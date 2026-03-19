@@ -1,0 +1,27 @@
+--- PRODUCT_INVENTORY SCHEMA ---
+- Ma san pham: string (text) - Description: Note:
+This is a Primary Key.<pk/>
+- Barcode: string (text) - Description: none
+- Seri / Emi: string (text) - Description: none
+- Nhom san pham: string (text) - Description: none
+- Muc dich su dung: string (text) - Description: none
+- Ten san pham: string (text) - Description: none
+- Don vi: string (text) - Description: none
+- Thong tin san pham: string (text) - Description: none
+- Ngay tao: string (text) - Description: none
+- Nguoi tao: string (text) - Description: none
+- Thuoc bien the cua  san pham: string (text) - Description: none
+- Hinh anh: string (text) - Description: none
+- Gia ban: integer (bigint) - Description: none
+- Gia von: integer (bigint) - Description: none
+- Nha san xuat: string (text) - Description: none
+- Seri: integer (bigint) - Description: Note:
+This is a Primary Key.<pk/>
+- Don vi quy doi: string (text) - Description: none
+- Thuoc tinh san pham: string (text) - Description: none
+- Ton kho: string (text) - Description: none
+- Phong ban ap dung: string (text) - Description: none
+- Trang thai: string (text) - Description: none
+- Loai hang hoa: string (text) - Description: none
+- Thao Luan: string (text) - Description: none
+- So luong file dinh kem: string (text) - Description: none
