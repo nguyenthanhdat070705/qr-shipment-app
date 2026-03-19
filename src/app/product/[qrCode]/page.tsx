@@ -9,6 +9,8 @@ import ShipmentConfirmationFormWrapper from '@/components/ShipmentConfirmationFo
 import { ArrowLeft, QrCode } from 'lucide-react';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 interface ProductPageProps {
   params: Promise<{ qrCode: string }>;
 }

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: 'Tính năng xem và in mã QR cho toàn bộ sản phẩm.',
 };
 
-export const revalidate = 0; // Luôn lấy data mới nhất
+export const dynamic = 'force-dynamic';
 
 export default async function ProductListPage() {
   const { data: products, error } = await getSupabase()
