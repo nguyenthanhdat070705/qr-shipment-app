@@ -61,7 +61,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       icon: <User size={20} />,
       label: 'Thông tin người dùng',
       desc: userEmail || 'Xem thông tin tài khoản',
-      href: '#user-info',
+      href: '/profile',
       color: 'text-amber-500',
       bg: 'bg-amber-50',
     },
