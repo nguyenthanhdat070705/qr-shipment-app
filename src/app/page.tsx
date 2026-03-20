@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { QrCode, ScanLine, Package, CheckCircle, LogOut, LayoutGrid, Truck, User, Menu, X, ChevronRight, Warehouse } from 'lucide-react';
+import { QrCode, ScanLine, Package, CheckCircle, LogOut, LayoutGrid, Truck, User, Menu, X, ChevronRight, Warehouse, Shield } from 'lucide-react';
 import QuickLookupForm from '@/components/QuickLookupForm';
 import AuthGuard from '@/components/AuthGuard';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { getUserRole, ROLE_CONFIGS, type UserRole } from '@/config/roles.config';
 
 /* ═══════════════════════════════════════════════════════════
    Sidebar Navigation Component
@@ -14,6 +15,7 @@ import { useRouter } from 'next/navigation';
 function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const router = useRouter();
   const [userEmail, setUserEmail] = useState('');
+  const [userRole, setUserRole] = useState<UserRole>('sales');
 
   useEffect(() => {
     try {
@@ -21,9 +23,12 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       if (raw) {
         const u = JSON.parse(raw);
         setUserEmail(u.email || '');
+        setUserRole(u.role || getUserRole(u.email || ''));
       }
     } catch { /* ignore */ }
   }, []);
+
+  const roleConfig = ROLE_CONFIGS[userRole];
 
   const handleLogout = () => {
     localStorage.removeItem('auth_token');
@@ -31,7 +36,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
     router.push('/login');
   };
 
-  const menuItems = [
+  const allMenuItems = [
     {
       icon: <Truck size={20} />,
       label: 'Xuất hàng',
@@ -40,6 +45,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-emerald-500',
       bg: 'bg-emerald-50',
       active: true,
+      requiresPermission: 'canExport' as const,
     },
     {
       icon: <Warehouse size={20} />,
@@ -48,6 +54,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/inventory',
       color: 'text-blue-500',
       bg: 'bg-blue-50',
+      requiresPermission: 'canViewInventory' as const,
     },
     {
       icon: <LayoutGrid size={20} />,
@@ -56,6 +63,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/product/fullproductlist',
       color: 'text-indigo-500',
       bg: 'bg-indigo-50',
+      requiresPermission: 'canViewProducts' as const,
     },
     {
       icon: <User size={20} />,
@@ -66,6 +74,12 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       bg: 'bg-amber-50',
     },
   ];
+
+  // Filter menu items by permissions
+  const menuItems = allMenuItems.filter((item) => {
+    if (!item.requiresPermission) return true;
+    return roleConfig.permissions[item.requiresPermission];
+  });
 
   return (
     <>
@@ -107,6 +121,19 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
           >
             <X size={18} />
           </button>
+        </div>
+
+        {/* Role Badge */}
+        <div className="px-5 pt-3 pb-1">
+          <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold
+            ${userRole === 'inventory'
+              ? 'bg-emerald-100 text-emerald-700'
+              : 'bg-blue-100 text-blue-700'
+            }`}
+          >
+            <Shield size={11} />
+            {roleConfig.label}
+          </div>
         </div>
 
         {/* Menu Label */}
