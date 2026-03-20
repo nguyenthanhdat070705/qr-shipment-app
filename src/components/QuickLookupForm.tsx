@@ -2,7 +2,7 @@
 
 import { useState, useRef, FormEvent } from 'react';
 import { ArrowRight, ScanLine, Keyboard } from 'lucide-react';
-import { PRODUCT_CONFIG } from '@/config/product.config';
+import { extractProductCode } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 
 const Scanner = dynamic(() => import('@yudiel/react-qr-scanner').then((mod) => mod.Scanner), {
@@ -18,35 +18,6 @@ export default function QuickLookupForm() {
   const [code, setCode] = useState('');
   const [inputMode, setInputMode] = useState<'type' | 'scan'>('type');
   const inputRef = useRef<HTMLInputElement>(null);
-
-  /**
-   * Extract the product code from a scanned QR value.
-   * QR codes may contain:
-   * - A full URL like "https://qr-shipment-app.vercel.app/product/2AQ0173"
-   * - Just a product code like "2AQ0173"
-   */
-  function extractProductCode(value: string): string {
-    const trimmed = value.trim();
-
-    // Check if the value is a URL containing /product/
-    try {
-      const url = new URL(trimmed);
-      const match = url.pathname.match(/\/product\/(.+)/);
-      if (match && match[1]) {
-        return decodeURIComponent(match[1]);
-      }
-    } catch {
-      // Not a URL — treat as raw product code
-    }
-
-    // Also handle relative paths like "/product/2AQ0173"
-    const relativeMatch = trimmed.match(/\/product\/(.+)/);
-    if (relativeMatch && relativeMatch[1]) {
-      return decodeURIComponent(relativeMatch[1]);
-    }
-
-    return trimmed;
-  }
 
   function navigate(value: string) {
     const productCode = extractProductCode(value);

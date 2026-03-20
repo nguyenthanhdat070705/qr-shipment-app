@@ -1,13 +1,15 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getSupabase } from '@/lib/supabase/client';
+import { getSupabaseAdmin } from '@/lib/supabase/server';
 import type { DynamicProductRow } from '@/types';
 import { PRODUCT_CONFIG } from '@/config/product.config';
+import { extractProductCode } from '@/lib/utils';
 import ProductDetailCard from '@/components/ProductDetailCard';
 import ProductNotFound from '@/components/ProductNotFound';
 import ShipmentConfirmationFormWrapper from '@/components/ShipmentConfirmationFormWrapper';
 import { ArrowLeft, QrCode } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,12 +22,14 @@ interface ProductPageProps {
  * Trả về null nếu không tìm thấy; ném lỗi nếu lỗi DB thực sự.
  */
 async function getProductByLookup(lookupValue: string): Promise<DynamicProductRow | null> {
-  const decodedValue = decodeURIComponent(lookupValue);
+  // Extract product code from full URL if needed
+  const productCode = extractProductCode(lookupValue);
 
-  const { data, error } = await getSupabase()
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
     .from(PRODUCT_CONFIG.TABLE_NAME as string)
     .select('*')
-    .eq(PRODUCT_CONFIG.LOOKUP_COLUMN as string, decodedValue)
+    .eq(PRODUCT_CONFIG.LOOKUP_COLUMN as string, productCode)
     .single();
 
   // PGRST116 = không có hàng nào — không phải lỗi DB thực sự
@@ -61,13 +65,11 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
 /**
  * Trang sản phẩm động — /product/[qrCode]
- *
- * - Dữ liệu được tải phía server (RSC) dùng cột tra cứu từ config
- * - Hiển thị toàn bộ trường từ hàng dữ liệu (không hardcode trường nào)
- * - Form xác nhận là client component, xử lý trạng thái cục bộ
  */
 export default async function ProductPage({ params }: ProductPageProps) {
   const { qrCode } = await params;
+  const productCode = extractProductCode(decodeURIComponent(qrCode));
+  
   let row: DynamicProductRow | null = null;
   let fetchFailed = false;
 
@@ -77,17 +79,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
     fetchFailed = true;
   }
 
-  // Lỗi DB thực sự → next.js notFound()
   if (fetchFailed) {
     notFound();
   }
 
-  // Không tìm thấy sản phẩm → component thân thiện
   if (!row) {
-    return <ProductNotFound lookupValue={decodeURIComponent(qrCode)} />;
+    return <ProductNotFound lookupValue={productCode} />;
   }
 
-  // Lấy tên sản phẩm và trạng thái từ hàng dữ liệu
   const productName =
     (row['name'] as string | undefined) ??
     (row['product_name'] as string | undefined) ??
@@ -108,18 +107,27 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <ArrowLeft size={16} />
             Quay lại
           </Link>
-          <div className="flex items-center gap-2">
-            <QrCode size={15} className="text-indigo-500" />
-            <span className="text-sm font-mono text-gray-600 max-w-[180px] truncate">
-              {decodeURIComponent(qrCode)}
-            </span>
+          <div className="flex items-center gap-3">
+            <Image
+              src="/blackstones-logo.webp"
+              alt="Blackstones"
+              width={100}
+              height={22}
+              style={{ height: 'auto', filter: 'invert(1) brightness(0.2)' }}
+            />
+            <div className="w-px h-5 bg-gray-200" />
+            <div className="flex items-center gap-1.5">
+              <QrCode size={14} className="text-indigo-500" />
+              <span className="text-sm font-mono text-gray-600 max-w-[140px] truncate">
+                {productCode}
+              </span>
+            </div>
           </div>
         </div>
       </header>
 
       {/* ── Nội dung chính ────────────────────────── */}
       <div className="mx-auto max-w-lg px-4 py-6 space-y-5">
-        {/* Tiêu đề trang */}
         <div>
           <h1 className="text-xl font-bold text-gray-900">Thông tin sản phẩm</h1>
           <p className="text-sm text-gray-500 mt-0.5">
@@ -127,12 +135,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </p>
         </div>
 
-        {/* Thẻ thông tin sản phẩm (động) */}
         <ProductDetailCard row={row} />
 
-        {/* Form xác nhận xuất kho (client component) */}
         <ShipmentConfirmationFormWrapper
-          qrCode={decodeURIComponent(qrCode)}
+          qrCode={productCode}
           productName={productName}
           currentStatus={statusValue}
         />

@@ -1,25 +1,17 @@
 'use client';
 
 import { QRCodeSVG } from 'qrcode.react';
-import { useEffect, useState } from 'react';
 
-export default function QRCodeDisplay({ code, size = 150 }: { code: string, size?: number }) {
-  const [url, setUrl] = useState('');
+const BASE_URL = 'https://qr-shipment-app.vercel.app';
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setUrl(`${window.location.origin}/product/${encodeURIComponent(code)}`);
-    }
-  }, [code]);
-
-  if (!url) {
-    return (
-      <div 
-        style={{ width: size, height: size }} 
-        className="bg-gray-100 rounded-xl border border-gray-50 inline-block animate-pulse" 
-      />
-    );
-  }
+/**
+ * QR Code display component — generates a QR code that links
+ * directly to the product page URL.
+ * Uses a hardcoded production URL to ensure QR codes are consistent
+ * regardless of which environment they were generated in.
+ */
+export default function QRCodeDisplay({ code, size = 150 }: { code: string; size?: number }) {
+  const url = `${BASE_URL}/product/${encodeURIComponent(code)}`;
 
   return (
     <div className="bg-white p-3 rounded-xl inline-block shadow-sm border border-gray-100">
