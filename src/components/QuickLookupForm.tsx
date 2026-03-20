@@ -19,10 +19,39 @@ export default function QuickLookupForm() {
   const [inputMode, setInputMode] = useState<'type' | 'scan'>('type');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  function navigate(value: string) {
+  /**
+   * Extract the product code from a scanned QR value.
+   * QR codes may contain:
+   * - A full URL like "https://qr-shipment-app.vercel.app/product/2AQ0173"
+   * - Just a product code like "2AQ0173"
+   */
+  function extractProductCode(value: string): string {
     const trimmed = value.trim();
-    if (trimmed) {
-      window.location.href = `/product/${encodeURIComponent(trimmed)}`;
+
+    // Check if the value is a URL containing /product/
+    try {
+      const url = new URL(trimmed);
+      const match = url.pathname.match(/\/product\/(.+)/);
+      if (match && match[1]) {
+        return decodeURIComponent(match[1]);
+      }
+    } catch {
+      // Not a URL — treat as raw product code
+    }
+
+    // Also handle relative paths like "/product/2AQ0173"
+    const relativeMatch = trimmed.match(/\/product\/(.+)/);
+    if (relativeMatch && relativeMatch[1]) {
+      return decodeURIComponent(relativeMatch[1]);
+    }
+
+    return trimmed;
+  }
+
+  function navigate(value: string) {
+    const productCode = extractProductCode(value);
+    if (productCode) {
+      window.location.href = `/product/${encodeURIComponent(productCode)}`;
     }
   }
 
