@@ -5,7 +5,8 @@ import { useRouter, usePathname } from 'next/navigation';
 
 /**
  * Auth-guard wrapper — renders children only when authenticated.
- * Redirects to /login if no auth_token is found in localStorage.
+ * Redirects to /login?redirect=<currentPath> if no auth_token found.
+ * After login, user is redirected back to the original page.
  */
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -17,7 +18,9 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const token = localStorage.getItem('auth_token');
 
     if (!token) {
-      router.replace('/login');
+      // Save current path so login page can redirect back
+      const redirectUrl = encodeURIComponent(pathname);
+      router.replace(`/login?redirect=${redirectUrl}`);
     } else {
       setIsAuthenticated(true);
     }

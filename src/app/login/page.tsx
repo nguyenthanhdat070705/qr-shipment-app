@@ -1,18 +1,31 @@
 'use client';
 
 import './login.css';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
+import { Suspense } from 'react';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Get the redirect URL from query params (set by AuthGuard)
+  const redirectUrl = searchParams.get('redirect') || '/';
+
+  // If already logged in, redirect
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      router.replace(decodeURIComponent(redirectUrl));
+    }
+  }, [router, redirectUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +56,9 @@ export default function LoginPage() {
       localStorage.setItem('auth_token', data.token);
       localStorage.setItem('auth_user', JSON.stringify(data.user));
 
-      router.push('/');
+      // Redirect to the original page (or home if none)
+      const target = decodeURIComponent(redirectUrl);
+      router.push(target);
     } catch {
       setError('Lỗi kết nối. Vui lòng thử lại sau.');
     } finally {
@@ -107,6 +122,25 @@ export default function LoginPage() {
               <div className="login-error" role="alert">
                 <AlertCircle size={16} />
                 <span>{error}</span>
+              </div>
+            )}
+
+            {/* Redirect notice */}
+            {redirectUrl !== '/' && (
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: '12px',
+                background: '#eff6ff',
+                border: '1px solid #bfdbfe',
+                marginBottom: '8px',
+                fontSize: '13px',
+                color: '#1e40af',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}>
+                <LogIn size={14} />
+                <span>Vui lòng đăng nhập để xem sản phẩm</span>
               </div>
             )}
 
@@ -181,5 +215,30 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #f8f9fc 0%, #eef1f8 100%)',
+      }}>
+        <div style={{
+          width: 32,
+          height: 32,
+          border: '3px solid #e5e7eb',
+          borderTopColor: '#4f46e5',
+          borderRadius: '50%',
+          animation: 'spin 0.7s linear infinite',
+        }} />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
