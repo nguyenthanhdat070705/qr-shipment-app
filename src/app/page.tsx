@@ -1,7 +1,6 @@
 'use client';
 
-import { QrCode, ScanLine, Package, CheckCircle, Settings2, LogOut } from 'lucide-react';
-import { PRODUCT_CONFIG } from '@/config/product.config';
+import { QrCode, ScanLine, Package, CheckCircle, LogOut } from 'lucide-react';
 import QuickLookupForm from '@/components/QuickLookupForm';
 import AuthGuard from '@/components/AuthGuard';
 import Image from 'next/image';
@@ -19,7 +18,7 @@ function LogoutButton() {
   return (
     <button
       onClick={handleLogout}
-      className="fixed top-4 right-4 z-50 flex items-center gap-1.5 px-3 py-2 rounded-xl 
+      className="fixed top-3 right-4 z-50 flex items-center gap-1.5 px-3 py-2 rounded-xl 
                  bg-white/80 backdrop-blur border border-gray-200 shadow-sm
                  text-gray-500 hover:text-red-500 hover:border-red-200 hover:bg-red-50
                  transition-all duration-200 text-xs font-medium"
@@ -36,21 +35,19 @@ export default function HomePage() {
       <main className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-slate-50">
         <LogoutButton />
 
-        {/* ── Top bar with logo ──────────────────────── */}
-        <div className="mx-auto max-w-lg px-5 pt-4 pb-2 flex items-center justify-center">
-          <div className="px-4 py-2 bg-gradient-to-r from-[#1a1a2e] to-[#16213e] rounded-xl">
-            <Image
-              src="/blackstones-logo.webp"
-              alt="Blackstones Logo"
-              width={160}
-              height={34}
-              style={{ height: 'auto' }}
-            />
-          </div>
+        {/* ── Top bar with logo (left) + logout (right) ── */}
+        <div className="fixed top-0 left-0 right-0 z-40 px-4 py-3 flex items-center justify-between">
+          <Image
+            src="/blackstones-logo.webp"
+            alt="Blackstones Logo"
+            width={140}
+            height={30}
+            style={{ height: 'auto', filter: 'invert(1) brightness(0.2)' }}
+          />
         </div>
 
         {/* ── Hero ─────────────────────────────────────── */}
-        <div className="mx-auto max-w-lg px-5 pt-6 pb-8 text-center">
+        <div className="mx-auto max-w-lg px-5 pt-16 pb-8 text-center">
           <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-600 shadow-lg shadow-indigo-600/30">
             <QrCode size={32} className="text-white" />
           </div>
@@ -111,38 +108,6 @@ export default function HomePage() {
                 </li>
               ))}
             </ol>
-          </div>
-        </div>
-
-        {/* ── Cấu hình đang áp dụng ─────────────────────── */}
-        <div className="mx-auto max-w-lg px-5 pb-16">
-          <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <Settings2 size={13} className="text-indigo-400" />
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
-                Cấu hình hiện tại
-              </h2>
-            </div>
-            <div className="space-y-1.5 text-sm">
-              {[
-                ['Bảng sản phẩm',          PRODUCT_CONFIG.TABLE_NAME],
-                ['Cột tra cứu mã',          PRODUCT_CONFIG.LOOKUP_COLUMN],
-                ['Cột trạng thái',          PRODUCT_CONFIG.STATUS_COLUMN],
-                ['Bảng xác nhận xuất',      PRODUCT_CONFIG.CONFIRMATION_TABLE],
-              ].map(([label, value]) => (
-                <div key={label} className="flex justify-between gap-4">
-                  <span className="text-indigo-500 font-medium flex-shrink-0">{label}:</span>
-                  <span className="font-mono text-indigo-700 text-right truncate">{value}</span>
-                </div>
-              ))}
-            </div>
-            <p className="mt-3 text-xs text-indigo-400">
-              Chỉnh sửa{' '}
-              <code className="bg-indigo-100 px-1 rounded text-indigo-600">
-                src/config/product.config.ts
-              </code>{' '}
-              để thay đổi cấu hình.
-            </p>
           </div>
         </div>
       </main>
