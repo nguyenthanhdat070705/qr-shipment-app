@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { QrCode, ScanLine, Package, CheckCircle, LogOut, LayoutGrid, Truck, User, Menu, X, ChevronRight } from 'lucide-react';
+import { QrCode, ScanLine, Package, CheckCircle, LogOut, LayoutGrid, Truck, User, Menu, X, ChevronRight, Warehouse } from 'lucide-react';
 import QuickLookupForm from '@/components/QuickLookupForm';
 import AuthGuard from '@/components/AuthGuard';
 import Image from 'next/image';
@@ -33,14 +33,6 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
 
   const menuItems = [
     {
-      icon: <LayoutGrid size={20} />,
-      label: 'Toàn bộ sản phẩm',
-      desc: 'Xem danh sách & mã QR',
-      href: '/product/fullproductlist',
-      color: 'text-indigo-500',
-      bg: 'bg-indigo-50',
-    },
-    {
       icon: <Truck size={20} />,
       label: 'Xuất hàng',
       desc: 'Quét QR & xác nhận xuất',
@@ -48,6 +40,22 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-emerald-500',
       bg: 'bg-emerald-50',
       active: true,
+    },
+    {
+      icon: <Warehouse size={20} />,
+      label: 'Kho hàng',
+      desc: 'Xem tồn kho, giá, tìm kiếm',
+      href: '/inventory',
+      color: 'text-blue-500',
+      bg: 'bg-blue-50',
+    },
+    {
+      icon: <LayoutGrid size={20} />,
+      label: 'Toàn bộ sản phẩm',
+      desc: 'Xem danh sách & mã QR',
+      href: '/product/fullproductlist',
+      color: 'text-indigo-500',
+      bg: 'bg-indigo-50',
     },
     {
       icon: <User size={20} />,
@@ -239,7 +247,16 @@ export default function HomePage() {
 
           {/* ── Quick Actions (mobile — replaces sidebar on small screens) ── */}
           <div className="mx-auto max-w-lg px-5 pb-6 lg:hidden">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              <Link
+                href="/inventory"
+                className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-200 bg-white hover:border-blue-200 hover:shadow-md transition-all"
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50">
+                  <Warehouse size={20} className="text-blue-500" />
+                </div>
+                <span className="text-xs font-semibold text-gray-700 text-center leading-tight">Kho hàng</span>
+              </Link>
               <Link
                 href="/product/fullproductlist"
                 className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-200 bg-white hover:border-indigo-200 hover:shadow-md transition-all"
@@ -247,25 +264,7 @@ export default function HomePage() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50">
                   <LayoutGrid size={20} className="text-indigo-500" />
                 </div>
-                <span className="text-xs font-semibold text-gray-700 text-center leading-tight">Toàn bộ sản phẩm</span>
-              </Link>
-              <Link
-                href="/"
-                className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-emerald-200 bg-emerald-50/50 shadow-sm"
-              >
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100">
-                  <Truck size={20} className="text-emerald-600" />
-                </div>
-                <span className="text-xs font-semibold text-emerald-700 text-center leading-tight">Xuất hàng</span>
-              </Link>
-              <Link
-                href="#user-info"
-                className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-200 bg-white hover:border-amber-200 hover:shadow-md transition-all"
-              >
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50">
-                  <User size={20} className="text-amber-500" />
-                </div>
-                <span className="text-xs font-semibold text-gray-700 text-center leading-tight">Thông tin người dùng</span>
+                <span className="text-xs font-semibold text-gray-700 text-center leading-tight">Toàn bộ SP</span>
               </Link>
             </div>
           </div>
@@ -290,8 +289,8 @@ export default function HomePage() {
                   },
                   {
                     icon: <CheckCircle size={16} className="text-indigo-500" />,
-                    title: 'Nhập họ tên, email và xác nhận xuất hàng',
-                    desc:  'Điền thông tin người xuất kho và nhấn "Xác nhận xuất hàng" để lưu vào hệ thống.',
+                    title: 'Nhập mã đơn hàng và xác nhận xuất',
+                    desc:  'Chỉ cần nhập mã đơn hàng — hệ thống tự động ghi nhận người xuất, thời gian và số lượng.',
                   },
                 ].map((step, i) => (
                   <li key={i} className="flex items-start gap-3">
