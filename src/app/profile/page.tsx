@@ -119,6 +119,11 @@ export default function ProfilePage() {
         setEditing(false);
         setSaveMsg({ type: 'success', text: 'Cập nhật thành công!' });
         setTimeout(() => setSaveMsg(null), 3000);
+      } else if (data.needsSetup) {
+        setSaveMsg({
+          type: 'error',
+          text: 'Bảng dữ liệu chưa được tạo. Vui lòng liên hệ quản trị viên để thiết lập database.',
+        });
       } else {
         setSaveMsg({ type: 'error', text: data.error || 'Lỗi khi cập nhật.' });
       }
