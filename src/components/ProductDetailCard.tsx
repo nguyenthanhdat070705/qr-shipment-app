@@ -88,7 +88,7 @@ export default function ProductDetailCard({ row }: ProductDetailCardProps) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
       {/* ── Header gradient ──────────────────────────── */}
-      <div className="bg-gradient-to-r from-navy-600 to-teal-500 px-5 py-4">
+      <div className="bg-gradient-to-r from-[#1B2A4A] to-teal-500 px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 pr-2">
             <p className="text-teal-200 text-[10px] font-bold uppercase tracking-widest mb-1">
@@ -119,14 +119,14 @@ export default function ProductDetailCard({ row }: ProductDetailCardProps) {
         {/* Mã sản phẩm */}
         <div className="flex items-center justify-between py-3 border-b border-gray-100">
           <span className="text-xs font-bold uppercase tracking-wide text-gray-400">Mã sản phẩm</span>
-          <span className="text-sm font-mono font-bold text-navy-600">{productCode}</span>
+          <span className="text-sm font-mono font-bold text-[#1B2A4A]">{productCode}</span>
         </div>
 
         {/* Giá bán */}
         {hasPrice && (
           <div className="flex items-center justify-between py-3 border-b border-gray-100">
             <span className="text-xs font-bold uppercase tracking-wide text-gray-400">Giá bán</span>
-            <span className="text-lg font-extrabold text-navy-600">
+            <span className="text-lg font-extrabold text-[#1B2A4A]">
               {formatPrice(giaBanStr)} <span className="text-xs font-semibold text-gray-400">VNĐ</span>
             </span>
           </div>

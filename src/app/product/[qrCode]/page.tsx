@@ -96,7 +96,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const statusValue = String(row[PRODUCT_CONFIG.STATUS_COLUMN] ?? '');
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-slate-50">
+    <main className="min-h-screen bg-gradient-to-br from-[#faf7f2] via-white to-slate-50">
       {/* ── Thanh tiêu đề cố định ─────────────────── */}
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
@@ -117,7 +117,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             />
             <div className="w-px h-5 bg-gray-200" />
             <div className="flex items-center gap-1.5">
-              <QrCode size={14} className="text-navy-500" />
+              <QrCode size={14} className="text-[#2d4a7a]" />
               <span className="text-sm font-mono text-gray-600 max-w-[140px] truncate">
                 {productCode}
               </span>

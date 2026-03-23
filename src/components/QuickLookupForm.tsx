@@ -46,7 +46,7 @@ export default function QuickLookupForm() {
           onClick={switchToType}
           className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold transition-all ${
             inputMode === 'type'
-              ? 'bg-white text-navy-700 shadow-sm'
+              ? 'bg-white text-[#162240] shadow-sm'
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
@@ -58,7 +58,7 @@ export default function QuickLookupForm() {
           onClick={() => setInputMode('scan')}
           className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold transition-all ${
             inputMode === 'scan'
-              ? 'bg-white text-navy-700 shadow-sm'
+              ? 'bg-white text-[#162240] shadow-sm'
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
@@ -78,12 +78,12 @@ export default function QuickLookupForm() {
             placeholder="Nhập mã sản phẩm…"
             autoFocus
             className="flex-1 rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm font-mono
-                       focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-transparent transition"
+                       focus:outline-none focus:ring-2 focus:ring-[#2d4a7a] focus:border-transparent transition"
           />
           <button
             type="submit"
-            className="rounded-xl bg-navy-600 px-4 py-3 text-sm font-semibold text-white
-                       hover:bg-navy-700 active:scale-95 transition-all inline-flex items-center gap-1.5"
+            className="rounded-xl bg-[#1B2A4A] px-4 py-3 text-sm font-semibold text-white
+                       hover:bg-[#162240] active:scale-95 transition-all inline-flex items-center gap-1.5"
           >
             <ArrowRight size={15} />
             Tìm
@@ -95,7 +95,7 @@ export default function QuickLookupForm() {
           <p className="text-sm text-gray-500 text-center">
             Đưa mã QR vào khung hình bên dưới để quét tự động.
           </p>
-          <div className="rounded-xl overflow-hidden border-2 border-navy-300 bg-black relative aspect-square max-h-[300px] mx-auto flex items-center justify-center">
+          <div className="rounded-xl overflow-hidden border-2 border-[#7b8db3] bg-black relative aspect-square max-h-[300px] mx-auto flex items-center justify-center">
             <Scanner
               onScan={(result) => {
                 if (result && result.length > 0 && result[0].rawValue) {
