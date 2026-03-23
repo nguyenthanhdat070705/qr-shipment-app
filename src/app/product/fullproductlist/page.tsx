@@ -59,7 +59,7 @@ export default async function ProductListPage() {
             </span>
             <button
               onClick={undefined}
-              className="print:hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
+              className="print:hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-navy-600 text-white text-sm font-semibold hover:bg-navy-700 transition-colors shadow-sm"
               id="print-btn"
             >
               <Printer size={14} />
@@ -113,7 +113,7 @@ export default async function ProductListPage() {
               return (
                 <div
                   key={String(product.id)}
-                  className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 flex flex-col items-center text-center hover:shadow-md hover:border-indigo-200 transition-all duration-200 print:shadow-none print:border print:p-3 print:break-inside-avoid"
+                  className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 flex flex-col items-center text-center hover:shadow-md hover:border-navy-200 transition-all duration-200 print:shadow-none print:border print:p-3 print:break-inside-avoid"
                 >
                   {/* Status indicator */}
                   <div className="self-end mb-2 print:hidden">
@@ -150,7 +150,7 @@ export default async function ProductListPage() {
                   </h3>
 
                   {/* Product code */}
-                  <p className="text-xs text-indigo-500 font-mono mb-4 uppercase tracking-wider font-semibold">
+                  <p className="text-xs text-navy-500 font-mono mb-4 uppercase tracking-wider font-semibold">
                     {productCode}
                   </p>
 
@@ -161,7 +161,7 @@ export default async function ProductListPage() {
                   <div className="mt-4 w-full print:hidden">
                     <Link
                       href={`/product/${encodeURIComponent(productCode)}`}
-                      className="block w-full text-sm font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 py-2.5 rounded-xl transition-colors"
+                      className="block w-full text-sm font-semibold text-navy-600 bg-navy-50 hover:bg-navy-100 py-2.5 rounded-xl transition-colors"
                       target="_blank"
                     >
                       Mở trang sản phẩm →

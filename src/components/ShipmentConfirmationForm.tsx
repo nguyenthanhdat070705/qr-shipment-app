@@ -241,7 +241,7 @@ export default function ShipmentConfirmationForm({
               required
               autoFocus
               className="w-full rounded-xl border border-gray-300 bg-gray-50 pl-9 pr-4 py-3 text-sm text-gray-900 placeholder-gray-400
-                         focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+                         focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-transparent
                          disabled:opacity-60 disabled:cursor-not-allowed transition"
             />
           </div>
@@ -259,9 +259,9 @@ export default function ShipmentConfirmationForm({
         <button
           type="submit"
           disabled={formState === 'submitting'}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3.5
+          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-navy-600 px-6 py-3.5
                      text-sm font-bold text-white shadow-sm
-                     hover:bg-indigo-700 active:scale-95
+                     hover:bg-navy-700 active:scale-95
                      disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100
                      transition-all duration-150"
         >

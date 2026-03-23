@@ -84,7 +84,7 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="w-full rounded-xl border border-gray-300 bg-white pl-10 pr-4 py-3 text-sm
-                       focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+                       focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-transparent
                        shadow-sm transition"
           />
         </div>
@@ -102,8 +102,8 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
               onClick={() => setFilter(f.key)}
               className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all whitespace-nowrap
                 ${filter === f.key
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'
+                  ? 'bg-navy-600 text-white border-navy-600 shadow-sm'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-navy-300'
                 }`}
             >
               {f.label}
@@ -121,7 +121,7 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as SortType)}
-          className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-navy-500"
         >
           <option value="name">Sắp xếp: Tên A-Z</option>
           <option value="code">Sắp xếp: Mã SP</option>
@@ -167,7 +167,7 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
                       </div>
                     </td>
                     <td className="py-3 px-4">
-                      <span className="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">
+                      <span className="font-mono text-xs font-bold text-navy-600 bg-navy-50 px-2 py-1 rounded-lg">
                         {item.code}
                       </span>
                     </td>
@@ -202,7 +202,7 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
                     <td className="py-3 px-4">
                       <Link
                         href={`/product/${encodeURIComponent(item.code)}`}
-                        className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
+                        className="text-xs font-semibold text-navy-600 hover:text-navy-800 transition-colors"
                       >
                         Chi tiết →
                       </Link>
@@ -230,7 +230,7 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-800 text-sm line-clamp-1">{item.name}</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="font-mono text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">
+                    <span className="font-mono text-[10px] font-bold text-navy-600 bg-navy-50 px-1.5 py-0.5 rounded">
                       {item.code}
                     </span>
                     <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full

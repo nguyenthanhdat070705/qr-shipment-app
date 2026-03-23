@@ -202,8 +202,8 @@ export default function HoldProductButton({ productCode, productName }: HoldProd
             onClick={handleHold}
             disabled={holding}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl
-                       bg-gradient-to-r from-blue-600 to-indigo-600 text-white
-                       hover:from-blue-700 hover:to-indigo-700
+                       bg-gradient-to-r from-navy-600 to-teal-500 text-white
+                       hover:from-navy-700 hover:to-teal-600
                        disabled:opacity-50 transition-all font-bold text-sm shadow-sm"
           >
             {holding ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} />}

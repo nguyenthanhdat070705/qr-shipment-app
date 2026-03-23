@@ -61,8 +61,8 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       label: 'Toàn bộ sản phẩm',
       desc: 'Xem danh sách & mã QR',
       href: '/product/fullproductlist',
-      color: 'text-indigo-500',
-      bg: 'bg-indigo-50',
+      color: 'text-navy-500',
+      bg: 'bg-navy-50',
       requiresPermission: 'canViewProducts' as const,
     },
     {
@@ -154,7 +154,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
                 group flex items-center gap-3 px-3 py-3 rounded-xl
                 transition-all duration-200
                 ${item.active
-                  ? 'bg-indigo-50 border border-indigo-100 shadow-sm'
+                  ? 'bg-navy-50 border border-navy-100 shadow-sm'
                   : 'hover:bg-gray-50 border border-transparent'}
               `}
             >
@@ -162,7 +162,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
                 {item.icon}
               </div>
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-semibold ${item.active ? 'text-indigo-700' : 'text-gray-800'}`}>
+                <p className={`text-sm font-semibold ${item.active ? 'text-navy-700' : 'text-gray-800'}`}>
                   {item.label}
                 </p>
                 <p className="text-xs text-gray-400 truncate">{item.desc}</p>
@@ -175,7 +175,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
         {/* Sidebar Footer — User Info & Logout */}
         <div className="border-t border-gray-100 p-4">
           <div className="flex items-center gap-3 mb-3 px-1">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-sm font-bold flex-shrink-0">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-navy-600 to-teal-500 text-white text-sm font-bold flex-shrink-0">
               {userEmail ? userEmail[0].toUpperCase() : 'U'}
             </div>
             <div className="min-w-0 flex-1">
@@ -209,7 +209,7 @@ export default function HomePage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-slate-50">
+      <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-slate-50">
         {/* Sidebar */}
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
@@ -247,7 +247,7 @@ export default function HomePage() {
 
           {/* ── Hero ─────────────────────────────────────── */}
           <div className="mx-auto max-w-lg px-5 pt-10 pb-8 text-center">
-            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-600 shadow-lg shadow-indigo-600/30">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-navy-600 shadow-lg shadow-navy-600/30">
               <QrCode size={32} className="text-white" />
             </div>
             <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 mb-2">
@@ -262,7 +262,7 @@ export default function HomePage() {
           <div className="mx-auto max-w-lg px-5 pb-8">
             <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
               <div className="flex items-center gap-2 mb-4">
-                <ScanLine size={18} className="text-indigo-500" />
+                <ScanLine size={18} className="text-navy-500" />
                 <h2 className="font-semibold text-gray-900">Quét mã QR / Nhập mã sản phẩm</h2>
               </div>
               <QuickLookupForm />
@@ -286,10 +286,10 @@ export default function HomePage() {
               </Link>
               <Link
                 href="/product/fullproductlist"
-                className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-200 bg-white hover:border-indigo-200 hover:shadow-md transition-all"
+                className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-200 bg-white hover:border-navy-200 hover:shadow-md transition-all"
               >
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50">
-                  <LayoutGrid size={20} className="text-indigo-500" />
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-navy-50">
+                  <LayoutGrid size={20} className="text-navy-500" />
                 </div>
                 <span className="text-xs font-semibold text-gray-700 text-center leading-tight">Toàn bộ SP</span>
               </Link>
@@ -305,23 +305,23 @@ export default function HomePage() {
               <ol className="space-y-4">
                 {[
                   {
-                    icon: <ScanLine size={16} className="text-indigo-500" />,
+                    icon: <ScanLine size={16} className="text-navy-500" />,
                     title: 'Quét mã QR hoặc nhập mã sản phẩm',
                     desc:  'Dùng camera điện thoại quét QR trên nhãn, hoặc nhập thủ công mã sản phẩm.',
                   },
                   {
-                    icon: <Package size={16} className="text-indigo-500" />,
+                    icon: <Package size={16} className="text-navy-500" />,
                     title: 'Kiểm tra thông tin & tình trạng hàng',
                     desc:  'Xem đầy đủ thông tin sản phẩm và kiểm tra xem hàng còn sẵn sàng xuất không.',
                   },
                   {
-                    icon: <CheckCircle size={16} className="text-indigo-500" />,
+                    icon: <CheckCircle size={16} className="text-navy-500" />,
                     title: 'Nhập mã đơn hàng và xác nhận xuất',
                     desc:  'Chỉ cần nhập mã đơn hàng — hệ thống tự động ghi nhận người xuất, thời gian và số lượng.',
                   },
                 ].map((step, i) => (
                   <li key={i} className="flex items-start gap-3">
-                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-50 mt-0.5">
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-navy-50 mt-0.5">
                       {step.icon}
                     </div>
                     <div>

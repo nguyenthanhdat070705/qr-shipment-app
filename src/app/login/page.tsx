@@ -232,7 +232,7 @@ export default function LoginPage() {
           width: 32,
           height: 32,
           border: '3px solid #e5e7eb',
-          borderTopColor: '#4f46e5',
+          borderTopColor: '#1B2A4A',
           borderRadius: '50%',
           animation: 'spin 0.7s linear infinite',
         }} />

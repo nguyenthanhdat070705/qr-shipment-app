@@ -1,5 +1,41 @@
 @import "tailwindcss";
 
+/* ── Blackstones Brand Color Palette (from poster) ─── */
+@theme {
+  --color-brand-50: #faf7f2;
+  --color-brand-100: #f5ede0;
+  --color-brand-200: #e8d9c4;
+  --color-brand-300: #d4c0a0;
+  --color-brand-400: #c5a55a;
+  --color-brand-500: #b8943f;
+  --color-brand-600: #a07d30;
+  --color-brand-700: #86672a;
+  --color-brand-800: #6e5424;
+  --color-brand-900: #5a4520;
+
+  --color-navy-50: #eef1f7;
+  --color-navy-100: #d5dbe9;
+  --color-navy-200: #a8b4ce;
+  --color-navy-300: #7b8db3;
+  --color-navy-400: #4e6698;
+  --color-navy-500: #2d4a7a;
+  --color-navy-600: #1B2A4A;
+  --color-navy-700: #162240;
+  --color-navy-800: #111a33;
+  --color-navy-900: #0c1226;
+
+  --color-teal-50: #eef6f8;
+  --color-teal-100: #d1e8ed;
+  --color-teal-200: #a3d1db;
+  --color-teal-300: #5eaebe;
+  --color-teal-400: #3d8e9e;
+  --color-teal-500: #2D6B7A;
+  --color-teal-600: #245868;
+  --color-teal-700: #1c4552;
+  --color-teal-800: #15353f;
+  --color-teal-900: #0e252c;
+}
+
 /* ── Custom CSS Variables ─────────────────────────── */
 :root {
   --font-inter: 'Inter', sans-serif;
@@ -22,7 +58,7 @@ html {
 
 /* ── Focus ring polish ────────────────────────────── */
 :focus-visible {
-  outline: 2px solid #4f46e5;
+  outline: 2px solid #1B2A4A;
   outline-offset: 2px;
 }
 

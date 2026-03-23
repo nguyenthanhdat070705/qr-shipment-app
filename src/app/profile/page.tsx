@@ -142,7 +142,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 size={32} className="animate-spin text-indigo-500" />
+        <Loader2 size={32} className="animate-spin text-navy-500" />
       </div>
     );
   }
@@ -173,7 +173,7 @@ export default function ProfilePage() {
         {/* ── Profile Card ────────────────────────────── */}
         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
           {/* Profile header with avatar */}
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-8">
+          <div className="bg-gradient-to-r from-navy-600 to-teal-500 px-6 py-8">
             <div className="flex items-center gap-4">
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm text-white text-2xl font-extrabold border border-white/30">
                 {(profile.ho_ten || profile.email)[0]?.toUpperCase() || 'U'}
@@ -200,7 +200,7 @@ export default function ProfilePage() {
               {!editing ? (
                 <button
                   onClick={() => setEditing(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-navy-600 bg-navy-50 hover:bg-navy-100 transition-colors"
                 >
                   <Edit3 size={13} />
                   Chỉnh sửa
@@ -217,7 +217,7 @@ export default function ProfilePage() {
                   <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-navy-600 hover:bg-navy-700 disabled:opacity-60 transition-colors"
                   >
                     {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
                     Lưu
@@ -254,7 +254,7 @@ export default function ProfilePage() {
                       type="text"
                       value={editProfile.ho_ten}
                       onChange={(e) => setEditProfile({ ...editProfile, ho_ten: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-transparent"
                       placeholder="Nhập họ và tên"
                     />
                   ) : (
@@ -290,7 +290,7 @@ export default function ProfilePage() {
                       type="text"
                       value={editProfile.chuc_vu}
                       onChange={(e) => setEditProfile({ ...editProfile, chuc_vu: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-transparent"
                       placeholder="VD: Thủ kho, Quản lý..."
                     />
                   ) : (
@@ -313,7 +313,7 @@ export default function ProfilePage() {
                       type="tel"
                       value={editProfile.so_dien_thoai}
                       onChange={(e) => setEditProfile({ ...editProfile, so_dien_thoai: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-transparent"
                       placeholder="0xxx xxx xxx"
                     />
                   ) : (
@@ -336,7 +336,7 @@ export default function ProfilePage() {
                       type="text"
                       value={editProfile.phong_ban}
                       onChange={(e) => setEditProfile({ ...editProfile, phong_ban: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-transparent"
                       placeholder="VD: Kho vận, Kinh doanh..."
                     />
                   ) : (
@@ -359,7 +359,7 @@ export default function ProfilePage() {
                       value={editProfile.ghi_chu}
                       onChange={(e) => setEditProfile({ ...editProfile, ghi_chu: e.target.value })}
                       rows={2}
-                      className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                      className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-transparent resize-none"
                       placeholder="Ghi chú thêm..."
                     />
                   ) : (
@@ -402,13 +402,13 @@ export default function ProfilePage() {
                 <div key={exp.stt || i} className="px-6 py-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-500 flex-shrink-0 mt-0.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-navy-50 text-navy-500 flex-shrink-0 mt-0.5">
                         <Hash size={16} />
                       </div>
                       <div>
                         <Link
                           href={`/product/${encodeURIComponent(exp.ma_san_pham)}`}
-                          className="text-sm font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+                          className="text-sm font-bold text-navy-600 hover:text-navy-800 transition-colors"
                         >
                           {exp.ma_san_pham}
                         </Link>

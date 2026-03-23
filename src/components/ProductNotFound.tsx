@@ -11,7 +11,7 @@ interface ProductNotFoundProps {
  */
 export default function ProductNotFound({ lookupValue }: ProductNotFoundProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-brand-50 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md text-center">
         {/* Biểu tượng */}
         <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-100">
@@ -44,7 +44,7 @@ export default function ProductNotFound({ lookupValue }: ProductNotFoundProps) {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 active:scale-95 transition-all"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-navy-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-navy-700 active:scale-95 transition-all"
           >
             <ArrowLeft size={16} />
             Quay về trang chủ

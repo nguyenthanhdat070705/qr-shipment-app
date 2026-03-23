@@ -82,7 +82,7 @@ export const PRODUCT_CONFIG = {
   STATUS_COLORS: {
     in_stock:   { bg: 'bg-blue-100',   text: 'text-blue-800',   dot: 'bg-blue-500'   },
     exported:   { bg: 'bg-green-100',  text: 'text-green-800',  dot: 'bg-green-500'  },
-    delivered:  { bg: 'bg-purple-100', text: 'text-purple-800', dot: 'bg-purple-500' },
+    delivered:  { bg: 'bg-teal-100', text: 'text-teal-800', dot: 'bg-teal-500' },
     returned:   { bg: 'bg-amber-100',  text: 'text-amber-800',  dot: 'bg-amber-500'  },
     pending:    { bg: 'bg-yellow-100', text: 'text-yellow-800', dot: 'bg-yellow-500' },
     cancelled:  { bg: 'bg-red-100',    text: 'text-red-800',    dot: 'bg-red-500'    },
