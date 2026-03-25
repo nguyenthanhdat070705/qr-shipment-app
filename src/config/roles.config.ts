@@ -2,30 +2,56 @@
  * ============================================================
  * roles.config.ts — Cấu hình phân quyền người dùng
  * ============================================================
- * 
- * Roles:
- * - inventory: Xuất kho bán hàng — được phép xuất hàng
- * - sales: Bộ phận bán hàng — chỉ xem + giữ hàng
+ *
+ * Phase 3 — 5 roles:
+ * - admin:       Quản trị toàn quyền
+ * - procurement: Thu mua — tạo/quản lý PO
+ * - warehouse:   Kho — nhập/xuất hàng, inventory
+ * - operations:  Vận hành — quản lý giao hàng
+ * - sales:       Bán hàng — xem + giữ hàng
  */
 
-export type UserRole = 'inventory' | 'sales';
+export type UserRole = 'admin' | 'procurement' | 'warehouse' | 'operations' | 'sales';
+
+export interface RolePermissions {
+  canAdmin: boolean;
+  canCreatePO: boolean;
+  canReceiveGoods: boolean;
+  canExport: boolean;
+  canManageDelivery: boolean;
+  canHold: boolean;
+  canViewInventory: boolean;
+  canViewProducts: boolean;
+}
 
 export interface RoleConfig {
   role: UserRole;
   label: string;
   description: string;
-  permissions: {
-    canExport: boolean;       // Được phép xuất hàng
-    canHold: boolean;         // Được phép giữ hàng (hold)
-    canViewInventory: boolean; // Được xem kho hàng
-    canViewProducts: boolean;  // Được xem sản phẩm
-  };
+  permissions: RolePermissions;
 }
 
-/** Map email patterns to roles */
+/** map email patterns to roles */
 const EMAIL_ROLE_MAP: { pattern: string; role: UserRole }[] = [
-  { pattern: 'xuatkhobanhang', role: 'inventory' },
-  { pattern: 'xuatkho', role: 'inventory' },
+  // Admin
+  { pattern: 'admin', role: 'admin' },
+  { pattern: 'quantri', role: 'admin' },
+  // Procurement (Thu mua)
+  { pattern: 'thuamua', role: 'procurement' },
+  { pattern: 'muahang', role: 'procurement' },
+  { pattern: 'procurement', role: 'procurement' },
+  // Warehouse (Kho)
+  { pattern: 'xuatkhobanhang', role: 'warehouse' },
+  { pattern: 'xuatkho', role: 'warehouse' },
+  { pattern: 'kho1', role: 'warehouse' },
+  { pattern: 'kho2', role: 'warehouse' },
+  { pattern: 'kho3', role: 'warehouse' },
+  { pattern: 'nhapkho', role: 'warehouse' },
+  // Operations (Vận hành)
+  { pattern: 'vanhanh', role: 'operations' },
+  { pattern: 'giaonhan', role: 'operations' },
+  { pattern: 'operations', role: 'operations' },
+  // Sales
   { pattern: 'bophanbanhang', role: 'sales' },
   { pattern: 'sales', role: 'sales' },
   { pattern: 'banhang', role: 'sales' },
@@ -33,12 +59,61 @@ const EMAIL_ROLE_MAP: { pattern: string; role: UserRole }[] = [
 
 /** Role configurations */
 export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
-  inventory: {
-    role: 'inventory',
-    label: 'Kho vận',
-    description: 'Quản lý xuất kho — được phép xuất hàng',
+  admin: {
+    role: 'admin',
+    label: 'Quản trị',
+    description: 'Quản trị toàn hệ thống',
     permissions: {
+      canAdmin: true,
+      canCreatePO: true,
+      canReceiveGoods: true,
       canExport: true,
+      canManageDelivery: true,
+      canHold: true,
+      canViewInventory: true,
+      canViewProducts: true,
+    },
+  },
+  procurement: {
+    role: 'procurement',
+    label: 'Thu mua',
+    description: 'Tạo và quản lý đơn mua hàng',
+    permissions: {
+      canAdmin: false,
+      canCreatePO: true,
+      canReceiveGoods: false,
+      canExport: false,
+      canManageDelivery: false,
+      canHold: false,
+      canViewInventory: true,
+      canViewProducts: true,
+    },
+  },
+  warehouse: {
+    role: 'warehouse',
+    label: 'Kho vận',
+    description: 'Quản lý nhập/xuất kho',
+    permissions: {
+      canAdmin: false,
+      canCreatePO: false,
+      canReceiveGoods: true,
+      canExport: true,
+      canManageDelivery: false,
+      canHold: false,
+      canViewInventory: true,
+      canViewProducts: true,
+    },
+  },
+  operations: {
+    role: 'operations',
+    label: 'Vận hành',
+    description: 'Quản lý giao hàng và vận hành',
+    permissions: {
+      canAdmin: false,
+      canCreatePO: false,
+      canReceiveGoods: false,
+      canExport: false,
+      canManageDelivery: true,
       canHold: false,
       canViewInventory: true,
       canViewProducts: true,
@@ -47,9 +122,13 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
   sales: {
     role: 'sales',
     label: 'Bán hàng',
-    description: 'Bộ phận bán hàng — xem hàng & giữ hàng',
+    description: 'Xem hàng & giữ hàng',
     permissions: {
+      canAdmin: false,
+      canCreatePO: false,
+      canReceiveGoods: false,
       canExport: false,
+      canManageDelivery: false,
       canHold: true,
       canViewInventory: true,
       canViewProducts: true,
@@ -84,3 +163,12 @@ export function getRoleConfig(email: string): RoleConfig {
 
 /** Hold duration in milliseconds (24 hours) */
 export const HOLD_DURATION_MS = 24 * 60 * 60 * 1000;
+
+/** Role badge colors */
+export const ROLE_COLORS: Record<UserRole, { bg: string; text: string }> = {
+  admin:       { bg: 'bg-red-100',     text: 'text-red-700' },
+  procurement: { bg: 'bg-purple-100',  text: 'text-purple-700' },
+  warehouse:   { bg: 'bg-emerald-100', text: 'text-emerald-700' },
+  operations:  { bg: 'bg-orange-100',  text: 'text-orange-700' },
+  sales:       { bg: 'bg-blue-100',    text: 'text-blue-700' },
+};
