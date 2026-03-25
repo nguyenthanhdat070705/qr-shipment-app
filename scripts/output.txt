@@ -1,0 +1,64 @@
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  STEP 1: TĂ¬m Base URL Ä‘Ăºng cá»§a 1Office API
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+  Testing https://api.1office.vn... âŒ Status 404 â€” text/html; charset=UTF-8
+     Body: Sorry, site is not accepted!/api/api.1office.vn
+  Testing https://app.1office.vn... âŒ Status 404 â€” text/html; charset=UTF-8
+     Body: Sorry, site is not accepted!/app/app.1office.vn
+  Testing https://1office.vn... âŒ Status 404 â€” text/html; charset=UTF-8
+  Testing https://open.1office.vn... âŒ Status 200 â€” text/html; charset=UTF-8
+     Body: <script type="text/javascript">window.location.href = "/";</script>
+  Testing https://openapi.1office.vn... âŒ Status 404 â€” text/html; charset=UTF-8
+     Body: Sorry, site is not accepted!/openapi/openapi.1office.vn
+  Testing https://gateway.1office.vn... âŒ Status 200 â€” text/html; charset=UTF-8
+     Body: Company have blocked
+  Testing https://cloudapi.1office.vn... âŒ Status 404 â€” text/html; charset=UTF-8
+     Body: Sorry, site is not accepted!/cloudapi/cloudapi.1office.vn
+  Testing https://connect.1office.vn... âŒ Status 404 â€” text/html; charset=UTF-8
+     Body: Sorry, site is not accepted!/connect/connect.1office.vn
+  Testing https://api-v2.1office.vn... âŒ Status 404 â€” text/html; charset=UTF-8
+     Body: Sorry, site is not accepted!/api-v2/api-v2.1office.vn
+  Testing https://v2.1office.vn... âŒ Status 404 â€” text/html; charset=UTF-8
+     Body: Sorry, site is not accepted!/v2/v2.1office.vn
+
+âŒ KhĂ´ng tĂ¬m Ä‘Æ°á»£c base URL nĂ o hoáº¡t Ä‘á»™ng.
+   Äá» xuáº¥t: Kiá»ƒm tra láº¡i token hoáº·c liĂªn há»‡ 1Office Ä‘á»ƒ láº¥y Ä‘Ăºng base URL.
+
+â”€â”€ Thá»­ thĂªm cĂ¡c URL variant khĂ¡c â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Testing https://1office.vn/api/admin/user/gets... Status 404
+  Testing https://app.1office.vn/openapi/admin/user/gets... Status 404
+  Testing https://api.1office.vn/v1/admin/user/gets... Status 404
+  Testing https://api.1office.vn/v2/admin/user/gets... Status 404
+
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  STEP 2: Query Supabase hiá»‡n táº¡i
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+â”€â”€ Báº£ng user_profiles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  âœ… Found 3 profiles
+  Columns: id, email, ho_ten, chuc_vu, so_dien_thoai, phong_ban, ghi_chu, created_at, updated_at
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ (index) â”‚ id        â”‚ email                              â”‚ ho_ten             â”‚ chuc_vu    â”‚ phong_ban      â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ 0       â”‚ 783808376 â”‚ 'nguyenthanhdat070705@gmail.com'   â”‚ 'Nguyen Thanh Dat' â”‚ 'GiĂ¡m Ä‘á»‘c' â”‚ 'Ban giĂ¡m Ä‘á»‘c' â”‚
+â”‚ 1       â”‚ 1         â”‚ 'xuatkhobanhang@blackstone.com.vn' â”‚ 'Nguyá»…n VÄƒn A'     â”‚ 'Chá»§ tá»‹ch' â”‚ 'Kinh doanh'   â”‚
+â”‚ 2       â”‚ 4         â”‚ 'bophanbanhang@blackstone.com.vn'  â”‚ 'bophanbanhang'    â”‚ ''         â”‚ ''             â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+
+â”€â”€ Báº£ng products â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  âœ… Found 5 products (showing first 5)
+  Columns: id, product_code, qr_code, name, sku, batch_no, serial_no, description, manufacture_date, expiry_date, status, created_at, updated_at, nhom_san_pham, muc_dich_su_dung, hinh_anh, gia_ban, ton_kho
+
+â”€â”€ Liá»‡t kĂª táº¥t cáº£ báº£ng Supabase â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  CĂ¡c báº£ng: , product_logs, product_holds, product_inventory, products, user_profiles, shipment_confirmations, export_confirmations
+
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  STEP 3: KhĂ´ng thá»ƒ match â€” thiáº¿u dá»¯ liá»‡u
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  â†’ ChÆ°a cĂ³ dá»¯ liá»‡u tá»« 1Office API
+
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  DONE
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
