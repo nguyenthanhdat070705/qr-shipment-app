@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { PackageCheck, ArrowLeft, Warehouse as WarehouseIcon, Calendar, User, FileText } from 'lucide-react';
+import { PackageCheck, ArrowLeft, Warehouse as WarehouseIcon, Calendar, User, FileText, Printer } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import StatusTimeline, { GR_STEPS } from '@/components/StatusTimeline';
 import QRCodeGenerator from '@/components/QRCodeGenerator';
@@ -69,13 +69,23 @@ export default function GoodsReceiptDetailPage({ params }: { params: Promise<{ i
   return (
     <PageLayout title="Chi tiết phiếu nhập" icon={<PackageCheck size={16} className="text-orange-500" />}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        <button
-          onClick={() => router.push('/goods-receipt')}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
-        >
-          <ArrowLeft size={16} />
-          Danh sách phiếu nhập
-        </button>
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => router.push('/goods-receipt')}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft size={16} />
+            Danh sách phiếu nhập
+          </button>
+          
+          <button
+            onClick={() => window.print()}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-orange-100 text-orange-700 hover:bg-orange-200 rounded-xl font-bold text-sm transition-colors shadow-sm"
+          >
+            <Printer size={16} />
+            In phiếu
+          </button>
+        </div>
 
         {/* Header */}
         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">

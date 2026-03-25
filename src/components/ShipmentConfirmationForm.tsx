@@ -73,7 +73,7 @@ export default function ShipmentConfirmationForm({
     const trimmedMaDonHang = maDonHang.trim();
 
     if (!trimmedMaDonHang) {
-      setErrorMsg('Vui lòng nhập mã đơn hàng.');
+      setErrorMsg('Vui lòng nhập mã đám.');
       setFormState('error');
       return;
     }
@@ -93,7 +93,7 @@ export default function ShipmentConfirmationForm({
           maSanPhamXacNhan: qrCode,
           maDonHang: trimmedMaDonHang,
           soLuong: 1,
-          note: `Mã đơn: ${trimmedMaDonHang}`,
+          note: `Mã đám: ${trimmedMaDonHang}`,
         }),
       });
 
@@ -200,7 +200,7 @@ export default function ShipmentConfirmationForm({
       <div className="mb-4">
         <h3 className="text-base font-bold text-gray-900">Xác nhận xuất hàng</h3>
         <p className="text-sm text-gray-500 mt-0.5">
-          Nhập mã đơn hàng để xuất sản phẩm <strong>{productName}</strong>.
+          Nhập mã đám để xuất sản phẩm <strong>{productName}</strong>.
         </p>
       </div>
 
@@ -224,17 +224,17 @@ export default function ShipmentConfirmationForm({
       </div>
 
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
-        {/* Mã đơn hàng — the ONLY field the user needs to fill */}
+        {/* Mã đám — the ONLY field the user needs to fill */}
         <div>
           <label htmlFor="ma-don-hang" className="block text-sm font-medium text-gray-700 mb-1">
-            Mã đơn hàng <span className="text-red-500">*</span>
+            Mã đám <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <FileText size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input
               id="ma-don-hang"
               type="text"
-              placeholder="Nhập mã đơn hàng (ví dụ: DH-001)"
+              placeholder="Nhập mã đám (ví dụ: DH-001)"
               value={maDonHang}
               onChange={(e) => setMaDonHang(e.target.value)}
               disabled={formState === 'submitting'}

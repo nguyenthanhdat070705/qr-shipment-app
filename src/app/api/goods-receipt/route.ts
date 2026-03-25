@@ -86,5 +86,38 @@ export async function POST(req: NextRequest) {
     if (itemsError) console.error('[goods-receipt] Items insert error:', itemsError);
   }
 
+  // Send Email Notification
+  let ordererEmail = 'phongmuahang@blackstones.vn';
+  let poCodeDisplay = 'Không';
+  if (po_id) {
+    const { data: po } = await supabase.from('purchase_orders').select('created_by, po_code').eq('id', po_id).single();
+    if (po && po.created_by) {
+      ordererEmail = po.created_by;
+      poCodeDisplay = po.po_code;
+    }
+  }
+
+  try {
+    const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    await fetch(`${origin}/api/send-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: ordererEmail,
+        subject: `[Thông báo nhập kho] GRPO: ${gr_code}`,
+        html: `
+          <h3>Thông báo đã nhập hàng kho</h3>
+          <p><strong>Mã phiếu nhập:</strong> ${gr_code}</p>
+          <p><strong>PO liên kết:</strong> ${poCodeDisplay}</p>
+          <p><strong>Người nhận (Kho):</strong> ${received_by}</p>
+          <hr/>
+          <p><a href="${origin}/goods-receipt/${gr.id}">Bấm vào đây để xem chi tiết số lượng nhập</a></p>
+        `
+      })
+    });
+  } catch (emailError) {
+    console.error('[goods-receipt] Lỗi gọi API gửi email:', emailError);
+  }
+
   return NextResponse.json({ data: gr, gr_code }, { status: 201 });
 }

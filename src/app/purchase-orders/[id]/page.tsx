@@ -102,7 +102,12 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
               </div>
             </div>
             {/* QR Code */}
-            <QRCodeGenerator type="po" id={po.id} code={po.po_code} size={100} />
+            <div className="flex flex-col items-center gap-2">
+              <QRCodeGenerator type="po" id={po.id} code={po.po_code} size={100} />
+              <p className="text-[10px] text-gray-400 max-w-[120px] text-center leading-tight">
+                * Người đặt hàng gửi mã QR cho NCC mang tới kho
+              </p>
+            </div>
           </div>
 
           {/* Info grid */}
@@ -110,7 +115,7 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
             <div className="flex items-start gap-2">
               <Building size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-[10px] font-bold uppercase text-gray-400">Nhà cung cấp</p>
+                <p className="text-[10px] font-bold uppercase text-gray-400">Nhà CC</p>
                 <p className="text-sm font-semibold text-gray-800">{po.supplier?.name || '—'}</p>
               </div>
             </div>
@@ -133,7 +138,7 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
             <div className="flex items-start gap-2">
               <User size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-[10px] font-bold uppercase text-gray-400">Người tạo</p>
+                <p className="text-[10px] font-bold uppercase text-gray-400">Người đặt</p>
                 <p className="text-sm font-semibold text-gray-800">{po.created_by}</p>
               </div>
             </div>
@@ -155,7 +160,7 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50/50 border-b border-gray-100">
-                  <th className="px-4 py-3 text-left text-xs font-bold uppercase text-gray-400">Mã SP</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold uppercase text-gray-400">Mã sản phẩm</th>
                   <th className="px-4 py-3 text-left text-xs font-bold uppercase text-gray-400">Tên SP</th>
                   <th className="px-4 py-3 text-right text-xs font-bold uppercase text-gray-400">SL</th>
                   <th className="px-4 py-3 text-right text-xs font-bold uppercase text-gray-400">Đơn giá</th>

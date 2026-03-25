@@ -16,7 +16,8 @@ export type UserRole = 'admin' | 'procurement' | 'warehouse' | 'operations' | 's
 export interface RolePermissions {
   canAdmin: boolean;
   canCreatePO: boolean;
-  canReceiveGoods: boolean;
+  canManageReceipt: boolean; // Thu mua duyệt nhập hàng
+  canReceiveGoods: boolean;  // Kho quét mã nhập hàng
   canExport: boolean;
   canManageDelivery: boolean;
   canHold: boolean;
@@ -66,6 +67,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
     permissions: {
       canAdmin: true,
       canCreatePO: true,
+      canManageReceipt: true,
       canReceiveGoods: true,
       canExport: true,
       canManageDelivery: true,
@@ -81,6 +83,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
     permissions: {
       canAdmin: false,
       canCreatePO: true,
+      canManageReceipt: true,
       canReceiveGoods: false,
       canExport: false,
       canManageDelivery: false,
@@ -96,6 +99,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
     permissions: {
       canAdmin: false,
       canCreatePO: false,
+      canManageReceipt: false,
       canReceiveGoods: true,
       canExport: true,
       canManageDelivery: false,
@@ -111,6 +115,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
     permissions: {
       canAdmin: false,
       canCreatePO: false,
+      canManageReceipt: false,
       canReceiveGoods: false,
       canExport: false,
       canManageDelivery: true,
@@ -126,6 +131,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
     permissions: {
       canAdmin: false,
       canCreatePO: false,
+      canManageReceipt: false,
       canReceiveGoods: false,
       canExport: false,
       canManageDelivery: false,

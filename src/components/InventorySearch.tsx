@@ -146,7 +146,7 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="text-left py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wide">Sản phẩm</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wide">Mã SP</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wide">Giá bán</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wide">Gói sp</th>
                   <th className="text-center py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wide">Kho</th>
                   <th className="text-center py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wide">Tình trạng</th>
                   <th className="py-3 px-4"></th>

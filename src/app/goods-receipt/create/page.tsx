@@ -5,6 +5,13 @@ import { useRouter } from 'next/navigation';
 import { PackageCheck, ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import type { Warehouse, PurchaseOrder } from '@/types';
+import dynamic from 'next/dynamic';
+import { ScanLine, Keyboard, Search } from 'lucide-react';
+
+const Scanner = dynamic(() => import('@yudiel/react-qr-scanner').then((mod) => mod.Scanner), {
+  ssr: false,
+});
+
 
 interface ReceiptItem {
   product_code: string;
@@ -26,6 +33,23 @@ export default function CreateGoodsReceiptPage() {
   ]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  
+  const [searchInput, setSearchInput] = useState('');
+  const [inputMode, setInputMode] = useState<'type' | 'scan'>('type');
+
+  const handleSearchPO = (code: string) => {
+    const found = purchaseOrders.find(
+      (p) => p.po_code.toLowerCase() === code.toLowerCase() || p.id === code
+    );
+    if (found) {
+      setPoId(found.id);
+      setSearchInput(found.po_code);
+      setError('');
+    } else {
+      setError(`Không tìm thấy PO với mã "${code}" hoặc PO chưa được duyệt.`);
+      setPoId('');
+    }
+  };
 
   useEffect(() => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -142,18 +166,74 @@ export default function CreateGoodsReceiptPage() {
             <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400">Thông tin chung</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Liên kết PO</label>
-                <select
-                  value={poId}
-                  onChange={(e) => setPoId(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 transition-all"
-                >
-                  <option value="">— Không liên kết —</option>
-                  {purchaseOrders.map((po) => (
-                    <option key={po.id} value={po.id}>{po.po_code}</option>
-                  ))}
-                </select>
+              <div className="sm:col-span-2 bg-orange-50/50 p-4 rounded-xl border border-orange-100">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Liên kết mã PO (Quét QR hoặc nhập mã)</label>
+                
+                <div className="flex rounded-xl border border-gray-200 bg-white p-1 gap-1 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setInputMode('type')}
+                    className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold transition-all ${
+                      inputMode === 'type'
+                        ? 'bg-orange-100 text-orange-700 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    <Keyboard size={14} />
+                    Nhập mã
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInputMode('scan')}
+                    className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold transition-all ${
+                      inputMode === 'scan'
+                        ? 'bg-orange-100 text-orange-700 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    <ScanLine size={14} />
+                    Quét QR
+                  </button>
+                </div>
+
+                {inputMode === 'type' ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      placeholder="Nhập mã PO (vd: PO-123)..."
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleSearchPO(searchInput)}
+                      className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-orange-500 text-white rounded-xl font-bold text-sm hover:bg-orange-600 shadow-md transition-all"
+                    >
+                      <Search size={16} />
+                      Tìm PO
+                    </button>
+                  </div>
+                ) : (
+                  <div className="rounded-xl overflow-hidden border-2 border-orange-200 bg-black relative aspect-[4/3] w-full max-w-sm mx-auto flex items-center justify-center">
+                    <Scanner
+                      onScan={(result) => {
+                        if (result && result.length > 0 && result[0].rawValue) {
+                          setSearchInput(result[0].rawValue);
+                          setInputMode('type');
+                          handleSearchPO(result[0].rawValue);
+                        }
+                      }}
+                      formats={['qr_code']}
+                      components={{ onOff: true, torch: true, zoom: true, finder: true }}
+                    />
+                  </div>
+                )}
+                {poId && (
+                  <div className="mt-3 text-sm text-green-700 font-medium">
+                    Đã liên kết thành công với PO: {purchaseOrders.find(p => p.id === poId)?.po_code}
+                  </div>
+                )}
               </div>
 
               <div>

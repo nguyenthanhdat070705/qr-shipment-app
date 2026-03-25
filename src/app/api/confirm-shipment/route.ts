@@ -54,7 +54,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return errorResponse('Dữ liệu gửi lên không hợp lệ (JSON lỗi).', 'VALIDATION_ERROR', 400);
   }
 
-  const { qrCode, hoTen, email, note, chucVu, maSanPhamXacNhan } = body;
+  const { qrCode, hoTen, email, note, chucVu, maSanPhamXacNhan, maDonHang } = body;
 
   if (!qrCode || typeof qrCode !== 'string' || qrCode.trim() === '') {
     return errorResponse('Không xác định được mã QR hiện tại.', 'VALIDATION_ERROR', 400);
@@ -220,6 +220,36 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     .then(({ error }) => {
       if (error) console.warn('[confirm-shipment] Ghi log thất bại (bỏ qua):', error.message);
     });
+
+  // ── Bước 6.5: Gửi email thông báo phòng mua hàng ────────────────
+  const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const displayDonHang = typeof maDonHang === 'string' ? maDonHang : 'Không xác định';
+  
+  try {
+    await fetch(`${origin}/api/send-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        to: 'phongmuahang@blackstones.vn', // Mặc định hoặc cấu hình
+        subject: `[Thông báo xuất kho] Mã đám: ${displayDonHang}`,
+        html: `
+          <h3>Thông báo xuất kho mới</h3>
+          <p><strong>Mã đám (Đơn hàng):</strong> ${displayDonHang}</p>
+          <p><strong>Người xuất:</strong> ${trimmedHoTen} (${trimmedEmail})</p>
+          <p><strong>Sản phẩm:</strong> ${productName} (Mã: ${maSanPham})</p>
+          <p><strong>Số lượng xuất:</strong> 1</p>
+          <p><strong>Ngày xuất:</strong> ${confirmation.ngay_xuat} ${confirmation.thoi_gian_xuat}</p>
+          <hr/>
+          <p><a href="${origin}/operations">Bấm vào đây để xem / chỉnh sửa thông tin xuất kho</a></p>
+          <p><em>Bạn có quyền edit nếu xuất sai (quét 2 lần, mã sai, vv).</em></p>
+        `
+      })
+    });
+  } catch (emailError) {
+    console.error('[confirm-shipment] Lỗi gọi API gửi email:', emailError);
+  }
 
   // ── Bước 7: Phản hồi thành công ─────────────────────────
   const response: ConfirmShipmentResponse = {

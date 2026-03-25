@@ -28,6 +28,7 @@ export interface ConfirmShipmentRequest {
   chucVu: string;    // Chức vụ
   note?: string;     // Ghi chú (tuỳ chọn)
   maSanPhamXacNhan: string; // Mã sản phẩm nhập thủ công để đối chiếu
+  maDonHang?: string; // Mã đám
 }
 
 /** Phản hồi khi xác nhận thành công */
