@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PackageCheck, ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
@@ -21,7 +21,7 @@ interface ReceiptItem {
   note: string;
 }
 
-export default function CreateGoodsReceiptPage() {
+function CreateGoodsReceiptForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -364,5 +364,13 @@ export default function CreateGoodsReceiptPage() {
         </form>
       </div>
     </PageLayout>
+  );
+}
+
+export default function CreateGoodsReceiptPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-gray-500">Đang tải...</div>}>
+      <CreateGoodsReceiptForm />
+    </Suspense>
   );
 }

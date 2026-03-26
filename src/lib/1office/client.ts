@@ -6,7 +6,7 @@
 
 const BASE_URL = 'https://cloud-cloud.1office.vn';
 const ACCESS_TOKEN = process.env.ONEOFFICE_API_KEY || '84869196569c35038d0514699999665';
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 20;
 const DELAY_MS = 800; // Tránh rate limit
 
 function sleep(ms: number) {
