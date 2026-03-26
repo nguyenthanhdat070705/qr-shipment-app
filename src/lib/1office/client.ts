@@ -25,7 +25,8 @@ interface OneOfficeResponse<T> {
  */
 export async function fetchAll<T = Record<string, unknown>>(
   endpoint: string,
-  extraParams: Record<string, string> = {}
+  extraParams: Record<string, string> = {},
+  specificToken?: string
 ): Promise<T[]> {
   const allData: T[] = [];
   let page = 1;
@@ -34,7 +35,7 @@ export async function fetchAll<T = Record<string, unknown>>(
 
   while (true) {
     const params = new URLSearchParams({
-      access_token: ACCESS_TOKEN,
+      access_token: specificToken || ACCESS_TOKEN,
       limit: String(PAGE_SIZE),
       page: String(page),
       ...extraParams,
@@ -123,9 +124,11 @@ export async function fetchSaleOrders() {
 }
 
 export async function fetchWarehouses() {
-  return fetchAll('/api/warehouse/gets');
+  const token = process.env.ONEOFFICE_WAREHOUSE_TOKEN || ACCESS_TOKEN;
+  return fetchAll('/api/warehouse/gets', {}, token);
 }
 
 export async function fetchInventory() {
-  return fetchAll('/api/warehouse/inventory/gets');
+  const token = process.env.ONEOFFICE_INVENTORY_TOKEN || ACCESS_TOKEN;
+  return fetchAll('/api/warehouse/inventory/gets', {}, token);
 }

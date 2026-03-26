@@ -1,0 +1,21 @@
+Starting discovery...
+❌ Lỗi 1Office: /api/warehouse/inventory/gets -> object doesn't not exits
+❌ Lỗi 1Office: /api/warehouse/export/gets -> object doesn't not exits
+❌ Lỗi 1Office: /api/warehouse/issue/gets -> object doesn't not exits
+❌ Lỗi 1Office: /api/sale/order/gets -> object doesn't not exits
+❌ Lỗi 1Office: /api/buy/order/gets -> module doesn't not exits
+❌ Lỗi 1Office: /api/purchase/order/gets -> module doesn't not exits
+❌ Lỗi 1Office: /api/buy/contract/gets -> module doesn't not exits
+❌ Lỗi 1Office: /api/purchase/contract/gets -> module doesn't not exits
+❌ Failed parsing JSON: /api/customer/gets <!doctype html>
+                    <html>
+       
+❌ Failed parsing JSON: /api/supplier/gets <!doctype html>
+                    <html>
+       
+❌ Failed parsing JSON: /api/contact/gets <!doctype html>
+                    <html>
+       
+❌ Failed parsing JSON: /api/material/gets <!doctype html>
+                    <html>
+       

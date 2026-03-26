@@ -253,10 +253,17 @@ function mapInventory(item) {
   };
 }
 
+// Token mở rộng
+const TOKEN_INV = '201770191369c4adde97a6d512470927';
+const TOKEN_WH  = '21629249469c4ae9a40117149012318';
+
 // ── Main ──────────────────────────────────────────────────────
 const TASKS = [
-  // Bỏ kho và inventory vì API không tồn tại hoặc sai đường dẫn:
-  // { name: 'sale_orders', ... }, { name: 'inventory_1office', ... }, { name: 'warehouses_1office', ... }
+  { name: 'warehouses_1office',   endpoint: '/api/warehouse/gets',          mapper: mapWarehouse,
+    table: 'warehouses_1office',    conflict: 'oneoffice_id', token: TOKEN_WH },
+  { name: 'inventory_1office',    endpoint: '/api/warehouse/inventory/gets',mapper: mapInventory,
+    table: 'inventory_1office',     conflict: 'oneoffice_id', token: TOKEN_INV },
+  { name: 'sale_orders',          endpoint: '/api/sale/order/gets',         mapper: mapSaleOrder, table: 'sale_orders', conflict: 'oneoffice_id' },
   { name: 'products',             endpoint: '/api/warehouse/product/gets',  mapper: mapProduct,    table: 'products',             conflict: 'oneoffice_id' },
   { name: 'goods_receipts_1office', endpoint: '/api/warehouse/receipt/gets', mapper: mapReceipt,   table: 'goods_receipts_1office', conflict: 'oneoffice_id' },
   { name: 'sale_contracts',       endpoint: '/api/sale/contract/gets',      mapper: mapContract,   table: 'sale_contracts',       conflict: 'oneoffice_id' },

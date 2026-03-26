@@ -1,0 +1,4 @@
+WARNING! Did you mean to deploy the subdirectory "build"? Use `vc --cwd build` instead.
+WARNING! Build not running on Vercel. System environment variables will not be available.
+WARNING: You should not upload the `.next` directory.
+Error: EPERM: operation not permitted, symlink '..\_not-found.func' -> 'C:\Users\Thanh Dat\OneDrive\Documents\BlackStones\BlackStone_Order_SCM\.vercel\output\functions\goods-receipt\[id].func'
