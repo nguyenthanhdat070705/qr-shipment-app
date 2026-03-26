@@ -27,7 +27,7 @@ export default function HoldProductButton({ productCode, productName }: HoldProd
       if (raw) {
         const u = JSON.parse(raw);
         setUserEmail(u.email || '');
-        setUserRole(u.role || getUserRole(u.email || ''));
+        setUserRole(getUserRole(u.email || ''));
       }
     } catch { /* ignore */ }
   }, []);

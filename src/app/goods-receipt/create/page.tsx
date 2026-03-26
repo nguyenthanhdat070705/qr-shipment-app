@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { PackageCheck, ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import type { Warehouse, PurchaseOrder } from '@/types';
@@ -23,6 +23,7 @@ interface ReceiptItem {
 
 export default function CreateGoodsReceiptPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
   const [warehouseId, setWarehouseId] = useState('');
@@ -66,7 +67,18 @@ export default function CreateGoodsReceiptPage() {
         po.status === 'approved' || po.status === 'submitted'
       );
       setPurchaseOrders(approvedPOs);
+
+      // Pre-fill from URL query params (coming from PO Detail page)
+      const qPoId = searchParams.get('po_id');
+      const qPoCode = searchParams.get('po_code');
+      const qWarehouseId = searchParams.get('warehouse_id');
+      if (qPoId) {
+        setPoId(qPoId);
+        if (qPoCode) setSearchInput(qPoCode);
+      }
+      if (qWarehouseId) setWarehouseId(qWarehouseId);
     }).catch(console.error);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // When PO is selected, auto-fill items from PO

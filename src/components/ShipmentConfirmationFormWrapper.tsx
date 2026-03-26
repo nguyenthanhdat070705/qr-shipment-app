@@ -23,7 +23,7 @@ export default function ShipmentConfirmationFormWrapper({ qrCode, productName, c
       const raw = localStorage.getItem('auth_user');
       if (raw) {
         const u = JSON.parse(raw);
-        const role = u.role || getUserRole(u.email || '');
+        const role = getUserRole(u.email || '');
         setUserRole(role);
       }
     } catch { /* ignore */ }

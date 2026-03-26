@@ -119,5 +119,20 @@ export async function POST(req: NextRequest) {
     console.error('[goods-receipt] Lỗi gọi API gửi email:', emailError);
   }
 
+  // Send System Notification (Phase 4 SCM)
+  try {
+    const { error: notifError } = await supabase.from('notifications').insert({
+      sender_email: received_by,
+      receiver_role: 'procurement',
+      title: 'Kho vừa nhập hàng mới',
+      message: `Mã phiếu: ${gr_code}. Vui lòng kiểm tra và duyệt nhập hàng để sinh QR mã đám.`,
+      type: 'receipt_alert',
+      reference_id: gr.id
+    });
+    if (notifError) console.error('[goods-receipt] Lỗi tạo notification:', notifError);
+  } catch (err) {
+    console.error('[goods-receipt] Lỗi exception notification:', err);
+  }
+
   return NextResponse.json({ data: gr, gr_code }, { status: 201 });
 }

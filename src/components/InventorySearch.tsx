@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Search, Package, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
+import { getWarehouseFilter } from '@/config/roles.config';
 
 interface InventoryItem {
   code: string;
@@ -16,6 +17,7 @@ interface InventoryItem {
   isExported: boolean;
   isOutOfStock: boolean;
   available: boolean;
+  lots?: string[];
 }
 
 type FilterType = 'all' | 'available' | 'exported' | 'out_of_stock';
@@ -25,6 +27,36 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
   const [sort, setSort] = useState<SortType>('name');
+  const [warehouseFilter, setWarehouseFilter] = useState<string>('all');
+  const [lockedWarehouse, setLockedWarehouse] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('auth_user');
+      if (stored) {
+        const user = JSON.parse(stored);
+        if (user.email) {
+          const filterValue = getWarehouseFilter(user.email);
+          if (filterValue) {
+            setLockedWarehouse(filterValue);
+            setWarehouseFilter(filterValue);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error reading auth_user', e);
+    }
+  }, []);
+
+  const uniqueWarehouses = useMemo(() => {
+    const ws = new Set<string>();
+    items.forEach(i => {
+      if (i.warehouse && i.warehouse !== '—') {
+        i.warehouse.split(', ').forEach(w => ws.add(w.trim()));
+      }
+    });
+    return Array.from(ws).sort();
+  }, [items]);
 
   const filtered = useMemo(() => {
     let result = [...items];
@@ -51,6 +83,11 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
       case 'out_of_stock':
         result = result.filter((i) => i.isOutOfStock && !i.isExported);
         break;
+    }
+
+    // Warehouse Filter
+    if (warehouseFilter !== 'all') {
+      result = result.filter(i => i.warehouse.includes(warehouseFilter));
     }
 
     // Sort
@@ -109,6 +146,23 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
               {f.label}
             </button>
           ))}
+          
+          {/* Warehouse Dropdown */}
+          {uniqueWarehouses.length > 0 && (
+            <select
+              value={warehouseFilter}
+              onChange={(e) => setWarehouseFilter(e.target.value)}
+              disabled={lockedWarehouse !== null}
+              className={`px-3 py-2 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-[#2d4a7a] ${lockedWarehouse ? 'opacity-70 cursor-not-allowed bg-gray-50' : ''}`}
+            >
+              {!lockedWarehouse && <option value="all">Tất cả kho</option>}
+              {uniqueWarehouses
+                .filter(w => !lockedWarehouse || w.includes(lockedWarehouse))
+                .map(w => (
+                  <option key={w} value={w}>{w}</option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
 
@@ -163,7 +217,14 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
                           alt={item.name}
                           className="w-12 h-12 object-contain rounded-lg border border-gray-100 bg-gray-50 flex-shrink-0"
                         />
-                        <span className="font-medium text-gray-800 line-clamp-2 leading-tight">{item.name}</span>
+                        <div>
+                          <span className="font-medium text-gray-800 line-clamp-2 leading-tight">{item.name}</span>
+                          {item.lots && item.lots.length > 0 && (
+                            <span className="text-[10px] text-indigo-500 font-mono mt-1 block">
+                              Mã Đám: {item.lots.length > 1 ? `${item.lots[0]} +${item.lots.length - 1} lô` : item.lots[0]}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="py-3 px-4">
@@ -229,6 +290,11 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
                 />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-800 text-sm line-clamp-1">{item.name}</p>
+                  {item.lots && item.lots.length > 0 && (
+                    <p className="text-[10px] text-indigo-500 font-mono mt-0.5 line-clamp-1">
+                      Mã Đám: {item.lots[0]} {item.lots.length > 1 ? `(+${item.lots.length - 1})` : ''}
+                    </p>
+                  )}
                   <div className="flex items-center gap-2 mt-1">
                     <span className="font-mono text-[10px] font-bold text-[#1B2A4A] bg-[#eef1f7] px-1.5 py-0.5 rounded">
                       {item.code}

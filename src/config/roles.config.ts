@@ -42,6 +42,7 @@ const EMAIL_ROLE_MAP: { pattern: string; role: UserRole }[] = [
   { pattern: 'muahang', role: 'procurement' },
   { pattern: 'procurement', role: 'procurement' },
   // Warehouse (Kho)
+  { pattern: 'bophankho', role: 'warehouse' },
   { pattern: 'xuatkhobanhang', role: 'warehouse' },
   { pattern: 'xuatkho', role: 'warehouse' },
   { pattern: 'kho1', role: 'warehouse' },
@@ -165,6 +166,22 @@ export function getUserRole(email: string): UserRole {
  */
 export function getRoleConfig(email: string): RoleConfig {
   return ROLE_CONFIGS[getUserRole(email)];
+}
+
+/**
+ * Get specific warehouse data filter for the given email.
+ * If it returns null, the user is allowed to see data from ALL warehouses.
+ */
+export function getWarehouseFilter(email: string): string | null {
+  if (!email) return null;
+  const lower = email.toLowerCase();
+
+  if (lower.includes('kho1')) return 'Kho 1';
+  if (lower.includes('kho2')) return 'Kho 2';
+  if (lower.includes('kho3')) return 'Kho 3';
+
+  // Master warehouse (Tổng kho) and other roles like admin/procurement see everything
+  return null;
 }
 
 /** Hold duration in milliseconds (24 hours) */

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Truck, Plus, Eye } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
+import { getWarehouseFilter } from '@/config/roles.config';
 import DataTable from '@/components/DataTable';
 import StatusTimeline, { DELIVERY_STEPS } from '@/components/StatusTimeline';
 import type { DeliveryOrder } from '@/types';
@@ -16,7 +17,20 @@ export default function OperationsPage() {
   useEffect(() => {
     fetch('/api/operations')
       .then((r) => r.json())
-      .then((res) => setOrders(res.data || []))
+      .then((res) => {
+        let data = res.data || [];
+        try {
+          const auth = localStorage.getItem('auth_user');
+          if (auth) {
+            const user = JSON.parse(auth);
+            const wFilter = getWarehouseFilter(user.email);
+            if (wFilter) {
+              data = data.filter((item: any) => item.warehouse?.name?.includes(wFilter));
+            }
+          }
+        } catch(e) { console.error(e); }
+        setOrders(data);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);

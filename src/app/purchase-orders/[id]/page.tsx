@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShoppingCart, ArrowLeft, FileText, Calendar, User, Building } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, FileText, Calendar, User, Building, PackageCheck, CheckCircle2, AlertTriangle } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import StatusTimeline, { PO_STEPS } from '@/components/StatusTimeline';
 import QRCodeGenerator from '@/components/QRCodeGenerator';
@@ -22,6 +22,12 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
   const [po, setPo] = useState<PurchaseOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null);
+
+  const showToast = (msg: string, type: 'ok' | 'err') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
   useEffect(() => {
     fetch(`/api/purchase-orders/${resolvedParams.id}`)
@@ -52,9 +58,18 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
       const result = await res.json();
       if (res.ok) {
         setPo({ ...po, ...result.data });
+        showToast(
+          nextStatus === 'approved' ? 'PO đã được duyệt!' :
+          nextStatus === 'cancelled' ? 'PO đã bị hủy.' :
+          'Cập nhật trạng thái thành công.',
+          nextStatus === 'cancelled' ? 'err' : 'ok'
+        );
+      } else {
+        showToast(result.error || 'Có lỗi xảy ra.', 'err');
       }
     } catch (err) {
       console.error(err);
+      showToast('Lỗi kết nối server.', 'err');
     } finally {
       setUpdating(false);
     }
@@ -63,7 +78,9 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
   if (loading) {
     return (
       <PageLayout title="Đơn mua hàng" icon={<ShoppingCart size={16} className="text-purple-500" />}>
-        <div className="flex items-center justify-center py-20 text-gray-400">Đang tải...</div>
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-4 border-purple-200 border-t-purple-500" />
+        </div>
       </PageLayout>
     );
   }
@@ -81,6 +98,16 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
   return (
     <PageLayout title="Chi tiết PO" icon={<ShoppingCart size={16} className="text-purple-500" />}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+        {/* ── Toast ──────────────────────────────────────────── */}
+        {toast && (
+          <div className={`fixed top-4 right-4 z-50 px-5 py-3 rounded-2xl shadow-xl font-semibold text-sm flex items-center gap-2 transition-all
+            ${toast.type === 'ok' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'}`}>
+            {toast.type === 'ok' ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
+            {toast.msg}
+          </div>
+        )}
+
         {/* Back */}
         <button
           onClick={() => router.push('/purchase-orders')}
@@ -205,6 +232,24 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
             ))}
           </div>
         )}
+
+        {/* ── Create GRPO button — appears when PO is approved ── */}
+        {po.status === 'approved' && (
+          <div className="rounded-2xl border-2 border-dashed border-orange-200 bg-orange-50 p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <p className="font-bold text-orange-700 text-sm">PO đã được duyệt</p>
+              <p className="text-orange-600 text-xs mt-0.5">Kho có thể tạo phiếu nhập hàng (GRPO) cho đơn này.</p>
+            </div>
+            <button
+              onClick={() => router.push(`/goods-receipt/create?po_id=${po.id}&po_code=${po.po_code}&warehouse_id=${po.warehouse_id || ''}`)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-xl font-bold text-sm hover:bg-orange-600 shadow-lg shadow-orange-200 transition-all whitespace-nowrap"
+            >
+              <PackageCheck size={16} />
+              Tạo phiếu nhập (GRPO)
+            </button>
+          </div>
+        )}
+
       </div>
     </PageLayout>
   );

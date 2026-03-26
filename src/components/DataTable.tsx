@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react';
 
 interface Column<T> {
   key: string;
@@ -19,6 +19,8 @@ interface DataTableProps<T> {
   pageSize?: number;
   onRowClick?: (row: T) => void;
   emptyMessage?: string;
+  /** Optional extra controls rendered next to the search bar */
+  toolbarExtra?: React.ReactNode;
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -30,11 +32,12 @@ export default function DataTable<T extends Record<string, any>>({
   pageSize = 10,
   onRowClick,
   emptyMessage = 'Không có dữ liệu.',
+  toolbarExtra,
 }: DataTableProps<T>) {
-  const [search, setSearch] = useState('');
-  const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortAsc, setSortAsc] = useState(true);
-  const [page, setPage] = useState(1);
+  const [search,   setSearch]  = useState('');
+  const [sortKey,  setSortKey] = useState<string | null>(null);
+  const [sortAsc,  setSortAsc] = useState(true);
+  const [page,     setPage]    = useState(1);
 
   const filtered = useMemo(() => {
     let result = data;
@@ -63,43 +66,55 @@ export default function DataTable<T extends Record<string, any>>({
   const paged = filtered.slice((safeP - 1) * pageSize, safeP * pageSize);
 
   const handleSort = (key: string) => {
-    if (sortKey === key) {
-      setSortAsc(!sortAsc);
-    } else {
-      setSortKey(key);
-      setSortAsc(true);
-    }
+    if (sortKey === key) setSortAsc(!sortAsc);
+    else { setSortKey(key); setSortAsc(true); }
   };
 
   return (
-    <div className="space-y-4">
-      {/* Search */}
-      {searchable && (
-        <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            placeholder={searchPlaceholder}
-            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2d4a7a]/20 focus:border-[#2d4a7a] transition-all"
-          />
+    <div className="space-y-3">
+
+      {/* ── Toolbar ────────────────────────────────────── */}
+      {(searchable || toolbarExtra) && (
+        <div className="flex items-center gap-3 flex-wrap">
+          {searchable && (
+            <div className="relative flex-1 min-w-[220px]">
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                placeholder={searchPlaceholder}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm
+                           focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]/15 focus:border-[#1B2A4A]
+                           placeholder:text-gray-400 transition-all shadow-sm"
+              />
+            </div>
+          )}
+
+          {toolbarExtra && (
+            <div className="flex items-center gap-2">{toolbarExtra}</div>
+          )}
+
+          <button className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors shadow-sm">
+            <SlidersHorizontal size={15} className="text-gray-400" />
+            Bộ lọc
+          </button>
         </div>
       )}
 
-      {/* Table */}
+      {/* ── Table card ─────────────────────────────────── */}
       <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/50">
+              <tr className="border-b border-gray-100 bg-gray-50/70">
                 {columns.map((col) => (
                   <th
                     key={col.key}
                     onClick={col.sortable ? () => handleSort(col.key) : undefined}
-                    className={`px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-400 ${
-                      col.sortable ? 'cursor-pointer hover:text-gray-600 select-none' : ''
-                    } ${col.className || ''}`}
+                    className={`px-5 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-gray-400
+                      ${col.sortable ? 'cursor-pointer select-none hover:text-gray-600' : ''}
+                      ${col.className || ''}`}
                   >
                     <span className="inline-flex items-center gap-1">
                       {col.label}
@@ -111,11 +126,16 @@ export default function DataTable<T extends Record<string, any>>({
                 ))}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-50">
               {paged.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length} className="px-4 py-12 text-center text-gray-400">
-                    {emptyMessage}
+                  <td colSpan={columns.length} className="px-5 py-14 text-center">
+                    <div className="flex flex-col items-center gap-2 text-gray-400">
+                      <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+                        <Search size={20} className="text-gray-300" />
+                      </div>
+                      <p className="text-sm font-medium">{emptyMessage}</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -123,12 +143,10 @@ export default function DataTable<T extends Record<string, any>>({
                   <tr
                     key={i}
                     onClick={onRowClick ? () => onRowClick(row) : undefined}
-                    className={`border-b border-gray-50 transition-colors ${
-                      onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''
-                    }`}
+                    className={`transition-colors ${onRowClick ? 'cursor-pointer hover:bg-[#f5f6fa]' : ''}`}
                   >
                     {columns.map((col) => (
-                      <td key={col.key} className={`px-4 py-3 ${col.className || ''}`}>
+                      <td key={col.key} className={`px-5 py-3.5 ${col.className || ''}`}>
                         {col.render ? col.render(row) : String(row[col.key] ?? '—')}
                       </td>
                     ))}
@@ -139,30 +157,44 @@ export default function DataTable<T extends Record<string, any>>({
           </table>
         </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/30">
-            <span className="text-xs text-gray-400">
-              {filtered.length} kết quả · Trang {safeP}/{totalPages}
-            </span>
+        {/* ── Pagination ───────────────────────────────── */}
+        <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 bg-gray-50/40">
+          <span className="text-xs text-gray-400">
+            {filtered.length} kết quả
+            {totalPages > 1 && ` · Trang ${safeP}/${totalPages}`}
+          </span>
+          {totalPages > 1 && (
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setPage(Math.max(1, safeP - 1))}
                 disabled={safeP <= 1}
-                className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft size={16} />
               </button>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                const pg = Math.max(1, Math.min(safeP - 2, totalPages - 4)) + i;
+                return (
+                  <button
+                    key={pg}
+                    onClick={() => setPage(pg)}
+                    className={`w-7 h-7 rounded-lg text-xs font-semibold transition-colors
+                      ${pg === safeP ? 'bg-[#1B2A4A] text-white' : 'hover:bg-gray-200 text-gray-600'}`}
+                  >
+                    {pg}
+                  </button>
+                );
+              })}
               <button
                 onClick={() => setPage(Math.min(totalPages, safeP + 1))}
                 disabled={safeP >= totalPages}
-                className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight size={16} />
               </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

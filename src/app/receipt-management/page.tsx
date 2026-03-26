@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { PackageCheck, Plus, Eye, Clock, CheckCircle, PackageOpen } from 'lucide-react';
+import { PackageCheck, Eye, Clock, CheckCircle, Search } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
-import { getWarehouseFilter } from '@/config/roles.config';
 import DataTable from '@/components/DataTable';
 import StatusTimeline, { GR_STEPS } from '@/components/StatusTimeline';
 import type { GoodsReceipt } from '@/types';
@@ -28,7 +27,7 @@ function StatCard({
   );
 }
 
-export default function GoodsReceiptPage() {
+export default function ReceiptManagementPage() {
   const router = useRouter();
   const [receipts, setReceipts] = useState<GoodsReceipt[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,26 +35,13 @@ export default function GoodsReceiptPage() {
   useEffect(() => {
     fetch('/api/goods-receipt')
       .then((r) => r.json())
-      .then((res) => {
-        let data = res.data || [];
-        try {
-          const auth = localStorage.getItem('auth_user');
-          if (auth) {
-            const user = JSON.parse(auth);
-            const wFilter = getWarehouseFilter(user.email);
-            if (wFilter) {
-              data = data.filter((item: any) => item.warehouse?.name?.includes(wFilter));
-            }
-          }
-        } catch(e) { console.error(e); }
-        setReceipts(data);
-      })
+      .then((res) => setReceipts(res.data || []))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
   const total = receipts.length;
-  const pendingCount = receipts.filter((r) => r.status === 'pending').length;
+  const pendingCount = receipts.filter((r) => r.status === 'pending' || r.status === 'inspecting').length;
   const completedCount = receipts.filter((r) => r.status === 'completed').length;
 
   const columns = [
@@ -65,10 +51,10 @@ export default function GoodsReceiptPage() {
       sortable: true,
       render: (row: GoodsReceipt) => (
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
-            <PackageCheck size={14} className="text-orange-600" />
+          <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
+            <PackageCheck size={14} className="text-indigo-600" />
           </div>
-          <span className="font-mono font-bold text-orange-700 text-sm">{row.gr_code}</span>
+          <span className="font-mono font-bold text-indigo-700 text-sm">{row.gr_code}</span>
         </div>
       ),
     },
@@ -90,7 +76,7 @@ export default function GoodsReceiptPage() {
     },
     {
       key: 'received_by',
-      label: 'Người nhận',
+      label: 'Người nhận (Kho)',
       sortable: true,
     },
     {
@@ -114,9 +100,9 @@ export default function GoodsReceiptPage() {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            router.push(`/goods-receipt/${row.id}`);
+            router.push(`/receipt-management/${row.id}`);
           }}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-orange-100 text-gray-600 hover:text-orange-700 text-xs font-semibold transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-indigo-100 text-gray-600 hover:text-indigo-700 text-xs font-semibold transition-colors"
         >
           <Eye size={13} />
           Chi tiết
@@ -126,38 +112,29 @@ export default function GoodsReceiptPage() {
   ];
 
   return (
-    <PageLayout title="Nhập hàng" icon={<PackageCheck size={15} className="text-orange-500" />}>
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-extrabold text-gray-900">Danh sách phiếu nhập</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Quản lý nhập hàng (GRPO) từ các PO đã duyệt</p>
-        </div>
-        <button
-          onClick={() => router.push('/goods-receipt/create')}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1B2A4A] text-white rounded-xl font-bold text-sm hover:bg-[#162240] shadow-lg shadow-[#1B2A4A]/20 transition-all"
-        >
-          <Plus size={16} />
-          Tạo phiếu nhập
-        </button>
+    <PageLayout title="Quản lý nhập hàng" icon={<PackageCheck size={15} className="text-indigo-500" />}>
+      <div className="mb-6">
+        <h1 className="text-2xl font-extrabold text-gray-900">Quản lý nhập hàng</h1>
+        <p className="text-sm text-gray-500 mt-0.5">Thu mua đối chiếu và duyệt hàng kho đã nhận</p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Tổng phiếu" value={total} icon={<PackageOpen size={22} />} color="text-[#1B2A4A]" bg="bg-[#eef1f7]" border="border-[#d5dbe9]" />
-        <StatCard label="Chờ xử lý" value={pendingCount} icon={<Clock size={22} />} color="text-yellow-600" bg="bg-yellow-50" border="border-yellow-200" />
-        <StatCard label="Hoàn tất" value={completedCount} icon={<CheckCircle size={22} />} color="text-emerald-600" bg="bg-emerald-50" border="border-emerald-200" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <StatCard label="Tổng phiếu" value={total} icon={<PackageCheck size={22} />} color="text-[#1B2A4A]" bg="bg-[#eef1f7]" border="border-[#d5dbe9]" />
+        <StatCard label="Cần duyệt" value={pendingCount} icon={<Clock size={22} />} color="text-yellow-600" bg="bg-yellow-50" border="border-yellow-200" />
+        <StatCard label="Đã duyệt" value={completedCount} icon={<CheckCircle size={22} />} color="text-emerald-600" bg="bg-emerald-50" border="border-emerald-200" />
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-4 border-orange-200 border-t-orange-600" />
+          <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-200 border-t-indigo-600" />
         </div>
       ) : (
         <DataTable
           data={receipts as unknown as Record<string, unknown>[]}
           columns={columns as Parameters<typeof DataTable>[0]['columns']}
           searchPlaceholder="Tìm theo mã phiếu, kho, PO..."
-          onRowClick={(row) => router.push(`/goods-receipt/${(row as unknown as GoodsReceipt).id}`)}
+          onRowClick={(row) => router.push(`/receipt-management/${(row as unknown as GoodsReceipt).id}`)}
           emptyMessage="Chưa có phiếu nhập kho nào."
         />
       )}
