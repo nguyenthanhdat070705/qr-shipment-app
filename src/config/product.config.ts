@@ -8,22 +8,22 @@
 export const PRODUCT_CONFIG = {
   // ── Cấu hình Bảng sản phẩm ─────────────────────────────────
   /** Tên bảng Supabase chứa thông tin sản phẩm */
-  TABLE_NAME: 'products',
+  TABLE_NAME: 'Hòm tháng 3',
 
   /**
    * Cột dùng để TRA CỨU sản phẩm khi quét mã QR / nhập mã.
    * Trong luồng thực tế: QR value = Mã sản phẩm → dùng cột product_code
    */
-  LOOKUP_COLUMN: 'product_code',
+  LOOKUP_COLUMN: 'mã sản phẩm',
 
   /**
    * Cột lưu MÃ SẢN PHẨM thực tế — sẽ được lưu vào trường ma_san_pham
    * của bảng export_confirmations. Thường giống LOOKUP_COLUMN.
    */
-  PRODUCT_CODE_COLUMN: 'product_code',
+  PRODUCT_CODE_COLUMN: 'mã sản phẩm',
 
   /** Cột lưu trạng thái vòng đời của sản phẩm */
-  STATUS_COLUMN: 'status',
+  STATUS_COLUMN: 'tình trạng',
 
   /**
    * Giá trị trong STATUS_COLUMN đại diện cho "đã xuất kho".
@@ -42,10 +42,13 @@ export const PRODUCT_CONFIG = {
    */
   DISPLAY_LABELS: {
     // — Thông tin cơ bản —
-    product_code:     'Mã sản phẩm',
+    'mã sản phẩm':    'Mã sản phẩm',
+    'sản phẩm':       'Tên sản phẩm',
+    'gói sản phẩm':   'Gói sản phẩm',
+    'kho nào':        'Kho',
+    'số lượng trên web': 'Số lượng trên web',
     qr_code:          'Mã QR',
     barcode:          'Mã vạch',
-    name:             'Tên sản phẩm',
     sku:              'SKU',
     description:      'Mô tả',
     // — Thông tin lô —
@@ -56,11 +59,11 @@ export const PRODUCT_CONFIG = {
     // — Thuộc tính phân loại —
     nhom_san_pham:    'Nhóm sản phẩm',
     muc_dich_su_dung: 'Mục đích sử dụng',
-    ton_kho:          'Kho còn hàng',
-    gia_ban:          'Giá bán',
+    ton_kho:          'Số lượng trên web',
+    gia_ban:          'Gói sản phẩm',
     hinh_anh:         'Hình ảnh',
     // — Trạng thái —
-    status:           'Trạng thái',
+    'tình trạng':     'Tình trạng',
     created_at:       'Ngày tạo',
     updated_at:       'Cập nhật lần cuối',
   } as Record<string, string>,

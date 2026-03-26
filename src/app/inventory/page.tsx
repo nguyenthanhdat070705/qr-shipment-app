@@ -85,12 +85,12 @@ export default async function InventoryPage() {
 
   // Transform products for the client component
   const items = (products || []).map((p: Record<string, unknown>) => {
-    const code = String(p[PRODUCT_CONFIG.LOOKUP_COLUMN as keyof typeof p] || p.product_code || p.id);
-    const name = String(p.name || p.product_name || p.ten_san_pham || 'Chưa có tên');
-    const price = Number(p.gia_ban || p['Gia ban'] || 0);
-    const status = String(p[PRODUCT_CONFIG.STATUS_COLUMN] || '');
-    const tonKho = String(p.ton_kho || p['Ton kho'] || '');
-    const warehouse = String(p.kho_hang || p['Kho hang'] || '—');
+    const code = String(p[PRODUCT_CONFIG.LOOKUP_COLUMN as keyof typeof p] || p['mã sản phẩm'] || p.product_code || p.id);
+    const name = String(p['sản phẩm'] || p.name || p.product_name || p.ten_san_pham || 'Chưa có tên');
+    const price = Number(p['gói sản phẩm'] || p.gia_ban || p['Gia ban'] || 0);
+    const status = String(p['tình trạng'] || p[PRODUCT_CONFIG.STATUS_COLUMN] || '');
+    const tonKho = String(p['số lượng trên web'] || p.ton_kho || p['Ton kho'] || '');
+    const warehouse = String(p['kho nào'] || p.kho_hang || p['Kho hang'] || '—');
     const serial = String(p.serial_no || p['Seri'] || '');
     const rawImg = String(p.hinh_anh || p['Hinh anh'] || '');
     const hasRealImage = rawImg && rawImg !== '—' && rawImg.trim() !== '' && rawImg.startsWith('http');

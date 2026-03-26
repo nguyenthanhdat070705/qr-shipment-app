@@ -46,9 +46,10 @@ function getCoffinImage(productCode: string): string {
  * những trường quan trọng nhất.
  */
 export default function ProductDetailCard({ row }: ProductDetailCardProps) {
-  const statusValue = String(row[PRODUCT_CONFIG.STATUS_COLUMN] ?? '');
+  const statusValue = String(row['tình trạng'] ?? row[PRODUCT_CONFIG.STATUS_COLUMN] ?? '');
 
   const productName =
+    (row['sản phẩm'] as string | undefined) ??
     (row['name'] as string | undefined) ??
     (row['product_name'] as string | undefined) ??
     (row['ten_san_pham'] as string | undefined) ??
@@ -56,6 +57,7 @@ export default function ProductDetailCard({ row }: ProductDetailCardProps) {
 
   const productCode = String(
     row[PRODUCT_CONFIG.LOOKUP_COLUMN as keyof typeof row] ??
+    row['mã sản phẩm'] ??
     row['product_code'] ?? ''
   );
 
@@ -64,13 +66,13 @@ export default function ProductDetailCard({ row }: ProductDetailCardProps) {
   const hasRealImage = rawImg && rawImg !== '—' && rawImg.trim() !== '' && rawImg.startsWith('http');
   const imgUrl: string = hasRealImage ? rawImg : getCoffinImage(productCode);
 
-  // Price
-  const giaBanRaw = row['gia_ban'] ?? row['Gia ban'];
+  // Price / Gói sản phẩm
+  const giaBanRaw = row['gói sản phẩm'] ?? row['gia_ban'] ?? row['Gia ban'];
   const giaBanStr = String(giaBanRaw ?? '');
   const hasPrice = giaBanStr && giaBanStr !== '—' && giaBanStr.trim() !== '';
 
   // Stock status
-  const tonKho = String(row['ton_kho'] ?? row['Ton kho'] ?? '');
+  const tonKho = String(row['số lượng trên web'] ?? row['ton_kho'] ?? row['Ton kho'] ?? '');
   const isOutOfStock = !tonKho || tonKho === '—' || tonKho.trim() === '';
 
   let displayStatus = statusValue;

@@ -97,18 +97,19 @@ export default async function ProductListPage() {
             {products.map((product: Record<string, unknown>) => {
               const productCode = String(
                 product[PRODUCT_CONFIG.LOOKUP_COLUMN as keyof typeof product] ||
+                product['mã sản phẩm'] ||
                 product.product_code ||
                 product.qr_code ||
                 product.id
               );
 
               const productName = String(
-                product.name || product.product_name || product.ten_san_pham || 'Sản phẩm chưa có tên'
+                product['sản phẩm'] || product.name || product.product_name || product.ten_san_pham || 'Sản phẩm chưa có tên'
               );
 
-              const status = String(product[PRODUCT_CONFIG.STATUS_COLUMN] || '');
-              const tonKho = product.ton_kho;
-              const isOutOfStock = !tonKho || String(tonKho).trim() === '';
+              const status = String(product['tình trạng'] || product[PRODUCT_CONFIG.STATUS_COLUMN] || '');
+              const tonKho = product['số lượng trên web'] || product.ton_kho || product['Ton kho'];
+              const isOutOfStock = !tonKho || String(tonKho).trim() === '' || tonKho === 0;
 
               return (
                 <div
