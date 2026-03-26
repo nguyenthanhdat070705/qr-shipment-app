@@ -8,22 +8,22 @@
 export const PRODUCT_CONFIG = {
   // ── Cấu hình Bảng sản phẩm ─────────────────────────────────
   /** Tên bảng Supabase chứa thông tin sản phẩm */
-  TABLE_NAME: 'Hòm tháng 3',
+  TABLE_NAME: 'products',
 
   /**
    * Cột dùng để TRA CỨU sản phẩm khi quét mã QR / nhập mã.
    * Trong luồng thực tế: QR value = Mã sản phẩm → dùng cột product_code
    */
-  LOOKUP_COLUMN: 'mã sản phẩm',
+  LOOKUP_COLUMN: 'code',
 
   /**
    * Cột lưu MÃ SẢN PHẨM thực tế — sẽ được lưu vào trường ma_san_pham
    * của bảng export_confirmations. Thường giống LOOKUP_COLUMN.
    */
-  PRODUCT_CODE_COLUMN: 'mã sản phẩm',
+  PRODUCT_CODE_COLUMN: 'code',
 
   /** Cột lưu trạng thái vòng đời của sản phẩm */
-  STATUS_COLUMN: 'tình trạng',
+  STATUS_COLUMN: 'is_active',
 
   /**
    * Giá trị trong STATUS_COLUMN đại diện cho "đã xuất kho".
