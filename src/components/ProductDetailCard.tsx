@@ -49,7 +49,9 @@ export default function ProductDetailCard({ row }: ProductDetailCardProps) {
   const statusValue = String(row['tình trạng'] ?? row[PRODUCT_CONFIG.STATUS_COLUMN] ?? '');
 
   const productName =
+    (row['hòm sản phẩm'] as string | undefined) ??
     (row['sản phẩm'] as string | undefined) ??
+    (row['Tên hàng hóa'] as string | undefined) ??
     (row['name'] as string | undefined) ??
     (row['product_name'] as string | undefined) ??
     (row['ten_san_pham'] as string | undefined) ??
@@ -58,6 +60,7 @@ export default function ProductDetailCard({ row }: ProductDetailCardProps) {
   const productCode = String(
     row[PRODUCT_CONFIG.LOOKUP_COLUMN as keyof typeof row] ??
     row['mã sản phẩm'] ??
+    row['Mã'] ??
     row['product_code'] ?? ''
   );
 
@@ -67,13 +70,13 @@ export default function ProductDetailCard({ row }: ProductDetailCardProps) {
   const imgUrl: string = hasRealImage ? rawImg : getCoffinImage(productCode);
 
   // Price / Gói sản phẩm
-  const giaBanRaw = row['gói sản phẩm'] ?? row['gia_ban'] ?? row['Gia ban'];
+  const giaBanRaw = row['gói sản phẩm'] ?? row['Ghi chú'] ?? row['gia_ban'] ?? row['Gia ban'];
   const giaBanStr = String(giaBanRaw ?? '');
   const hasPrice = giaBanStr && giaBanStr !== '—' && giaBanStr.trim() !== '';
 
   // Stock status
-  const tonKho = String(row['số lượng trên web'] ?? row['ton_kho'] ?? row['Ton kho'] ?? '');
-  const isOutOfStock = !tonKho || tonKho === '—' || tonKho.trim() === '';
+  const tonKhoRaw = String(row['số lượng'] ?? row['Số lượng'] ?? row['số lượng trên web'] ?? row['ton_kho'] ?? row['Ton kho'] ?? '');
+  const isOutOfStock = !tonKhoRaw || tonKhoRaw === '—' || tonKhoRaw.trim() === '' || tonKhoRaw === '0';
 
   let displayStatus = statusValue;
   if (statusValue !== PRODUCT_CONFIG.EXPORTED_STATUS_VALUE) {

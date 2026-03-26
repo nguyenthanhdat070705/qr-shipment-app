@@ -85,12 +85,12 @@ export default async function InventoryPage() {
 
   // Transform products for the client component
   const items = (products || []).map((p: Record<string, unknown>) => {
-    const code = String(p[PRODUCT_CONFIG.LOOKUP_COLUMN as keyof typeof p] || p.code || p['mã sản phẩm'] || p.product_code || p.id);
-    const name = String(p.name || p['sản phẩm'] || p.product_name || p.ten_san_pham || 'Chưa có tên');
-    const price = Number(p.selling_price || p.cost_price || p['gói sản phẩm'] || p.gia_ban || p['Gia ban'] || 0);
-    const status = String(p.is_active || p['tình trạng'] || p[PRODUCT_CONFIG.STATUS_COLUMN] || '');
-    const tonKho = String(p['số lượng trên web'] || p.ton_kho || p['Ton kho'] || '');
-    const warehouse = String(p['kho nào'] || p.kho_hang || p['Kho hang'] || '—');
+    const code = String(p[PRODUCT_CONFIG.LOOKUP_COLUMN as keyof typeof p] || p['mã sản phẩm'] || p['Mã'] || p.code || p.product_code || '');
+    const name = String(p['hòm sản phẩm'] || p['sản phẩm'] || p['Tên hàng hóa'] || p.name || p.product_name || p.ten_san_pham || 'Chưa có tên');
+    const price = Number(p['gói sản phẩm'] || p['Ghi chú'] || p.selling_price || p.cost_price || p.gia_ban || p['Gia ban'] || 0);
+    const status = String(p['tình trạng'] || p.is_active || p[PRODUCT_CONFIG.STATUS_COLUMN] || '');
+    const tonKhoRaw = String(p['số lượng'] || p['Số lượng'] || p['số lượng trên web'] || p.ton_kho || p['Ton kho'] || '');
+    const warehouseRaw = String(p['kho nào'] || p['Kho'] || p.kho_hang || p['Kho hang'] || '—');
     const serial = String(p.serial_no || p['Seri'] || '');
     const rawImg = String(p.image_url || p.hinh_anh || p['Hinh anh'] || '');
     const hasRealImage = rawImg && rawImg !== '—' && rawImg.trim() !== '' && rawImg.startsWith('http');
@@ -102,11 +102,11 @@ export default async function InventoryPage() {
       return wMap[id as string] || id; 
     }).join(', ') : '';
 
-    const finalTonKho = realQty > 0 ? String(realQty) : String(p.ton_kho || p['Ton kho'] || '');
-    const finalWarehouse = realWarehouses || String(p.kho_hang || p['Kho hang'] || '—');
+    const finalTonKho = realQty > 0 ? String(realQty) : tonKhoRaw;
+    const finalWarehouse = realWarehouses || warehouseRaw;
 
     const isExported = status === PRODUCT_CONFIG.EXPORTED_STATUS_VALUE;
-    const isOutOfStock = realQty <= 0 && (!tonKho || tonKho === '—' || tonKho.trim() === '');
+    const isOutOfStock = realQty <= 0 && (!tonKhoRaw || tonKhoRaw === '—' || tonKhoRaw.trim() === '' || tonKhoRaw === '0');
     const available = !isExported && !isOutOfStock;
 
     return {
