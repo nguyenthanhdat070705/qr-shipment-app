@@ -1,53 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 
-const CREATE_TABLE_SQL = `
-  CREATE TABLE IF NOT EXISTS user_profiles (
-    id SERIAL PRIMARY KEY,
-    email TEXT UNIQUE NOT NULL,
-    ho_ten TEXT DEFAULT '',
-    chuc_vu TEXT DEFAULT '',
-    so_dien_thoai TEXT DEFAULT '',
-    phong_ban TEXT DEFAULT '',
-    ghi_chu TEXT DEFAULT '',
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-  );
-`;
-
 /**
- * Execute raw SQL via Supabase's pg_net / management API
+ * GET /api/profile?email=xxx  → Get user profile from dim_account
+ * PUT /api/profile            → Update user profile in dim_account
  */
-async function ensureTableExists(): Promise<void> {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!supabaseUrl || !serviceRoleKey) return;
-
-  // Extract project ref from URL (e.g., "zspazvdyrrkdosqigom" from "https://zspazvdyrrkdosqigom.supabase.co")
-  const projectRef = supabaseUrl.replace('https://', '').split('.')[0];
-
-  try {
-    // Use Supabase SQL API (available for service role)
-    const res = await fetch(`https://${projectRef}.supabase.co/rest/v1/rpc/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': serviceRoleKey,
-        'Authorization': `Bearer ${serviceRoleKey}`,
-        'Prefer': 'return=representation',
-      },
-      body: JSON.stringify({}),
-    });
-    console.log('[profile] RPC endpoint check:', res.status);
-  } catch (err) {
-    console.warn('[profile] Table creation via API not available:', err);
-  }
-}
-
-/**
- * GET /api/profile?email=xxx
- */
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const email = req.nextUrl.searchParams.get('email');
   if (!email) {
@@ -57,41 +15,28 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const supabase = getSupabaseAdmin();
   let profile: Record<string, unknown> | null = null;
 
-  // Try to get profile
-  const { data: existingProfile, error: profileError } = await supabase
-    .from('user_profiles')
+  // Try dim_account first
+  const { data: account, error: accountError } = await supabase
+    .from('dim_account')
     .select('*')
     .eq('email', email)
-    .single();
+    .maybeSingle();
 
-  if (!profileError) {
-    // Profile found
-    profile = existingProfile as Record<string, unknown>;
-  } else if (profileError.code === 'PGRST116') {
-    // No rows found — try to create profile
-    const { data: newProfile, error: insertErr } = await supabase
-      .from('user_profiles')
-      .insert({
-        email,
-        ho_ten: email.split('@')[0],
-        chuc_vu: '',
-        so_dien_thoai: '',
-        phong_ban: '',
-        ghi_chu: '',
-      })
-      .select('*')
-      .single();
-
-    if (!insertErr && newProfile) {
-      profile = newProfile as Record<string, unknown>;
-    }
-  } else {
-    // Table might not exist — try creating it
-    console.warn('[profile] GET error:', profileError.message);
-    await ensureTableExists();
+  if (!accountError && account) {
+    profile = {
+      id: account.id,
+      email: account.email,
+      ho_ten: account.ho_ten || '',
+      chuc_vu: account.chuc_vu || '',
+      so_dien_thoai: account.sdt || '',
+      phong_ban: account.phong_ban || '',
+      ghi_chu: account.ghi_chu || '',
+      avatar_url: account.avatar_url || '',
+      role: account.role || '',
+    };
   }
 
-  // Fallback profile
+  // Fallback if not found
   if (!profile) {
     profile = {
       email,
@@ -100,6 +45,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       so_dien_thoai: '',
       phong_ban: '',
       ghi_chu: '',
+      avatar_url: '',
       _isLocal: true,
     };
   }
@@ -123,9 +69,6 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   });
 }
 
-/**
- * PUT /api/profile
- */
 export async function PUT(req: NextRequest): Promise<NextResponse> {
   const supabase = getSupabaseAdmin();
 
@@ -136,48 +79,90 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { email, ho_ten, chuc_vu, so_dien_thoai, phong_ban, ghi_chu } = body;
+  const { email, ho_ten, chuc_vu, so_dien_thoai, phong_ban, ghi_chu, avatar_url } = body;
 
   if (!email || typeof email !== 'string') {
     return NextResponse.json({ error: 'Email is required' }, { status: 400 });
   }
 
-  // First check if table exists
-  const { error: checkError } = await supabase
-    .from('user_profiles')
-    .select('id')
-    .limit(1);
-
-  if (checkError && (checkError.message?.includes('does not exist') || checkError.message?.includes('schema cache'))) {
-    // Table doesn't exist — return instructions
-    return NextResponse.json({
-      success: false,
-      error: 'Bảng user_profiles chưa tồn tại. Vui lòng tạo bảng trong Supabase Dashboard.',
-      needsSetup: true,
-      sql: CREATE_TABLE_SQL,
-    }, { status: 200 });
-  }
-
-  // Try upsert
-  const profileData = {
-    email: email as string,
+  // Build update data for dim_account 
+  const updateData: Record<string, unknown> = {
     ho_ten: (ho_ten as string) || '',
     chuc_vu: (chuc_vu as string) || '',
-    so_dien_thoai: (so_dien_thoai as string) || '',
+    sdt: (so_dien_thoai as string) || '',
     phong_ban: (phong_ban as string) || '',
-    ghi_chu: (ghi_chu as string) || '',
     updated_at: new Date().toISOString(),
   };
 
+  // Only include optional columns if provided
+  if (typeof ghi_chu === 'string') updateData.ghi_chu = ghi_chu;
+  if (typeof avatar_url === 'string') updateData.avatar_url = avatar_url;
+
+  // Try update first
   const { data: updated, error: updateError } = await supabase
-    .from('user_profiles')
-    .upsert(profileData, { onConflict: 'email' })
+    .from('dim_account')
+    .update(updateData)
+    .eq('email', email)
     .select('*')
-    .single();
+    .maybeSingle();
 
   if (updateError) {
-    console.error('[profile] PUT error:', updateError);
+    console.error('[profile] PUT error:', updateError.message);
+    // If column doesn't exist (ghi_chu/avatar_url), try without optional columns
+    if (updateError.message.includes('column') || updateError.message.includes('schema')) {
+      const basicUpdate: Record<string, unknown> = {
+        ho_ten: (ho_ten as string) || '',
+        chuc_vu: (chuc_vu as string) || '',
+        sdt: (so_dien_thoai as string) || '',
+        phong_ban: (phong_ban as string) || '',
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data: basic, error: basicErr } = await supabase
+        .from('dim_account')
+        .update(basicUpdate)
+        .eq('email', email)
+        .select('*')
+        .maybeSingle();
+
+      if (basicErr) {
+        return NextResponse.json({ error: basicErr.message }, { status: 500 });
+      }
+
+      if (!basic) {
+        // Insert new row
+        const { data: inserted, error: insertErr } = await supabase
+          .from('dim_account')
+          .insert({ email: email as string, ...basicUpdate })
+          .select('*')
+          .single();
+        if (insertErr) return NextResponse.json({ error: insertErr.message }, { status: 500 });
+        return NextResponse.json({ success: true, profile: inserted, avatarSaveLocal: true });
+      }
+
+      return NextResponse.json({ success: true, profile: basic, avatarSaveLocal: true });
+    }
+
     return NextResponse.json({ error: updateError.message }, { status: 500 });
+  }
+
+  // If no row was updated (email not found), insert new
+  if (!updated) {
+    const insertData: Record<string, unknown> = {
+      email: email as string,
+      ...updateData,
+    };
+    const { data: inserted, error: insertErr } = await supabase
+      .from('dim_account')
+      .insert(insertData)
+      .select('*')
+      .single();
+
+    if (insertErr) {
+      console.error('[profile] Insert error:', insertErr.message);
+      return NextResponse.json({ error: insertErr.message }, { status: 500 });
+    }
+    return NextResponse.json({ success: true, profile: inserted });
   }
 
   return NextResponse.json({ success: true, profile: updated });

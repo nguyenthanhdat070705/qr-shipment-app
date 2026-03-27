@@ -61,6 +61,15 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   const allMenuItems: MenuItem[] = [
     /* ── Core SCM Flow ── */
     {
+      icon: <Search size={18} />,
+      label: 'Tìm kiếm hàng',
+      desc: 'Tra cứu',
+      href: '/',
+      color: 'text-blue-400',
+      iconBg: 'bg-blue-500/15',
+      section: 'Nghiệp vụ',
+    },
+    {
       icon: <ShoppingCart size={18} />,
       label: 'Đặt hàng',
       desc: 'Tạo & quản lý PO',
@@ -68,7 +77,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-violet-400',
       iconBg: 'bg-violet-500/15',
       requiresPermission: 'canCreatePO',
-      section: 'Nghiệp vụ',
+      // section handled by 'Tìm kiếm hàng' now (though it's fine to leave it here to be safe)
     },
     {
       icon: <PackageCheck size={18} />,
@@ -91,7 +100,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
     {
       icon: <Truck size={18} />,
       label: 'Xuất hàng',
-      desc: 'Quét QR & xác nhận xuất',
+      desc: 'IT & GRIT',
       href: '/goods-issue',
       color: 'text-emerald-400',
       iconBg: 'bg-emerald-500/15',
@@ -300,14 +309,19 @@ function TopBar({
   const [userEmail, setUserEmail] = useState('');
   const [userRole, setUserRole] = useState<UserRole>('sales');
   const [searchVal, setSearchVal] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem('auth_user');
-      if (raw) {
-        const u = JSON.parse(raw);
+      const authRaw = localStorage.getItem('auth_user');
+      if (authRaw) {
+        const u = JSON.parse(authRaw);
         setUserEmail(u.email || '');
         setUserRole(getUserRole(u.email || ''));
+      }
+      const avatarRaw = localStorage.getItem('avatar_url');
+      if (avatarRaw) {
+        setAvatarUrl(avatarRaw);
       }
     } catch { /* ignore */ }
   }, []);
@@ -362,10 +376,16 @@ function TopBar({
           <div className="w-px h-6 bg-gray-200 mx-1 hidden sm:block" />
 
           {/* User pill */}
-          <div className="flex items-center gap-2 pl-1 pr-3 py-1.5 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#1B2A4A] to-indigo-600 text-white text-xs font-bold flex-shrink-0">
-              {initial}
-            </div>
+          <Link href="/profile" className="flex items-center gap-2 pl-1 pr-3 py-1.5 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer">
+            {avatarUrl ? (
+              <div className="h-8 w-8 rounded-full overflow-hidden flex-shrink-0 border border-gray-200">
+                <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+              </div>
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#1B2A4A] to-indigo-600 text-white text-xs font-bold flex-shrink-0">
+                {initial}
+              </div>
+            )}
             <div className="hidden sm:block">
               <p className="text-xs font-bold text-gray-800 leading-none truncate max-w-[100px]">
                 {userEmail.split('@')[0] || 'User'}
@@ -374,7 +394,7 @@ function TopBar({
                 {roleConfig.label}
               </div>
             </div>
-          </div>
+          </Link>
         </div>
       </div>
     </header>

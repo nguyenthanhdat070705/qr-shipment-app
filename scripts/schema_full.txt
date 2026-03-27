@@ -1,0 +1,37 @@
+{
+  "required": [
+    "MĂ£",
+    "TĂªn hĂ ng hĂ³a",
+    "Kho",
+    "Sá»‘ lÆ°á»£ng",
+    "Ghi chĂº"
+  ],
+  "properties": {
+    "MĂ£": {
+      "description": "Note:\nThis is a Primary Key.<pk/>",
+      "format": "uuid",
+      "type": "string"
+    },
+    "TĂªn hĂ ng hĂ³a": {
+      "description": "Note:\nThis is a Foreign Key to `dim_hom.id`.<fk table='dim_hom' column='id'/>",
+      "format": "uuid",
+      "type": "string"
+    },
+    "Kho": {
+      "description": "Note:\nThis is a Foreign Key to `dim_kho.id`.<fk table='dim_kho' column='id'/>",
+      "format": "uuid",
+      "type": "string"
+    },
+    "Sá»‘ lÆ°á»£ng": {
+      "default": 0,
+      "format": "integer",
+      "type": "integer"
+    },
+    "Ghi chĂº": {
+      "default": 0,
+      "format": "integer",
+      "type": "integer"
+    }
+  },
+  "type": "object"
+}

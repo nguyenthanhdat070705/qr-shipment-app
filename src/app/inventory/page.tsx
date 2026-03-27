@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { PRODUCT_CONFIG } from '@/config/product.config';
-import { Warehouse, Search, CheckCircle, PackageOpen } from 'lucide-react';
+import { Warehouse, CheckCircle, PackageOpen, AlertTriangle } from 'lucide-react';
 import InventorySearch from '@/components/InventorySearch';
 import PageLayout from '@/components/PageLayout';
 
@@ -13,7 +12,7 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 /**
- * Hash-based coffin image selector (same logic as ProductDetailCard)
+ * Hash-based coffin image selector
  */
 function getCoffinImage(productCode: string): string {
   let hash = 0;
@@ -43,99 +42,179 @@ function StatCard({
   );
 }
 
+interface FactInventoryRow {
+  'Mã': string;
+  'Tên hàng hóa': string;  // FK → dim_hom.id
+  'Kho': string;            // FK → dim_kho.id
+  'Số lượng': number;
+  'Loại hàng': string | null;
+  'Ghi chú': number;        // so_luong_kha_dung
+}
+
+interface DimHom {
+  id: string;
+  ma_hom: string;
+  ten_hom: string;
+  gia_ban: number | null;
+  gia_von: number | null;
+  hinh_anh: string | null;
+  NCC: string | null;
+}
+
+interface DimKho {
+  id: string;
+  ma_kho: string;
+  ten_kho: string;
+}
+
+interface DimNcc {
+  id: string;
+  ma_ncc: string;
+  ten_ncc: string;
+  nguoi_lien_he: string | null;
+  sdt: string | null;
+  dia_chi: string | null;
+}
+
 export default async function InventoryPage() {
   const supabase = getSupabaseAdmin();
-  const { data: products, error } = await supabase
-    .from(PRODUCT_CONFIG.TABLE_NAME as string)
-    .select('*')
-    .order('name', { ascending: true });
 
-  if (error) {
+  // Fetch all 4 tables in parallel
+  const [inventoryRes, homRes, khoRes, nccRes] = await Promise.all([
+    supabase.from('fact_inventory').select('*'),
+    supabase.from('dim_hom').select('id, ma_hom, ten_hom, gia_ban, gia_von, hinh_anh, NCC'),
+    supabase.from('dim_kho').select('id, ma_kho, ten_kho'),
+    supabase.from('dim_ncc').select('id, ma_ncc, ten_ncc, nguoi_lien_he, sdt, dia_chi'),
+  ]);
+
+  if (inventoryRes.error) {
     return (
       <div className="min-h-screen p-10 flex items-center justify-center bg-gray-50">
         <p className="text-red-500 font-semibold px-4 py-3 bg-red-50 rounded-xl border border-red-200">
-          Lỗi: {error.message}
+          Lỗi tải tồn kho: {inventoryRes.error.message}
         </p>
       </div>
     );
   }
 
-  // Fetch active QR Codes (Lots) to calculate real inventory stock
-  const [
-    { data: qrCodes },
-    { data: wData }
-  ] = await Promise.all([
-    supabase.from('qr_codes').select('*').eq('type', 'INVENTORY').eq('status', 'active'),
-    supabase.from('warehouses').select('id, name')
-  ]);
+  // Build lookup maps
+  const homMap = new Map<string, DimHom>();
+  for (const h of (homRes.data || []) as DimHom[]) {
+    homMap.set(h.id, h);
+  }
 
-  const wMap = (wData || []).reduce((acc: Record<string, string>, curr: { id: string, name: string }) => {
-    acc[curr.id] = curr.name;
-    return acc;
-  }, {});
+  const khoMap = new Map<string, DimKho>();
+  for (const k of (khoRes.data || []) as DimKho[]) {
+    khoMap.set(k.id, k);
+  }
 
-  const qrMap = (qrCodes || []).reduce((acc: any, curr: any) => {
-    const code = curr.reference_id;
-    if (!acc[code]) acc[code] = { qty: 0, warehouses: new Set<string>(), lots: [] };
-    acc[code].qty += curr.quantity || 0;
-    if (curr.warehouse) acc[code].warehouses.add(curr.warehouse);
-    acc[code].lots.push(curr.qr_code);
-    return acc;
-  }, {});
+  const nccMap = new Map<string, DimNcc>();
+  for (const n of (nccRes.data || []) as DimNcc[]) {
+    nccMap.set(n.id, n);
+  }
 
-  // Transform products for the client component
-  const items = (products || []).map((p: Record<string, unknown>) => {
-    const code = String(p[PRODUCT_CONFIG.LOOKUP_COLUMN as keyof typeof p] || p['mã sản phẩm'] || p['Mã'] || p.code || p.product_code || '');
-    const name = String(p['hòm sản phẩm'] || p['sản phẩm'] || p['Tên hàng hóa'] || p.name || p.product_name || p.ten_san_pham || 'Chưa có tên');
-    const price = Number(p['gói sản phẩm'] || p['Ghi chú'] || p.selling_price || p.cost_price || p.gia_ban || p['Gia ban'] || 0);
-    const status = String(p['tình trạng'] || p.is_active || p[PRODUCT_CONFIG.STATUS_COLUMN] || '');
-    const tonKhoRaw = String(p['số lượng'] || p['Số lượng'] || p['số lượng trên web'] || p.ton_kho || p['Ton kho'] || '');
-    const warehouseRaw = String(p['kho nào'] || p['Kho'] || p.kho_hang || p['Kho hang'] || '—');
-    const serial = String(p.serial_no || p['Seri'] || '');
-    const rawImg = String(p.image_url || p.hinh_anh || p['Hinh anh'] || '');
-    const hasRealImage = rawImg && rawImg !== '—' && rawImg.trim() !== '' && rawImg.startsWith('http');
+  const inventory = (inventoryRes.data || []) as FactInventoryRow[];
+
+  // Group by product code and warehouse to avoid merging different warehouses
+  const productGroupMap = new Map<string, {
+    homId: string;
+    khoId: string;
+    totalQty: number;
+    totalAvail: number;
+    warehouses: Set<string>;
+    warehouseCodes: Set<string>;
+    loaiSet: Set<string>;
+  }>();
+
+  for (const row of inventory) {
+    const homId = row['Tên hàng hóa'];
+    const khoId = row['Kho'] || 'unknown_kho';
+    const kho = khoMap.get(khoId);
+    const groupKey = `${homId}_${khoId}`;
+    const loai = row['Loại hàng'] || '';
+    
+    const existing = productGroupMap.get(groupKey);
+
+    if (existing) {
+      existing.totalQty += row['Số lượng'] || 0;
+      existing.totalAvail += row['Ghi chú'] || 0;
+      if (loai) existing.loaiSet.add(loai);
+    } else {
+      const warehouses = new Set<string>();
+      const warehouseCodes = new Set<string>();
+      const loaiSet = new Set<string>();
+      if (kho?.ten_kho) warehouses.add(kho.ten_kho);
+      if (kho?.ma_kho) warehouseCodes.add(kho.ma_kho);
+      if (loai) loaiSet.add(loai);
+      
+      productGroupMap.set(groupKey, {
+        homId,
+        khoId,
+        totalQty: row['Số lượng'] || 0,
+        totalAvail: row['Ghi chú'] || 0,
+        warehouses,
+        warehouseCodes,
+        loaiSet,
+      });
+    }
+  }
+
+  // Transform grouped data to InventoryItem format expected by InventorySearch
+  const items = Array.from(productGroupMap.values()).map((group) => {
+    const hom = homMap.get(group.homId);
+    const ncc = hom?.NCC ? nccMap.get(hom.NCC) : null;
+
+    const code = hom?.ma_hom || '—';
+    const name = hom?.ten_hom || 'Chưa có tên';
+    const price = Number(hom?.gia_ban || 0);
+    const warehouse = Array.from(group.warehouses).join(', ') || '—';
+    const warehouseCode = Array.from(group.warehouseCodes).join(', ');
+    const soLuong = group.totalQty;
+    const loaiHang = Array.from(group.loaiSet).join(', ');
+    const khaDung = group.totalAvail;
+
+    const rawImg = hom?.hinh_anh || '';
+    const hasRealImage = rawImg && rawImg.startsWith('http');
     const imageUrl = hasRealImage ? rawImg : getCoffinImage(code);
 
-    const qrData = qrMap[code];
-    const realQty = qrData ? qrData.qty : 0;
-    const realWarehouses = qrData ? Array.from(qrData.warehouses).map(id => {
-      return wMap[id as string] || id; 
-    }).join(', ') : '';
-
-    const finalTonKho = realQty > 0 ? String(realQty) : tonKhoRaw;
-    const finalWarehouse = realWarehouses || warehouseRaw;
-
-    const isExported = status === PRODUCT_CONFIG.EXPORTED_STATUS_VALUE;
-    const isOutOfStock = realQty <= 0 && (!tonKhoRaw || tonKhoRaw === '—' || tonKhoRaw.trim() === '' || tonKhoRaw === '0');
-    const available = !isExported && !isOutOfStock;
+    const isOutOfStock = soLuong <= 0;
+    const isExported = false;
+    const available = !isOutOfStock;
 
     return {
       code,
       name,
       price,
-      status,
-      tonKho: finalTonKho,
-      warehouse: finalWarehouse,
-      serial,
+      giaVon: Number(hom?.gia_von || 0),
+      status: loaiHang,
+      tonKho: String(soLuong),
+      khaDung: String(khaDung),
+      warehouse,
+      warehouseCode,
+      serial: '',
       imageUrl,
       isExported,
       isOutOfStock,
       available,
-      lots: qrData ? qrData.lots : [],
+      lots: [] as string[],
+      supplierName: ncc?.ten_ncc || '',
+      supplierContact: ncc?.nguoi_lien_he || '',
+      supplierPhone: ncc?.sdt || '',
+      supplierAddress: ncc?.dia_chi || '',
     };
   });
 
   // Statistics
   const totalProducts = items.length;
-  const availableCount = items.filter((i: { available: boolean }) => i.available).length;
-  const exportedCount = items.filter((i: { isExported: boolean }) => i.isExported).length;
+  const availableCount = items.filter((i) => i.available).length;
+  const outOfStockCount = items.filter((i) => i.isOutOfStock).length;
 
   return (
     <PageLayout title="Kho hàng" icon={<Warehouse size={15} className="text-sky-500" />}>
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900">Kho hàng</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Xem tồn kho, giá, tình trạng sản phẩm.</p>
+          <p className="text-sm text-gray-500 mt-0.5">Xem tồn kho, loại hàng, tình trạng sản phẩm.</p>
         </div>
       </div>
 
@@ -143,7 +222,7 @@ export default async function InventoryPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <StatCard label="Tổng SP" value={totalProducts} icon={<Warehouse size={22} />} color="text-[#1B2A4A]" bg="bg-[#eef1f7]" border="border-[#d5dbe9]" />
         <StatCard label="Còn hàng" value={availableCount} icon={<CheckCircle size={22} />} color="text-emerald-600" bg="bg-emerald-50" border="border-emerald-200" />
-        <StatCard label="Đã xuất" value={exportedCount} icon={<PackageOpen size={22} />} color="text-blue-600" bg="bg-blue-50" border="border-blue-200" />
+        <StatCard label="Hết hàng" value={outOfStockCount} icon={<AlertTriangle size={22} />} color="text-red-600" bg="bg-red-50" border="border-red-200" />
       </div>
 
       {/* Search + Table — Client Component */}

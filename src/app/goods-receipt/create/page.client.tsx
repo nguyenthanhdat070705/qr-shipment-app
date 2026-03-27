@@ -5,7 +5,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PackageCheck, ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
-import type { Warehouse, PurchaseOrder } from '@/types';
+import type { PurchaseOrder } from '@/types';
 import nextDynamic from 'next/dynamic';
 import { ScanLine, Keyboard, Search } from 'lucide-react';
 
@@ -13,6 +13,11 @@ const Scanner = nextDynamic(() => import('@yudiel/react-qr-scanner').then((mod) 
   ssr: false,
 });
 
+interface DimKhoItem {
+  id: string;
+  ma_kho: string;
+  ten_kho: string;
+}
 
 interface ReceiptItem {
   product_code: string;
@@ -25,7 +30,7 @@ interface ReceiptItem {
 function CreateGoodsReceiptForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [warehouses, setWarehouses] = useState<DimKhoItem[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
   const [warehouseId, setWarehouseId] = useState('');
   const [poId, setPoId] = useState('');
@@ -35,20 +40,25 @@ function CreateGoodsReceiptForm() {
   ]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   
   const [searchInput, setSearchInput] = useState('');
   const [inputMode, setInputMode] = useState<'type' | 'scan'>('type');
 
   const handleSearchPO = (code: string) => {
+    if (!code.trim()) {
+      setError('Vui lòng nhập mã PO.');
+      return;
+    }
     const found = purchaseOrders.find(
-      (p) => p.po_code.toLowerCase() === code.toLowerCase() || p.id === code
+      (p) => p.po_code.toLowerCase() === code.trim().toLowerCase() || p.id === code.trim()
     );
     if (found) {
       setPoId(found.id);
       setSearchInput(found.po_code);
       setError('');
     } else {
-      setError(`Không tìm thấy PO với mã "${code}" hoặc PO chưa được duyệt.`);
+      setError(`Không tìm thấy PO với mã "${code}".`);
       setPoId('');
     }
   };
@@ -60,14 +70,14 @@ function CreateGoodsReceiptForm() {
     const headers = { apikey: anonKey, Authorization: `Bearer ${anonKey}` };
 
     Promise.all([
-      fetch(`${supabaseUrl}/rest/v1/warehouses?is_active=eq.true&select=*`, { headers }).then(r => r.json()),
+      // Fetch warehouses from dim_kho instead of warehouses table
+      fetch(`${supabaseUrl}/rest/v1/dim_kho?select=id,ma_kho,ten_kho&order=ten_kho.asc`, { headers }).then(r => r.json()),
       fetch('/api/purchase-orders').then(r => r.json()),
-    ]).then(([w, poRes]) => {
-      setWarehouses(Array.isArray(w) ? w : []);
-      const approvedPOs = (poRes.data || []).filter((po: PurchaseOrder) =>
-        po.status === 'approved' || po.status === 'submitted'
-      );
-      setPurchaseOrders(approvedPOs);
+    ]).then(([khoData, poRes]) => {
+      setWarehouses(Array.isArray(khoData) ? khoData : []);
+      // Accept ALL POs (no status filtering)
+      const allPOs = poRes.data || [];
+      setPurchaseOrders(allPOs);
 
       // Pre-fill from URL query params (coming from PO Detail page)
       const qPoId = searchParams.get('po_id');
@@ -124,6 +134,13 @@ function CreateGoodsReceiptForm() {
     e.preventDefault();
     setSubmitting(true);
     setError('');
+    setSuccessMsg('');
+
+    if (!warehouseId) {
+      setError('Vui lòng chọn kho nhận.');
+      setSubmitting(false);
+      return;
+    }
 
     let receivedBy = 'unknown';
     try {
@@ -132,6 +149,12 @@ function CreateGoodsReceiptForm() {
     } catch { /* ignore */ }
 
     const validItems = items.filter((item) => item.product_code.trim() && item.product_name.trim());
+
+    if (validItems.length === 0) {
+      setError('Vui lòng thêm ít nhất 1 sản phẩm có mã SP và tên SP.');
+      setSubmitting(false);
+      return;
+    }
 
     try {
       const res = await fetch('/api/goods-receipt', {
@@ -148,13 +171,21 @@ function CreateGoodsReceiptForm() {
 
       const result = await res.json();
       if (!res.ok) {
-        setError(result.error || 'Có lỗi xảy ra.');
+        setError(result.error || 'Có lỗi xảy ra khi tạo phiếu.');
         return;
       }
 
-      router.push(`/goods-receipt/${result.data.id}`);
+      setSuccessMsg(`Đã tạo phiếu nhập kho thành công! Mã: ${result.gr_code || ''}`);
+      // Navigate after a short delay so user sees the success message
+      setTimeout(() => {
+        if (result.data?.id) {
+          router.push(`/goods-receipt/${result.data.id}`);
+        } else {
+          router.push('/goods-receipt');
+        }
+      }, 1500);
     } catch (err) {
-      setError('Lỗi kết nối server.');
+      setError('Lỗi kết nối server. Vui lòng thử lại.');
       console.error(err);
     } finally {
       setSubmitting(false);
@@ -215,6 +246,12 @@ function CreateGoodsReceiptForm() {
                       type="text"
                       value={searchInput}
                       onChange={(e) => setSearchInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleSearchPO(searchInput);
+                        }
+                      }}
                       placeholder="Nhập mã PO (vd: PO-123)..."
                       className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400"
                     />
@@ -243,8 +280,48 @@ function CreateGoodsReceiptForm() {
                   </div>
                 )}
                 {poId && (
-                  <div className="mt-3 text-sm text-green-700 font-medium">
-                    Đã liên kết thành công với PO: {purchaseOrders.find(p => p.id === poId)?.po_code}
+                  <div className="mt-3 px-3 py-2 rounded-lg bg-green-50 border border-green-200 text-sm text-green-700 font-medium">
+                    ✅ Đã liên kết thành công với PO: <strong>{purchaseOrders.find(p => p.id === poId)?.po_code || poId}</strong>
+                    {' '}
+                    <span className="text-green-500 text-xs">
+                      ({purchaseOrders.find(p => p.id === poId)?.status || ''})
+                    </span>
+                  </div>
+                )}
+
+                {/* Available PO list for quick selection */}
+                {!poId && purchaseOrders.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-xs font-semibold text-gray-400 mb-1.5">Chọn nhanh PO có sẵn:</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {purchaseOrders.slice(0, 8).map((po) => (
+                        <button
+                          key={po.id}
+                          type="button"
+                          onClick={() => {
+                            setPoId(po.id);
+                            setSearchInput(po.po_code);
+                            setError('');
+                          }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-gray-200 text-xs font-semibold text-gray-600 hover:border-orange-300 hover:text-orange-600 hover:bg-orange-50 transition-all"
+                        >
+                          {po.po_code}
+                          <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                            po.status === 'approved' ? 'bg-green-100 text-green-700' :
+                            po.status === 'submitted' ? 'bg-blue-100 text-blue-700' :
+                            po.status === 'draft' ? 'bg-gray-100 text-gray-500' :
+                            'bg-gray-100 text-gray-500'
+                          }`}>
+                            {po.status === 'approved' ? 'Duyệt' :
+                             po.status === 'submitted' ? 'Gửi' :
+                             po.status === 'draft' ? 'Đặt hàng' :
+                             po.status === 'received' ? 'Đã nhận' :
+                             po.status === 'closed' ? 'Hoàn thành' :
+                             po.status}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -259,7 +336,7 @@ function CreateGoodsReceiptForm() {
                 >
                   <option value="">— Chọn kho —</option>
                   {warehouses.map((w) => (
-                    <option key={w.id} value={w.id}>{w.name}</option>
+                    <option key={w.id} value={w.id}>{w.ten_kho} ({w.ma_kho})</option>
                   ))}
                 </select>
               </div>
@@ -352,6 +429,12 @@ function CreateGoodsReceiptForm() {
           {error && (
             <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
               {error}
+            </div>
+          )}
+
+          {successMsg && (
+            <div className="px-4 py-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm font-medium">
+              ✅ {successMsg}
             </div>
           )}
 

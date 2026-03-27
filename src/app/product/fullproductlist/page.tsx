@@ -1,34 +1,92 @@
 import { Metadata } from 'next';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { PRODUCT_CONFIG } from '@/config/product.config';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
+import DownloadAllQR from '@/components/DownloadAllQR';
 import Link from 'next/link';
 import { ArrowLeft, Printer } from 'lucide-react';
 import Image from 'next/image';
 
 export const metadata: Metadata = {
   title: 'Danh sách mã QR sản phẩm',
-  description: 'Xem và in mã QR cho toàn bộ sản phẩm.',
+  description: 'Xem và in mã QR cho toàn bộ sản phẩm tại kho hàng.',
 };
 
 export const dynamic = 'force-dynamic';
 
+interface DimHom {
+  id: string;
+  ma_hom: string;
+  ten_hom: string;
+  gia_ban: number | null;
+  hinh_anh: string | null;
+}
+
+interface DimKho {
+  id: string;
+  ma_kho: string;
+  ten_kho: string;
+}
+
+interface FactInventoryRow {
+  'Mã': string;
+  'Tên hàng hóa': string;
+  'Kho': string;
+  'Số lượng': number;
+  'Loại hàng': string | null;
+}
+
 export default async function ProductListPage() {
   const supabase = getSupabaseAdmin();
-  const { data: products, error } = await supabase
-    .from(PRODUCT_CONFIG.TABLE_NAME as string)
-    .select('*')
-    .order('created_at', { ascending: false });
 
-  if (error) {
+  // Fetch inventory, product dimension, and warehouse dimension
+  const [inventoryRes, homRes, khoRes] = await Promise.all([
+    supabase.from('fact_inventory').select('*'),
+    supabase.from('dim_hom').select('id, ma_hom, ten_hom, gia_ban, hinh_anh'),
+    supabase.from('dim_kho').select('id, ma_kho, ten_kho'),
+  ]);
+
+  if (inventoryRes.error) {
     return (
       <div className="min-h-screen p-10 flex items-center justify-center bg-gray-50">
         <p className="text-red-500 font-semibold px-4 py-3 bg-red-50 rounded-xl border border-red-200">
-          Lỗi không thể lấy dữ liệu sản phẩm: {error.message}
+          Lỗi không thể lấy dữ liệu sản phẩm: {inventoryRes.error.message}
         </p>
       </div>
     );
   }
+
+  // Build lookup maps
+  const homMap = new Map<string, DimHom>();
+  for (const h of (homRes.data || []) as DimHom[]) {
+    homMap.set(h.id, h);
+  }
+
+  const khoMap = new Map<string, DimKho>();
+  for (const k of (khoRes.data || []) as DimKho[]) {
+    khoMap.set(k.id, k);
+  }
+
+  const inventory = (inventoryRes.data || []) as FactInventoryRow[];
+
+  // Build product list from inventory with warehouse info
+  const products = inventory.map((row) => {
+    const hom = homMap.get(row['Tên hàng hóa']);
+    const kho = khoMap.get(row['Kho']);
+
+    return {
+      productCode: hom?.ma_hom || row['Mã'] || '—',
+      productName: hom?.ten_hom || 'Chưa có tên',
+      warehouse: kho?.ten_kho || '—',
+      quantity: row['Số lượng'] || 0,
+      category: row['Loại hàng'] || '',
+    };
+  });
+
+  // Serialize for client component
+  const downloadProducts = products.map((p) => ({
+    productCode: p.productCode,
+    productName: p.productName,
+  }));
 
   return (
     <main className="min-h-screen bg-gray-50 pb-12">
@@ -55,11 +113,12 @@ export default async function ProductListPage() {
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm font-bold text-gray-800">
-              {products?.length || 0} sản phẩm
+              {products.length} sản phẩm
             </span>
+            <DownloadAllQR products={downloadProducts} />
             <button
               onClick={undefined}
-              className="print:hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#1B2A4A] text-white text-sm font-semibold hover:bg-[#162240] transition-colors shadow-sm"
+              className="print:hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors shadow-sm"
               id="print-btn"
             >
               <Printer size={14} />
@@ -84,89 +143,70 @@ export default async function ProductListPage() {
           </h1>
           <p className="mt-2 text-gray-500 max-w-2xl mx-auto text-sm">
             Mỗi mã QR liên kết trực tiếp đến trang chi tiết sản phẩm tương ứng.
+            Nhấn <strong>Tải PDF QR</strong> để tải toàn bộ mã QR dưới dạng file PDF.
           </p>
         </div>
 
         {/* ── Product Grid ──────────────────────────── */}
-        {(!products || products.length === 0) ? (
+        {products.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl border border-gray-200">
-            <p className="text-gray-500">Chưa có sản phẩm nào trong kho dữ liệu.</p>
+            <p className="text-gray-500">Chưa có sản phẩm nào trong kho hàng.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 print:grid-cols-3 print:gap-3">
-            {products.map((product: Record<string, unknown>) => {
-              const productCode = String(
-                product[PRODUCT_CONFIG.LOOKUP_COLUMN as keyof typeof product] ||
-                product['mã sản phẩm'] ||
-                product['Mã'] ||
-                product.product_code ||
-                product.qr_code ||
-                product.id
-              );
-
-              const productName = String(
-                product['hòm sản phẩm'] || product['sản phẩm'] || product['Tên hàng hóa'] || product.name || product.product_name || product.ten_san_pham || 'Sản phẩm chưa có tên'
-              );
-
-              const status = String(product['tình trạng'] || product[PRODUCT_CONFIG.STATUS_COLUMN] || '');
-              const tonKho = product['số lượng'] || product['Số lượng'] || product['số lượng trên web'] || product.ton_kho || product['Ton kho'];
-              const isOutOfStock = !tonKho || String(tonKho).trim() === '' || tonKho === 0 || tonKho === '0';
+            {products.map((product, idx) => {
+              const isOutOfStock = product.quantity <= 0;
 
               return (
                 <div
-                  key={String(product.id)}
+                  key={`${product.productCode}-${idx}`}
                   className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 flex flex-col items-center text-center hover:shadow-md hover:border-[#a8b4ce] transition-all duration-200 print:shadow-none print:border print:p-3 print:break-inside-avoid"
                 >
                   {/* Status indicator */}
                   <div className="self-end mb-2 print:hidden">
                     <span
                       className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                        status === PRODUCT_CONFIG.EXPORTED_STATUS_VALUE
-                          ? 'bg-green-100 text-green-700'
-                          : isOutOfStock
+                        isOutOfStock
                           ? 'bg-red-100 text-red-700'
                           : 'bg-blue-100 text-blue-700'
                       }`}
                     >
                       <span className={`w-1.5 h-1.5 rounded-full ${
-                        status === PRODUCT_CONFIG.EXPORTED_STATUS_VALUE
-                          ? 'bg-green-500'
-                          : isOutOfStock
-                          ? 'bg-red-500'
-                          : 'bg-blue-500'
+                        isOutOfStock ? 'bg-red-500' : 'bg-blue-500'
                       }`} />
-                      {status === PRODUCT_CONFIG.EXPORTED_STATUS_VALUE
-                        ? 'Đã xuất'
-                        : isOutOfStock
-                        ? 'Hết hàng'
-                        : 'Còn hàng'}
+                      {isOutOfStock ? 'Hết hàng' : `SL: ${product.quantity}`}
                     </span>
                   </div>
 
                   {/* Product name */}
                   <h3
                     className="font-bold text-gray-900 mb-0.5 line-clamp-2 w-full text-sm leading-tight print:text-xs"
-                    title={productName}
+                    title={product.productName}
                   >
-                    {productName}
+                    {product.productName}
                   </h3>
 
                   {/* Product code */}
-                  <p className="text-xs text-[#2d4a7a] font-mono mb-4 uppercase tracking-wider font-semibold">
-                    {productCode}
+                  <p className="text-xs text-[#2d4a7a] font-mono mb-1 uppercase tracking-wider font-semibold">
+                    {product.productCode}
+                  </p>
+
+                  {/* Warehouse tag */}
+                  <p className="text-[10px] text-gray-400 font-semibold mb-3 print:hidden">
+                    📍 {product.warehouse}
                   </p>
 
                   {/* QR Code */}
-                  <QRCodeDisplay code={productCode} size={130} />
+                  <QRCodeDisplay code={product.productCode} size={130} />
 
                   {/* Action button */}
                   <div className="mt-4 w-full print:hidden">
                     <Link
-                      href={`/product/${encodeURIComponent(productCode)}`}
+                      href={`/product-sheet/${encodeURIComponent(product.productCode)}`}
                       className="block w-full text-sm font-semibold text-[#1B2A4A] bg-[#eef1f7] hover:bg-[#d5dbe9] py-2.5 rounded-xl transition-colors"
                       target="_blank"
                     >
-                      Mở trang sản phẩm →
+                      Xem phiếu thông tin →
                     </Link>
                   </div>
                 </div>

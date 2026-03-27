@@ -14,14 +14,10 @@ export async function GET(
   const { id } = await params;
   const supabase = getSupabaseAdmin();
 
-  const { data, error } = await supabase
-    .from('purchase_orders')
-    .select(`
-      *,
-      supplier:suppliers(*),
-      warehouse:warehouses(*),
-      items:purchase_order_items(*)
-    `)
+  // Fetch PO from fact_don_hang
+  const { data: po, error } = await supabase
+    .from('fact_don_hang')
+    .select('*')
     .eq('id', id)
     .single();
 
@@ -29,7 +25,60 @@ export async function GET(
     return NextResponse.json({ error: error.message }, { status: error.code === 'PGRST116' ? 404 : 500 });
   }
 
-  return NextResponse.json({ data });
+  // Fetch related data
+  const [nccRes, khoRes, createdByRes, itemsRes] = await Promise.all([
+    po.ncc_id ? supabase.from('dim_ncc').select('*').eq('id', po.ncc_id).single() : { data: null },
+    po.kho_id ? supabase.from('dim_kho').select('*').eq('id', po.kho_id).single() : { data: null },
+    po.nguoi_tao_id ? supabase.from('dim_account').select('*').eq('id', po.nguoi_tao_id).single() : { data: null },
+    supabase.from('fact_don_hang_items').select('*').eq('don_hang_id', id),
+  ]);
+
+  const createdByName = createdByRes.data?.ho_ten || createdByRes.data?.email || po.nguoi_tao_id;
+
+  // Transform to expected frontend format
+  const transformed = {
+    id: po.id,
+    po_code: po.ma_don_hang,
+    supplier_id: po.ncc_id,
+    warehouse_id: po.kho_id,
+    status: po.trang_thai || 'draft',
+    total_amount: po.tong_tien || 0,
+    note: po.ghi_chu,
+    created_by: createdByName,
+    approved_by: po.nguoi_duyet_id,
+    order_date: po.ngay_dat,
+    expected_date: po.ngay_du_kien,
+    created_at: po.created_at,
+    updated_at: po.updated_at,
+    supplier: nccRes.data ? {
+      id: nccRes.data.id,
+      code: nccRes.data.ma_ncc,
+      name: nccRes.data.ten_ncc,
+      contact_name: nccRes.data.nguoi_lien_he,
+      phone: nccRes.data.sdt,
+      address: nccRes.data.dia_chi,
+    } : null,
+    warehouse: khoRes.data ? {
+      id: khoRes.data.id,
+      code: khoRes.data.ma_kho,
+      name: khoRes.data.ten_kho,
+      address: khoRes.data.dia_chi,
+    } : null,
+    items: (itemsRes.data || []).map((item: Record<string, unknown>) => ({
+      id: item.id,
+      po_id: item.don_hang_id,
+      product_code: item.ma_hom,
+      product_name: item.ten_hom,
+      quantity: item.so_luong,
+      unit_price: item.don_gia,
+      total_price: (Number(item.so_luong) || 0) * (Number(item.don_gia) || 0),
+      received_qty: item.so_luong_nhan || 0,
+      note: item.ghi_chu,
+      created_at: item.created_at,
+    })),
+  };
+
+  return NextResponse.json({ data: transformed });
 }
 
 export async function PUT(
@@ -49,12 +98,12 @@ export async function PUT(
   const { supplier_id, warehouse_id, note, expected_date } = body;
 
   const { data, error } = await supabase
-    .from('purchase_orders')
+    .from('fact_don_hang')
     .update({
-      supplier_id: supplier_id || null,
-      warehouse_id: warehouse_id || null,
-      note: note || null,
-      expected_date: expected_date || null,
+      ncc_id: supplier_id || null,
+      kho_id: warehouse_id || null,
+      ghi_chu: note || null,
+      ngay_du_kien: expected_date || null,
     })
     .eq('id', id)
     .select()
@@ -86,13 +135,19 @@ export async function PATCH(
     return NextResponse.json({ error: `Trạng thái không hợp lệ: ${body.status}` }, { status: 400 });
   }
 
-  const updateData: Record<string, unknown> = { status: body.status };
+  const updateData: Record<string, unknown> = { trang_thai: body.status };
   if (body.status === 'approved' && body.approved_by) {
-    updateData.approved_by = body.approved_by;
+    // Lookup user UUID
+    const { data: account } = await supabase
+      .from('dim_account')
+      .select('id')
+      .eq('email', body.approved_by)
+      .maybeSingle();
+    if (account) updateData.nguoi_duyet_id = account.id;
   }
 
   const { data, error } = await supabase
-    .from('purchase_orders')
+    .from('fact_don_hang')
     .update(updateData)
     .eq('id', id)
     .select()
@@ -102,5 +157,5 @@ export async function PATCH(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ data });
+  return NextResponse.json({ data: { ...data, status: data.trang_thai } });
 }

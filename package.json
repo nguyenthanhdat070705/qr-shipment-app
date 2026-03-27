@@ -10,7 +10,11 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.99.2",
+    "@types/file-saver": "^2.0.7",
     "@yudiel/react-qr-scanner": "^2.5.1",
+    "file-saver": "^2.0.5",
+    "jspdf": "^4.2.1",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.577.0",
     "next": "^16.2.1",
     "qrcode.react": "^4.2.0",

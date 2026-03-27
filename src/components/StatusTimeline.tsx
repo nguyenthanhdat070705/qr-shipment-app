@@ -11,9 +11,10 @@ export interface TimelineStep {
 interface StatusTimelineProps {
   steps: TimelineStep[];
   current: string;
+  stepOverrides?: Record<string, Partial<TimelineStep>>;
 }
 
-export default function StatusTimeline({ steps, current }: StatusTimelineProps) {
+export default function StatusTimeline({ steps, current, stepOverrides }: StatusTimelineProps) {
   const currentIndex = steps.findIndex((s) => s.key === current);
 
   return (
@@ -21,21 +22,25 @@ export default function StatusTimeline({ steps, current }: StatusTimelineProps) 
       {steps.map((step, i) => {
         const isDone = i < currentIndex;
         const isActive = i === currentIndex;
-        const isFuture = i > currentIndex;
+        const isFuture = i > currentIndex || currentIndex === -1; // If status not found, consider all future
+        
+        const currentStep = stepOverrides && stepOverrides[step.key]
+          ? { ...step, ...stepOverrides[step.key] }
+          : step;
 
         return (
-          <div key={step.key} className="flex items-center gap-1">
+          <div key={currentStep.key} className="flex items-center gap-1">
             <div
               className={`
                 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold
                 transition-all duration-200
                 ${isDone ? 'bg-emerald-100 text-emerald-700' : ''}
-                ${isActive ? `${step.color} ring-2 ring-offset-1 ring-current` : ''}
-                ${isFuture ? 'bg-gray-100 text-gray-400' : ''}
+                ${isActive ? `${currentStep.color} ring-2 ring-offset-1 ring-current` : ''}
+                ${isFuture ? (currentStep.key === 'completed' && currentStep.label === 'Thiếu hàng' ? currentStep.color : 'bg-gray-100 text-gray-400') : ''}
               `}
             >
               {isDone ? <CheckCircle size={12} /> : <Circle size={12} />}
-              {step.label}
+              {currentStep.label}
             </div>
             {i < steps.length - 1 && (
               <ArrowRight
@@ -53,11 +58,11 @@ export default function StatusTimeline({ steps, current }: StatusTimelineProps) 
 /* ── Pre-defined step configs ──────────────────────────── */
 
 export const PO_STEPS: TimelineStep[] = [
-  { key: 'draft',     label: 'Nháp',       color: 'bg-gray-200 text-gray-700' },
+  { key: 'draft',     label: 'Đặt hàng',   color: 'bg-gray-200 text-gray-700' },
   { key: 'submitted', label: 'Đã gửi',     color: 'bg-blue-100 text-blue-700' },
   { key: 'approved',  label: 'Đã duyệt',   color: 'bg-purple-100 text-purple-700' },
   { key: 'received',  label: 'Đã nhận',     color: 'bg-emerald-100 text-emerald-700' },
-  { key: 'closed',    label: 'Đóng',        color: 'bg-gray-200 text-gray-600' },
+  { key: 'closed',    label: 'Hoàn thành',  color: 'bg-emerald-100 text-emerald-700' },
 ];
 
 export const GR_STEPS: TimelineStep[] = [

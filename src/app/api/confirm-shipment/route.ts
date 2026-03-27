@@ -83,11 +83,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const trimmedNote   = typeof note === 'string' ? note.trim() || null : null;
   const trimmedMaSanPhamXacNhan = maSanPhamXacNhan.trim();
 
-  // ── Bước 2: Tìm sản phẩm ──────────────────────────────
+  // ── Bước 2: Tìm sản phẩm trong dim_hom ──────────────────────────────
   const { data: product, error: fetchError } = await supabaseAdmin
-    .from(PRODUCT_CONFIG.TABLE_NAME as string)
-    .select('*')
-    .eq(PRODUCT_CONFIG.LOOKUP_COLUMN as string, trimmedQrCode)
+    .from('dim_hom')
+    .select('id, ma_hom, ten_hom')
+    .eq('ma_hom', trimmedQrCode)
     .single();
 
   if (fetchError && fetchError.code !== 'PGRST116') {
@@ -103,11 +103,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const productRow = product as unknown as Record<string, unknown>;
-  const currentStatus = String(productRow[PRODUCT_CONFIG.STATUS_COLUMN] ?? '');
-  const productId     = String(productRow['id'] ?? '');
-  const productName   = String(productRow['name'] ?? trimmedQrCode);
-  const maSanPham     = String(productRow[PRODUCT_CONFIG.PRODUCT_CODE_COLUMN] ?? trimmedQrCode);
+  const productId     = String(product.id);
+  const productName   = String(product.ten_hom);
+  const maSanPham     = String(product.ma_hom);
 
   // Đối chiếu mã sản phẩm
   if (trimmedMaSanPhamXacNhan.toUpperCase() !== maSanPham.toUpperCase() && 
@@ -119,14 +117,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // ── Bước 3: Guard — đã xuất kho ─────────────────────────
-  if (currentStatus === PRODUCT_CONFIG.EXPORTED_STATUS_VALUE) {
-    return errorResponse(
-      `Sản phẩm "${maSanPham}" đã được xác nhận xuất kho trước đó.`,
-      'ALREADY_EXPORTED',
-      409
-    );
-  }
+  // ── Bước 3: Guard — (Đã xuất kho - Bỏ qua vì dùng dim_hom) ─────────────────────────
+  // Trong schema mới, dim_hom là danh mục sản phẩm nên không có trạng thái "exported".
+  // Lịch sử xuất được ghi nhận qua export_confirmations và trừ tồn trong fact_inventory.
 
   // ── Bước 4: Thử insert vào export_confirmations ─────────
   // First attempt
@@ -193,15 +186,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // ── Bước 5: Cập nhật trạng thái sản phẩm ───────────────
-  const { error: updateError } = await supabaseAdmin
-    .from(PRODUCT_CONFIG.TABLE_NAME as string)
-    .update({ [PRODUCT_CONFIG.STATUS_COLUMN]: PRODUCT_CONFIG.EXPORTED_STATUS_VALUE })
-    .eq('id', productId);
-
-  if (updateError) {
-    console.error('[confirm-shipment] Lỗi cập nhật trạng thái:', updateError);
-  }
+  // ── Bước 5: Cập nhật trạng thái sản phẩm (Bỏ qua) ───────────────
+  // Không cập nhật is_active của dim_hom thành 'exported' vì nó là danh mục sản phẩm.
 
   // ── Bước 6: Ghi log (không bắt buộc) ────────────────────
   supabaseAdmin

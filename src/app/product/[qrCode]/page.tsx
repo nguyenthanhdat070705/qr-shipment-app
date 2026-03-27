@@ -17,46 +17,166 @@ interface ProductPageProps {
   params: Promise<{ qrCode: string }>;
 }
 
-/**
- * Tìm sản phẩm bằng giá trị cột LOOKUP_COLUMN trong bảng TABLE_NAME.
- * Trả về null nếu không tìm thấy; ném lỗi nếu lỗi DB thực sự.
- */
-async function getProductByLookup(lookupValue: string): Promise<DynamicProductRow | null> {
-  // Extract product code from full URL if needed
-  const productCode = extractProductCode(lookupValue);
-
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from(PRODUCT_CONFIG.TABLE_NAME as string)
-    .select('*')
-    .eq(PRODUCT_CONFIG.LOOKUP_COLUMN as string, productCode)
-    .single();
-
-  // PGRST116 = không có hàng nào — không phải lỗi DB thực sự
-  if (error && error.code !== 'PGRST116') {
-    console.error('[product page] Lỗi DB:', error);
-    throw new Error('Không thể tải thông tin sản phẩm.');
-  }
-
-  return data as DynamicProductRow | null;
+interface DimHom {
+  id: string;
+  ma_hom: string;
+  ten_hom: string;
+  gia_ban: number | null;
+  gia_von: number | null;
+  hinh_anh: string | null;
+  NCC: string | null;
 }
 
-/** Tạo metadata động cho thẻ <title> của trình duyệt */
+interface DimKho {
+  id: string;
+  ma_kho: string;
+  ten_kho: string;
+}
+
+interface DimNcc {
+  id: string;
+  ma_ncc: string;
+  ten_ncc: string;
+  nguoi_lien_he: string | null;
+  sdt: string | null;
+  dia_chi: string | null;
+}
+
+interface FactInventoryRow {
+  'Mã': string;
+  'Tên hàng hóa': string;
+  'Kho': string;
+  'Số lượng': number;
+  'Loại hàng': string | null;
+  'Ghi chú': number;
+}
+
+/**
+ * Find product by ma_hom (product code) using fact_inventory + dim_hom + dim_kho + dim_ncc.
+ * Falls back to legacy products table lookup.
+ */
+async function getProductByCode(productCode: string): Promise<DynamicProductRow | null> {
+  const code = extractProductCode(productCode);
+  const supabase = getSupabaseAdmin();
+
+  // 1) Look up dim_hom by ma_hom
+  const { data: homData, error: homError } = await supabase
+    .from('dim_hom')
+    .select('*')
+    .eq('ma_hom', code)
+    .single();
+
+  if (homError && homError.code !== 'PGRST116') {
+    console.error('[product page] dim_hom lookup error:', homError);
+  }
+
+  if (!homData) {
+    // Fallback: try legacy products table
+    try {
+      const { data: legacyData, error: legacyError } = await supabase
+        .from(PRODUCT_CONFIG.TABLE_NAME as string)
+        .select('*')
+        .eq(PRODUCT_CONFIG.LOOKUP_COLUMN as string, code)
+        .single();
+
+      if (legacyError && legacyError.code !== 'PGRST116') {
+        console.error('[product page] legacy lookup error:', legacyError);
+      }
+
+      return legacyData as DynamicProductRow | null;
+    } catch {
+      return null;
+    }
+  }
+
+  const hom = homData as DimHom;
+
+  // 2) Find inventory row for this product
+  const { data: invData } = await supabase
+    .from('fact_inventory')
+    .select('*')
+    .eq('Tên hàng hóa', hom.id);
+
+  const inventoryRows = (invData || []) as FactInventoryRow[];
+  const firstInv = inventoryRows[0] || null;
+
+  // 3) Get warehouse info
+  let warehouse: DimKho | null = null;
+  if (firstInv && firstInv['Kho']) {
+    const { data: khoData } = await supabase
+      .from('dim_kho')
+      .select('*')
+      .eq('id', firstInv['Kho'])
+      .single();
+    warehouse = (khoData as DimKho) || null;
+  }
+
+  // 4) Get supplier info
+  let supplier: DimNcc | null = null;
+  if (hom.NCC) {
+    const { data: nccData } = await supabase
+      .from('dim_ncc')
+      .select('*')
+      .eq('id', hom.NCC)
+      .single();
+    supplier = (nccData as DimNcc) || null;
+  }
+
+  // Total quantity across all warehouses
+  const totalQty = inventoryRows.reduce((sum, r) => sum + (r['Số lượng'] || 0), 0);
+
+  // Build a unified DynamicProductRow with all info
+  const row: DynamicProductRow = {
+    id: hom.id,
+    'mã sản phẩm': hom.ma_hom,
+    code: hom.ma_hom,
+    'sản phẩm': hom.ten_hom,
+    name: hom.ten_hom,
+    product_name: hom.ten_hom,
+    'hòm sản phẩm': hom.ten_hom,
+    'Tên hàng hóa': hom.ten_hom,
+    gia_ban: hom.gia_ban,
+    'gói sản phẩm': hom.gia_ban,
+    gia_von: hom.gia_von,
+    hinh_anh: hom.hinh_anh,
+    'số lượng': totalQty,
+    'Số lượng': totalQty,
+    ton_kho: totalQty,
+    'kho nào': warehouse?.ten_kho || '—',
+    'mã kho': warehouse?.ma_kho || '',
+    'loại hàng': firstInv?.['Loại hàng'] || '',
+    'tình trạng': totalQty > 0 ? 'in_stock' : 'unavailable',
+    is_active: totalQty > 0 ? 'in_stock' : 'unavailable',
+    // Supplier info
+    'nhà cung cấp': supplier?.ten_ncc || '',
+    'mã ncc': supplier?.ma_ncc || '',
+    'liên hệ ncc': supplier?.nguoi_lien_he || '',
+    'sdt ncc': supplier?.sdt || '',
+    'địa chỉ ncc': supplier?.dia_chi || '',
+    // All warehouse locations
+    'danh sách kho': inventoryRows.map((r) => {
+      return `${r['Số lượng']} SP`;
+    }).join(', '),
+  };
+
+  return row;
+}
+
+/** SEO metadata */
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { qrCode } = await params;
 
   try {
-    const row = await getProductByLookup(qrCode);
+    const row = await getProductByCode(qrCode);
     if (!row) return { title: 'Không tìm thấy sản phẩm' };
 
-    const name =
-      (row['name'] as string | undefined) ??
-      (row['product_name'] as string | undefined) ??
-      'Thông tin sản phẩm';
+    const name = String(
+      row['sản phẩm'] ?? row['name'] ?? row['product_name'] ?? 'Thông tin sản phẩm'
+    );
 
     return {
       title: name,
-      description: `Xem chi tiết và xác nhận xuất kho sản phẩm: ${name}.`,
+      description: `Xem chi tiết sản phẩm: ${name}.`,
     };
   } catch {
     return { title: 'Thông tin sản phẩm' };
@@ -64,7 +184,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 }
 
 /**
- * Trang sản phẩm động — /product/[qrCode]
+ * Product detail page — /product/[qrCode]
  */
 export default async function ProductPage({ params }: ProductPageProps) {
   const { qrCode } = await params;
@@ -74,7 +194,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   let fetchFailed = false;
 
   try {
-    row = await getProductByLookup(qrCode);
+    row = await getProductByCode(qrCode);
   } catch {
     fetchFailed = true;
   }
@@ -87,13 +207,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
     return <ProductNotFound lookupValue={productCode} />;
   }
 
-  const productName =
-    (row['name'] as string | undefined) ??
-    (row['product_name'] as string | undefined) ??
-    (row['ten_san_pham'] as string | undefined) ??
-    'Sản phẩm';
+  const productName = String(
+    row['hòm sản phẩm'] ?? row['sản phẩm'] ?? row['name'] ?? row['product_name'] ?? 'Sản phẩm'
+  );
 
-  const statusValue = String(row[PRODUCT_CONFIG.STATUS_COLUMN] ?? '');
+  const statusValue = String(row['tình trạng'] ?? row[PRODUCT_CONFIG.STATUS_COLUMN] ?? '');
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-[#faf7f2] via-white to-slate-50">

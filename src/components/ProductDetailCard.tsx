@@ -137,6 +137,40 @@ export default function ProductDetailCard({ row }: ProductDetailCardProps) {
           </div>
         )}
 
+        {/* Kho hàng */}
+        {String(row['kho nào'] ?? '').trim() !== '' && String(row['kho nào']) !== '—' && (
+          <div className="flex items-center justify-between py-3 border-b border-gray-100">
+            <span className="text-xs font-bold uppercase tracking-wide text-gray-400">Kho hàng</span>
+            <span className="text-sm font-semibold text-gray-700">📍 {String(row['kho nào'])}</span>
+          </div>
+        )}
+
+        {/* Số lượng tồn kho */}
+        {tonKhoRaw && tonKhoRaw !== '—' && tonKhoRaw.trim() !== '' && (
+          <div className="flex items-center justify-between py-3 border-b border-gray-100">
+            <span className="text-xs font-bold uppercase tracking-wide text-gray-400">Tồn kho</span>
+            <span className={`text-sm font-bold ${isOutOfStock ? 'text-red-500' : 'text-emerald-600'}`}>
+              {tonKhoRaw} sản phẩm
+            </span>
+          </div>
+        )}
+
+        {/* Nhà cung cấp */}
+        {String(row['nhà cung cấp'] ?? '').trim() !== '' && (
+          <div className="flex items-center justify-between py-3 border-b border-gray-100">
+            <span className="text-xs font-bold uppercase tracking-wide text-gray-400">Nhà cung cấp</span>
+            <span className="text-sm font-semibold text-gray-700">{String(row['nhà cung cấp'])}</span>
+          </div>
+        )}
+
+        {/* Loại hàng */}
+        {String(row['loại hàng'] ?? '').trim() !== '' && (
+          <div className="flex items-center justify-between py-3 border-b border-gray-100">
+            <span className="text-xs font-bold uppercase tracking-wide text-gray-400">Loại hàng</span>
+            <span className="text-sm font-medium text-gray-700">{String(row['loại hàng'])}</span>
+          </div>
+        )}
+
         {/* Số serial */}
         {serialStr && serialStr.trim() !== '' && serialStr !== '—' && (
           <div className="flex items-center justify-between py-3 border-b border-gray-100">

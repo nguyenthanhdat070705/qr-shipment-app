@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Search, Package, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Package } from 'lucide-react';
 import Link from 'next/link';
 import { getWarehouseFilter } from '@/config/roles.config';
 
@@ -9,15 +9,22 @@ interface InventoryItem {
   code: string;
   name: string;
   price: number;
+  giaVon?: number;
   status: string;
   tonKho: string;
+  khaDung?: string;
   warehouse: string;
+  warehouseCode?: string;
   serial: string;
   imageUrl: string;
   isExported: boolean;
   isOutOfStock: boolean;
   available: boolean;
   lots?: string[];
+  supplierName?: string;
+  supplierContact?: string;
+  supplierPhone?: string;
+  supplierAddress?: string;
 }
 
 type FilterType = 'all' | 'available' | 'exported' | 'out_of_stock';
@@ -107,7 +114,7 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
     }
 
     return result;
-  }, [items, query, filter, sort]);
+  }, [items, query, filter, sort, warehouseFilter]);
 
   return (
     <div className="space-y-4">
@@ -200,15 +207,16 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="text-left py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wide">Sản phẩm</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wide">Mã SP</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wide">Gói sp</th>
+                  <th className="text-center py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wide">SL</th>
                   <th className="text-center py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wide">Kho</th>
+                  <th className="text-center py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wide">Loại hàng</th>
                   <th className="text-center py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wide">Tình trạng</th>
                   <th className="py-3 px-4"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filtered.map((item) => (
-                  <tr key={item.code} className="hover:bg-gray-50 transition-colors">
+                {filtered.map((item, idx) => (
+                  <tr key={`${item.code}-${idx}`} className="hover:bg-gray-50 transition-colors">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -232,38 +240,42 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
                         {item.code}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-right">
-                      {item.price > 0 ? (
-                        <span className="font-bold text-gray-800">
-                          {item.price.toLocaleString('vi-VN')}
-                          <span className="text-gray-400 font-normal text-xs ml-0.5">₫</span>
+                    <td className="py-3 px-4 text-center">
+                      <span className="font-bold text-gray-800">{item.tonKho || '0'}</span>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className="text-xs text-gray-600">{item.warehouse}</span>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      {item.status ? (
+                        <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full
+                          ${item.status === 'Ký gửi'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-indigo-100 text-indigo-700'
+                          }`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'Ký gửi' ? 'bg-amber-500' : 'bg-indigo-500'}`} />
+                          {item.status}
                         </span>
                       ) : (
                         <span className="text-gray-300">—</span>
                       )}
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <span className="text-xs text-gray-600">{item.warehouse}</span>
-                    </td>
-                    <td className="py-3 px-4 text-center">
                       <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full
-                        ${item.isExported
-                          ? 'bg-green-100 text-green-700'
-                          : item.available
+                        ${item.available
                           ? 'bg-blue-100 text-blue-700'
                           : 'bg-red-100 text-red-700'
                         }`}
                       >
-                        <span className={`w-1.5 h-1.5 rounded-full ${
-                          item.isExported ? 'bg-green-500' : item.available ? 'bg-blue-500' : 'bg-red-500'
-                        }`} />
-                        {item.isExported ? 'Đã xuất' : item.available ? 'Còn hàng' : 'Hết hàng'}
+                        <span className={`w-1.5 h-1.5 rounded-full ${item.available ? 'bg-blue-500' : 'bg-red-500'}`} />
+                        {item.available ? 'Còn hàng' : 'Hết hàng'}
                       </span>
                     </td>
                     <td className="py-3 px-4">
                       <Link
-                        href={`/product/${encodeURIComponent(item.code)}`}
-                        className="text-xs font-semibold text-[#1B2A4A] hover:text-[#111a33] transition-colors"
+                        href={`/inventory/${encodeURIComponent(item.code)}`}
+                        className="text-xs font-semibold text-[#1B2A4A] hover:text-[#111a33] hover:bg-[#eef1f7] px-3 py-1.5 rounded-lg transition-all"
                       >
                         Chi tiết →
                       </Link>
@@ -276,10 +288,10 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
 
           {/* Mobile cards */}
           <div className="md:hidden divide-y divide-gray-100">
-            {filtered.map((item) => (
+            {filtered.map((item, idx) => (
               <Link
-                key={item.code}
-                href={`/product/${encodeURIComponent(item.code)}`}
+                key={`${item.code}-${idx}`}
+                href={`/inventory/${encodeURIComponent(item.code)}`}
                 className="flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}

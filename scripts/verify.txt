@@ -1,0 +1,38 @@
+Total count: 103
+Sample rows: [
+  {
+    "MĂ£": "7d912f27-3615-408e-afb4-234b62f7ec7e",
+    "TĂªn hĂ ng hĂ³a": "cc360014-79e0-4503-b847-ec1dc5fccfc2",
+    "Kho": "2b7cf8d1-2882-4e98-a38d-d14eb101dfca",
+    "Sá»‘ lÆ°á»£ng": 1,
+    "Ghi chĂº": 1
+  },
+  {
+    "MĂ£": "d04c717f-c668-4b61-abc1-4ff4f2511d60",
+    "TĂªn hĂ ng hĂ³a": "b1cb3de9-852a-46fb-ad50-9b099368f86f",
+    "Kho": "2b7cf8d1-2882-4e98-a38d-d14eb101dfca",
+    "Sá»‘ lÆ°á»£ng": 1,
+    "Ghi chĂº": 1
+  },
+  {
+    "MĂ£": "4190c1e3-e768-4770-8f4c-e0039a75bf91",
+    "TĂªn hĂ ng hĂ³a": "3b1d6eec-78cb-46a9-98bf-7c9d57ca33c8",
+    "Kho": "2b7cf8d1-2882-4e98-a38d-d14eb101dfca",
+    "Sá»‘ lÆ°á»£ng": 1,
+    "Ghi chĂº": 1
+  },
+  {
+    "MĂ£": "61119741-0809-409a-ab3e-5a3b697bac08",
+    "TĂªn hĂ ng hĂ³a": "3b20f16c-1af3-4b31-9c52-bed2ea6a84d2",
+    "Kho": "2b7cf8d1-2882-4e98-a38d-d14eb101dfca",
+    "Sá»‘ lÆ°á»£ng": 1,
+    "Ghi chĂº": 1
+  },
+  {
+    "MĂ£": "43cb590e-3aec-41bf-bd26-0ab98b0e96d5",
+    "TĂªn hĂ ng hĂ³a": "c7346247-d902-4e56-9f2d-d9f04685a625",
+    "Kho": "2b7cf8d1-2882-4e98-a38d-d14eb101dfca",
+    "Sá»‘ lÆ°á»£ng": 2,
+    "Ghi chĂº": 2
+  }
+]

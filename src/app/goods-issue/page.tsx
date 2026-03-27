@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Truck, Search, ScanLine, Keyboard, ArrowLeft } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
@@ -11,13 +11,16 @@ const Scanner = dynamic(() => import('@yudiel/react-qr-scanner').then((mod) => m
   ssr: false,
 });
 
-interface QRCodeData {
-  id: string;
-  qr_code: string;
-  reference_id: string;
-  quantity: number;
-  warehouse: string;
-  warehouse_name?: string;
+interface InventoryItemData {
+  inventory_id: string;
+  ma_lo: string;
+  product_id: string;
+  product_code: string;
+  product_name: string;
+  warehouse_id: string;
+  warehouse_name: string;
+  quantity_available: number;
+  quantity_total: number;
 }
 
 export default function GoodsIssuePage() {
@@ -25,7 +28,9 @@ export default function GoodsIssuePage() {
   const [inputMode, setInputMode] = useState<'type' | 'scan'>('type');
   const [searchInput, setSearchInput] = useState('');
   
-  const [scannedQR, setScannedQR] = useState<QRCodeData | null>(null);
+  const [scannedItems, setScannedItems] = useState<InventoryItemData[]>([]);
+  const [selectedInventoryId, setSelectedInventoryId] = useState<string>('');
+  
   const [error, setError] = useState('');
   
   // Delivery form
@@ -37,66 +42,61 @@ export default function GoodsIssuePage() {
   const [submitting, setSubmitting] = useState(false);
 
   // Search logic
-  const handleSearchQR = async (code: string) => {
+  const handleSearchProductOrLot = async (code: string) => {
     setError('');
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!supabaseUrl || !anonKey) return;
+    setScannedItems([]);
+    setSelectedInventoryId('');
+
+    if (!code) return;
 
     try {
-      // Find qr_code
-      const res = await fetch(`${supabaseUrl}/rest/v1/qr_codes?qr_code=eq.${encodeURIComponent(code)}&status=eq.active&select=*,warehouses!warehouse(name)`, {
-        headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` }
-      });
-      const data = await res.json();
+      const res = await fetch(`/api/goods-issue/search?q=${encodeURIComponent(code)}`);
+      const result = await res.json();
 
-      if (data && data.length > 0) {
-        const qr = data[0];
-        const qrName = qr.warehouses?.name || qr.warehouse;
-        
-        let allowed = true;
-        try {
-          const auth = localStorage.getItem('auth_user');
-          if (auth) {
-            const user = JSON.parse(auth);
-            const filter = getWarehouseFilter(user.email);
-            if (filter && !qrName?.includes(filter)) {
-              allowed = false;
-            }
-          }
-        } catch(e) {}
-
-        if (!allowed) {
-          setError(`Lỗi: Bạn không có quyền xuất kho từ "${qrName}".`);
-          setScannedQR(null);
-          return;
-        }
-
-        setScannedQR({
-          id: qr.id,
-          qr_code: qr.qr_code,
-          reference_id: qr.reference_id,
-          quantity: qr.quantity,
-          warehouse: qr.warehouse,
-          warehouse_name: qrName
-        });
-        setQuantityToExport(qr.quantity);
-        setSearchInput(qr.qr_code);
-      } else {
-        setError(`Mã Đám "${code}" không tồn tại hoặc đã hết/được sử dụng.`);
-        setScannedQR(null);
+      if (!res.ok) {
+        setError(result.error || `Mã "${code}" không tồn tại hoặc đã hết hàng.`);
+        return;
       }
+
+      let data = result.data as InventoryItemData[];
+
+      // Filter by authorized warehouse if applicable
+      try {
+        const auth = localStorage.getItem('auth_user');
+        if (auth) {
+          const user = JSON.parse(auth);
+          const filter = getWarehouseFilter(user.email);
+          if (filter) {
+            data = data.filter(item => item.warehouse_name?.includes(filter));
+          }
+        }
+      } catch(e) {}
+
+      if (data.length === 0) {
+        setError(`Lỗi: Không tìm thấy lô hàng khả dụng nào phù hợp với quyền truy cập kho của bạn.`);
+        return;
+      }
+
+      setScannedItems(data);
+      // Auto-select first item
+      setSelectedInventoryId(data[0].inventory_id);
+      setQuantityToExport(data[0].quantity_available > 0 ? 1 : 0);
+      setSearchInput(code);
+
     } catch (err) {
       console.error(err);
-      setError('Lỗi kết nối cơ sở dữ liệu.');
+      setError('Lỗi kết nối cơ sở dữ liệu khi tra cứu tồn kho.');
     }
   };
 
+  const selectedItem = scannedItems.find(i => i.inventory_id === selectedInventoryId);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!scannedQR) return;
-    if (quantityToExport <= 0 || quantityToExport > scannedQR.quantity) {
-      setError(`Số lượng xuất không hợp lệ (Tồn: ${scannedQR.quantity})`);
+    if (!selectedItem) return;
+    
+    if (quantityToExport <= 0 || quantityToExport > selectedItem.quantity_available) {
+      setError(`Số lượng xuất không hợp lệ (Tồn khả dụng: ${selectedItem.quantity_available})`);
       return;
     }
 
@@ -112,11 +112,9 @@ export default function GoodsIssuePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          qr_code: scannedQR.qr_code,
-          qr_id: scannedQR.id,
-          product_code: scannedQR.reference_id,
+          inventory_id: selectedItem.inventory_id,
+          product_code: selectedItem.product_code,
           quantity: quantityToExport,
-          warehouse_id: scannedQR.warehouse,
           customer_name: customerName,
           customer_phone: customerPhone,
           customer_address: customerAddress,
@@ -127,12 +125,12 @@ export default function GoodsIssuePage() {
 
       const result = await res.json();
       if (!res.ok) {
-        setError(result.error || 'Có lỗi xảy ra.');
+        setError(result.error || 'Có lỗi xảy ra khi tạo Đơn xuất hàng.');
         return;
       }
 
       // Success
-      router.push(`/operations/${result.data.id}`);
+      router.push(`/operations`); // Redirect to operations page to view Delivery Orders
     } catch (err) {
       console.error(err);
       setError('Lỗi kết nối server.');
@@ -146,14 +144,14 @@ export default function GoodsIssuePage() {
       <div className="mb-6 flex items-center justify-between max-w-4xl mx-auto">
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900">Tính năng xuất kho</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Quét QR hoặc nhập mã Đám để ghi nhận hàng ra khỏi kho</p>
+          <p className="text-sm text-gray-500 mt-0.5">Tìm Mã Sản phẩm, Mã Đám hoặc quét QR để ghi nhận xuất kho</p>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Scanner Card */}
         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 space-y-4">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400">Bước 1: Quét mã lô hàng (Mã Đám)</h2>
+            <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400">Bước 1: Quét mã SP hoặc Mã Đám</h2>
             
             <div className="flex rounded-xl border border-gray-200 bg-gray-50 p-1 gap-1 mb-3">
               <button
@@ -188,16 +186,19 @@ export default function GoodsIssuePage() {
                   type="text"
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="Nhập mã QR lô (vd: INV-2023...)"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSearchProductOrLot(searchInput.trim());
+                  }}
+                  placeholder="Tra cứu: Mã Sản phẩm (vd: 2AQ0075) hoặc Mã Lô"
                   className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
                 />
                 <button
                   type="button"
-                  onClick={() => handleSearchQR(searchInput.trim())}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 shadow-md transition-all"
+                  onClick={() => handleSearchProductOrLot(searchInput.trim())}
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 shadow-md transition-all whitespace-nowrap"
                 >
                   <Search size={16} />
-                  Tìm lô
+                  Tìm
                 </button>
               </div>
             ) : (
@@ -207,7 +208,7 @@ export default function GoodsIssuePage() {
                     if (result && result.length > 0 && result[0].rawValue) {
                       setSearchInput(result[0].rawValue);
                       setInputMode('type');
-                      handleSearchQR(result[0].rawValue);
+                      handleSearchProductOrLot(result[0].rawValue);
                     }
                   }}
                   formats={['qr_code']}
@@ -218,49 +219,83 @@ export default function GoodsIssuePage() {
           </div>
 
           {error && (
-            <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
+            <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium transition-all">
               {error}
             </div>
           )}
 
           {/* Form */}
-          {scannedQR && (
-            <form onSubmit={handleSubmit} className="rounded-2xl border border-emerald-200 bg-emerald-50 shadow-sm p-6 space-y-5">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-emerald-800">Bước 2: Xác nhận thông tin xuất</h2>
+          {scannedItems.length > 0 && selectedItem && (
+            <form onSubmit={handleSubmit} className="rounded-2xl border border-emerald-200 bg-emerald-50 shadow-sm p-6 space-y-5 animate-in slide-in-from-bottom-4 relative">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-emerald-800">Bước 2: Xác nhận xuất kho</h2>
               
-              <div className="grid grid-cols-2 gap-4 bg-white p-4 rounded-xl border border-emerald-100">
-                <div>
-                  <p className="text-[10px] font-bold uppercase text-gray-400">Mã lô (Đám)</p>
-                  <p className="text-sm font-bold font-mono text-emerald-600">{scannedQR.qr_code}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase text-gray-400">Mã Sản phẩm</p>
-                  <p className="text-sm font-bold text-gray-900">{scannedQR.reference_id}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase text-gray-400">Kho xuất</p>
-                  <p className="text-sm font-bold text-gray-900">{scannedQR.warehouse_name}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase text-gray-400">Tồn trong lô</p>
-                  <p className="text-sm font-bold text-emerald-600">{scannedQR.quantity}</p>
+              <div className="grid grid-cols-1 gap-4 bg-white p-4 rounded-xl border border-emerald-100">
+                {scannedItems.length > 1 && (
+                  <div className="mb-2">
+                    <label className="block text-xs font-bold text-gray-400 mb-1 uppercase">Chọn Lô / Kho xuất</label>
+                    <select
+                      value={selectedInventoryId}
+                      onChange={(e) => {
+                        setSelectedInventoryId(e.target.value);
+                        const it = scannedItems.find(i => i.inventory_id === e.target.value);
+                        if (it && quantityToExport > it.quantity_available) {
+                          setQuantityToExport(it.quantity_available);
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-sm font-medium focus:ring-2 focus:ring-emerald-200"
+                    >
+                      {scannedItems.map((item) => (
+                        <option key={item.inventory_id} value={item.inventory_id}>
+                          Kho: {item.warehouse_name} — Tồn: {item.quantity_available} (SP: {item.product_name})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase text-gray-400">Mã SP</p>
+                    <p className="text-sm font-bold font-mono text-emerald-600">{selectedItem.product_code}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase text-gray-400">Tên sản phẩm</p>
+                    <p className="text-sm font-bold text-gray-900 line-clamp-1" title={selectedItem.product_name}>{selectedItem.product_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase text-gray-400">Kho xuất</p>
+                    <p className="text-sm font-bold text-gray-900">{selectedItem.warehouse_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase text-gray-400">Mã lô (Đám)</p>
+                    <p className="text-sm font-bold text-gray-900">{selectedItem.ma_lo}</p>
+                  </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Số lượng xuất *</label>
+                  <div className="flex justify-between items-end mb-1">
+                    <label className="block text-sm font-semibold text-gray-700">Số lượng xuất *</label>
+                    <span className="text-xs font-bold text-emerald-600">
+                      Tồn khả dụng: {selectedItem.quantity_available}
+                    </span>
+                  </div>
                   <input
                     type="number"
                     min={1}
-                    max={scannedQR.quantity}
+                    max={selectedItem.quantity_available}
                     value={quantityToExport}
                     onChange={(e) => setQuantityToExport(parseInt(e.target.value) || 0)}
                     required
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 transition-all font-bold"
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 transition-all font-bold text-lg"
                   />
                 </div>
                 
+                <div className="sm:col-span-2 border-t border-emerald-100 pt-4 mt-2">
+                  <h3 className="text-xs font-bold uppercase text-emerald-700 mb-3">Thông tin Đơn giao hàng (Tuỳ chọn)</h3>
+                </div>
+
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Tên Khách hàng</label>
                   <input

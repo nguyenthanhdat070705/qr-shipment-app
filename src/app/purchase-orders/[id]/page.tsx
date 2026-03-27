@@ -13,7 +13,7 @@ const STATUS_ACTIONS: Record<string, { label: string; next: string; color: strin
   submitted: [{ label: 'Duyệt', next: 'approved', color: 'bg-purple-600 hover:bg-purple-700 shadow-purple-200' },
               { label: 'Hủy', next: 'cancelled', color: 'bg-red-500 hover:bg-red-600 shadow-red-200' }],
   approved:  [{ label: 'Xác nhận nhận hàng', next: 'received', color: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200' }],
-  received:  [{ label: 'Đóng PO', next: 'closed', color: 'bg-gray-600 hover:bg-gray-700 shadow-gray-200' }],
+  received:  [{ label: 'Hoàn thành', next: 'closed', color: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200' }],
 };
 
 export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -138,7 +138,7 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
           </div>
 
           {/* Info grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-100">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mt-6 pt-6 border-t border-gray-100">
             <div className="flex items-start gap-2">
               <Building size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
               <div>
@@ -158,7 +158,16 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
               <div>
                 <p className="text-[10px] font-bold uppercase text-gray-400">Ngày đặt</p>
                 <p className="text-sm font-semibold text-gray-800">
-                  {new Date(po.order_date).toLocaleDateString('vi-VN')}
+                  {po.order_date ? new Date(po.order_date).toLocaleDateString('vi-VN') : '—'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <Calendar size={14} className="text-emerald-400 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-[10px] font-bold uppercase text-emerald-500">Ngày dự kiến nhận</p>
+                <p className="text-sm font-semibold text-gray-800">
+                  {po.expected_date ? new Date(po.expected_date).toLocaleDateString('vi-VN') : '—'}
                 </p>
               </div>
             </div>
@@ -166,7 +175,7 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
               <User size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-[10px] font-bold uppercase text-gray-400">Người đặt</p>
-                <p className="text-sm font-semibold text-gray-800">{po.created_by}</p>
+                <p className="text-sm font-semibold text-gray-800">{po.created_by || '—'}</p>
               </div>
             </div>
           </div>
@@ -200,15 +209,15 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
                     <td className="px-4 py-3 font-mono font-semibold text-purple-600">{item.product_code}</td>
                     <td className="px-4 py-3">{item.product_name}</td>
                     <td className="px-4 py-3 text-right">{item.quantity}</td>
-                    <td className="px-4 py-3 text-right">{Number(item.unit_price).toLocaleString('vi-VN')} ₫</td>
-                    <td className="px-4 py-3 text-right font-semibold">{Number(item.total_price).toLocaleString('vi-VN')} ₫</td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap">{Number(item.unit_price).toLocaleString('vi-VN')} ₫</td>
+                    <td className="px-4 py-3 text-right font-semibold whitespace-nowrap">{Number(item.total_price).toLocaleString('vi-VN')} ₫</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr className="bg-gray-50/50">
                   <td colSpan={4} className="px-4 py-3 text-right font-bold text-gray-500 uppercase text-xs">Tổng cộng</td>
-                  <td className="px-4 py-3 text-right text-lg font-extrabold text-gray-900">
+                  <td className="px-4 py-3 text-right text-lg font-extrabold text-gray-900 whitespace-nowrap">
                     {Number(po.total_amount).toLocaleString('vi-VN')} ₫
                   </td>
                 </tr>

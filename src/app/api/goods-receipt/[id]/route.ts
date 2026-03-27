@@ -4,10 +4,6 @@ import { getSupabaseAdmin } from '@/lib/supabase/server';
 /**
  * GET   /api/goods-receipt/[id]  → Detail with items
  * PATCH /api/goods-receipt/[id]  → Update status OR update item received_qty
- *
- * PATCH body options:
- *   { status: string }                                             → change GR status
- *   { update_items: [{ id: string, received_qty: number }] }      → update item quantities
  */
 
 export async function GET(
@@ -17,14 +13,10 @@ export async function GET(
   const { id } = await params;
   const supabase = getSupabaseAdmin();
 
-  const { data, error } = await supabase
-    .from('goods_receipts')
-    .select(`
-      *,
-      warehouse:warehouses(*),
-      purchase_order:purchase_orders(*, supplier:suppliers(*)),
-      items:goods_receipt_items(*)
-    `)
+  // Fetch GR from fact_nhap_hang
+  const { data: gr, error } = await supabase
+    .from('fact_nhap_hang')
+    .select('*')
     .eq('id', id)
     .single();
 
@@ -32,7 +24,88 @@ export async function GET(
     return NextResponse.json({ error: error.message }, { status: error.code === 'PGRST116' ? 404 : 500 });
   }
 
-  return NextResponse.json({ data });
+  // Fetch items from fact_nhap_hang_items
+  const { data: rawItems } = await supabase
+    .from('fact_nhap_hang_items')
+    .select('*')
+    .eq('nhap_hang_id', id);
+
+  const items = (rawItems || []).map((item: Record<string, unknown>) => ({
+    id: item.id,
+    gr_id: item.nhap_hang_id,
+    product_code: item.ma_hom,
+    product_name: item.ten_hom,
+    expected_qty: item.so_luong_yeu_cau || 0,
+    received_qty: item.so_luong_thuc_nhan || 0,
+    is_accepted: true,
+    note: item.ghi_chu,
+    created_at: item.created_at,
+  }));
+
+  // Fetch warehouse from dim_kho
+  let warehouse = null;
+  if (gr.kho_id) {
+    const { data: kho } = await supabase
+      .from('dim_kho')
+      .select('id, ma_kho, ten_kho')
+      .eq('id', gr.kho_id)
+      .single();
+    if (kho) warehouse = { id: kho.id, code: kho.ma_kho, name: kho.ten_kho };
+  }
+
+  // Fetch PO from fact_don_hang
+  let purchase_order = null;
+  if (gr.don_hang_id) {
+    const { data: po } = await supabase
+      .from('fact_don_hang')
+      .select('*')
+      .eq('id', gr.don_hang_id)
+      .single();
+
+    if (po) {
+      let supplier = null;
+      if (po.ncc_id) {
+        const { data: ncc } = await supabase
+          .from('dim_ncc')
+          .select('*')
+          .eq('id', po.ncc_id)
+          .single();
+        if (ncc) {
+          supplier = {
+            id: ncc.id,
+            code: ncc.ma_ncc,
+            name: ncc.ten_ncc,
+            contact_name: ncc.nguoi_lien_he,
+            phone: ncc.sdt,
+          };
+        }
+      }
+      purchase_order = {
+        id: po.id,
+        po_code: po.ma_don_hang,
+        status: po.trang_thai,
+        supplier,
+      };
+    }
+  }
+
+  return NextResponse.json({
+    data: {
+      id: gr.id,
+      gr_code: gr.ma_phieu_nhap,
+      po_id: gr.don_hang_id,
+      warehouse_id: gr.kho_id,
+      status: gr.trang_thai || 'pending',
+      note: gr.ghi_chu,
+      received_by: gr.nguoi_nhan_id,
+      received_date: gr.ngay_nhan,
+      created_at: gr.created_at,
+      updated_at: gr.updated_at,
+      warehouse,
+      purchase_order,
+      items,
+    },
+  });
 }
 
 export async function PATCH(
@@ -59,10 +132,10 @@ export async function PATCH(
 
     for (const item of updates) {
       const { error } = await supabase
-        .from('goods_receipt_items')
-        .update({ received_qty: item.received_qty })
+        .from('fact_nhap_hang_items')
+        .update({ so_luong_thuc_nhan: item.received_qty })
         .eq('id', item.id)
-        .eq('gr_id', id); // safety: only update items belonging to this GR
+        .eq('nhap_hang_id', id);
       if (error) errors.push(error.message);
     }
 
@@ -84,8 +157,8 @@ export async function PATCH(
   }
 
   const { data, error } = await supabase
-    .from('goods_receipts')
-    .update({ status: body.status })
+    .from('fact_nhap_hang')
+    .update({ trang_thai: body.status })
     .eq('id', id)
     .select()
     .single();
@@ -98,30 +171,29 @@ export async function PATCH(
   let generatedQRCodes: string[] = [];
 
   if (body.status === 'completed') {
-    const { data: grData } = await supabase
-      .from('goods_receipts')
-      .select('warehouse_id, received_by, goods_receipt_items(product_code, received_qty)')
-      .eq('id', id)
-      .single();
+    const { data: grItems } = await supabase
+      .from('fact_nhap_hang_items')
+      .select('ma_hom, so_luong_thuc_nhan')
+      .eq('nhap_hang_id', id);
 
-    if (grData?.goods_receipt_items) {
+    if (grItems) {
       const now = new Date();
       const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
 
-      const qrInserts = (grData.goods_receipt_items as { product_code: string; received_qty: number }[])
-        .filter((item) => item.received_qty > 0)
-        .map((item, i) => {
+      const qrInserts = grItems
+        .filter((item: Record<string, unknown>) => (item.so_luong_thuc_nhan as number) > 0)
+        .map((item: Record<string, unknown>, i: number) => {
           const uniqueId = Math.random().toString(36).substring(2, 6).toUpperCase();
-          const qr_code = `INV-${dateStr}-${item.product_code}-${uniqueId}-${i}`;
+          const qr_code = `INV-${dateStr}-${item.ma_hom}-${uniqueId}-${i}`;
           generatedQRCodes.push(qr_code);
           return {
             qr_code,
             type: 'INVENTORY',
-            reference_id: item.product_code,
-            quantity: item.received_qty,
-            warehouse: grData.warehouse_id,
+            reference_id: item.ma_hom,
+            quantity: item.so_luong_thuc_nhan,
+            warehouse: data.kho_id,
             status: 'active',
-            created_by: grData.received_by || 'system',
+            created_by: 'system',
           };
         });
 
@@ -133,17 +205,16 @@ export async function PATCH(
 
     // Notify procurement
     try {
-      const { error: notifError } = await supabase.from('notifications').insert({
-        sender_email: data.received_by || 'kho@blackstones.vn',
+      await supabase.from('notifications').insert({
+        sender_email: 'kho@blackstones.vn',
         receiver_role: 'procurement',
         title: 'Nhập kho hoàn tất — QR đã sinh',
-        message: `Phiếu ${data.gr_code} đã hoàn tất. ${generatedQRCodes.length} mã QR lô hàng đã tạo.`,
+        message: `Phiếu ${data.ma_phieu_nhap} đã hoàn tất. ${generatedQRCodes.length} mã QR lô hàng đã tạo.`,
         type: 'receipt_alert',
         reference_id: id,
       });
-      if (notifError) console.error('[goods-receipt PATCH] Notification error:', notifError);
     } catch (e) { console.error(e); }
   }
 
-  return NextResponse.json({ data, qr_codes: generatedQRCodes });
+  return NextResponse.json({ data: { ...data, status: data.trang_thai, gr_code: data.ma_phieu_nhap }, qr_codes: generatedQRCodes });
 }

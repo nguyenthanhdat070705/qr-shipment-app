@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
   ArrowLeft, User, Mail, Phone, Briefcase, Building2,
   FileText, Save, CheckCircle, AlertCircle, Loader2,
-  Package, Calendar, Clock, Hash, Edit3, X, Truck
+  Package, Calendar, Clock, Hash, Edit3, X, Truck, Camera
 } from 'lucide-react';
 
 interface UserProfile {
@@ -16,6 +16,7 @@ interface UserProfile {
   so_dien_thoai: string;
   phong_ban: string;
   ghi_chu: string;
+  avatar_url: string;
 }
 
 interface ExportRecord {
@@ -49,7 +50,9 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [saveMsg, setSaveMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [profile, setProfile] = useState<UserProfile>({
     email: '',
@@ -58,6 +61,7 @@ export default function ProfilePage() {
     so_dien_thoai: '',
     phong_ban: '',
     ghi_chu: '',
+    avatar_url: '',
   });
 
   const [editProfile, setEditProfile] = useState<UserProfile>({ ...profile });
@@ -84,14 +88,13 @@ export default function ProfilePage() {
             so_dien_thoai: data.profile.so_dien_thoai || '',
             phong_ban: data.profile.phong_ban || '',
             ghi_chu: data.profile.ghi_chu || '',
+            avatar_url: data.profile.avatar_url || localStorage.getItem('avatar_url') || '',
           };
           setProfile(p);
           setEditProfile(p);
         }
 
-        if (data.exportHistory) {
-          setExports(data.exportHistory);
-        }
+        if (data.exportHistory) setExports(data.exportHistory);
         setTotalExports(data.totalExports || 0);
       } catch (err) {
         console.error('Failed to load profile:', err);
@@ -101,6 +104,41 @@ export default function ProfilePage() {
     }
     loadProfile();
   }, []);
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingAvatar(true);
+    setSaveMsg(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('email', profile.email);
+
+      const res = await fetch('/api/profile/avatar', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.success && data.avatar_url) {
+        setProfile(prev => ({ ...prev, avatar_url: data.avatar_url }));
+        setEditProfile(prev => ({ ...prev, avatar_url: data.avatar_url }));
+        localStorage.setItem('avatar_url', data.avatar_url);
+        setSaveMsg({ type: 'success', text: 'Cập nhật ảnh đại diện thành công!' });
+        setTimeout(() => setSaveMsg(null), 3000);
+      } else {
+        setSaveMsg({ type: 'error', text: data.error || 'Lỗi upload ảnh.' });
+      }
+    } catch {
+      setSaveMsg({ type: 'error', text: 'Lỗi kết nối khi upload ảnh.' });
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -117,13 +155,19 @@ export default function ProfilePage() {
       if (data.success) {
         setProfile({ ...editProfile });
         setEditing(false);
-        setSaveMsg({ type: 'success', text: 'Cập nhật thành công!' });
+        setSaveMsg({ type: 'success', text: 'Cập nhật thông tin thành công!' });
+
+        // Update localStorage too
+        try {
+          const raw = localStorage.getItem('auth_user');
+          if (raw) {
+            const u = JSON.parse(raw);
+            u.ho_ten = editProfile.ho_ten;
+            localStorage.setItem('auth_user', JSON.stringify(u));
+          }
+        } catch { /* ignore */ }
+
         setTimeout(() => setSaveMsg(null), 3000);
-      } else if (data.needsSetup) {
-        setSaveMsg({
-          type: 'error',
-          text: 'Bảng dữ liệu chưa được tạo. Vui lòng liên hệ quản trị viên để thiết lập database.',
-        });
       } else {
         setSaveMsg({ type: 'error', text: data.error || 'Lỗi khi cập nhật.' });
       }
@@ -146,6 +190,9 @@ export default function ProfilePage() {
       </div>
     );
   }
+
+  const avatarUrl = profile.avatar_url;
+  const initials = (profile.ho_ten || profile.email)[0]?.toUpperCase() || 'U';
 
   return (
     <main className="min-h-screen bg-gray-50 pb-12">
@@ -175,9 +222,47 @@ export default function ProfilePage() {
           {/* Profile header with avatar */}
           <div className="bg-gradient-to-r from-[#1B2A4A] to-teal-500 px-6 py-8">
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm text-white text-2xl font-extrabold border border-white/30">
-                {(profile.ho_ten || profile.email)[0]?.toUpperCase() || 'U'}
+              {/* Avatar with upload */}
+              <div className="relative group">
+                {avatarUrl ? (
+                  <div className="h-20 w-20 rounded-2xl overflow-hidden border-2 border-white/30 shadow-lg">
+                    <img
+                      src={avatarUrl}
+                      alt="Avatar"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm text-white text-3xl font-extrabold border-2 border-white/30 shadow-lg">
+                    {initials}
+                  </div>
+                )}
+                {/* Upload overlay */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                  className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                >
+                  {uploadingAvatar ? (
+                    <Loader2 size={20} className="text-white animate-spin" />
+                  ) : (
+                    <Camera size={20} className="text-white" />
+                  )}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                />
+                {/* Upload hint badge */}
+                <div className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-md border border-gray-100">
+                  <Camera size={13} className="text-gray-500" />
+                </div>
               </div>
+
               <div>
                 <h1 className="text-xl font-extrabold text-white">
                   {profile.ho_ten || profile.email.split('@')[0]}

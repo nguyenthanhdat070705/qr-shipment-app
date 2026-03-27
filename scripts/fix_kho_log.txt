@@ -1,0 +1,40 @@
+đŸ”§ Fix dim_kho & re-upload fact_inventory
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+đŸ—‘ï¸  Step 1: XĂ³a toĂ n bá»™ fact_inventory...
+   âœ… ÄĂ£ xĂ³a 103 dĂ²ng
+
+đŸ“ Step 2: Update ten_kho...
+   âœ… 5d05ea62 â†’ "Kho Kinh DÆ°Æ¡ng VÆ°Æ¡ng"
+   âœ… d8808bcf â†’ "Kho HĂ m Long"
+   âœ… cc42cba4 â†’ "Kho Kha Váº¡n CĂ¢n"
+   âœ… c18a1d0d â†’ "kho kĂ½ gá»­i"
+
+đŸ—‘ï¸  Step 3: XĂ³a 3 kho trĂ¹ng...
+   âœ… Deleted 2b7cf8d1
+   âœ… Deleted f66fe9f0
+   âœ… Deleted 490764b0
+
+đŸ“ dim_kho sau xá»­ lĂ½:
+   KHO-01 | Kho HĂ m Long | d8808bcf-7ba4-45cb-879f-fc409f463fdd
+   KHO-02 | Kho Kha Váº¡n CĂ¢n | cc42cba4-185e-4a0c-901a-a81e7f7de374
+   KHO-03 | Kho Kinh DÆ°Æ¡ng VÆ°Æ¡ng | 5d05ea62-125f-48b8-870b-52e916d1a5f9
+   KHO-KI-GUI | kho kĂ½ gá»­i | c18a1d0d-5bf7-4097-a741-3fc9a1eae816
+
+đŸ“¥ Step 4: Re-upload fact_inventory...
+   CSV: 103 dĂ²ng
+   âœ… Chunk 1-50: OK
+   âœ… Chunk 51-100: OK
+   âœ… Chunk 101-103: OK
+
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+âœ… HOĂ€N Táº¤T
+   dim_kho: 4 kho
+   fact_inventory: 103 / 103 dĂ²ng
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+PhĂ¢n bá»‘ kho:
+   Kho HĂ m Long: 24 dĂ²ng
+   Kho Kha Váº¡n CĂ¢n: 37 dĂ²ng
+   Kho Kinh DÆ°Æ¡ng VÆ°Æ¡ng: 16 dĂ²ng
+   kho kĂ½ gá»­i: 26 dĂ²ng

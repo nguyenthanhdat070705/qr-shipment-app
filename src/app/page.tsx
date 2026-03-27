@@ -1,7 +1,7 @@
 'use client';
 
 import { QrCode, ScanLine, Package, CheckCircle } from 'lucide-react';
-import { Truck } from 'lucide-react';
+import { Search } from 'lucide-react';
 import QuickLookupForm from '@/components/QuickLookupForm';
 import PageLayout from '@/components/PageLayout';
 
@@ -10,7 +10,7 @@ import PageLayout from '@/components/PageLayout';
    ═══════════════════════════════════════════════════════════ */
 export default function HomePage() {
   return (
-    <PageLayout title="Xuất hàng" icon={<Truck size={16} className="text-emerald-500" />}>
+    <PageLayout title="Tìm kiếm hàng" icon={<Search size={16} className="text-blue-500" />}>
       {/* ── Hero ─────────────────────────────────────── */}
       <div className="mx-auto max-w-lg px-5 pt-10 pb-8 text-center">
         <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1B2A4A] shadow-lg shadow-[#1B2A4A4D]">
@@ -20,7 +20,7 @@ export default function HomePage() {
           Tìm sản phẩm
         </h1>
         <p className="text-gray-500 text-sm leading-relaxed max-w-xs mx-auto">
-          Quét mã QR hoặc nhập mã sản phẩm vào ô bên dưới để xem thông tin và xác nhận xuất kho.
+          Quét mã QR hoặc nhập mã sản phẩm vào ô bên dưới để xem đầy đủ thông tin chi tiết của sản phẩm.
         </p>
       </div>
 
@@ -58,8 +58,8 @@ export default function HomePage() {
               },
               {
                 icon: <CheckCircle size={16} className="text-[#2d4a7a]" />,
-                title: 'Nhập mã đơn hàng và xác nhận xuất',
-                desc: 'Chỉ cần nhập mã đơn hàng — hệ thống tự động ghi nhận người xuất, thời gian và số lượng.',
+                title: 'Xem và In thông tin',
+                desc: 'Xem phiếu thông tin sản phẩm và có thể kết nối máy in để in tem nhãn.',
               },
             ].map((step, i) => (
               <li key={i} className="flex items-start gap-3">

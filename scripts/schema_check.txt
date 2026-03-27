@@ -1,0 +1,1 @@
+fact_inventory properties: ["MĂ£","TĂªn hĂ ng hĂ³a","Kho","Sá»‘ lÆ°á»£ng","Ghi chĂº"]

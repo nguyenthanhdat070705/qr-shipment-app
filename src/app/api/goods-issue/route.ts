@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase/server';
 
 /**
  * POST /api/goods-issue
- * Creates a Delivery Order, deducts Inventory QR quantity, and notifies Operations.
+ * Creates a Delivery Order (fact_xuat_hang), deducts from fact_inventory, and notifies Operations.
  */
 export async function POST(req: NextRequest) {
   const supabase = getSupabaseAdmin();
@@ -16,11 +16,8 @@ export async function POST(req: NextRequest) {
   }
 
   const {
-    qr_id,
-    qr_code,
-    product_code,
+    inventory_id,
     quantity,
-    warehouse_id,
     customer_name,
     customer_phone,
     customer_address,
@@ -28,96 +25,106 @@ export async function POST(req: NextRequest) {
     created_by
   } = body;
 
-  if (!qr_id || !quantity || !warehouse_id) {
-    return NextResponse.json({ error: 'Thiếu dữ liệu: Mã lô, Số lượng hoặc Kho.' }, { status: 400 });
+  if (!inventory_id || !quantity) {
+    return NextResponse.json({ error: 'Thiếu dữ liệu: Lô hàng tồn kho hoặc số lượng.' }, { status: 400 });
   }
 
   try {
-    // 1. Verify and update QR Code
-    const { data: qrData, error: qrErr } = await supabase
-      .from('qr_codes')
-      .select('quantity, status')
-      .eq('id', qr_id)
+    // 1. Verify Inventory Record & Product Data
+    const { data: invRow, error: invErr } = await supabase
+      .from('fact_inventory')
+      .select('*')
+      .eq('Mã', inventory_id)
       .single();
 
-    if (qrErr || !qrData) {
-      return NextResponse.json({ error: 'Không tìm thấy Mã Đám hợp lệ.' }, { status: 404 });
+    if (invErr || !invRow) {
+      return NextResponse.json({ error: 'Không tìm thấy thông tin tồn kho hợp lệ.' }, { status: 404 });
     }
 
-    if (qrData.status !== 'active') {
-      return NextResponse.json({ error: 'Mã Đám không trong trạng thái hoạt động.' }, { status: 400 });
+    const avail = Number(invRow['Ghi chú'] || 0);
+    const totalQty = Number(invRow['Số lượng'] || 0);
+
+    if (avail < quantity) {
+      return NextResponse.json({ error: `Số lượng khả dụng không đủ (Kho chỉ còn: ${avail})` }, { status: 400 });
     }
 
-    if (qrData.quantity < quantity) {
-      return NextResponse.json({ error: `Số lượng tồn kho không đủ (Tồn: ${qrData.quantity})` }, { status: 400 });
-    }
+    // 2. Map related data from dim_hom and dim_kho
+    const { data: homData } = await supabase.from('dim_hom').select('id, ma_hom, ten_hom').eq('id', invRow['Tên hàng hóa']).single();
+    if (!homData) throw new Error('Không tìm thấy dữ liệu Sản phẩm.');
+    
+    const homId = homData.id;
+    const maHom = homData.ma_hom;
+    const tenHom = homData.ten_hom;
+    const khoId = invRow['Kho'];
 
-    const newQty = qrData.quantity - quantity;
-    const newStatus = newQty === 0 ? 'used' : 'active';
+    // 3. Deduct from fact_inventory
+    const newInvQty = Math.max(0, totalQty - quantity);
+    const newInvAvail = Math.max(0, avail - quantity);
+    const newStatus = newInvQty === 0 ? 'depleted' : 'active';
 
-    const { error: qrUpdateErr } = await supabase
-      .from('qr_codes')
-      .update({ quantity: newQty, status: newStatus })
-      .eq('id', qr_id);
+    const { error: updateInvErr } = await supabase
+      .from('fact_inventory')
+      .update({ 'Số lượng': newInvQty, 'Ghi chú': newInvAvail })
+      .eq('Mã', inventory_id);
 
-    if (qrUpdateErr) throw new Error('Lỗi cập nhật số lượng tồn kho.');
+    if (updateInvErr) throw new Error('Lỗi cập nhật số lượng tồn kho: ' + updateInvErr.message);
 
-    // 2. Generate DO Code
+    // 4. Generate DO Code (ma_phieu_xuat)
+    const { count } = await supabase.from('fact_xuat_hang').select('*', { count: 'exact', head: true });
+    const seq = String((count || 0) + 1).padStart(3, '0');
     const now = new Date();
     const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
-    const { count } = await supabase.from('delivery_orders').select('*', { count: 'exact', head: true });
-    const seq = String((count || 0) + 1).padStart(3, '0');
     const do_code = `DO-${dateStr}-${seq}`;
 
-    // 3. Create Delivery Order
+    // 5. Create Goods Issue (fact_xuat_hang)
     const { data: doData, error: doErr } = await supabase
-      .from('delivery_orders')
+      .from('fact_xuat_hang')
       .insert({
-        do_code,
-        warehouse_id,
-        status: 'pending',
-        customer_name: customer_name || 'Khách vãng lai',
-        customer_phone,
-        customer_address,
-        note,
-        delivery_date: null,
-        created_by: created_by || 'Kho (Scan QR)'
+        ma_phieu_xuat: do_code,
+        kho_id: khoId,
+        trang_thai: 'pending',
+        ten_khach: customer_name || 'Khách vãng lai',
+        sdt_khach: customer_phone,
+        dia_chi_giao: customer_address,
+        ghi_chu: note,
+        nguoi_xuat_id: null // Ideally map from created_by to dim_account(id)
       })
       .select()
       .single();
 
     if (doErr) {
-      // Rollback not supported easily without RPC, assume it works for demo
-      console.error('[goods-issue] Delivery Order insert error:', doErr);
-      throw new Error('Lỗi tạo Đơn Giao Hàng.');
+      console.error('[goods-issue] create Delivery Order error:', doErr);
+      throw new Error('Lỗi tạo Đơn Xuất Hàng.');
     }
 
-    // 4. Create DO Items
+    // 6. Create GI Items (fact_xuat_hang_items)
     const { error: itemsErr } = await supabase
-      .from('delivery_order_items')
+      .from('fact_xuat_hang_items')
       .insert({
-        do_id: doData.id,
-        product_code,
-        product_name: 'Đám: ' + qr_code,
-        quantity,
-        note: 'Xuất từ mã QR Đám'
+        xuat_hang_id: doData.id,
+        hom_id: homId,
+        ma_hom: maHom,
+        ten_hom: tenHom,
+        so_luong: quantity,
+        inventory_id: inventory_id,
+        ghi_chu: 'Xuất từ hệ thống SCM'
       });
 
     if (itemsErr) console.error('[goods-issue] Items error:', itemsErr);
 
-    // 5. Notify Operations
+    // 7. Notify Operations
     await supabase.from('notifications').insert({
       sender_email: created_by,
       receiver_role: 'operations',
       title: 'Đơn giao hàng mới',
-      message: `Kho vừa xuất lô hàng ${qr_code} và tạo lệnh giao ${do_code}. Vui lòng tiếp nhận.`,
+      message: `Kho vừa tạo lệnh xuất hàng (${maHom} - Số lượng: ${quantity}) và tạo phiếu giao ${do_code}. Vui lòng tiếp nhận.`,
       type: 'export_alert',
       reference_id: doData.id
     });
 
     return NextResponse.json({ data: doData, do_code }, { status: 201 });
   } catch (err: any) {
-    console.error('[goods-issue API]', err);
+    console.error('[goods-issue API POST]', err);
     return NextResponse.json({ error: err.message || 'Lỗi xử lý server.' }, { status: 500 });
   }
 }

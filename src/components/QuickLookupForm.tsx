@@ -22,7 +22,7 @@ export default function QuickLookupForm() {
   function navigate(value: string) {
     const productCode = extractProductCode(value);
     if (productCode) {
-      window.location.href = `/product/${encodeURIComponent(productCode)}`;
+      window.location.href = `/product-sheet/${encodeURIComponent(productCode)}`;
     }
   }
 

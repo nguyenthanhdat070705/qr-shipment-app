@@ -1,0 +1,44 @@
+[
+  {
+    "id": "d8808bcf-7ba4-45cb-879f-fc409f463fdd",
+    "ma_kho": "KHO-01",
+    "ten_kho": "HĂ m Long",
+    "dia_chi": "Sá»‘ 5, ÄÆ°á»ng 103-TML, PhÆ°á»ng CĂ¡t LĂ¡i, TP.HCM"
+  },
+  {
+    "id": "cc42cba4-185e-4a0c-901a-a81e7f7de374",
+    "ma_kho": "KHO-02",
+    "ten_kho": "Kha Váº¡n CĂ¢n",
+    "dia_chi": "124 Kha Váº¡n CĂ¢n, phÆ°á»ng Hiá»‡p BĂ¬nh, TP.HCM"
+  },
+  {
+    "id": "5d05ea62-125f-48b8-870b-52e916d1a5f9",
+    "ma_kho": "KHO-03",
+    "ten_kho": "Kinh DÆ°Æ¡ng VÆ°Æ¡ng",
+    "dia_chi": "34 Kinh DÆ°Æ¡ng VÆ°Æ¡ng, PhÆ°á»ng PhĂº LĂ¢m, TP.HCM"
+  },
+  {
+    "id": "490764b0-d150-4ed5-8263-d1dcbc81ea1f",
+    "ma_kho": "KHO-G792TL",
+    "ten_kho": "Kho Kha Váº¡n CĂ¢n",
+    "dia_chi": "Kho Kha Váº¡n CĂ¢n"
+  },
+  {
+    "id": "f66fe9f0-0b45-4bac-ae7b-3a90c648f0a6",
+    "ma_kho": "KHO-IOSEK8",
+    "ten_kho": "Kho HĂ m Long",
+    "dia_chi": "Kho HĂ m Long"
+  },
+  {
+    "id": "c18a1d0d-5bf7-4097-a741-3fc9a1eae816",
+    "ma_kho": "KHO-KI-GUI",
+    "ten_kho": "kho kĂ½ gá»­i",
+    "dia_chi": "kho kĂ½ gá»­i"
+  },
+  {
+    "id": "2b7cf8d1-2882-4e98-a38d-d14eb101dfca",
+    "ma_kho": "KHO-MYHV48",
+    "ten_kho": "Kho Kinh DÆ°Æ¡ng VÆ°Æ¡ng",
+    "dia_chi": "Kho Kinh DÆ°Æ¡ng VÆ°Æ¡ng"
+  }
+]
