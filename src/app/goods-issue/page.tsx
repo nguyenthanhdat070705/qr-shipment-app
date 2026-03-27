@@ -141,214 +141,272 @@ export default function GoodsIssuePage() {
 
   return (
     <PageLayout title="Xuất hàng" icon={<Truck size={15} className="text-emerald-500" />}>
-      <div className="mb-6 flex items-center justify-between max-w-4xl mx-auto">
-        <div>
-          <h1 className="text-2xl font-extrabold text-gray-900">Tính năng xuất kho</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Tìm Mã Sản phẩm, Mã Đám hoặc quét QR để ghi nhận xuất kho</p>
+      {/* ── Header Section ── */}
+      <div className="mb-8 p-8 sm:p-10 rounded-[2rem] bg-gradient-to-br from-[#1B2A4A] via-indigo-900 to-[#1e3a8a] text-white shadow-xl shadow-indigo-900/20 max-w-4xl mx-auto relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3"></div>
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-blue-500/20 rounded-full blur-[60px] translate-y-1/3 -translate-x-1/4"></div>
+        
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md mb-4 shadow-sm">
+              <Truck size={14} className="text-emerald-400" />
+              <span className="text-[11px] font-bold text-white tracking-widest uppercase">Nghiệp Vụ Xuất Kho</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold mb-3 tracking-tight">Tạo Đơn Xuất Hàng</h1>
+            <p className="text-indigo-100 text-sm max-w-md leading-relaxed">
+              Quét mã QR sản phẩm hoặc nhập mã lô/mã sản phẩm để lập phiếu xuất kho và bắt đầu giao hàng nhanh chóng.
+            </p>
+          </div>
+          
+          <div className="hidden md:flex h-24 w-24 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 items-center justify-center rotate-3 shadow-lg">
+             <ScanLine size={40} className="text-emerald-300 opacity-80" />
+          </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Scanner Card */}
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 space-y-4">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400">Bước 1: Quét mã SP hoặc Mã Đám</h2>
+      <div className="max-w-4xl mx-auto space-y-8 pb-12">
+        {/* ── Scanner / Search Card ── */}
+        <div className="rounded-[2rem] bg-white border border-gray-100 shadow-xl shadow-gray-200/50 p-6 sm:p-8 relative overflow-hidden transition-all">
+          <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-emerald-500"></div>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <h2 className="text-sm font-extrabold uppercase tracking-wide text-gray-900 flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 text-xs">1</span>
+              Quét mã hoặc tìm kiếm
+            </h2>
             
-            <div className="flex rounded-xl border border-gray-200 bg-gray-50 p-1 gap-1 mb-3">
+            <div className="flex bg-gray-100/80 backdrop-blur-xl p-1 rounded-xl">
               <button
                 type="button"
                 onClick={() => setInputMode('type')}
-                className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold transition-all ${
+                className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all duration-300 ${
                   inputMode === 'type'
-                    ? 'bg-blue-100 text-blue-700 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-gray-200/50'
+                    : 'text-gray-500 hover:text-gray-800'
                 }`}
               >
                 <Keyboard size={14} />
-                Nhập mã
+                Nhập tay
               </button>
               <button
                 type="button"
                 onClick={() => setInputMode('scan')}
-                className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold transition-all ${
+                className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all duration-300 ${
                   inputMode === 'scan'
-                    ? 'bg-blue-100 text-blue-700 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-white text-emerald-600 shadow-sm ring-1 ring-gray-200/50'
+                    : 'text-gray-500 hover:text-gray-800'
                 }`}
               >
                 <ScanLine size={14} />
-                Quét QR
+                Quét mã QR
               </button>
             </div>
+          </div>
 
-            {inputMode === 'type' ? (
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSearchProductOrLot(searchInput.trim());
-                  }}
-                  placeholder="Tra cứu: Mã Sản phẩm (vd: 2AQ0075) hoặc Mã Lô"
-                  className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-                />
+          {inputMode === 'type' ? (
+            <div className="relative max-w-2xl">
+              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                <Search size={18} className="text-gray-400" />
+              </div>
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSearchProductOrLot(searchInput.trim());
+                }}
+                placeholder="Nhập mã Sản phẩm (vd: 2AQ0075) hoặc mã lô / đám..."
+                className="w-full pl-11 pr-32 py-4 bg-gray-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 rounded-2xl text-sm font-medium text-gray-900 placeholder:text-gray-400 transition-all shadow-inner focus:shadow-indigo-500/10 outline-none"
+              />
+              <div className="absolute right-2 top-2 bottom-2">
                 <button
                   type="button"
                   onClick={() => handleSearchProductOrLot(searchInput.trim())}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 shadow-md transition-all whitespace-nowrap"
+                  className="h-full px-6 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 shadow-md shadow-indigo-600/20 transition-all"
                 >
-                  <Search size={16} />
-                  Tìm
+                  Tìm kiếm
                 </button>
               </div>
-            ) : (
-              <div className="rounded-xl overflow-hidden border-2 border-emerald-200 bg-black relative aspect-[4/3] w-full max-w-sm mx-auto flex items-center justify-center">
-                <Scanner
-                  onScan={(result) => {
-                    if (result && result.length > 0 && result[0].rawValue) {
-                      setSearchInput(result[0].rawValue);
-                      setInputMode('type');
-                      handleSearchProductOrLot(result[0].rawValue);
-                    }
-                  }}
-                  formats={['qr_code']}
-                  components={{ onOff: true, torch: true, zoom: true, finder: true }}
-                />
+            </div>
+          ) : (
+            <div className="rounded-2xl overflow-hidden bg-black/5 relative aspect-video sm:aspect-[21/9] w-full max-w-2xl border border-gray-200 flex items-center justify-center">
+              <Scanner
+                onScan={(result) => {
+                  if (result && result.length > 0 && result[0].rawValue) {
+                    setSearchInput(result[0].rawValue);
+                    setInputMode('type');
+                    handleSearchProductOrLot(result[0].rawValue);
+                  }
+                }}
+                formats={['qr_code']}
+                components={{ onOff: true, torch: true, zoom: true, finder: true }}
+              />
+              <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center text-white/50 pb-8">
+                <ScanLine size={48} className="mb-4 opacity-50" />
+                <p className="text-xs font-medium tracking-widest uppercase">Đưa mã QR vào khung ngắm</p>
               </div>
-            )}
-          </div>
-
-          {error && (
-            <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium transition-all">
-              {error}
             </div>
           )}
 
-          {/* Form */}
-          {scannedItems.length > 0 && selectedItem && (
-            <form onSubmit={handleSubmit} className="rounded-2xl border border-emerald-200 bg-emerald-50 shadow-sm p-6 space-y-5 animate-in slide-in-from-bottom-4 relative">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-emerald-800">Bước 2: Xác nhận xuất kho</h2>
-              
-              <div className="grid grid-cols-1 gap-4 bg-white p-4 rounded-xl border border-emerald-100">
-                {scannedItems.length > 1 && (
-                  <div className="mb-2">
-                    <label className="block text-xs font-bold text-gray-400 mb-1 uppercase">Chọn Lô / Kho xuất</label>
-                    <select
-                      value={selectedInventoryId}
-                      onChange={(e) => {
-                        setSelectedInventoryId(e.target.value);
-                        const it = scannedItems.find(i => i.inventory_id === e.target.value);
-                        if (it && quantityToExport > it.quantity_available) {
-                          setQuantityToExport(it.quantity_available);
-                        }
-                      }}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-sm font-medium focus:ring-2 focus:ring-emerald-200"
-                    >
-                      {scannedItems.map((item) => (
-                        <option key={item.inventory_id} value={item.inventory_id}>
-                          Kho: {item.warehouse_name} — Tồn: {item.quantity_available} (SP: {item.product_name})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase text-gray-400">Mã SP</p>
-                    <p className="text-sm font-bold font-mono text-emerald-600">{selectedItem.product_code}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase text-gray-400">Tên sản phẩm</p>
-                    <p className="text-sm font-bold text-gray-900 line-clamp-1" title={selectedItem.product_name}>{selectedItem.product_name}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase text-gray-400">Kho xuất</p>
-                    <p className="text-sm font-bold text-gray-900">{selectedItem.warehouse_name}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase text-gray-400">Mã lô (Đám)</p>
-                    <p className="text-sm font-bold text-gray-900">{selectedItem.ma_lo}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2">
-                  <div className="flex justify-between items-end mb-1">
-                    <label className="block text-sm font-semibold text-gray-700">Số lượng xuất *</label>
-                    <span className="text-xs font-bold text-emerald-600">
-                      Tồn khả dụng: {selectedItem.quantity_available}
-                    </span>
-                  </div>
-                  <input
-                    type="number"
-                    min={1}
-                    max={selectedItem.quantity_available}
-                    value={quantityToExport}
-                    onChange={(e) => setQuantityToExport(parseInt(e.target.value) || 0)}
-                    required
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 transition-all font-bold text-lg"
-                  />
-                </div>
-                
-                <div className="sm:col-span-2 border-t border-emerald-100 pt-4 mt-2">
-                  <h3 className="text-xs font-bold uppercase text-emerald-700 mb-3">Thông tin Đơn giao hàng (Tuỳ chọn)</h3>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Tên Khách hàng</label>
-                  <input
-                    type="text"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Nguyễn Văn A"
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Số Điện thoại</label>
-                  <input
-                    type="text"
-                    value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    placeholder="09..."
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 transition-all"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Địa chỉ giao hàng</label>
-                  <input
-                    type="text"
-                    value={customerAddress}
-                    onChange={(e) => setCustomerAddress(e.target.value)}
-                    placeholder="123 ABC..."
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 transition-all"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Ghi chú (Vận hành)</label>
-                  <input
-                    type="text"
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    placeholder="Giao đúng giờ..."
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 transition-all"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full py-4 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 disabled:opacity-50 shadow-lg shadow-emerald-200 transition-all flex items-center justify-center gap-2"
-              >
-                <Truck size={18} />
-                {submitting ? 'Đang xử lý...' : 'Xác nhận xuất & Tạo đơn giao hàng'}
-              </button>
-            </form>
+          {error && (
+            <div className="mt-6 px-5 py-4 rounded-xl bg-red-50/50 border border-red-100 text-red-600 text-sm font-medium flex items-center gap-3 animate-in slide-in-from-top-2">
+              <div className="h-2 w-2 rounded-full bg-red-500 flex-shrink-0 animate-pulse" />
+              {error}
+            </div>
           )}
         </div>
+
+        {/* ── Form Section ── */}
+        {scannedItems.length > 0 && selectedItem && (
+          <form onSubmit={handleSubmit} className="rounded-[2rem] bg-white border border-gray-100 shadow-xl shadow-emerald-900/5 p-6 sm:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-500 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-bl-[100px] -z-0"></div>
+            
+            <h2 className="text-sm font-extrabold uppercase tracking-wide text-gray-900 flex items-center gap-2 relative z-10">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-xs">2</span>
+              Điền thông tin xuất kho
+            </h2>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
+              {/* Product Info Panel */}
+              <div className="lg:col-span-5 space-y-4">
+                <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200/60">
+                  <h3 className="text-xs font-bold uppercase text-slate-500 mb-4 tracking-wider">Thông tin sản phẩm chọn xuất</h3>
+                  
+                  {scannedItems.length > 1 && (
+                    <div className="mb-4">
+                      <select
+                        value={selectedInventoryId}
+                        onChange={(e) => {
+                          setSelectedInventoryId(e.target.value);
+                          const it = scannedItems.find(i => i.inventory_id === e.target.value);
+                          if (it && quantityToExport > it.quantity_available) {
+                            setQuantityToExport(it.quantity_available);
+                          }
+                        }}
+                        className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 bg-white text-sm font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 cursor-pointer transition-all"
+                      >
+                        {scannedItems.map((item) => (
+                          <option key={item.inventory_id} value={item.inventory_id}>
+                            Kho {item.warehouse_name} — Tồn: {item.quantity_available} SP
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b border-slate-200/60">
+                      <span className="text-xs font-semibold text-slate-500">Mã Sản Phẩm</span>
+                      <span className="text-sm font-bold font-mono text-indigo-700">{selectedItem.product_code}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-200/60">
+                      <span className="text-xs font-semibold text-slate-500">Tên SP</span>
+                      <span className="text-sm font-bold text-slate-900 truncate max-w-[150px]" title={selectedItem.product_name}>
+                        {selectedItem.product_name}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-200/60">
+                      <span className="text-xs font-semibold text-slate-500">Kho / Vị trí</span>
+                      <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-1 rounded-md">
+                        {selectedItem.warehouse_name}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-xs font-semibold text-slate-500">Mã Lô (Đám)</span>
+                      <span className="text-sm font-bold text-slate-900">{selectedItem.ma_lo || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-emerald-50 rounded-2xl p-5 border border-emerald-100">
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="text-xs font-bold uppercase text-emerald-800 tracking-wider">Số Lượng Xuất</label>
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">
+                      Tối đa: {selectedItem.quantity_available}
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min={1}
+                      max={selectedItem.quantity_available}
+                      value={quantityToExport}
+                      onChange={(e) => setQuantityToExport(parseInt(e.target.value) || 0)}
+                      required
+                      className="w-full text-center px-4 py-3 rounded-xl border border-transparent bg-white text-xl font-extrabold text-emerald-700 outline-none focus:ring-4 focus:ring-emerald-500/20 shadow-sm transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Delivery Info Panel */}
+              <div className="lg:col-span-7 space-y-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="h-px bg-gray-100 flex-1"></div>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Thông tin giao hàng</span>
+                  <div className="h-px bg-gray-100 flex-1"></div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-600 ml-1">Tên khách hàng</label>
+                    <input
+                      type="text"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="Nguyễn Văn A..."
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 outline-none focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-gray-400"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-600 ml-1">Số điện thoại</label>
+                    <input
+                      type="tel"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      placeholder="09..."
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 outline-none focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-gray-400"
+                    />
+                  </div>
+                  <div className="sm:col-span-2 space-y-1.5">
+                    <label className="text-xs font-bold text-gray-600 ml-1">Địa chỉ nhận hàng</label>
+                    <input
+                      type="text"
+                      value={customerAddress}
+                      onChange={(e) => setCustomerAddress(e.target.value)}
+                      placeholder="Số nhà, Tên đường, Phường/Xã..."
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 outline-none focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-gray-400"
+                    />
+                  </div>
+                  <div className="sm:col-span-2 space-y-1.5">
+                    <label className="text-xs font-bold text-gray-600 ml-1">Ghi chú vận hành</label>
+                    <textarea
+                      rows={2}
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      placeholder="Giao siêu tốc, gọi trước khi đến..."
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 outline-none focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-gray-400 resize-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="group relative w-full flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-bold text-sm hover:from-emerald-600 hover:to-teal-700 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/30 transition-all overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
+                    <Truck size={18} className="relative z-10" />
+                    <span className="relative z-10">{submitting ? 'Đang xử lý...' : 'Xác nhận tạo Đơn xuất hàng'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        )}
+      </div>
     </PageLayout>
   );
 }
