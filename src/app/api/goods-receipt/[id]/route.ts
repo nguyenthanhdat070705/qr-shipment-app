@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { randomUUID } from 'crypto';
 
 /**
  * GET   /api/goods-receipt/[id]  → Detail with items
@@ -200,6 +201,64 @@ export async function PATCH(
       if (qrInserts.length > 0) {
         const { error: qrError } = await supabase.from('qr_codes').insert(qrInserts);
         if (qrError) console.error('[goods-receipt PATCH] QR Insert error:', qrError);
+      }
+
+      // Update inventory based on received goods
+      try {
+        const kho_id = data.kho_id;
+        if (kho_id && grItems.length > 0) {
+          const maHomList = grItems.map((item: any) => item.ma_hom);
+          const { data: homData } = await supabase
+            .from('dim_hom')
+            .select('id, ma_hom')
+            .in('ma_hom', maHomList);
+
+          const homMap = new Map<string, string>();
+          if (homData) {
+            for (const h of homData) homMap.set(h.ma_hom, h.id);
+          }
+
+          const receivedMap = new Map<string, number>();
+          for (const item of grItems) {
+            const qty = (item.so_luong_thuc_nhan as number) || 0;
+            if (qty > 0) {
+              receivedMap.set(item.ma_hom as string, (receivedMap.get(item.ma_hom as string) || 0) + qty);
+            }
+          }
+
+          for (const [maHom, qty] of receivedMap.entries()) {
+            const homId = homMap.get(maHom);
+            if (!homId) continue;
+
+            const { data: existingInv } = await supabase
+              .from('fact_inventory')
+              .select('*')
+              .eq('Tên hàng hóa', homId)
+              .eq('Kho', kho_id);
+
+            if (existingInv && existingInv.length > 0) {
+              const invRow = existingInv[0];
+              const newQty = (invRow['Số lượng'] || 0) + qty;
+              const newKhadung = (invRow['Ghi chú'] || 0) + qty;
+              await supabase
+                .from('fact_inventory')
+                .update({ 'Số lượng': newQty, 'Ghi chú': newKhadung })
+                .eq('Mã', invRow['Mã']);
+            } else {
+              await supabase
+                .from('fact_inventory')
+                .insert({
+                  'Mã': randomUUID(),
+                  'Tên hàng hóa': homId,
+                  'Kho': kho_id,
+                  'Số lượng': qty,
+                  'Ghi chú': qty,
+                });
+            }
+          }
+        }
+      } catch (invErr) {
+        console.error('[goods-receipt PATCH] Inventory update error:', invErr);
       }
     }
 
