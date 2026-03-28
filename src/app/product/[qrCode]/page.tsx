@@ -122,8 +122,9 @@ async function getProductByCode(productCode: string): Promise<DynamicProductRow 
     supplier = (nccData as DimNcc) || null;
   }
 
-  // Total quantity across all warehouses
+  // Quantities
   const totalQty = inventoryRows.reduce((sum, r) => sum + (r['Số lượng'] || 0), 0);
+  const totalAvail = inventoryRows.reduce((sum, r) => sum + (r['Ghi chú'] || 0), 0);
 
   // Build a unified DynamicProductRow with all info
   const row: DynamicProductRow = {
@@ -139,23 +140,25 @@ async function getProductByCode(productCode: string): Promise<DynamicProductRow 
     'gói sản phẩm': hom.gia_ban,
     gia_von: hom.gia_von,
     hinh_anh: hom.hinh_anh,
-    'số lượng': totalQty,
-    'Số lượng': totalQty,
-    ton_kho: totalQty,
+    // Use available qty (Ghi chú) for display — not total
+    'số lượng': totalAvail,
+    'Số lượng': totalAvail,
+    ton_kho: totalAvail,
     'kho nào': warehouse?.ten_kho || '—',
     'mã kho': warehouse?.ma_kho || '',
     'loại hàng': firstInv?.['Loại hàng'] || '',
-    'tình trạng': totalQty > 0 ? 'in_stock' : 'unavailable',
-    is_active: totalQty > 0 ? 'in_stock' : 'unavailable',
+    // Còn hàng = available > 0
+    'tình trạng': totalAvail > 0 ? 'in_stock' : 'unavailable',
+    is_active: totalAvail > 0 ? 'in_stock' : 'unavailable',
     // Supplier info
     'nhà cung cấp': supplier?.ten_ncc || '',
     'mã ncc': supplier?.ma_ncc || '',
     'liên hệ ncc': supplier?.nguoi_lien_he || '',
     'sdt ncc': supplier?.sdt || '',
     'địa chỉ ncc': supplier?.dia_chi || '',
-    // All warehouse locations
+    // Warehouse listing
     'danh sách kho': inventoryRows.map((r) => {
-      return `${r['Số lượng']} SP`;
+      return `KHẢ DỤNG: ${r['Ghi chú']} (Tổng: ${r['Số lượng']})`;
     }).join(', '),
   };
 

@@ -96,8 +96,19 @@ export default function GoodsReceiptPage() {
     {
       key: 'status',
       label: 'Trạng thái',
-      render: (row: GoodsReceipt) => (
-        <StatusTimeline steps={GR_STEPS} current={row.status} />
+      render: (row: GoodsReceipt & { is_missing_goods?: boolean }) => (
+        <StatusTimeline 
+          steps={GR_STEPS} 
+          current={row.status} 
+          stepOverrides={{
+            completed: {
+              label: row.is_missing_goods ? 'Thiếu hàng' : 'Đầy đủ',
+              color: row.is_missing_goods 
+                ? 'bg-yellow-200 text-red-600 font-extrabold ring-red-300' 
+                : 'bg-emerald-100 text-emerald-700'
+            }
+          }}
+        />
       ),
     },
     {

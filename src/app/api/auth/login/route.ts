@@ -51,9 +51,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: message }, { status: 401 });
     }
 
-    // ── Step 3: Determine user role ───────────────────────────
+    // ── Step 3: Determine user role & fetch account info ─────────────
     const role = getUserRole(data.user.email || email);
     const roleConfig = ROLE_CONFIGS[role];
+
+    const { data: accountInfo } = await supabase
+      .from('dim_account')
+      .select('ho_ten, phong_ban')
+      .eq('email', email)
+      .single();
 
     return NextResponse.json({
       token: data.session.access_token,
@@ -63,6 +69,8 @@ export async function POST(request: NextRequest) {
         role: role,
         roleLabel: roleConfig.label,
         permissions: roleConfig.permissions,
+        ho_ten: accountInfo?.ho_ten || '',
+        phong_ban: accountInfo?.phong_ban || '',
       },
     });
   } catch (err) {

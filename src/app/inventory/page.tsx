@@ -177,9 +177,10 @@ export default async function InventoryPage() {
     const hasRealImage = rawImg && rawImg.startsWith('http');
     const imageUrl = hasRealImage ? rawImg : getCoffinImage(code);
 
-    const isOutOfStock = soLuong <= 0;
-    const isExported = false;
-    const available = !isOutOfStock;
+    // Còn hàng = khả dụng > 0 (NOT tổng số lượng)
+    const isOutOfStock = khaDung <= 0;
+    const isExported = soLuong > 0 && khaDung <= 0; // Đã xuất hết khả dụng
+    const available = khaDung > 0;
 
     return {
       code,
@@ -204,10 +205,10 @@ export default async function InventoryPage() {
     };
   });
 
-  // Statistics
   const totalProducts = items.length;
   const availableCount = items.filter((i) => i.available).length;
   const outOfStockCount = items.filter((i) => i.isOutOfStock).length;
+  const exportedCount = items.filter((i) => i.isExported).length;
 
   return (
     <PageLayout title="Kho hàng" icon={<Warehouse size={15} className="text-sky-500" />}>

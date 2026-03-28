@@ -20,6 +20,24 @@ export default function QuickLookupForm() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   function navigate(value: string) {
+    if (!value) return;
+
+    // Nếu người dùng quét được hẳn 1 URL (VD: quét mã QR của PO, GRPO, vv)
+    try {
+      const url = new URL(value);
+      // Nếu là URL của nội bộ trang web thì chuyển hướng trong app
+      if (url.origin === window.location.origin) {
+        window.location.href = url.pathname + url.search + url.hash;
+        return;
+      }
+      // Hoặc nếu là URL hệ thống khác thì chuyển đi luôn
+      window.location.href = value;
+      return;
+    } catch {
+      // Bỏ qua lỗi vì đây chỉ là chuỗi mã sản phẩm bình thường
+    }
+
+    // Nếu là mã sản phẩm hoặc đường dẫn /product/...
     const productCode = extractProductCode(value);
     if (productCode) {
       window.location.href = `/product-sheet/${encodeURIComponent(productCode)}`;

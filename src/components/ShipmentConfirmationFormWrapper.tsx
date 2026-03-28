@@ -7,6 +7,8 @@ import ShipmentConfirmationForm from './ShipmentConfirmationForm';
 import HoldProductButton from './HoldProductButton';
 import { Shield } from 'lucide-react';
 
+import { useRouter } from 'next/navigation';
+
 interface Props {
   qrCode: string;
   productName: string;
@@ -17,6 +19,7 @@ export default function ShipmentConfirmationFormWrapper({ qrCode, productName, c
   const [status, setStatus] = useState<string>(currentStatus);
   const [userRole, setUserRole] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     try {
@@ -32,6 +35,7 @@ export default function ShipmentConfirmationFormWrapper({ qrCode, productName, c
 
   function handleConfirmed() {
     setStatus(PRODUCT_CONFIG.EXPORTED_STATUS_VALUE as string);
+    router.refresh(); // Refresh backend data (like fact_inventory) seamlessly
   }
 
   if (loading) return null;

@@ -37,6 +37,7 @@ export default function StatusTimeline({ steps, current, stepOverrides }: Status
                 ${isDone ? 'bg-emerald-100 text-emerald-700' : ''}
                 ${isActive ? `${currentStep.color} ring-2 ring-offset-1 ring-current` : ''}
                 ${isFuture ? (currentStep.key === 'completed' && currentStep.label === 'Thiếu hàng' ? currentStep.color : 'bg-gray-100 text-gray-400') : ''}
+                ${['Thiếu hàng', 'Đầy đủ', 'Hoàn tất'].includes(currentStep.label) ? 'w-[115px] justify-center whitespace-nowrap' : ''}
               `}
             >
               {isDone ? <CheckCircle size={12} /> : <Circle size={12} />}

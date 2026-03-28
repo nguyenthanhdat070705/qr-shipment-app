@@ -82,6 +82,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const trimmedChucVu = chucVu.trim();
   const trimmedNote   = typeof note === 'string' ? note.trim() || null : null;
   const trimmedMaSanPhamXacNhan = maSanPhamXacNhan.trim();
+  const trimmedMaDonHang = typeof maDonHang === 'string' ? maDonHang.trim() : '';
 
   // ── Bước 2: Tìm sản phẩm trong dim_hom ──────────────────────────────
   const { data: product, error: fetchError } = await supabaseAdmin
@@ -115,6 +116,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       'VALIDATION_ERROR',
       400
     );
+  }
+
+  // ── Bước 2.5: Đối chiếu mã đám trong dim_dam ───────────────────
+  if (trimmedMaDonHang) {
+    const { data: damItem, error: damError } = await supabaseAdmin
+      .from('dim_dam')
+      .select('ma_dam')
+      .eq('ma_dam', trimmedMaDonHang)
+      .single();
+
+    if (damError || !damItem) {
+      return errorResponse(
+        `Mã đám "${trimmedMaDonHang}" không tồn tại trong hệ thống. Vui lòng nhập chính xác mã đám hợp lệ.`,
+        'VALIDATION_ERROR',
+        400
+      );
+    }
   }
 
   // ── Bước 3: Guard — (Đã xuất kho - Bỏ qua vì dùng dim_hom) ─────────────────────────
@@ -186,8 +204,56 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // ── Bước 5: Cập nhật trạng thái sản phẩm (Bỏ qua) ───────────────
-  // Không cập nhật is_active của dim_hom thành 'exported' vì nó là danh mục sản phẩm.
+  // ── Bước 5.5: Trừ tồn kho trong fact_inventory (dùng SQL trực tiếp) ─────
+  try {
+    // Dùng raw SQL để tránh lỗi encoding tên cột tiếng Việt
+    const { error: deductErr } = await supabaseAdmin.rpc('exec_sql', {
+      sql: `
+        UPDATE fact_inventory
+        SET "Số lượng" = GREATEST(0, CAST("Số lượng" AS INTEGER) - 1),
+            "Ghi chú"  = GREATEST(0, CAST("Số lượng" AS INTEGER) - 1)
+        WHERE "Tên hàng hóa" = '${productId}'
+          AND CAST("Số lượng" AS INTEGER) > 0
+          AND ctid = (
+            SELECT ctid FROM fact_inventory
+            WHERE "Tên hàng hóa" = '${productId}'
+              AND CAST("Số lượng" AS INTEGER) > 0
+            ORDER BY CAST("Số lượng" AS INTEGER) DESC
+            LIMIT 1
+          )
+      `
+    });
+
+    if (deductErr) {
+      // exec_sql không có → fallback dùng REST API không filter .gt()
+      console.warn('[confirm-shipment] exec_sql thất bại, thử REST fallback:', deductErr.message);
+
+      const { data: allRows } = await supabaseAdmin
+        .from('fact_inventory')
+        .select('Mã, Số lượng')
+        .eq('Tên hàng hóa', productId);
+
+      const validRows = (allRows || []).filter((r: any) => Number(r['Số lượng']) > 0);
+      if (validRows.length > 0) {
+        validRows.sort((a: any, b: any) => Number(b['Số lượng']) - Number(a['Số lượng']));
+        const best = validRows[0] as any;
+        const newQty = Math.max(0, Number(best['Số lượng']) - 1);
+        const { error: restErr } = await supabaseAdmin
+          .from('fact_inventory')
+          .update({ 'Số lượng': newQty, 'Ghi chú': newQty })
+          .eq('Mã', best['Mã']);
+        if (restErr) {
+          console.error('[confirm-shipment] REST fallback cũng thất bại:', restErr.message);
+        } else {
+          console.log(`[confirm-shipment] ✅ REST fallback: SL ${best['Số lượng']} → ${newQty}`);
+        }
+      }
+    } else {
+      console.log(`[confirm-shipment] ✅ SQL trực tiếp trừ kho thành công cho productId=${productId}`);
+    }
+  } catch (invDeductErr) {
+    console.error('[confirm-shipment] Exception trừ kho:', invDeductErr);
+  }
 
   // ── Bước 6: Ghi log (không bắt buộc) ────────────────────
   supabaseAdmin

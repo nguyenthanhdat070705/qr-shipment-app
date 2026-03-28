@@ -1,0 +1,6 @@
+Rows referencing kho ky gui: 0
+Deleted kho ky gui OK
+Remaining kho:
+  KHO-01 | Kho HĂ m Long
+  KHO-02 | Kho Kha Váº¡n CĂ¢n
+  KHO-03 | Kho Kinh DÆ°Æ¡ng VÆ°Æ¡ng

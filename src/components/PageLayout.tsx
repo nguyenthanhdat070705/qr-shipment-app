@@ -5,7 +5,7 @@ import {
   Menu, X, ChevronRight, Shield, LogOut,
   Truck, Warehouse, LayoutGrid, User,
   ShoppingCart, PackageCheck, TruckIcon,
-  Bell, Search, BarChart3, Settings,
+  Bell, Search, BarChart3, Settings, BookOpen
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -115,6 +115,15 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       iconBg: 'bg-amber-500/15',
       requiresPermission: 'canManageDelivery',
     },
+    {
+      icon: <BookOpen size={18} />,
+      label: 'Đám',
+      desc: 'Thông tin tổ chức',
+      href: '/funerals',
+      color: 'text-pink-400',
+      iconBg: 'bg-pink-500/15',
+      requiresPermission: 'canViewProducts',
+    },
     /* ── Tồn kho ── */
     {
       icon: <Warehouse size={18} />,
@@ -189,20 +198,20 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
         `}
       >
         {/* ── Logo ── */}
-        <div className="px-5 py-5 border-b border-white/[0.07] flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-1.5 bg-white/10 rounded-xl">
+        <div className="py-6 border-b border-white/[0.07] flex items-center justify-center relative">
+          <div className="flex items-center justify-center">
+            <div className="p-2">
               <Image
                 src="/blackstones-logo.webp"
                 alt="Blackstones"
-                width={100}
-                height={22}
+                width={130}
+                height={28}
                 style={{ height: 'auto', filter: 'brightness(0) invert(1)' }}
               />
             </div>
           </div>
-          <button onClick={onClose} className="lg:hidden p-1.5 rounded-lg hover:bg-white/10 text-white/50 transition-colors">
-            <X size={16} />
+          <button onClick={onClose} className="lg:hidden absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-white/10 text-white/50 transition-colors">
+            <X size={18} />
           </button>
         </div>
 

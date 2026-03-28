@@ -241,7 +241,7 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
                       </span>
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <span className="font-bold text-gray-800">{item.tonKho || '0'}</span>
+                      <span className="font-bold text-gray-800">{item.khaDung || '0'}</span>
                     </td>
                     <td className="py-3 px-4 text-center">
                       <span className="text-xs text-gray-600">{item.warehouse}</span>
@@ -264,12 +264,14 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
                     <td className="py-3 px-4 text-center">
                       <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full
                         ${item.available
-                          ? 'bg-blue-100 text-blue-700'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : item.isExported
+                          ? 'bg-orange-100 text-orange-700'
                           : 'bg-red-100 text-red-700'
                         }`}
                       >
-                        <span className={`w-1.5 h-1.5 rounded-full ${item.available ? 'bg-blue-500' : 'bg-red-500'}`} />
-                        {item.available ? 'Còn hàng' : 'Hết hàng'}
+                        <span className={`w-1.5 h-1.5 rounded-full ${item.available ? 'bg-emerald-500' : item.isExported ? 'bg-orange-500' : 'bg-red-500'}`} />
+                        {item.available ? 'Còn hàng' : item.isExported ? 'Đã xuất' : 'Hết hàng'}
                       </span>
                     </td>
                     <td className="py-3 px-4">

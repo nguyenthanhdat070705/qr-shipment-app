@@ -242,8 +242,19 @@ export async function PATCH(
               const newKhadung = (invRow['Ghi chú'] || 0) + qty;
               await supabase
                 .from('fact_inventory')
-                .update({ 'Số lượng': newQty, 'Ghi chú': newKhadung })
+                .delete()
                 .eq('Mã', invRow['Mã']);
+
+              await supabase
+                .from('fact_inventory')
+                .insert({
+                  'Mã': invRow['Mã'],
+                  'Tên hàng hóa': invRow['Tên hàng hóa'],
+                  'Kho': invRow['Kho'],
+                  'Số lượng': newQty,
+                  'Ghi chú': newKhadung,
+                  'Loại hàng': invRow['Loại hàng']
+                });
             } else {
               await supabase
                 .from('fact_inventory')

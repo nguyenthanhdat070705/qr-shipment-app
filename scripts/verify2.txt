@@ -1,0 +1,6 @@
+Total: 103
+{"MĂ£":"1421b97d-101c-46dc-a8df-51bf76ef75c5","TĂªn hĂ ng hĂ³a":"73207432-3674-4e6c-8abf-367efa902303","Kho":"d8808bcf-7ba4-45cb-879f-fc409f463fdd","Sá»‘ lÆ°á»£ng":1,"Ghi chĂº":1,"Loáº¡i hĂ ng":"Own"}
+{"MĂ£":"69fec52b-2e91-41a6-9a13-5a4effc5d03b","TĂªn hĂ ng hĂ³a":"313dc770-f597-4fb6-be07-a1c5cc607cb3","Kho":"d8808bcf-7ba4-45cb-879f-fc409f463fdd","Sá»‘ lÆ°á»£ng":1,"Ghi chĂº":1,"Loáº¡i hĂ ng":"Own"}
+{"MĂ£":"803a1ed8-2ce7-4b0d-a307-9d306da638f7","TĂªn hĂ ng hĂ³a":"5572fd5c-5375-48cd-9d7f-2a6a643fa2c8","Kho":"d8808bcf-7ba4-45cb-879f-fc409f463fdd","Sá»‘ lÆ°á»£ng":1,"Ghi chĂº":1,"Loáº¡i hĂ ng":"Own"}
+{"MĂ£":"e3ecd46f-64c3-49ea-9a13-aa8c56377977","TĂªn hĂ ng hĂ³a":"405ed8b5-5f0e-4d6c-bb45-04eba0f3fbdc","Kho":"d8808bcf-7ba4-45cb-879f-fc409f463fdd","Sá»‘ lÆ°á»£ng":2,"Ghi chĂº":2,"Loáº¡i hĂ ng":"Own"}
+{"MĂ£":"945219d3-f322-4b28-97cf-fb4415fc604d","TĂªn hĂ ng hĂ³a":"9b0f7d52-e34e-48ef-b2a4-5185a87ac358","Kho":"d8808bcf-7ba4-45cb-879f-fc409f463fdd","Sá»‘ lÆ°á»£ng":2,"Ghi chĂº":2,"Loáº¡i hĂ ng":"Own"}

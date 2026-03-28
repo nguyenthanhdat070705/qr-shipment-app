@@ -46,19 +46,27 @@ function CreateGoodsReceiptForm() {
   const [inputMode, setInputMode] = useState<'type' | 'scan'>('type');
 
   const handleSearchPO = (code: string) => {
-    if (!code.trim()) {
+    let searchCode = code.trim();
+    
+    // Hỗ trợ quét URL từ mã QR (ví dụ: http://localhost:3000/scan/po/uuid...)
+    if (searchCode.includes('/scan/po/')) {
+      const parts = searchCode.split('/scan/po/');
+      searchCode = parts[parts.length - 1];
+    }
+
+    if (!searchCode) {
       setError('Vui lòng nhập mã PO.');
       return;
     }
     const found = purchaseOrders.find(
-      (p) => p.po_code.toLowerCase() === code.trim().toLowerCase() || p.id === code.trim()
+      (p) => p.po_code.toLowerCase() === searchCode.toLowerCase() || p.id === searchCode
     );
     if (found) {
       setPoId(found.id);
       setSearchInput(found.po_code);
       setError('');
     } else {
-      setError(`Không tìm thấy PO với mã "${code}".`);
+      setError(`Không tìm thấy PO với từ khóa "${searchCode}".`);
       setPoId('');
     }
   };
@@ -328,17 +336,24 @@ function CreateGoodsReceiptForm() {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Kho nhận *</label>
-                <select
-                  value={warehouseId}
-                  onChange={(e) => setWarehouseId(e.target.value)}
-                  required
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 transition-all"
-                >
-                  <option value="">— Chọn kho —</option>
-                  {warehouses.map((w) => (
-                    <option key={w.id} value={w.id}>{w.ten_kho} ({w.ma_kho})</option>
-                  ))}
-                </select>
+                {poId && warehouseId ? (
+                  <div className="w-full px-3 py-2.5 rounded-xl border border-orange-200 bg-orange-50 text-sm font-semibold text-orange-800 flex items-center gap-2 cursor-not-allowed select-none">
+                    <span className="text-orange-500">🔒</span>
+                    {warehouses.find(w => w.id === warehouseId)?.ten_kho || warehouseId}
+                  </div>
+                ) : (
+                  <select
+                    value={warehouseId}
+                    onChange={(e) => setWarehouseId(e.target.value)}
+                    required
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 transition-all"
+                  >
+                    <option value="">— Chọn kho —</option>
+                    {warehouses.map((w) => (
+                      <option key={w.id} value={w.id}>{w.ten_kho} ({w.ma_kho})</option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               <div className="sm:col-span-2">
@@ -393,23 +408,27 @@ function CreateGoodsReceiptForm() {
                   </div>
                   <div className="col-span-2">
                     <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">SL yêu cầu</label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={item.expected_qty}
-                      onChange={(e) => updateItem(i, 'expected_qty', parseInt(e.target.value) || 0)}
-                      className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    />
+                    {poId ? (
+                      <div className="w-full px-2 py-2 rounded-lg border border-orange-200 bg-orange-50 text-sm font-bold text-center text-orange-800 cursor-not-allowed">{item.expected_qty}</div>
+                    ) : (
+                      <input
+                        type="number"
+                        min={0}
+                        value={item.expected_qty}
+                        onChange={(e) => updateItem(i, 'expected_qty', parseInt(e.target.value) || 0)}
+                        className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                      />
+                    )}
                   </div>
                   <div className="col-span-2">
                     <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">SL nhận</label>
                     <input
-                      type="number"
-                      min={0}
-                      value={item.received_qty}
-                      onChange={(e) => updateItem(i, 'received_qty', parseInt(e.target.value) || 0)}
-                      className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    />
+                        type="number"
+                        min={0}
+                        value={item.received_qty}
+                        onChange={(e) => updateItem(i, 'received_qty', parseInt(e.target.value) || 0)}
+                        className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                      />
                   </div>
                   <div className="col-span-2 flex justify-center">
                     <button
