@@ -232,28 +232,13 @@ export default function CreatePurchaseOrderPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Ngày dự kiến nhận</label>
-                <div className="relative">
-                  <input
-                    type="date"
-                    value={expectedDate}
-                    onChange={(e) => setExpectedDate(e.target.value)}
-                    lang="vi"
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400 transition-all"
-                    style={{ colorScheme: 'light' }}
-                  />
-                  {/* Overlay hint showing dd/mm/yyyy when empty */}
-                  {!expectedDate && (
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none select-none">
-                      dd/mm/yyyy
-                    </span>
-                  )}
-                  {/* Show formatted date below when filled */}
-                  {expectedDate && (
-                    <span className="absolute right-10 top-1/2 -translate-y-1/2 text-xs text-purple-600 font-semibold pointer-events-none">
-                      {new Date(expectedDate + 'T00:00:00').toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                    </span>
-                  )}
-                </div>
+                <input
+                  type="text"
+                  value={expectedDate}
+                  onChange={(e) => setExpectedDate(e.target.value)}
+                  placeholder="dd/mm/yyyy"
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400 transition-all"
+                />
               </div>
 
               <div>
