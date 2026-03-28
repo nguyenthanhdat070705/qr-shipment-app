@@ -32,4 +32,4 @@ export function extractProductCode(value: string): string {
 /** The production base URL for QR codes */
 export const APP_BASE_URL =
   process.env.NEXT_PUBLIC_APP_URL ||
-  (typeof window !== 'undefined' ? window.location.origin : 'https://qr-shipment-app.vercel.app');
+  (typeof window !== 'undefined' ? window.location.origin : 'https://blackstone-order-scm.vercel.app');
