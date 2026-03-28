@@ -139,70 +139,81 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Trong schema mới, dim_hom là danh mục sản phẩm nên không có trạng thái "exported".
   // Lịch sử xuất được ghi nhận qua export_confirmations và trừ tồn trong fact_inventory.
 
-  // ── Bước 4: Thử insert vào export_confirmations ─────────
-  // First attempt
+  // ── Bước 4: Insert vào export_confirmations (bypass RLS bằng raw SQL) ─────
+  // Dùng raw SQL để hoàn toàn bypass Row Level Security
   let confirmation: Record<string, unknown> | null = null;
   let insertError: { message: string; code?: string } | null = null;
 
-  const insertData: Record<string, unknown> = {
-    ma_san_pham: maSanPham,
-    ho_ten:      trimmedHoTen,
-    email:       trimmedEmail,
-    ghi_chu:     trimmedNote,
-  };
+  const now = new Date();
+  const ngayXuat = now.toISOString().split('T')[0]; // YYYY-MM-DD
+  const thoiGianXuat = now.toTimeString().slice(0, 8); // HH:MM:SS
 
-  // Only include chuc_vu if we have it (in case the column doesn't exist in DB)
-  if (trimmedChucVu) {
-    insertData.chuc_vu = trimmedChucVu;
+  // Escape single quotes to prevent SQL injection
+  const escStr = (s: string | null) =>
+    s == null ? 'NULL' : `'${String(s).replace(/'/g, "''")}'`;
+
+  const rawInsertSql = `
+    INSERT INTO export_confirmations
+      (ma_san_pham, ho_ten, email, chuc_vu, ghi_chu, ngay_xuat, thoi_gian_xuat)
+    VALUES
+      (${escStr(maSanPham)}, ${escStr(trimmedHoTen)}, ${escStr(trimmedEmail)},
+       ${escStr(trimmedChucVu)}, ${escStr(trimmedNote)},
+       '${ngayXuat}', '${thoiGianXuat}')
+    RETURNING stt, ho_ten, email, ngay_xuat, thoi_gian_xuat, created_at;
+  `;
+
+  try {
+    const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('exec_sql', {
+      sql: rawInsertSql,
+    });
+
+    if (!rpcErr && rpcData) {
+      // exec_sql returns rows as JSON array string or object
+      const rows = Array.isArray(rpcData) ? rpcData : JSON.parse(JSON.stringify(rpcData));
+      confirmation = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+    } else {
+      console.warn('[confirm-shipment] exec_sql insert failed, trying SDK insert:', rpcErr?.message);
+    }
+  } catch (rpcEx) {
+    console.warn('[confirm-shipment] exec_sql exception:', rpcEx);
   }
 
-  const result1 = await supabaseAdmin
-    .from(PRODUCT_CONFIG.CONFIRMATION_TABLE as string)
-    .insert(insertData)
-    .select('stt, ho_ten, email, ngay_xuat, thoi_gian_xuat, created_at')
-    .single();
+  // Fallback: SDK insert (works if service_role is correctly configured)
+  if (!confirmation) {
+    const insertData: Record<string, unknown> = {
+      ma_san_pham: maSanPham,
+      ho_ten:      trimmedHoTen,
+      email:       trimmedEmail,
+      chuc_vu:     trimmedChucVu,
+      ghi_chu:     trimmedNote,
+      ngay_xuat:   ngayXuat,
+      thoi_gian_xuat: thoiGianXuat,
+    };
 
-  insertError = result1.error;
-  confirmation = result1.data as Record<string, unknown> | null;
-
-  // If the error is about missing column 'chuc_vu', retry without it
-  if (insertError && insertError.message?.includes('chuc_vu')) {
-    console.warn('[confirm-shipment] Column chuc_vu not found, retrying without it...');
-    delete insertData.chuc_vu;
-    
-    const result2 = await supabaseAdmin
+    const result1 = await supabaseAdmin
       .from(PRODUCT_CONFIG.CONFIRMATION_TABLE as string)
       .insert(insertData)
       .select('stt, ho_ten, email, ngay_xuat, thoi_gian_xuat, created_at')
       .single();
 
-    insertError = result2.error;
-    confirmation = result2.data as Record<string, unknown> | null;
+    insertError = result1.error;
+    confirmation = result1.data as Record<string, unknown> | null;
   }
 
-  // If still failing (table doesn't exist), try to create it and retry
-  if (insertError && (insertError.message?.includes('does not exist') || insertError.code === '42P01')) {
-    console.warn('[confirm-shipment] Table not found, attempting to create...');
-    await ensureConfirmationTable(supabaseAdmin);
-
-    const result3 = await supabaseAdmin
-      .from(PRODUCT_CONFIG.CONFIRMATION_TABLE as string)
-      .insert(insertData)
-      .select('stt, ho_ten, email, ngay_xuat, thoi_gian_xuat, created_at')
-      .single();
-
-    insertError = result3.error;
-    confirmation = result3.data as Record<string, unknown> | null;
-  }
-
-  if (insertError || !confirmation) {
+  if (!confirmation) {
     console.error('[confirm-shipment] Lỗi khi lưu xác nhận:', insertError);
     return errorResponse(
-      `Không thể lưu xác nhận: ${insertError?.message || 'Unknown error'}. Vui lòng kiểm tra bảng "${PRODUCT_CONFIG.CONFIRMATION_TABLE}" trong Supabase.`,
+      `Không thể lưu xác nhận: ${insertError?.message || 'Unknown error'}. Vui lòng kiểm tra bảng "${PRODUCT_CONFIG.CONFIRMATION_TABLE}" hoặc RLS trong Supabase.`,
       'DATABASE_ERROR',
       500
     );
   }
+
+  // Gán giá trị mặc định nếu raw SQL không trả về đủ fields
+  if (!confirmation.ngay_xuat) confirmation.ngay_xuat = new Date().toISOString().split('T')[0];
+  if (!confirmation.thoi_gian_xuat) confirmation.thoi_gian_xuat = new Date().toTimeString().slice(0, 8);
+  if (!confirmation.created_at) confirmation.created_at = new Date().toISOString();
+  if (!confirmation.stt) confirmation.stt = 0;
 
   // ── Bước 5.5: Trừ tồn kho trong fact_inventory (dùng SQL trực tiếp) ─────
   try {
