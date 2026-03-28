@@ -38,6 +38,7 @@ const EMAIL_ROLE_MAP: { pattern: string; role: UserRole }[] = [
   { pattern: 'admin', role: 'admin' },
   { pattern: 'quantri', role: 'admin' },
   // Procurement (Thu mua)
+  { pattern: 'bophanthumua', role: 'procurement' },
   { pattern: 'thuamua', role: 'procurement' },
   { pattern: 'muahang', role: 'procurement' },
   { pattern: 'procurement', role: 'procurement' },
@@ -50,6 +51,7 @@ const EMAIL_ROLE_MAP: { pattern: string; role: UserRole }[] = [
   { pattern: 'kho3', role: 'warehouse' },
   { pattern: 'nhapkho', role: 'warehouse' },
   // Operations (Vận hành)
+  { pattern: 'bophanvanhanh', role: 'operations' },
   { pattern: 'vanhanh', role: 'operations' },
   { pattern: 'giaonhan', role: 'operations' },
   { pattern: 'operations', role: 'operations' },
@@ -112,13 +114,13 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
   operations: {
     role: 'operations',
     label: 'Vận hành',
-    description: 'Quản lý giao hàng và vận hành',
+    description: 'Quản lý giao hàng, xuất hàng và vận hành tang lễ',
     permissions: {
       canAdmin: false,
       canCreatePO: false,
       canManageReceipt: false,
       canReceiveGoods: false,
-      canExport: false,
+      canExport: true,
       canManageDelivery: true,
       canHold: false,
       canViewInventory: true,

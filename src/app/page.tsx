@@ -1,14 +1,41 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { QrCode, ScanLine, Package, CheckCircle } from 'lucide-react';
 import { Search } from 'lucide-react';
 import QuickLookupForm from '@/components/QuickLookupForm';
 import PageLayout from '@/components/PageLayout';
+import { getUserRole } from '@/config/roles.config';
 
 /* ═══════════════════════════════════════════════════════════
-   Main Page — Xuất hàng (uses shared PageLayout with Sidebar)
+   Main Page — Tìm kiếm hàng (role-based redirect)
    ═══════════════════════════════════════════════════════════ */
 export default function HomePage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('auth_user');
+      if (raw) {
+        const u = JSON.parse(raw);
+        const role = getUserRole(u.email || '');
+        if (role === 'procurement') {
+          router.replace('/procurement');
+          return;
+        }
+        if (role === 'operations') {
+          router.replace('/operations');
+          return;
+        }
+        if (role === 'warehouse') {
+          router.replace('/warehouse');
+          return;
+        }
+      }
+    } catch { /* ignore */ }
+  }, [router]);
+
   return (
     <PageLayout title="Tìm kiếm hàng" icon={<Search size={16} className="text-blue-500" />}>
       {/* ── Hero ─────────────────────────────────────── */}

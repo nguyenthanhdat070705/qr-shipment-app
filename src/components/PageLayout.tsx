@@ -58,7 +58,41 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
     router.push('/login');
   };
 
+  const procurementRole = userRole === 'procurement';
+  const operationsRole  = userRole === 'operations';
+  const warehouseRole   = userRole === 'warehouse';
+
   const allMenuItems: MenuItem[] = [
+    /* ── Procurement Dashboard (ận hành) ── */
+    ...(procurementRole ? [{
+      icon: <BarChart3 size={18} />,
+      label: 'Dashboard Thu mua',
+      desc: 'Tổng quan bộ phận',
+      href: '/procurement',
+      color: 'text-violet-400',
+      iconBg: 'bg-violet-500/15',
+      section: 'Thu mua',
+    } as MenuItem] : []),
+    /* ── Operations Dashboard (chỉ hiện với operations) ── */
+    ...(operationsRole ? [{
+      icon: <BarChart3 size={18} />,
+      label: 'Dashboard Vận hành',
+      desc: 'Tổng quan bộ phận vận hành',
+      href: '/operations',
+      color: 'text-orange-400',
+      iconBg: 'bg-orange-500/15',
+      section: 'Vận hành',
+    } as MenuItem] : []),
+    /* ── Warehouse Dashboard ── */
+    ...(warehouseRole ? [{
+      icon: <BarChart3 size={18} />,
+      label: 'Dashboard Kho',
+      desc: 'Tổng quan nghiệp vụ kho',
+      href: '/warehouse',
+      color: 'text-emerald-400',
+      iconBg: 'bg-emerald-500/15',
+      section: 'Kho vận',
+    } as MenuItem] : []),
     /* ── Core SCM Flow ── */
     {
       icon: <Search size={18} />,
@@ -67,7 +101,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/',
       color: 'text-blue-400',
       iconBg: 'bg-blue-500/15',
-      section: 'Nghiệp vụ',
+      section: (procurementRole || warehouseRole) ? undefined : 'Nghiệp vụ',
     },
     {
       icon: <ShoppingCart size={18} />,
@@ -77,7 +111,6 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-violet-400',
       iconBg: 'bg-violet-500/15',
       requiresPermission: 'canCreatePO',
-      // section handled by 'Tìm kiếm hàng' now (though it's fine to leave it here to be safe)
     },
     {
       icon: <PackageCheck size={18} />,
