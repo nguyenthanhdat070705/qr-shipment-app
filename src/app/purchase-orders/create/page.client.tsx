@@ -233,10 +233,10 @@ export default function CreatePurchaseOrderPage() {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Ngày dự kiến nhận</label>
                 <input
-                  type="text"
+                  type="date"
                   value={expectedDate}
                   onChange={(e) => setExpectedDate(e.target.value)}
-                  placeholder="dd/mm/yyyy"
+                  lang="vi"
                   className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400 transition-all"
                 />
               </div>
