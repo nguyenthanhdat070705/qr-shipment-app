@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Warehouse, PackageCheck, Truck, Search,
-  ScanLine, History, RefreshCw, ArrowRight,
+  ScanLine, RefreshCw, ArrowRight,
   ChevronRight, Package, CheckCircle2, AlertTriangle,
   Clock, User, MapPin, BarChart3, QrCode, TrendingUp,
   Boxes, ArrowUpRight,

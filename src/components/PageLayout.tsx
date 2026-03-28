@@ -5,7 +5,7 @@ import {
   Menu, X, ChevronRight, Shield, LogOut,
   Truck, Warehouse, LayoutGrid, User,
   ShoppingCart, PackageCheck, TruckIcon,
-  Bell, Search, BarChart3, Settings, BookOpen
+  Bell, Search, BarChart3, Settings, BookOpen, Users
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -187,6 +187,15 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       iconBg: 'bg-slate-500/15',
       section: 'Hệ thống',
     },
+    /* ── Chỉ admin mới thấy quản lý tài khoản ── */
+    ...(userRole === 'admin' ? [{
+      icon: <Users size={18} />,
+      label: 'Quản lý tài khoản',
+      desc: '6 tài khoản hệ thống',
+      href: '/accounts',
+      color: 'text-red-400',
+      iconBg: 'bg-red-500/15',
+    } as MenuItem] : []),
   ];
 
   // Filter by permissions
