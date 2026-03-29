@@ -7,9 +7,10 @@ import { extractProductCode } from '@/lib/utils';
 import ProductDetailCard from '@/components/ProductDetailCard';
 import ProductNotFound from '@/components/ProductNotFound';
 import ShipmentConfirmationFormWrapper from '@/components/ShipmentConfirmationFormWrapper';
-import { ArrowLeft, QrCode } from 'lucide-react';
+import { ArrowLeft, QrCode, Printer } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import PrintButton from '@/components/PrintButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -263,6 +264,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
           productName={productName}
           currentStatus={statusValue}
         />
+
+        {/* Print button */}
+        <PrintButton />
       </div>
     </main>
   );
