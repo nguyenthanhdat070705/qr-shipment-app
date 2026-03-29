@@ -6,6 +6,7 @@ import Link from 'next/link';
 import {
   ArrowLeft, Warehouse, Tag, Box, Layers, DollarSign, TrendingUp,
   User, Phone, MapPin, ClipboardList, Package, CheckCircle, XCircle,
+  ArrowDownCircle, ArrowUpCircle, History,
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -142,7 +143,69 @@ export default async function InventoryDetailPage({ params }: PageProps) {
     ncc = nccData as DimNcc | null;
   }
 
-  // 5. Image
+  // 5. Fetch GRPO (nhập) history for this product
+  const { data: grpoItems } = await supabase
+    .from('fact_nhap_hang_items')
+    .select('so_luong_thuc_nhan, created_at, nhap_hang_id')
+    .eq('ma_hom', productCode)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  // Enrich GRPO items with GR code and warehouse
+  const grpoHistory: { code: string; qty: number; date: string; warehouse: string }[] = [];
+  if (grpoItems && grpoItems.length > 0) {
+    const grIds = [...new Set(grpoItems.map((i: any) => i.nhap_hang_id).filter(Boolean))];
+    const { data: grData } = await supabase
+      .from('fact_nhap_hang')
+      .select('id, ma_phieu_nhap, kho_id, ngay_nhan')
+      .in('id', grIds);
+    const grMap = new Map<string, any>();
+    for (const gr of (grData || [])) grMap.set(gr.id, gr);
+
+    for (const item of grpoItems as any[]) {
+      const gr = grMap.get(item.nhap_hang_id);
+      const kho = gr?.kho_id ? khoMap.get(gr.kho_id) : null;
+      grpoHistory.push({
+        code: gr?.ma_phieu_nhap || '—',
+        qty: item.so_luong_thuc_nhan || 0,
+        date: gr?.ngay_nhan || item.created_at || '',
+        warehouse: kho?.ten_kho || '—',
+      });
+    }
+  }
+
+  // 6. Fetch IT/GRIT (xuất) history for this product
+  const { data: itItems } = await supabase
+    .from('fact_xuat_hang_items')
+    .select('so_luong, created_at, xuat_hang_id, ghi_chu')
+    .eq('ma_hom', productCode)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  const itHistory: { code: string; qty: number; date: string; warehouse: string; note: string }[] = [];
+  if (itItems && itItems.length > 0) {
+    const itIds = [...new Set(itItems.map((i: any) => i.xuat_hang_id).filter(Boolean))];
+    const { data: itData } = await supabase
+      .from('fact_xuat_hang')
+      .select('id, ma_phieu_xuat, kho_id, created_at, ghi_chu')
+      .in('id', itIds);
+    const itMap = new Map<string, any>();
+    for (const it of (itData || [])) itMap.set(it.id, it);
+
+    for (const item of itItems as any[]) {
+      const it = itMap.get(item.xuat_hang_id);
+      const kho = it?.kho_id ? khoMap.get(it.kho_id) : null;
+      itHistory.push({
+        code: it?.ma_phieu_xuat || '—',
+        qty: item.so_luong || 0,
+        date: it?.created_at || item.created_at || '',
+        warehouse: kho?.ten_kho || '—',
+        note: it?.ghi_chu || item.ghi_chu || '',
+      });
+    }
+  }
+
+  // 7. Image
   const rawImg = hom.hinh_anh || '';
   const hasRealImage = rawImg && rawImg.startsWith('http');
   const imageUrl = hasRealImage ? rawImg : getCoffinImage(hom.ma_hom);
@@ -372,6 +435,66 @@ export default async function InventoryDetailPage({ params }: PageProps) {
             )}
           </SectionCard>
         </div>
+      </div>
+
+      {/* ── Transaction History ──────────────────────── */}
+      <div className="mt-6">
+        <SectionCard
+          icon={<History size={16} />}
+          title="Lịch sử nhập / xuất"
+          color="text-indigo-600"
+          bg="bg-indigo-50"
+        >
+          {grpoHistory.length === 0 && itHistory.length === 0 ? (
+            <p className="text-sm text-gray-400 italic py-4 text-center">Chưa có lịch sử nhập xuất</p>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {/* GRPO entries (+) */}
+              {grpoHistory.map((entry, i) => (
+                <div key={`gr-${i}`} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 flex-shrink-0">
+                    <ArrowDownCircle size={16} className="text-emerald-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-mono font-bold text-emerald-700">{entry.code}</span>
+                      <span className="text-[10px] text-gray-400">GRPO</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5">{entry.warehouse}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm font-extrabold text-emerald-600">+{entry.qty}</p>
+                    <p className="text-[10px] text-gray-400">
+                      {entry.date ? new Date(entry.date).toLocaleDateString('vi-VN') : '—'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+
+              {/* IT entries (-) */}
+              {itHistory.map((entry, i) => (
+                <div key={`it-${i}`} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 flex-shrink-0">
+                    <ArrowUpCircle size={16} className="text-orange-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-mono font-bold text-orange-700">{entry.code}</span>
+                      <span className="text-[10px] text-gray-400">IT</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5 truncate">{entry.note || entry.warehouse}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm font-extrabold text-orange-600">−{entry.qty}</p>
+                    <p className="text-[10px] text-gray-400">
+                      {entry.date ? new Date(entry.date).toLocaleDateString('vi-VN') : '—'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </SectionCard>
       </div>
     </PageLayout>
   );
