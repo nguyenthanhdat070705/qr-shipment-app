@@ -82,12 +82,9 @@ function QuickAction({
 ───────────────────────────────────── */
 function StatusPill({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
-    draft:      { label: 'Nháp',        cls: 'bg-gray-100 text-gray-600' },
-    submitted:  { label: 'Chờ duyệt',   cls: 'bg-amber-100 text-amber-700' },
-    approved:   { label: 'Đã duyệt',    cls: 'bg-blue-100 text-blue-700' },
-    receiving:  { label: 'Đang nhận',   cls: 'bg-purple-100 text-purple-700' },
+    confirmed:  { label: 'Đã xác nhận', cls: 'bg-purple-100 text-purple-700' },
     received:   { label: 'Đã nhận',     cls: 'bg-emerald-100 text-emerald-700' },
-    closed:     { label: 'Đã đóng',     cls: 'bg-slate-100 text-slate-600' },
+    closed:     { label: 'Hoàn thành',  cls: 'bg-sky-100 text-sky-700' },
     cancelled:  { label: 'Đã huỷ',      cls: 'bg-red-100 text-red-600' },
     pending:    { label: 'Chờ duyệt',   cls: 'bg-amber-100 text-amber-700' },
     inspecting: { label: 'Đang kiểm',   cls: 'bg-purple-100 text-purple-700' },
@@ -139,8 +136,7 @@ export default function ProcurementDashboard() {
 
   /* ── Derived stats ── */
   const totalPO       = orders.length;
-  const pendingPO     = orders.filter(o => ['draft', 'submitted'].includes(o.status)).length;
-  const approvedPO    = orders.filter(o => o.status === 'approved').length;
+  const confirmedPO   = orders.filter(o => o.status === 'confirmed').length;
   const receivedPO    = orders.filter(o => ['received', 'closed'].includes(o.status)).length;
   const totalSpend    = orders.reduce((s, o) => s + Number(o.total_amount || 0), 0);
 
@@ -201,11 +197,11 @@ export default function ProcurementDashboard() {
         </div>
 
         {/* Alert if pending */}
-        {(pendingPO > 0 || needApproval > 0) && (
+        {(confirmedPO > 0 || needApproval > 0) && (
           <div className="mt-4 flex items-center gap-2 bg-amber-400/20 border border-amber-400/30 rounded-xl px-4 py-2.5">
             <AlertCircle size={15} className="text-amber-300 flex-shrink-0" />
             <p className="text-xs text-amber-200 font-medium">
-              Có <strong className="text-amber-100">{pendingPO} đơn hàng</strong> đang chờ xử lý
+              Có <strong className="text-amber-100">{confirmedPO} đơn hàng</strong> đã xác nhận, chờ nhận hàng
               {needApproval > 0 && <> và <strong className="text-amber-100">{needApproval} phiếu nhập</strong> cần duyệt</>}.
             </p>
           </div>
@@ -217,14 +213,14 @@ export default function ProcurementDashboard() {
         <StatCard
           label="Tổng đơn mua"
           value={totalPO}
-          sub={`${pendingPO} đang chờ`}
+          sub={`${confirmedPO} chờ nhận hàng`}
           icon={<ShoppingCart size={20} />}
           gradient="bg-gradient-to-br from-violet-500 to-purple-600"
         />
         <StatCard
-          label="Cần xử lý"
-          value={pendingPO}
-          sub="Chờ duyệt / nháp"
+          label="Đã xác nhận"
+          value={confirmedPO}
+          sub="Chờ nhận hàng"
           icon={<Clock size={20} />}
           gradient="bg-gradient-to-br from-amber-400 to-orange-500"
         />
@@ -441,9 +437,8 @@ export default function ProcurementDashboard() {
             </div>
             <div className="space-y-3">
               {[
-                { label: 'Đã hoàn thành', count: receivedPO, total: totalPO, color: 'bg-emerald-500' },
-                { label: 'Đã duyệt', count: approvedPO, total: totalPO, color: 'bg-blue-500' },
-                { label: 'Đang chờ', count: pendingPO, total: totalPO, color: 'bg-amber-400' },
+                { label: 'Đã nhận hàng', count: receivedPO, total: totalPO, color: 'bg-emerald-500' },
+                { label: 'Đã xác nhận', count: confirmedPO, total: totalPO, color: 'bg-purple-500' },
               ].map((item) => (
                 <div key={item.label}>
                   <div className="flex justify-between mb-1">
