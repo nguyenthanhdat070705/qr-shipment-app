@@ -160,7 +160,7 @@ export default function CreatePurchaseOrderPage() {
 
   return (
     <PageLayout title="Tạo đơn mua hàng" icon={<ShoppingCart size={16} className="text-purple-500" />}>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
         <button
           onClick={() => router.push('/purchase-orders')}
           className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-6"
@@ -231,11 +231,13 @@ export default function CreatePurchaseOrderPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Ngày dự kiến nhận</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Ngày dự kiến nhận *</label>
                 <input
                   type="date"
+                  lang="vi"
                   value={expectedDate}
                   onChange={(e) => setExpectedDate(e.target.value)}
+                  required
                   className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400 transition-all"
                 />
               </div>
@@ -294,28 +296,21 @@ export default function CreatePurchaseOrderPage() {
                     </select>
                   </div>
 
-                  <div className="grid grid-cols-12 gap-2 items-end">
-                    <div className="col-span-3">
+                  <div className="grid grid-cols-12 gap-2 items-start">
+                    <div className="col-span-2">
                       <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">Mã SP</label>
                       <input
                         type="text"
                         value={item.product_code}
-                        onChange={(e) => updateItem(i, 'product_code', e.target.value)}
-                        placeholder="2AQ0001"
-                        className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 bg-gray-100"
                         readOnly
+                        className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm bg-gray-100 font-mono"
                       />
                     </div>
-                    <div className="col-span-3">
+                    <div className="col-span-5">
                       <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">Tên SP</label>
-                      <input
-                        type="text"
-                        value={item.product_name}
-                        onChange={(e) => updateItem(i, 'product_name', e.target.value)}
-                        placeholder="Tên sản phẩm"
-                        className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 bg-gray-100"
-                        readOnly
-                      />
+                      <div className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm bg-gray-100 min-h-[38px] break-words leading-snug">
+                        {item.product_name || <span className="text-gray-400">Tên sản phẩm</span>}
+                      </div>
                     </div>
                     <div className="col-span-2">
                       <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">SL</label>
@@ -327,7 +322,7 @@ export default function CreatePurchaseOrderPage() {
                         className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200"
                       />
                     </div>
-                    <div className="col-span-3">
+                    <div className="col-span-2">
                       <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">Đơn giá (₫)</label>
                       <input
                         type="number"
@@ -337,7 +332,7 @@ export default function CreatePurchaseOrderPage() {
                         className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200"
                       />
                     </div>
-                    <div className="col-span-1 flex justify-center">
+                    <div className="col-span-1 flex justify-center pt-5">
                       <button
                         type="button"
                         onClick={() => removeItem(i)}
