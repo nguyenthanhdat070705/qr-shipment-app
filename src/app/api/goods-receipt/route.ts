@@ -57,7 +57,20 @@ export async function GET() {
         }
       }
 
-      const isMissingGoods = Array.isArray(gr.items) 
+      // Resolve receiver name
+      let receivedByName: string | null = null;
+      if (gr.nguoi_nhan_id) {
+        const { data: account } = await supabase
+          .from('dim_account')
+          .select('ho_ten, email')
+          .eq('id', gr.nguoi_nhan_id as string)
+          .maybeSingle();
+        if (account) {
+          receivedByName = account.ho_ten || account.email?.split('@')[0] || null;
+        }
+      }
+
+      const isMissingGoods = Array.isArray(gr.items)
         ? gr.items.some((i: any) => (i.so_luong_thuc_nhan || 0) < (i.so_luong_yeu_cau || 0))
         : false;
 
@@ -68,7 +81,7 @@ export async function GET() {
         warehouse_id: gr.kho_id,
         status: gr.trang_thai || 'completed',
         note: gr.ghi_chu,
-        received_by: gr.nguoi_nhan_id,
+        received_by: receivedByName || gr.nguoi_nhan_id,
         received_date: gr.ngay_nhan,
         created_at: gr.created_at,
         updated_at: gr.updated_at,

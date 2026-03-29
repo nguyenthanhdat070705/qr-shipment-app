@@ -89,6 +89,19 @@ export async function GET(
     }
   }
 
+  // Fetch receiver name from dim_account
+  let receivedByName: string | null = null;
+  if (gr.nguoi_nhan_id) {
+    const { data: account } = await supabase
+      .from('dim_account')
+      .select('ho_ten, email')
+      .eq('id', gr.nguoi_nhan_id)
+      .maybeSingle();
+    if (account) {
+      receivedByName = account.ho_ten || account.email?.split('@')[0] || null;
+    }
+  }
+
   return NextResponse.json({
     data: {
       id: gr.id,
@@ -97,7 +110,7 @@ export async function GET(
       warehouse_id: gr.kho_id,
       status: gr.trang_thai || 'completed',
       note: gr.ghi_chu,
-      received_by: gr.nguoi_nhan_id,
+      received_by: receivedByName || gr.nguoi_nhan_id,
       received_date: gr.ngay_nhan,
       created_at: gr.created_at,
       updated_at: gr.updated_at,
