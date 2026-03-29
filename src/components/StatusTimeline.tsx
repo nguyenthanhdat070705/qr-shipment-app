@@ -59,16 +59,12 @@ export default function StatusTimeline({ steps, current, stepOverrides }: Status
 /* ── Pre-defined step configs ──────────────────────────── */
 
 export const PO_STEPS: TimelineStep[] = [
-  { key: 'draft',     label: 'Đặt hàng',   color: 'bg-gray-200 text-gray-700' },
-  { key: 'submitted', label: 'Đã gửi',     color: 'bg-blue-100 text-blue-700' },
-  { key: 'approved',  label: 'Đã duyệt',   color: 'bg-purple-100 text-purple-700' },
+  { key: 'confirmed', label: 'Xác nhận',    color: 'bg-purple-100 text-purple-700' },
   { key: 'received',  label: 'Đã nhận',     color: 'bg-emerald-100 text-emerald-700' },
   { key: 'closed',    label: 'Hoàn thành',  color: 'bg-emerald-100 text-emerald-700' },
 ];
 
 export const GR_STEPS: TimelineStep[] = [
-  { key: 'pending',    label: 'Chờ xử lý',   color: 'bg-yellow-100 text-yellow-700' },
-  { key: 'inspecting', label: 'Đang kiểm',    color: 'bg-blue-100 text-blue-700' },
   { key: 'completed',  label: 'Hoàn tất',     color: 'bg-emerald-100 text-emerald-700' },
 ];
 

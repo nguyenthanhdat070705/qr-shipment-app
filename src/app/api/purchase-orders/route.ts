@@ -46,7 +46,7 @@ export async function GET() {
     po_code: po.ma_don_hang,
     supplier_id: po.ncc_id,
     warehouse_id: po.kho_id,
-    status: po.trang_thai || 'draft',
+    status: po.trang_thai || 'confirmed',
     total_amount: po.tong_tien || 0,
     note: po.ghi_chu,
     created_by: po.nguoi_tao_id ? (usersMap[po.nguoi_tao_id as string] || po.nguoi_tao_id) : null,
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
       nguoi_tao_id: nguoiTaoId,
       ngay_du_kien: expected_date || null,
       tong_tien: totalAmount,
-      trang_thai: 'draft',
+      trang_thai: 'confirmed',
       ngay_dat: now.toISOString().slice(0, 10),
     })
     .select()

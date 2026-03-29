@@ -59,11 +59,10 @@ export default function PurchaseOrdersPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const total         = orders.length;
-  const draftCount    = orders.filter((o) => o.status === 'draft' || o.status === 'submitted').length;
-  const approvedCount = orders.filter((o) => o.status === 'approved').length;
-  const receivedCount = orders.filter((o) => o.status === 'received').length;
-  const closedCount   = orders.filter((o) => o.status === 'closed' || o.status === 'cancelled').length;
+  const total          = orders.length;
+  const confirmedCount = orders.filter((o) => o.status === 'confirmed').length;
+  const receivedCount  = orders.filter((o) => o.status === 'received').length;
+  const closedCount    = orders.filter((o) => o.status === 'closed' || o.status === 'cancelled').length;
 
   const columns = [
     {
@@ -170,10 +169,10 @@ export default function PurchaseOrdersPage() {
 
       {/* ── Stat cards ─────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Tổng đơn hàng"  value={total}         icon={<ShoppingCart size={22} />} color="text-[#1B2A4A]" bg="bg-[#eef1f7]"    border="border-[#d5dbe9]" />
-        <StatCard label="Đang chờ xử lý" value={draftCount}    icon={<Clock size={22} />}        color="text-amber-600"  bg="bg-amber-50"      border="border-amber-200" />
-        <StatCard label="Đã xác nhận"    value={approvedCount} icon={<CheckCircle size={22} />}  color="text-emerald-600" bg="bg-emerald-50"   border="border-emerald-200" />
-        <StatCard label="Đã giao hàng"   value={receivedCount + closedCount} icon={<PackageCheck size={22} />} color="text-sky-600" bg="bg-sky-50" border="border-sky-200" />
+        <StatCard label="Tổng đơn hàng"  value={total}          icon={<ShoppingCart size={22} />} color="text-[#1B2A4A]" bg="bg-[#eef1f7]"    border="border-[#d5dbe9]" />
+        <StatCard label="Đã xác nhận"    value={confirmedCount} icon={<CheckCircle size={22} />}  color="text-purple-600" bg="bg-purple-50"    border="border-purple-200" />
+        <StatCard label="Đã nhận hàng"   value={receivedCount}  icon={<PackageCheck size={22} />} color="text-emerald-600" bg="bg-emerald-50"  border="border-emerald-200" />
+        <StatCard label="Hoàn thành"     value={closedCount}    icon={<XCircle size={22} />}      color="text-sky-600"    bg="bg-sky-50"       border="border-sky-200" />
       </div>
 
       {/* ── Table ──────────────────────────────────────── */}

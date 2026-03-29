@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { randomUUID } from 'crypto';
 
 /**
  * GET  /api/goods-receipt     → List all GRPOs from fact_nhap_hang
@@ -65,7 +66,7 @@ export async function GET() {
         gr_code: gr.ma_phieu_nhap,
         po_id: gr.don_hang_id,
         warehouse_id: gr.kho_id,
-        status: gr.trang_thai || 'pending',
+        status: gr.trang_thai || 'completed',
         note: gr.ghi_chu,
         received_by: gr.nguoi_nhan_id,
         received_date: gr.ngay_nhan,
@@ -129,7 +130,7 @@ export async function POST(req: NextRequest) {
       kho_id: warehouse_id,
       ghi_chu: note ? `${note} | Nhận bởi: ${received_by}` : `Nhận bởi: ${received_by}`,
       nguoi_nhan_id: nguoiNhanId,
-      trang_thai: 'pending',
+      trang_thai: 'completed',
       ngay_nhan: now.toISOString().slice(0, 10),
     })
     .select()
@@ -152,6 +153,97 @@ export async function POST(req: NextRequest) {
 
     const { error: itemsError } = await supabase.from('fact_nhap_hang_items').insert(itemRows);
     if (itemsError) console.error('[goods-receipt] Items insert error:', itemsError);
+  }
+
+  // ── Auto-update linked PO status to 'received' ──
+  if (po_id) {
+    await supabase.from('fact_don_hang').update({ trang_thai: 'received' }).eq('id', po_id);
+  }
+
+  // ── Generate Inventory QR codes ──
+  let generatedQRCodes: string[] = [];
+
+  if (items && items.length > 0) {
+    const dateStrQR = now.toISOString().slice(0, 10).replace(/-/g, '');
+
+    const qrInserts = items
+      .filter((item) => item.received_qty > 0)
+      .map((item, i) => {
+        const uniqueId = Math.random().toString(36).substring(2, 6).toUpperCase();
+        const qr_code = `INV-${dateStrQR}-${item.product_code}-${uniqueId}-${i}`;
+        generatedQRCodes.push(qr_code);
+        return {
+          qr_code,
+          type: 'INVENTORY',
+          reference_id: item.product_code,
+          quantity: item.received_qty,
+          warehouse: warehouse_id,
+          status: 'active',
+          created_by: 'system',
+        };
+      });
+
+    if (qrInserts.length > 0) {
+      const { error: qrError } = await supabase.from('qr_codes').insert(qrInserts);
+      if (qrError) console.error('[goods-receipt POST] QR Insert error:', qrError);
+    }
+
+    // ── Update inventory ──
+    try {
+      const maHomList = items.filter(i => i.received_qty > 0).map(i => i.product_code);
+      const { data: homData } = await supabase
+        .from('dim_hom')
+        .select('id, ma_hom')
+        .in('ma_hom', maHomList);
+
+      const homMap = new Map<string, string>();
+      if (homData) {
+        for (const h of homData) homMap.set(h.ma_hom, h.id);
+      }
+
+      const receivedMap = new Map<string, number>();
+      for (const item of items) {
+        if (item.received_qty > 0) {
+          receivedMap.set(item.product_code, (receivedMap.get(item.product_code) || 0) + item.received_qty);
+        }
+      }
+
+      for (const [maHom, qty] of receivedMap.entries()) {
+        const homId = homMap.get(maHom);
+        if (!homId) continue;
+
+        const { data: existingInv } = await supabase
+          .from('fact_inventory')
+          .select('*')
+          .eq('Tên hàng hóa', homId)
+          .eq('Kho', warehouse_id);
+
+        if (existingInv && existingInv.length > 0) {
+          const invRow = existingInv[0];
+          const newQty = (invRow['Số lượng'] || 0) + qty;
+          const newKhadung = (invRow['Ghi chú'] || 0) + qty;
+          await supabase.from('fact_inventory').delete().eq('Mã', invRow['Mã']);
+          await supabase.from('fact_inventory').insert({
+            'Mã': invRow['Mã'],
+            'Tên hàng hóa': invRow['Tên hàng hóa'],
+            'Kho': invRow['Kho'],
+            'Số lượng': newQty,
+            'Ghi chú': newKhadung,
+            'Loại hàng': invRow['Loại hàng'],
+          });
+        } else {
+          await supabase.from('fact_inventory').insert({
+            'Mã': randomUUID(),
+            'Tên hàng hóa': homId,
+            'Kho': warehouse_id,
+            'Số lượng': qty,
+            'Ghi chú': qty,
+          });
+        }
+      }
+    } catch (invErr) {
+      console.error('[goods-receipt POST] Inventory update error:', invErr);
+    }
   }
 
   // Send Email Notification
@@ -195,8 +287,8 @@ export async function POST(req: NextRequest) {
     await supabase.from('notifications').insert({
       sender_email: received_by,
       receiver_role: 'procurement',
-      title: 'Kho vừa nhập hàng mới',
-      message: `Mã phiếu: ${ma_phieu_nhap}. Vui lòng kiểm tra và duyệt nhập hàng.`,
+      title: 'Nhập kho hoàn tất',
+      message: `Phiếu ${ma_phieu_nhap} đã hoàn tất. ${generatedQRCodes.length} mã QR lô hàng đã tạo.`,
       type: 'receipt_alert',
       reference_id: gr.id
     });
@@ -207,5 +299,6 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     data: { id: gr.id, gr_code: ma_phieu_nhap },
     gr_code: ma_phieu_nhap,
+    qr_codes: generatedQRCodes,
   }, { status: 201 });
 }

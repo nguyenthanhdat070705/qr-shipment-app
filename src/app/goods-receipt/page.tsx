@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { PackageCheck, Plus, Eye, Clock, CheckCircle, PackageOpen } from 'lucide-react';
+import { PackageCheck, Plus, Eye, CheckCircle, PackageOpen } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import { getWarehouseFilter } from '@/config/roles.config';
 import DataTable from '@/components/DataTable';
@@ -55,7 +55,6 @@ export default function GoodsReceiptPage() {
   }, []);
 
   const total = receipts.length;
-  const pendingCount = receipts.filter((r) => r.status === 'pending').length;
   const completedCount = receipts.filter((r) => r.status === 'completed').length;
 
   const columns = [
@@ -141,7 +140,7 @@ export default function GoodsReceiptPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900">Danh sách phiếu nhập</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Quản lý nhập hàng (GRPO) từ các PO đã duyệt</p>
+          <p className="text-sm text-gray-500 mt-0.5">Quản lý nhập hàng (GRPO) từ các PO đã xác nhận</p>
         </div>
         <button
           onClick={() => router.push('/goods-receipt/create')}
@@ -155,7 +154,6 @@ export default function GoodsReceiptPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard label="Tổng phiếu" value={total} icon={<PackageOpen size={22} />} color="text-[#1B2A4A]" bg="bg-[#eef1f7]" border="border-[#d5dbe9]" />
-        <StatCard label="Chờ xử lý" value={pendingCount} icon={<Clock size={22} />} color="text-yellow-600" bg="bg-yellow-50" border="border-yellow-200" />
         <StatCard label="Hoàn tất" value={completedCount} icon={<CheckCircle size={22} />} color="text-emerald-600" bg="bg-emerald-50" border="border-emerald-200" />
       </div>
 

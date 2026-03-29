@@ -376,7 +376,7 @@ export default function CreatePurchaseOrderPage() {
             disabled={submitting}
             className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold text-sm hover:bg-purple-700 disabled:opacity-50 shadow-lg shadow-purple-200 transition-all"
           >
-            {submitting ? 'Đang tạo...' : 'Tạo đơn mua hàng'}
+            {submitting ? 'Đang xử lý...' : 'Xác nhận đơn hàng'}
           </button>
         </form>
       </div>

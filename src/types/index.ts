@@ -90,7 +90,7 @@ export interface Supplier {
 }
 
 /** Trạng thái PO */
-export type POStatus = 'draft' | 'submitted' | 'approved' | 'received' | 'closed' | 'cancelled';
+export type POStatus = 'confirmed' | 'received' | 'closed' | 'cancelled';
 
 /** Đơn mua hàng — Purchase Order */
 export interface PurchaseOrder {
@@ -128,7 +128,7 @@ export interface PurchaseOrderItem {
 }
 
 /** Trạng thái GRPO */
-export type GRStatus = 'pending' | 'inspecting' | 'completed' | 'rejected';
+export type GRStatus = 'completed' | 'cancelled';
 
 /** Phiếu nhập kho — Goods Receipt PO */
 export interface GoodsReceipt {

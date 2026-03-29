@@ -41,7 +41,7 @@ export async function GET(
     po_code: po.ma_don_hang,
     supplier_id: po.ncc_id,
     warehouse_id: po.kho_id,
-    status: po.trang_thai || 'draft',
+    status: po.trang_thai || 'confirmed',
     total_amount: po.tong_tien || 0,
     note: po.ghi_chu,
     created_by: createdByName,
@@ -123,28 +123,19 @@ export async function PATCH(
   const { id } = await params;
   const supabase = getSupabaseAdmin();
 
-  let body: { status: string; approved_by?: string };
+  let body: { status: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const validStatuses = ['draft', 'submitted', 'approved', 'received', 'closed', 'cancelled'];
+  const validStatuses = ['confirmed', 'received', 'closed', 'cancelled'];
   if (!validStatuses.includes(body.status)) {
     return NextResponse.json({ error: `Trạng thái không hợp lệ: ${body.status}` }, { status: 400 });
   }
 
   const updateData: Record<string, unknown> = { trang_thai: body.status };
-  if (body.status === 'approved' && body.approved_by) {
-    // Lookup user UUID
-    const { data: account } = await supabase
-      .from('dim_account')
-      .select('id')
-      .eq('email', body.approved_by)
-      .maybeSingle();
-    if (account) updateData.nguoi_duyet_id = account.id;
-  }
 
   const { data, error } = await supabase
     .from('fact_don_hang')

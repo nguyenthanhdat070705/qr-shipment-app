@@ -9,10 +9,6 @@ import QRCodeGenerator from '@/components/QRCodeGenerator';
 import type { PurchaseOrder } from '@/types';
 
 const STATUS_ACTIONS: Record<string, { label: string; next: string; color: string }[]> = {
-  draft:     [{ label: 'Gửi duyệt', next: 'submitted', color: 'bg-blue-600 hover:bg-blue-700 shadow-blue-200' }],
-  submitted: [{ label: 'Duyệt', next: 'approved', color: 'bg-purple-600 hover:bg-purple-700 shadow-purple-200' },
-              { label: 'Hủy', next: 'cancelled', color: 'bg-red-500 hover:bg-red-600 shadow-red-200' }],
-  approved:  [{ label: 'Xác nhận nhận hàng', next: 'received', color: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200' }],
   received:  [{ label: 'Hoàn thành', next: 'closed', color: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200' }],
 };
 
@@ -41,25 +37,16 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
     if (!po) return;
     setUpdating(true);
 
-    let approvedBy: string | undefined;
-    if (nextStatus === 'approved') {
-      try {
-        const raw = localStorage.getItem('auth_user');
-        if (raw) approvedBy = JSON.parse(raw).email;
-      } catch { /* ignore */ }
-    }
-
     try {
       const res = await fetch(`/api/purchase-orders/${po.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: nextStatus, approved_by: approvedBy }),
+        body: JSON.stringify({ status: nextStatus }),
       });
       const result = await res.json();
       if (res.ok) {
         setPo({ ...po, ...result.data });
         showToast(
-          nextStatus === 'approved' ? 'PO đã được duyệt!' :
           nextStatus === 'cancelled' ? 'PO đã bị hủy.' :
           'Cập nhật trạng thái thành công.',
           nextStatus === 'cancelled' ? 'err' : 'ok'
@@ -243,10 +230,10 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
         )}
 
         {/* ── Create GRPO button — appears when PO is approved ── */}
-        {po.status === 'approved' && (
+        {po.status === 'confirmed' && (
           <div className="rounded-2xl border-2 border-dashed border-orange-200 bg-orange-50 p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
-              <p className="font-bold text-orange-700 text-sm">PO đã được duyệt</p>
+              <p className="font-bold text-orange-700 text-sm">PO đã xác nhận</p>
               <p className="text-orange-600 text-xs mt-0.5">Kho có thể tạo phiếu nhập hàng (GRPO) cho đơn này.</p>
             </div>
             <button

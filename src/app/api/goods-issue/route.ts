@@ -25,11 +25,14 @@ export async function POST(req: NextRequest) {
   const {
     inventory_id,
     quantity = 1,
+    ma_dam,
+    nguoi_nhan,
+    note,
+    created_by,
+    // Legacy fields (kept for backwards compatibility)
     customer_name,
     customer_phone,
     customer_address,
-    note,
-    created_by,
   } = body;
 
   if (!inventory_id) {
@@ -97,10 +100,10 @@ export async function POST(req: NextRequest) {
           ma_phieu_xuat: do_code,
           kho_id: khoId,
           trang_thai: 'pending',
-          ten_khach: customer_name || 'Khách vãng lai',
+          ten_khach: nguoi_nhan || customer_name || 'Khách vãng lai',
           sdt_khach: customer_phone || null,
           dia_chi_giao: customer_address || null,
-          ghi_chu: note || null,
+          ghi_chu: ma_dam ? `Mã Đám: ${ma_dam}${note ? ' | ' + note : ''}` : (note || null),
           nguoi_xuat_id: null,
         })
         .select('id')

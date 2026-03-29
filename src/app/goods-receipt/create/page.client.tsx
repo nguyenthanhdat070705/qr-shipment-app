@@ -183,7 +183,8 @@ function CreateGoodsReceiptForm() {
         return;
       }
 
-      setSuccessMsg(`Đã tạo phiếu nhập kho thành công! Mã: ${result.gr_code || ''}`);
+      const qrCount = result.qr_codes?.length || 0;
+      setSuccessMsg(`Nhập kho hoàn tất! Mã: ${result.gr_code || ''}. ${qrCount > 0 ? `${qrCount} mã QR lô hàng đã được tạo.` : ''}`);
       // Navigate after a short delay so user sees the success message
       setTimeout(() => {
         if (result.data?.id) {
@@ -315,14 +316,12 @@ function CreateGoodsReceiptForm() {
                         >
                           {po.po_code}
                           <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                            po.status === 'approved' ? 'bg-green-100 text-green-700' :
-                            po.status === 'submitted' ? 'bg-blue-100 text-blue-700' :
-                            po.status === 'draft' ? 'bg-gray-100 text-gray-500' :
+                            po.status === 'confirmed' ? 'bg-purple-100 text-purple-700' :
+                            po.status === 'received' ? 'bg-emerald-100 text-emerald-700' :
+                            po.status === 'closed' ? 'bg-gray-100 text-gray-500' :
                             'bg-gray-100 text-gray-500'
                           }`}>
-                            {po.status === 'approved' ? 'Duyệt' :
-                             po.status === 'submitted' ? 'Gửi' :
-                             po.status === 'draft' ? 'Đặt hàng' :
+                            {po.status === 'confirmed' ? 'Xác nhận' :
                              po.status === 'received' ? 'Đã nhận' :
                              po.status === 'closed' ? 'Hoàn thành' :
                              po.status}
@@ -462,7 +461,7 @@ function CreateGoodsReceiptForm() {
             disabled={submitting}
             className="w-full py-3 bg-orange-500 text-white rounded-xl font-bold text-sm hover:bg-orange-600 disabled:opacity-50 shadow-lg shadow-orange-200 transition-all"
           >
-            {submitting ? 'Đang tạo...' : 'Tạo phiếu nhập kho'}
+            {submitting ? 'Đang xử lý...' : 'Xác nhận nhập kho'}
           </button>
         </form>
       </div>
