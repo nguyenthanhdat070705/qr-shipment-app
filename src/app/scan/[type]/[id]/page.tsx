@@ -69,18 +69,16 @@ async function POScanPage({ id }: { id: string }) {
     .order('created_at', { ascending: false });
 
   const poCode = po.ma_don_hang || '—';
-  const status = po.trang_thai || 'draft';
-  const isApproved = status === 'approved' || status === 'received' || status === 'closed';
+  const status = po.trang_thai || 'confirmed';
+  const isConfirmed = status === 'confirmed' || status === 'received' || status === 'closed';
   const totalItems = (items || []).reduce((s: number, i: any) => s + (Number(i.so_luong) || 0), 0);
 
   const statusLabels: Record<string, string> = {
-    draft: 'Nháp', submitted: 'Đã gửi', approved: 'Đã duyệt',
+    confirmed: 'Đã xác nhận',
     received: 'Đã nhận', closed: 'Hoàn thành', cancelled: 'Đã hủy',
   };
   const statusColors: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-600',
-    submitted: 'bg-blue-100 text-blue-700',
-    approved: 'bg-purple-100 text-purple-700',
+    confirmed: 'bg-purple-100 text-purple-700',
     received: 'bg-green-100 text-green-700',
     closed: 'bg-green-100 text-green-700',
     cancelled: 'bg-red-100 text-red-600',
@@ -143,7 +141,7 @@ async function POScanPage({ id }: { id: string }) {
         </div>
 
         {/* CTA Section */}
-        {isApproved ? (
+        {isConfirmed ? (
           <div className="space-y-3">
             {/* Nếu đã có GRPO thì hiện link */}
             {existingGRs && existingGRs.length > 0 ? (
@@ -189,10 +187,10 @@ async function POScanPage({ id }: { id: string }) {
             )}
           </div>
         ) : (
-          /* PO chưa được duyệt */
-          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 text-center">
-            <p className="text-yellow-800 font-bold text-sm mb-1">⚠️ PO chưa được duyệt</p>
-            <p className="text-yellow-700 text-xs">Đơn hàng cần được duyệt trước khi nhập kho.</p>
+          /* PO đã hủy */
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center">
+            <p className="text-red-800 font-bold text-sm mb-1">⚠️ PO đã bị hủy</p>
+            <p className="text-red-700 text-xs">Đơn hàng này đã bị hủy, không thể nhập kho.</p>
           </div>
         )}
 
