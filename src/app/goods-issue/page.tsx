@@ -2,14 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Truck, Search, ScanLine, Keyboard, CheckCircle2, Package, Clock, History, AlertCircle } from 'lucide-react';
+import { Truck, Search, CheckCircle2, Package, Clock, History, AlertCircle } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import { getWarehouseFilter } from '@/config/roles.config';
-import dynamic from 'next/dynamic';
-
-const Scanner = dynamic(() => import('@yudiel/react-qr-scanner').then((mod) => mod.Scanner), {
-  ssr: false,
-});
 
 interface InventoryItemData {
   inventory_id: string;
@@ -24,7 +19,6 @@ interface InventoryItemData {
 
 export default function GoodsIssuePage() {
   const router = useRouter();
-  const [inputMode, setInputMode] = useState<'type' | 'scan'>('type');
   const [searchInput, setSearchInput] = useState('');
 
   const [scannedItems, setScannedItems] = useState<InventoryItemData[]>([]);
@@ -196,7 +190,7 @@ export default function GoodsIssuePage() {
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold mb-3 tracking-tight">Chuyển Kho Nội Bộ (IT)</h1>
           <p className="text-indigo-100 text-sm max-w-md leading-relaxed">
-            Quét mã QR sản phẩm hoặc nhập mã đám, điền thông tin người nhận, xác nhận xuất kho.
+            Nhập mã sản phẩm hoặc mã đám, điền thông tin người nhận, xác nhận xuất kho.
           </p>
         </div>
       </div>
@@ -214,89 +208,42 @@ export default function GoodsIssuePage() {
           </div>
         )}
 
-        {/* Scanner / Search Card */}
+        {/* Search Card */}
         {!success && (
           <div className="rounded-[2rem] bg-white border border-gray-100 shadow-xl shadow-gray-200/50 p-6 sm:p-8 relative overflow-hidden transition-all">
             <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-emerald-500"></div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div className="mb-6">
               <h2 className="text-sm font-extrabold uppercase tracking-wide text-gray-900 flex items-center gap-2">
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 text-xs">1</span>
-                Quét mã hoặc tìm kiếm
+                Tìm kiếm sản phẩm
               </h2>
+            </div>
 
-              <div className="flex bg-gray-100/80 backdrop-blur-xl p-1 rounded-xl">
+            <div className="relative max-w-2xl">
+              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                <Search size={18} className="text-gray-400" />
+              </div>
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSearchProductOrLot(searchInput.trim());
+                }}
+                placeholder="Nhập Mã Đám hoặc mã sản phẩm..."
+                className="w-full pl-11 pr-32 py-4 bg-gray-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 rounded-2xl text-sm font-medium text-gray-900 placeholder:text-gray-400 transition-all shadow-inner focus:shadow-indigo-500/10 outline-none"
+              />
+              <div className="absolute right-2 top-2 bottom-2">
                 <button
                   type="button"
-                  onClick={() => setInputMode('type')}
-                  className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all duration-300 ${
-                    inputMode === 'type'
-                      ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-gray-200/50'
-                      : 'text-gray-500 hover:text-gray-800'
-                  }`}
+                  onClick={() => handleSearchProductOrLot(searchInput.trim())}
+                  className="h-full px-6 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 shadow-md shadow-indigo-600/20 transition-all"
                 >
-                  <Keyboard size={14} />
-                  Nhập tay
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setInputMode('scan')}
-                  className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all duration-300 ${
-                    inputMode === 'scan'
-                      ? 'bg-white text-emerald-600 shadow-sm ring-1 ring-gray-200/50'
-                      : 'text-gray-500 hover:text-gray-800'
-                  }`}
-                >
-                  <ScanLine size={14} />
-                  Quét mã QR
+                  Tìm kiếm
                 </button>
               </div>
             </div>
-
-            {inputMode === 'type' ? (
-              <div className="relative max-w-2xl">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                  <Search size={18} className="text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSearchProductOrLot(searchInput.trim());
-                  }}
-                  placeholder="Nhập Mã Đám hoặc mã sản phẩm..."
-                  className="w-full pl-11 pr-32 py-4 bg-gray-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 rounded-2xl text-sm font-medium text-gray-900 placeholder:text-gray-400 transition-all shadow-inner focus:shadow-indigo-500/10 outline-none"
-                />
-                <div className="absolute right-2 top-2 bottom-2">
-                  <button
-                    type="button"
-                    onClick={() => handleSearchProductOrLot(searchInput.trim())}
-                    className="h-full px-6 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 shadow-md shadow-indigo-600/20 transition-all"
-                  >
-                    Tìm kiếm
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-2xl overflow-hidden bg-black/5 relative aspect-video sm:aspect-[21/9] w-full max-w-2xl border border-gray-200 flex items-center justify-center">
-                <Scanner
-                  onScan={(result) => {
-                    if (result && result.length > 0 && result[0].rawValue) {
-                      setSearchInput(result[0].rawValue);
-                      setInputMode('type');
-                      handleSearchProductOrLot(result[0].rawValue);
-                    }
-                  }}
-                  formats={['qr_code']}
-                  components={{ onOff: true, torch: true, zoom: true, finder: true }}
-                />
-                <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center text-white/50 pb-8">
-                  <ScanLine size={48} className="mb-4 opacity-50" />
-                  <p className="text-xs font-medium tracking-widest uppercase">Đưa mã QR vào khung ngắm</p>
-                </div>
-              </div>
-            )}
 
             {error && (
               <div className="mt-6 px-5 py-4 rounded-xl bg-red-50/50 border border-red-100 text-red-600 text-sm font-medium flex items-center gap-3">

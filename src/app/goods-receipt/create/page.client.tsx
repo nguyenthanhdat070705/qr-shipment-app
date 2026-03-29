@@ -3,15 +3,9 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { PackageCheck, ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { PackageCheck, ArrowLeft, Plus, Trash2, Search } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import type { PurchaseOrder } from '@/types';
-import nextDynamic from 'next/dynamic';
-import { ScanLine, Keyboard, Search } from 'lucide-react';
-
-const Scanner = nextDynamic(() => import('@yudiel/react-qr-scanner').then((mod) => mod.Scanner), {
-  ssr: false,
-});
 
 interface DimKhoItem {
   id: string;
@@ -43,7 +37,6 @@ function CreateGoodsReceiptForm() {
   const [successMsg, setSuccessMsg] = useState('');
   
   const [searchInput, setSearchInput] = useState('');
-  const [inputMode, setInputMode] = useState<'type' | 'scan'>('type');
 
   const handleSearchPO = (code: string) => {
     let searchCode = code.trim();
@@ -220,74 +213,31 @@ function CreateGoodsReceiptForm() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2 bg-orange-50/50 p-4 rounded-xl border border-orange-100">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Liên kết mã PO (Quét QR hoặc nhập mã)</label>
-                
-                <div className="flex rounded-xl border border-gray-200 bg-white p-1 gap-1 mb-3">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Liên kết mã PO</label>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSearchPO(searchInput);
+                      }
+                    }}
+                    placeholder="Nhập mã PO (vd: PO-123)..."
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400"
+                  />
                   <button
                     type="button"
-                    onClick={() => setInputMode('type')}
-                    className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold transition-all ${
-                      inputMode === 'type'
-                        ? 'bg-orange-100 text-orange-700 shadow-sm'
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
+                    onClick={() => handleSearchPO(searchInput)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-orange-500 text-white rounded-xl font-bold text-sm hover:bg-orange-600 shadow-md transition-all"
                   >
-                    <Keyboard size={14} />
-                    Nhập mã
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setInputMode('scan')}
-                    className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold transition-all ${
-                      inputMode === 'scan'
-                        ? 'bg-orange-100 text-orange-700 shadow-sm'
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    <ScanLine size={14} />
-                    Quét QR
+                    <Search size={16} />
+                    Tìm PO
                   </button>
                 </div>
-
-                {inputMode === 'type' ? (
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={searchInput}
-                      onChange={(e) => setSearchInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleSearchPO(searchInput);
-                        }
-                      }}
-                      placeholder="Nhập mã PO (vd: PO-123)..."
-                      className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleSearchPO(searchInput)}
-                      className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-orange-500 text-white rounded-xl font-bold text-sm hover:bg-orange-600 shadow-md transition-all"
-                    >
-                      <Search size={16} />
-                      Tìm PO
-                    </button>
-                  </div>
-                ) : (
-                  <div className="rounded-xl overflow-hidden border-2 border-orange-200 bg-black relative aspect-[4/3] w-full max-w-sm mx-auto flex items-center justify-center">
-                    <Scanner
-                      onScan={(result) => {
-                        if (result && result.length > 0 && result[0].rawValue) {
-                          setSearchInput(result[0].rawValue);
-                          setInputMode('type');
-                          handleSearchPO(result[0].rawValue);
-                        }
-                      }}
-                      formats={['qr_code']}
-                      components={{ onOff: true, torch: true, zoom: true, finder: true }}
-                    />
-                  </div>
-                )}
                 {poId && (
                   <div className="mt-3 px-3 py-2 rounded-lg bg-green-50 border border-green-200 text-sm text-green-700 font-medium">
                     ✅ Đã liên kết thành công với PO: <strong>{purchaseOrders.find(p => p.id === poId)?.po_code || poId}</strong>
