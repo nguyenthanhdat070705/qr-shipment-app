@@ -115,46 +115,50 @@ export default async function InventoryPage() {
 
   const inventory = (inventoryRes.data || []) as FactInventoryRow[];
 
-  // Group by product code and warehouse to avoid merging different warehouses
+  // Group by product (combine all warehouses together)
   const productGroupMap = new Map<string, {
     homId: string;
-    khoId: string;
     totalQty: number;
     totalAvail: number;
-    warehouses: Set<string>;
-    warehouseCodes: Set<string>;
     loaiSet: Set<string>;
+    warehouseBreakdown: { khoId: string; name: string; code: string; qty: number; avail: number }[];
   }>();
 
   for (const row of inventory) {
     const homId = row['Tên hàng hóa'];
     const khoId = row['Kho'] || 'unknown_kho';
     const kho = khoMap.get(khoId);
-    const groupKey = `${homId}_${khoId}`;
     const loai = row['Loại hàng'] || '';
-    
-    const existing = productGroupMap.get(groupKey);
+    const qty = row['Số lượng'] || 0;
+    const avail = row['Ghi chú'] || 0;
+
+    const existing = productGroupMap.get(homId);
 
     if (existing) {
-      existing.totalQty += row['Số lượng'] || 0;
-      existing.totalAvail += row['Ghi chú'] || 0;
+      existing.totalQty += qty;
+      existing.totalAvail += avail;
       if (loai) existing.loaiSet.add(loai);
+      // Add to warehouse breakdown
+      const existingWh = existing.warehouseBreakdown.find(w => w.khoId === khoId);
+      if (existingWh) {
+        existingWh.qty += qty;
+        existingWh.avail += avail;
+      } else {
+        existing.warehouseBreakdown.push({
+          khoId, name: kho?.ten_kho || '—', code: kho?.ma_kho || '', qty, avail,
+        });
+      }
     } else {
-      const warehouses = new Set<string>();
-      const warehouseCodes = new Set<string>();
       const loaiSet = new Set<string>();
-      if (kho?.ten_kho) warehouses.add(kho.ten_kho);
-      if (kho?.ma_kho) warehouseCodes.add(kho.ma_kho);
       if (loai) loaiSet.add(loai);
-      
-      productGroupMap.set(groupKey, {
+      productGroupMap.set(homId, {
         homId,
-        khoId,
-        totalQty: row['Số lượng'] || 0,
-        totalAvail: row['Ghi chú'] || 0,
-        warehouses,
-        warehouseCodes,
+        totalQty: qty,
+        totalAvail: avail,
         loaiSet,
+        warehouseBreakdown: [{
+          khoId, name: kho?.ten_kho || '—', code: kho?.ma_kho || '', qty, avail,
+        }],
       });
     }
   }
@@ -167,8 +171,8 @@ export default async function InventoryPage() {
     const code = hom?.ma_hom || '—';
     const name = hom?.ten_hom || 'Chưa có tên';
     const price = Number(hom?.gia_ban || 0);
-    const warehouse = Array.from(group.warehouses).join(', ') || '—';
-    const warehouseCode = Array.from(group.warehouseCodes).join(', ');
+    const warehouse = group.warehouseBreakdown.map(w => w.name).join(', ') || '—';
+    const warehouseCode = group.warehouseBreakdown.map(w => w.code).join(', ');
     const soLuong = group.totalQty;
     const loaiHang = Array.from(group.loaiSet).join(', ');
     const khaDung = group.totalAvail;
@@ -198,6 +202,7 @@ export default async function InventoryPage() {
       isOutOfStock,
       available,
       lots: [] as string[],
+      warehouseBreakdown: group.warehouseBreakdown,
       supplierName: ncc?.ten_ncc || '',
       supplierContact: ncc?.nguoi_lien_he || '',
       supplierPhone: ncc?.sdt || '',

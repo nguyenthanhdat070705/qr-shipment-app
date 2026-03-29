@@ -1,9 +1,17 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Search, Package } from 'lucide-react';
+import { Search, Package, ChevronDown, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { getWarehouseFilter } from '@/config/roles.config';
+
+interface WarehouseBreakdown {
+  khoId: string;
+  name: string;
+  code: string;
+  qty: number;
+  avail: number;
+}
 
 interface InventoryItem {
   code: string;
@@ -21,6 +29,7 @@ interface InventoryItem {
   isOutOfStock: boolean;
   available: boolean;
   lots?: string[];
+  warehouseBreakdown?: WarehouseBreakdown[];
   supplierName?: string;
   supplierContact?: string;
   supplierPhone?: string;
@@ -36,6 +45,7 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
   const [sort, setSort] = useState<SortType>('name');
   const [warehouseFilter, setWarehouseFilter] = useState<string>('all');
   const [lockedWarehouse, setLockedWarehouse] = useState<string | null>(null);
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -205,137 +215,168 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wide">Sản phẩm</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wide">Mã SP</th>
-                  <th className="text-center py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wide">SL</th>
-                  <th className="text-center py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wide">Kho</th>
-                  <th className="text-center py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wide">Loại hàng</th>
-                  <th className="text-center py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wide">Tình trạng</th>
-                  <th className="py-3 px-4"></th>
+                  <th className="text-left py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide w-[35%]">Sản phẩm</th>
+                  <th className="text-left py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Mã SP</th>
+                  <th className="text-center py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Tổng SL</th>
+                  <th className="text-center py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Kho</th>
+                  <th className="text-center py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Loại hàng</th>
+                  <th className="text-center py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Tình trạng</th>
+                  <th className="py-3 px-3"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filtered.map((item, idx) => (
-                  <tr key={`${item.code}-${idx}`} className="hover:bg-gray-50 transition-colors">
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={item.imageUrl}
-                          alt={item.name}
-                          className="w-12 h-12 object-contain rounded-lg border border-gray-100 bg-gray-50 flex-shrink-0"
-                        />
-                        <div>
-                          <span className="font-medium text-gray-800 line-clamp-2 leading-tight">{item.name}</span>
-                          {item.lots && item.lots.length > 0 && (
-                            <span className="text-[10px] text-indigo-500 font-mono mt-1 block">
-                              Mã Đám: {item.lots.length > 1 ? `${item.lots[0]} +${item.lots.length - 1} lô` : item.lots[0]}
-                            </span>
-                          )}
+                {filtered.map((item, idx) => {
+                  const rowKey = `${item.code}-${idx}`;
+                  const isExpanded = expandedRow === rowKey;
+                  const breakdown = item.warehouseBreakdown || [];
+
+                  return (
+                    <tr key={rowKey} className="hover:bg-gray-50 transition-colors align-top">
+                      <td className="py-3 px-3">
+                        <div className="flex items-start gap-2.5">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={item.imageUrl}
+                            alt={item.name}
+                            className="w-10 h-10 object-contain rounded-lg border border-gray-100 bg-gray-50 flex-shrink-0 mt-0.5"
+                          />
+                          <span className="text-sm font-medium text-gray-800 leading-snug break-words">{item.name}</span>
                         </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="font-mono text-xs font-bold text-[#1B2A4A] bg-[#eef1f7] px-2 py-1 rounded-lg">
-                        {item.code}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <span className="font-bold text-gray-800">{item.khaDung || '0'}</span>
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <span className="text-xs text-gray-600">{item.warehouse}</span>
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      {item.status ? (
+                      </td>
+                      <td className="py-3 px-3">
+                        <span className="font-mono text-xs font-bold text-[#1B2A4A] bg-[#eef1f7] px-2 py-1 rounded-lg">
+                          {item.code}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        <span className="font-bold text-gray-800 text-base">{item.khaDung || '0'}</span>
+                      </td>
+                      <td className="py-3 px-3 text-center relative">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setExpandedRow(isExpanded ? null : rowKey); }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-50 text-sky-700 text-xs font-semibold hover:bg-sky-100 border border-sky-200 transition-all"
+                        >
+                          <MapPin size={12} />
+                          {breakdown.length} kho
+                          <ChevronDown size={12} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                        </button>
+                        {isExpanded && breakdown.length > 0 && (
+                          <div className="absolute z-20 top-full mt-1 right-0 w-56 bg-white border border-gray-200 rounded-xl shadow-xl p-2 space-y-1 text-left">
+                            {breakdown.map((w, i) => (
+                              <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 hover:bg-gray-100">
+                                <span className="text-xs font-medium text-gray-700">{w.name}</span>
+                                <span className={`text-xs font-bold ${w.avail > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                  Tồn {w.avail}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        {item.status ? (
+                          <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full
+                            ${item.status === 'Ký gửi'
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-indigo-100 text-indigo-700'
+                            }`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'Ký gửi' ? 'bg-amber-500' : 'bg-indigo-500'}`} />
+                            {item.status}
+                          </span>
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 text-center">
                         <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full
-                          ${item.status === 'Ký gửi'
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-indigo-100 text-indigo-700'
+                          ${item.available
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : item.isExported
+                            ? 'bg-orange-100 text-orange-700'
+                            : 'bg-red-100 text-red-700'
                           }`}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'Ký gửi' ? 'bg-amber-500' : 'bg-indigo-500'}`} />
-                          {item.status}
+                          <span className={`w-1.5 h-1.5 rounded-full ${item.available ? 'bg-emerald-500' : item.isExported ? 'bg-orange-500' : 'bg-red-500'}`} />
+                          {item.available ? 'Còn hàng' : item.isExported ? 'Đã xuất' : 'Hết hàng'}
                         </span>
-                      ) : (
-                        <span className="text-gray-300">—</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full
-                        ${item.available
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : item.isExported
-                          ? 'bg-orange-100 text-orange-700'
-                          : 'bg-red-100 text-red-700'
-                        }`}
-                      >
-                        <span className={`w-1.5 h-1.5 rounded-full ${item.available ? 'bg-emerald-500' : item.isExported ? 'bg-orange-500' : 'bg-red-500'}`} />
-                        {item.available ? 'Còn hàng' : item.isExported ? 'Đã xuất' : 'Hết hàng'}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <Link
-                        href={`/inventory/${encodeURIComponent(item.code)}`}
-                        className="text-xs font-semibold text-[#1B2A4A] hover:text-[#111a33] hover:bg-[#eef1f7] px-3 py-1.5 rounded-lg transition-all"
-                      >
-                        Chi tiết →
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="py-3 px-3">
+                        <Link
+                          href={`/inventory/${encodeURIComponent(item.code)}`}
+                          className="text-xs font-semibold text-[#1B2A4A] hover:text-[#111a33] hover:bg-[#eef1f7] px-3 py-1.5 rounded-lg transition-all"
+                        >
+                          Chi tiết →
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
           {/* Mobile cards */}
           <div className="md:hidden divide-y divide-gray-100">
-            {filtered.map((item, idx) => (
-              <Link
-                key={`${item.code}-${idx}`}
-                href={`/inventory/${encodeURIComponent(item.code)}`}
-                className="flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={item.imageUrl}
-                  alt={item.name}
-                  className="w-14 h-14 object-contain rounded-xl border border-gray-100 bg-gray-50 flex-shrink-0"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-800 text-sm line-clamp-1">{item.name}</p>
-                  {item.lots && item.lots.length > 0 && (
-                    <p className="text-[10px] text-indigo-500 font-mono mt-0.5 line-clamp-1">
-                      Mã Đám: {item.lots[0]} {item.lots.length > 1 ? `(+${item.lots.length - 1})` : ''}
-                    </p>
+            {filtered.map((item, idx) => {
+              const rowKey = `m-${item.code}-${idx}`;
+              const isExpanded = expandedRow === rowKey;
+              const breakdown = item.warehouseBreakdown || [];
+
+              return (
+                <div key={rowKey} className="p-4 hover:bg-gray-50 transition-colors">
+                  <Link href={`/inventory/${encodeURIComponent(item.code)}`} className="flex items-start gap-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={item.imageUrl}
+                      alt={item.name}
+                      className="w-12 h-12 object-contain rounded-xl border border-gray-100 bg-gray-50 flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-800 text-sm leading-snug break-words">{item.name}</p>
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                        <span className="font-mono text-[10px] font-bold text-[#1B2A4A] bg-[#eef1f7] px-1.5 py-0.5 rounded">
+                          {item.code}
+                        </span>
+                        <span className="text-xs font-bold text-gray-800">Tồn: {item.khaDung || '0'}</span>
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full
+                          ${item.available ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}
+                        >
+                          {item.available ? 'Còn hàng' : 'Hết hàng'}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                  {/* Warehouse button */}
+                  {breakdown.length > 0 && (
+                    <div className="mt-2 ml-[60px]">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedRow(isExpanded ? null : rowKey)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-50 text-sky-700 text-xs font-semibold hover:bg-sky-100 border border-sky-200 transition-all"
+                      >
+                        <MapPin size={11} />
+                        Xem {breakdown.length} kho
+                        <ChevronDown size={11} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                      </button>
+                      {isExpanded && (
+                        <div className="mt-1.5 space-y-1">
+                          {breakdown.map((w, i) => (
+                            <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 border border-gray-100">
+                              <span className="text-xs font-medium text-gray-700">📍 {w.name}</span>
+                              <span className={`text-xs font-bold ${w.avail > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                Tồn {w.avail}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   )}
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="font-mono text-[10px] font-bold text-[#1B2A4A] bg-[#eef1f7] px-1.5 py-0.5 rounded">
-                      {item.code}
-                    </span>
-                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full
-                      ${item.isExported
-                        ? 'bg-green-100 text-green-700'
-                        : item.available
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'bg-red-100 text-red-700'
-                      }`}
-                    >
-                      {item.isExported ? 'Đã xuất' : item.available ? 'Còn hàng' : 'Hết hàng'}
-                    </span>
-                  </div>
                 </div>
-                <div className="text-right flex-shrink-0">
-                  {item.price > 0 ? (
-                    <p className="font-bold text-sm text-gray-800">
-                      {item.price.toLocaleString('vi-VN')}₫
-                    </p>
-                  ) : (
-                    <p className="text-gray-300 text-sm">—</p>
-                  )}
-                </div>
-              </Link>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
