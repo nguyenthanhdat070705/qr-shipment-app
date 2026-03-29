@@ -85,13 +85,24 @@ export async function POST(req: NextRequest) {
 
     console.log(`[goods-issue] ✅ Trừ kho: ${inventory_id} | SL: ${totalQty} → ${newQty}`);
 
-    // 4. Generate export code
+    // 4. Resolve creator UUID from dim_account
+    let nguoiXuatId: string | null = null;
+    if (created_by && created_by.includes('@')) {
+      const { data: account } = await supabase
+        .from('dim_account')
+        .select('id')
+        .eq('email', created_by)
+        .maybeSingle();
+      nguoiXuatId = account?.id || null;
+    }
+
+    // 5. Generate export code
     const now = new Date();
     const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
     const randSuffix = Math.floor(Math.random() * 9000 + 1000);
     const do_code = `DO-${dateStr}-${randSuffix}`;
 
-    // 5. Try to record in fact_xuat_hang — skip gracefully if table schema mismatch
+    // 6. Try to record in fact_xuat_hang — skip gracefully if table schema mismatch
     let doId: string | null = null;
     try {
       const { data: doData, error: doErr } = await supabase
@@ -104,7 +115,7 @@ export async function POST(req: NextRequest) {
           sdt_khach: customer_phone || null,
           dia_chi_giao: customer_address || null,
           ghi_chu: ma_dam ? `Mã Đám: ${ma_dam}${note ? ' | ' + note : ''}` : (note || null),
-          nguoi_xuat_id: null,
+          nguoi_xuat_id: nguoiXuatId,
         })
         .select('id')
         .single();

@@ -102,7 +102,7 @@ export default function PurchaseOrdersPage() {
       label: 'Người đặt',
       sortable: true,
       render: (row: PurchaseOrder) => (
-        <span className="text-sm text-gray-700">{row.created_by?.split('@')[0] || '—'}</span>
+        <span className="text-sm text-gray-700">{row.created_by || '—'}</span>
       ),
     },
     {
