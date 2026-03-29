@@ -101,16 +101,17 @@ async function getProductByCode(productCode: string): Promise<DynamicProductRow 
   const inventoryRows = (invData || []) as FactInventoryRow[];
   const firstInv = inventoryRows[0] || null;
 
-  // 3) Get warehouse info
-  let warehouse: DimKho | null = null;
-  if (firstInv && firstInv['Kho']) {
+  // 3) Get ALL warehouse info for inventory rows
+  const warehouseIds = [...new Set(inventoryRows.map(r => r['Kho']).filter(Boolean))];
+  let allWarehouses: DimKho[] = [];
+  if (warehouseIds.length > 0) {
     const { data: khoData } = await supabase
       .from('dim_kho')
       .select('*')
-      .eq('id', firstInv['Kho'])
-      .single();
-    warehouse = (khoData as DimKho) || null;
+      .in('id', warehouseIds);
+    allWarehouses = (khoData || []) as DimKho[];
   }
+  const warehouse = allWarehouses[0] || null;
 
   // 4) Get supplier info
   let supplier: DimNcc | null = null;
@@ -157,10 +158,16 @@ async function getProductByCode(productCode: string): Promise<DynamicProductRow 
     'liên hệ ncc': supplier?.nguoi_lien_he || '',
     'sdt ncc': supplier?.sdt || '',
     'địa chỉ ncc': supplier?.dia_chi || '',
-    // Warehouse listing
-    'danh sách kho': inventoryRows.map((r) => {
-      return `KHẢ DỤNG: ${r['Ghi chú']} (Tổng: ${r['Số lượng']})`;
-    }).join(', '),
+    // Warehouse listing — per-warehouse inventory
+    'danh sách kho': JSON.stringify(inventoryRows.map((r) => {
+      const kho = allWarehouses.find(w => w.id === r['Kho']);
+      return {
+        warehouse_name: kho?.ten_kho || '—',
+        warehouse_code: kho?.ma_kho || '',
+        quantity: r['Số lượng'] || 0,
+        available: r['Ghi chú'] || 0,
+      };
+    })),
   };
 
   return row;

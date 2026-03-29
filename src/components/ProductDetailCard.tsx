@@ -137,23 +137,52 @@ export default function ProductDetailCard({ row }: ProductDetailCardProps) {
           </div>
         )}
 
-        {/* Kho hàng */}
-        {String(row['kho nào'] ?? '').trim() !== '' && String(row['kho nào']) !== '—' && (
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
-            <span className="text-xs font-bold uppercase tracking-wide text-gray-400">Kho hàng</span>
-            <span className="text-sm font-semibold text-gray-700">📍 {String(row['kho nào'])}</span>
-          </div>
-        )}
+        {/* Per-warehouse inventory */}
+        {(() => {
+          let warehouseList: { warehouse_name: string; available: number }[] = [];
+          try {
+            const raw = String(row['danh sách kho'] ?? '');
+            if (raw.startsWith('[')) warehouseList = JSON.parse(raw);
+          } catch { /* ignore */ }
 
-        {/* Số lượng tồn kho */}
-        {tonKhoRaw && tonKhoRaw !== '—' && tonKhoRaw.trim() !== '' && (
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
-            <span className="text-xs font-bold uppercase tracking-wide text-gray-400">Tồn kho</span>
-            <span className={`text-sm font-bold ${isOutOfStock ? 'text-red-500' : 'text-emerald-600'}`}>
-              {tonKhoRaw} sản phẩm
-            </span>
-          </div>
-        )}
+          if (warehouseList.length > 0) {
+            return (
+              <div className="py-3 border-b border-gray-100">
+                <span className="text-xs font-bold uppercase tracking-wide text-gray-400">Tồn kho theo kho</span>
+                <div className="mt-2 space-y-1.5">
+                  {warehouseList.map((w, i) => (
+                    <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50">
+                      <span className="text-sm font-medium text-gray-700">📍 {w.warehouse_name}</span>
+                      <span className={`text-sm font-bold ${w.available > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                        Tồn {w.available}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          }
+
+          // Fallback to old single-warehouse display
+          return (
+            <>
+              {String(row['kho nào'] ?? '').trim() !== '' && String(row['kho nào']) !== '—' && (
+                <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                  <span className="text-xs font-bold uppercase tracking-wide text-gray-400">Kho hàng</span>
+                  <span className="text-sm font-semibold text-gray-700">📍 {String(row['kho nào'])}</span>
+                </div>
+              )}
+              {tonKhoRaw && tonKhoRaw !== '—' && tonKhoRaw.trim() !== '' && (
+                <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                  <span className="text-xs font-bold uppercase tracking-wide text-gray-400">Tồn kho</span>
+                  <span className={`text-sm font-bold ${isOutOfStock ? 'text-red-500' : 'text-emerald-600'}`}>
+                    {tonKhoRaw} sản phẩm
+                  </span>
+                </div>
+              )}
+            </>
+          );
+        })()}
 
         {/* Nhà cung cấp */}
         {String(row['nhà cung cấp'] ?? '').trim() !== '' && (

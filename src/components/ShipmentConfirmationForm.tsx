@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import type { ConfirmShipmentResponse } from '@/types';
 import {
-  Send, CheckCircle, AlertCircle, Loader2, Lock,
-  Calendar, Clock, Hash, User, Mail, Package, FileText,
-  Warehouse, Printer, ChevronDown
+  Send, AlertCircle, Loader2, Lock,
+  Clock, User, Package,
+  ChevronDown
 } from 'lucide-react';
 
 interface ShipmentConfirmationFormProps {
@@ -15,21 +16,7 @@ interface ShipmentConfirmationFormProps {
   onConfirmed?: (hoTen: string, email: string) => void;
 }
 
-type FormState = 'idle' | 'submitting' | 'success' | 'error';
-
-interface SuccessData {
-  hoTen: string;
-  email: string;
-  ngayXuat: string;
-  thoiGianXuat: string;
-  createdAt: string;
-  stt: number;
-  maDam: string;
-  nguoiMat: string;
-  khoXuat: string;
-  productName: string;
-  productCode: string;
-}
+type FormState = 'idle' | 'submitting' | 'error';
 
 interface DamOption {
   ma_dam: string;
@@ -57,9 +44,9 @@ export default function ShipmentConfirmationForm({
   currentStatus,
   onConfirmed,
 }: ShipmentConfirmationFormProps) {
+  const router = useRouter();
   const [formState, setFormState] = useState<FormState>('idle');
   const [errorMsg, setErrorMsg] = useState('');
-  const [successData, setSuccessData] = useState<SuccessData | null>(null);
 
   const [userEmail, setUserEmail] = useState('');
   const [userName, setUserName] = useState('');
@@ -183,21 +170,23 @@ export default function ShipmentConfirmationForm({
 
       const khoName = warehouses.find(w => w.id === selectedWarehouse)?.ten_kho || '';
 
-      setSuccessData({
-        hoTen: data.confirmation.ho_ten,
-        email: data.confirmation.email,
-        ngayXuat: data.confirmation.ngay_xuat,
-        thoiGianXuat: data.confirmation.thoi_gian_xuat,
-        createdAt: data.confirmation.created_at,
-        stt: data.confirmation.stt,
-        maDam: maDam.trim(),
-        nguoiMat: selectedDam?.nguoi_mat || '',
-        khoXuat: khoName,
-        productName,
-        productCode: qrCode,
-      });
-      setFormState('success');
       onConfirmed?.(userName, userEmail);
+
+      // Redirect to completion page with all info
+      const completionParams = new URLSearchParams({
+        stt: String(data.confirmation.stt || ''),
+        ma_dam: maDam.trim(),
+        nguoi_mat: selectedDam?.nguoi_mat || '',
+        product_code: qrCode,
+        product_name: productName,
+        kho_xuat: khoName,
+        nguoi_xuat: data.confirmation.ho_ten || userName,
+        email: data.confirmation.email || userEmail,
+        ngay_xuat: data.confirmation.ngay_xuat ? formatDate(data.confirmation.ngay_xuat) : new Date().toLocaleDateString('vi-VN'),
+        thoi_gian: data.confirmation.thoi_gian_xuat ? formatTime(data.confirmation.thoi_gian_xuat) : '',
+        so_luong: '1',
+      });
+      router.push(`/transfer-complete?${completionParams.toString()}`);
     } catch {
       setErrorMsg('Lỗi kết nối mạng. Vui lòng thử lại.');
       setFormState('error');
@@ -215,62 +204,6 @@ export default function ShipmentConfirmationForm({
         <p className="text-sm text-green-700">
           Sản phẩm <strong>{productName}</strong> đã được xác nhận xuất kho.
         </p>
-      </div>
-    );
-  }
-
-  // ── SUCCESS / COMPLETION SCREEN ──
-  if (formState === 'success' && successData) {
-    return (
-      <div className="space-y-4">
-        <div className="rounded-2xl border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-5 print:bg-white print:border-gray-300">
-          {/* Header */}
-          <div className="flex items-center gap-3 mb-5 print:mb-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-green-100 print:bg-green-50">
-              <CheckCircle size={24} className="text-green-600" />
-            </div>
-            <div>
-              <h3 className="font-bold text-green-800 text-base">Yêu cầu chuyển hàng được hoàn thành</h3>
-              <p className="text-xs text-green-600">Đã lưu vào hệ thống — Tồn kho đã được cập nhật</p>
-            </div>
-          </div>
-
-          {/* Info card */}
-          <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-50 print:border-gray-300">
-            <InfoRow icon={<Hash size={14} />} label="STT" value={`#${successData.stt}`} />
-            <InfoRow icon={<FileText size={14} />} label="Mã Đám" value={successData.maDam} highlight />
-            {successData.nguoiMat && (
-              <InfoRow icon={<User size={14} />} label="Người mất" value={successData.nguoiMat} />
-            )}
-            <InfoRow icon={<Package size={14} />} label="Sản phẩm" value={`${successData.productCode} — ${successData.productName}`} />
-            <InfoRow icon={<Warehouse size={14} />} label="Kho xuất" value={successData.khoXuat} />
-            <InfoRow icon={<User size={14} />} label="Người xuất" value={successData.hoTen} />
-            <InfoRow icon={<Mail size={14} />} label="Email" value={successData.email} />
-            <InfoRow icon={<Calendar size={14} />} label="Ngày xuất" value={formatDate(successData.ngayXuat)} />
-            <InfoRow icon={<Clock size={14} />} label="Thời gian" value={formatTime(successData.thoiGianXuat)} />
-            <InfoRow icon={<Package size={14} />} label="Số lượng" value="1" />
-          </div>
-        </div>
-
-        {/* Print button */}
-        <button
-          onClick={() => window.print()}
-          className="print:hidden w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#1B2A4A] text-white font-bold text-sm hover:bg-[#162240] shadow-lg shadow-[#1B2A4A]/20 transition-all active:scale-[0.98]"
-        >
-          <Printer size={16} />
-          In phiếu chuyển hàng
-        </button>
-
-        {/* Print styles */}
-        <style jsx global>{`
-          @media print {
-            header, nav, aside, .print\\:hidden, button:not(.print-keep) {
-              display: none !important;
-            }
-            main { background: white !important; }
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          }
-        `}</style>
       </div>
     );
   }
@@ -410,19 +343,6 @@ export default function ShipmentConfirmationForm({
           )}
         </button>
       </form>
-    </div>
-  );
-}
-
-/* ── Helper: Info row for completion screen ── */
-function InfoRow({ icon, label, value, highlight }: { icon: React.ReactNode; label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className="flex items-start gap-2 px-4 py-2.5 text-sm">
-      <span className="text-green-500 flex-shrink-0 mt-0.5">{icon}</span>
-      <span className="text-gray-500 font-medium w-24 flex-shrink-0">{label}</span>
-      <span className={`font-medium break-words ${highlight ? 'font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded font-mono' : 'text-gray-800'}`}>
-        {value}
-      </span>
     </div>
   );
 }
