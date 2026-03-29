@@ -4,7 +4,8 @@ import { useState, useEffect, FormEvent } from 'react';
 import type { ConfirmShipmentResponse } from '@/types';
 import {
   Send, CheckCircle, AlertCircle, Loader2, Lock,
-  Calendar, Clock, Hash, User, Mail, Package, FileText
+  Calendar, Clock, Hash, User, Mail, Package, FileText,
+  Warehouse, Printer, ChevronDown
 } from 'lucide-react';
 
 interface ShipmentConfirmationFormProps {
@@ -23,7 +24,19 @@ interface SuccessData {
   thoiGianXuat: string;
   createdAt: string;
   stt: number;
-  maDam?: string;
+  maDam: string;
+  nguoiMat: string;
+  khoXuat: string;
+  productName: string;
+  productCode: string;
+}
+
+interface DamOption {
+  ma_dam: string;
+  nguoi_mat: string | null;
+  ngay_liem: string | null;
+  loai: string | null;
+  chi_nhanh: string | null;
 }
 
 function formatDate(iso: string): string {
@@ -52,8 +65,14 @@ export default function ShipmentConfirmationForm({
   const [userName, setUserName] = useState('');
   const [userDepartment, setUserDepartment] = useState('');
 
-  // Mã đám — bắt buộc nhập
+  // Mã đám
   const [maDam, setMaDam] = useState('');
+  const [damList, setDamList] = useState<DamOption[]>([]);
+  const [damLoading, setDamLoading] = useState(true);
+
+  // Warehouse selector
+  const [warehouses, setWarehouses] = useState<{ id: string; ten_kho: string; ma_kho: string }[]>([]);
+  const [selectedWarehouse, setSelectedWarehouse] = useState('');
 
   // Live clock
   const [nowStr, setNowStr] = useState('');
@@ -69,6 +88,7 @@ export default function ShipmentConfirmationForm({
     return () => clearInterval(id);
   }, []);
 
+  // Load user info
   useEffect(() => {
     try {
       const raw = localStorage.getItem('auth_user');
@@ -81,13 +101,37 @@ export default function ShipmentConfirmationForm({
     } catch { /* ignore */ }
   }, []);
 
+  // Load dam list + warehouses
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/dam').then(r => r.json()).catch(() => ({ data: [] })),
+      fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/dim_kho?select=id,ma_kho,ten_kho&order=ten_kho.asc`, {
+        headers: {
+          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''}`,
+        },
+      }).then(r => r.json()).catch(() => []),
+    ]).then(([damRes, khoData]) => {
+      setDamList(damRes.data || []);
+      setWarehouses(Array.isArray(khoData) ? khoData : []);
+      setDamLoading(false);
+    });
+  }, []);
+
+  const selectedDam = damList.find(d => d.ma_dam === maDam);
   const isAlreadyExported = currentStatus === 'exported';
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     if (!maDam.trim()) {
-      setErrorMsg('Vui lòng nhập Mã Đám trước khi xác nhận xuất hàng.');
+      setErrorMsg('Vui lòng chọn Mã Đám trước khi xác nhận xuất hàng.');
+      setFormState('error');
+      return;
+    }
+
+    if (!selectedWarehouse) {
+      setErrorMsg('Vui lòng chọn kho xuất hàng.');
       setFormState('error');
       return;
     }
@@ -107,7 +151,7 @@ export default function ShipmentConfirmationForm({
           maSanPhamXacNhan: qrCode,
           maDonHang: maDam.trim(),
           soLuong: 1,
-          note: `Xuất kho SP: ${productName} — Đám: ${maDam.trim()}`,
+          note: `Xuất kho SP: ${productName} — Đám: ${maDam.trim()} — Kho: ${warehouses.find(w => w.id === selectedWarehouse)?.ten_kho || ''}`,
         }),
       });
 
@@ -115,18 +159,18 @@ export default function ShipmentConfirmationForm({
 
       if (!data.success) {
         const viMessages: Record<string, string> = {
-          VALIDATION_ERROR:  data.error,
+          VALIDATION_ERROR: data.error,
           PRODUCT_NOT_FOUND: 'Không tìm thấy sản phẩm với mã này.',
-          ALREADY_EXPORTED:  'Sản phẩm này đã được xuất kho trước đó.',
-          DATABASE_ERROR:    data.error || 'Lỗi cơ sở dữ liệu.',
-          INTERNAL_ERROR:    'Lỗi hệ thống.',
+          ALREADY_EXPORTED: 'Sản phẩm này đã được xuất kho trước đó.',
+          DATABASE_ERROR: data.error || 'Lỗi cơ sở dữ liệu.',
+          INTERNAL_ERROR: 'Lỗi hệ thống.',
         };
         setErrorMsg(viMessages[data.code] ?? data.error);
         setFormState('error');
         return;
       }
 
-      // ── Trừ tồn kho ngay lập tức ──────────────────────────────────
+      // Deduct inventory
       try {
         await fetch('/api/inventory/deduct', {
           method: 'POST',
@@ -134,18 +178,23 @@ export default function ShipmentConfirmationForm({
           body: JSON.stringify({ ma_hom: qrCode, quantity: 1 }),
         });
       } catch (deductErr) {
-        // Không block UI nếu deduct lỗi — đã được log server-side
         console.warn('Inventory deduct call failed (non-blocking):', deductErr);
       }
 
+      const khoName = warehouses.find(w => w.id === selectedWarehouse)?.ten_kho || '';
+
       setSuccessData({
-        hoTen:        data.confirmation.ho_ten,
-        email:        data.confirmation.email,
-        ngayXuat:     data.confirmation.ngay_xuat,
+        hoTen: data.confirmation.ho_ten,
+        email: data.confirmation.email,
+        ngayXuat: data.confirmation.ngay_xuat,
         thoiGianXuat: data.confirmation.thoi_gian_xuat,
-        createdAt:    data.confirmation.created_at,
-        stt:          data.confirmation.stt,
-        maDam:        maDam.trim(),
+        createdAt: data.confirmation.created_at,
+        stt: data.confirmation.stt,
+        maDam: maDam.trim(),
+        nguoiMat: selectedDam?.nguoi_mat || '',
+        khoXuat: khoName,
+        productName,
+        productCode: qrCode,
       });
       setFormState('success');
       onConfirmed?.(userName, userEmail);
@@ -155,7 +204,7 @@ export default function ShipmentConfirmationForm({
     }
   }
 
-  // ── Đã xuất kho ─────────────────────────────────────
+  // ── Already exported ──
   if (isAlreadyExported) {
     return (
       <div className="rounded-2xl border border-green-200 bg-green-50 p-5">
@@ -165,70 +214,68 @@ export default function ShipmentConfirmationForm({
         </div>
         <p className="text-sm text-green-700">
           Sản phẩm <strong>{productName}</strong> đã được xác nhận xuất kho.
-          Không thể xác nhận thêm lần nữa.
         </p>
       </div>
     );
   }
 
-  // ── Thành công ───────────────────────────────────────
+  // ── SUCCESS / COMPLETION SCREEN ──
   if (formState === 'success' && successData) {
     return (
-      <div className="rounded-2xl border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-5">
-        <div className="flex items-center gap-3 mb-5">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-green-100">
-            <CheckCircle size={24} className="text-green-600" />
+      <div className="space-y-4">
+        <div className="rounded-2xl border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-5 print:bg-white print:border-gray-300">
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-5 print:mb-4">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-green-100 print:bg-green-50">
+              <CheckCircle size={24} className="text-green-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-green-800 text-base">Yêu cầu chuyển hàng được hoàn thành</h3>
+              <p className="text-xs text-green-600">Đã lưu vào hệ thống — Tồn kho đã được cập nhật</p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-bold text-green-800 text-base">Xuất hàng thành công!</h3>
-            <p className="text-xs text-green-600">Đã lưu vào hệ thống — Tồn kho đã được cập nhật</p>
+
+          {/* Info card */}
+          <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-50 print:border-gray-300">
+            <InfoRow icon={<Hash size={14} />} label="STT" value={`#${successData.stt}`} />
+            <InfoRow icon={<FileText size={14} />} label="Mã Đám" value={successData.maDam} highlight />
+            {successData.nguoiMat && (
+              <InfoRow icon={<User size={14} />} label="Người mất" value={successData.nguoiMat} />
+            )}
+            <InfoRow icon={<Package size={14} />} label="Sản phẩm" value={`${successData.productCode} — ${successData.productName}`} />
+            <InfoRow icon={<Warehouse size={14} />} label="Kho xuất" value={successData.khoXuat} />
+            <InfoRow icon={<User size={14} />} label="Người xuất" value={successData.hoTen} />
+            <InfoRow icon={<Mail size={14} />} label="Email" value={successData.email} />
+            <InfoRow icon={<Calendar size={14} />} label="Ngày xuất" value={formatDate(successData.ngayXuat)} />
+            <InfoRow icon={<Clock size={14} />} label="Thời gian" value={formatTime(successData.thoiGianXuat)} />
+            <InfoRow icon={<Package size={14} />} label="Số lượng" value="1" />
           </div>
         </div>
 
-        <div className="bg-white/70 rounded-xl p-4 space-y-2.5">
-          <div className="flex items-center gap-2 text-sm">
-            <Hash size={14} className="text-green-500 flex-shrink-0" />
-            <span className="text-gray-500 font-medium w-28">STT:</span>
-            <span className="font-bold text-gray-800">#{successData.stt}</span>
-          </div>
-          {successData.maDam && (
-            <div className="flex items-center gap-2 text-sm">
-              <FileText size={14} className="text-green-500 flex-shrink-0" />
-              <span className="text-gray-500 font-medium w-28">Mã Đám:</span>
-              <span className="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded font-mono">{successData.maDam}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2 text-sm">
-            <User size={14} className="text-green-500 flex-shrink-0" />
-            <span className="text-gray-500 font-medium w-28">Người xuất:</span>
-            <span className="font-medium text-gray-800">{successData.hoTen}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Mail size={14} className="text-green-500 flex-shrink-0" />
-            <span className="text-gray-500 font-medium w-28">Email:</span>
-            <span className="font-medium text-gray-800 break-all">{successData.email}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Calendar size={14} className="text-green-500 flex-shrink-0" />
-            <span className="text-gray-500 font-medium w-28">Ngày xuất:</span>
-            <span className="font-medium text-gray-800">{formatDate(successData.ngayXuat)}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Clock size={14} className="text-green-500 flex-shrink-0" />
-            <span className="text-gray-500 font-medium w-28">Thời gian:</span>
-            <span className="font-medium text-gray-800">{formatTime(successData.thoiGianXuat)}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Package size={14} className="text-green-500 flex-shrink-0" />
-            <span className="text-gray-500 font-medium w-28">Số lượng:</span>
-            <span className="font-medium text-gray-800">1</span>
-          </div>
-        </div>
+        {/* Print button */}
+        <button
+          onClick={() => window.print()}
+          className="print:hidden w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#1B2A4A] text-white font-bold text-sm hover:bg-[#162240] shadow-lg shadow-[#1B2A4A]/20 transition-all active:scale-[0.98]"
+        >
+          <Printer size={16} />
+          In phiếu chuyển hàng
+        </button>
+
+        {/* Print styles */}
+        <style jsx global>{`
+          @media print {
+            header, nav, aside, .print\\:hidden, button:not(.print-keep) {
+              display: none !important;
+            }
+            main { background: white !important; }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          }
+        `}</style>
       </div>
     );
   }
 
-  // ── Form nhập liệu ────────────────────────
+  // ── FORM ──
   return (
     <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-5">
       <div className="mb-4">
@@ -261,27 +308,81 @@ export default function ShipmentConfirmationForm({
 
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
 
-        {/* ── Mã Đám — bắt buộc ── */}
+        {/* ── Warehouse selector ── */}
         <div>
-          <label htmlFor="ma-dam-input" className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">
+          <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">
+            Kho xuất hàng <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <select
+              value={selectedWarehouse}
+              onChange={(e) => { setSelectedWarehouse(e.target.value); if (formState === 'error') setFormState('idle'); }}
+              required
+              className={`w-full rounded-xl border px-4 py-3 text-sm font-medium appearance-none
+                focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all
+                ${formState === 'error' && !selectedWarehouse ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white'}`}
+            >
+              <option value="">— Chọn kho xuất —</option>
+              {warehouses.map((w) => (
+                <option key={w.id} value={w.id}>{w.ten_kho} ({w.ma_kho})</option>
+              ))}
+            </select>
+            <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
+        </div>
+
+        {/* ── Mã Đám selector ── */}
+        <div>
+          <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">
             Mã Đám <span className="text-red-500">*</span>
           </label>
-          <input
-            id="ma-dam-input"
-            type="text"
-            value={maDam}
-            onChange={(e) => { setMaDam(e.target.value); if (formState === 'error') setFormState('idle'); }}
-            placeholder="Nhập mã đám (vd: 260108, 260334...)"
-            required
-            className={`w-full rounded-xl border px-4 py-3 text-sm font-medium
-              focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-              transition-all placeholder:text-gray-300
-              ${formState === 'error' && !maDam.trim()
-                ? 'border-red-300 bg-red-50'
-                : 'border-gray-200 bg-gray-50 focus:bg-white'
-              }`}
-          />
-          <p className="text-[10px] text-gray-400 mt-1">Nhập mã đám tang tương ứng với sản phẩm này</p>
+          {damLoading ? (
+            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-400">
+              <Loader2 size={14} className="animate-spin" /> Đang tải danh sách đám...
+            </div>
+          ) : damList.length > 0 ? (
+            <>
+              <div className="relative">
+                <select
+                  value={maDam}
+                  onChange={(e) => { setMaDam(e.target.value); if (formState === 'error') setFormState('idle'); }}
+                  required
+                  className={`w-full rounded-xl border px-4 py-3 text-sm font-medium appearance-none
+                    focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all
+                    ${formState === 'error' && !maDam.trim() ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white'}`}
+                >
+                  <option value="">— Chọn mã đám —</option>
+                  {damList.map((d) => (
+                    <option key={d.ma_dam} value={d.ma_dam}>
+                      {d.ma_dam} — {d.nguoi_mat || 'N/A'} {d.ngay_liem ? `(Liệm: ${new Date(d.ngay_liem).toLocaleDateString('vi-VN')})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              </div>
+              {selectedDam && (
+                <div className="mt-2 p-2.5 rounded-lg bg-indigo-50 border border-indigo-100 text-xs space-y-0.5">
+                  <p className="font-bold text-indigo-800">{selectedDam.ma_dam} — {selectedDam.nguoi_mat || 'N/A'}</p>
+                  {selectedDam.ngay_liem && <p className="text-indigo-600">📅 Ngày liệm: {new Date(selectedDam.ngay_liem).toLocaleDateString('vi-VN')}</p>}
+                  {selectedDam.loai && <p className="text-indigo-600">📋 Loại: {selectedDam.loai}</p>}
+                  {selectedDam.chi_nhanh && <p className="text-indigo-600">🏢 Chi nhánh: {selectedDam.chi_nhanh}</p>}
+                </div>
+              )}
+            </>
+          ) : (
+            /* Fallback to text input if no dam data */
+            <input
+              type="text"
+              value={maDam}
+              onChange={(e) => { setMaDam(e.target.value); if (formState === 'error') setFormState('idle'); }}
+              placeholder="Nhập mã đám (vd: 260108, 260334...)"
+              required
+              className={`w-full rounded-xl border px-4 py-3 text-sm font-medium
+                focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all
+                ${formState === 'error' && !maDam.trim() ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white'}`}
+            />
+          )}
+          <p className="text-[10px] text-gray-400 mt-1">Chỉ hiển thị đám có ngày liệm chưa diễn ra</p>
         </div>
 
         {/* Error */}
@@ -295,7 +396,7 @@ export default function ShipmentConfirmationForm({
         {/* Submit */}
         <button
           type="submit"
-          disabled={formState === 'submitting' || !maDam.trim()}
+          disabled={formState === 'submitting' || !maDam.trim() || !selectedWarehouse}
           className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#1B2A4A] px-6 py-3.5
                      text-sm font-bold text-white shadow-sm
                      hover:bg-[#162240] active:scale-95
@@ -303,18 +404,25 @@ export default function ShipmentConfirmationForm({
                      transition-all duration-150"
         >
           {formState === 'submitting' ? (
-            <>
-              <Loader2 size={16} className="animate-spin" />
-              Đang xác nhận…
-            </>
+            <><Loader2 size={16} className="animate-spin" /> Đang xác nhận…</>
           ) : (
-            <>
-              <Send size={16} />
-              Xác nhận xuất hàng
-            </>
+            <><Send size={16} /> Xác nhận xuất hàng</>
           )}
         </button>
       </form>
+    </div>
+  );
+}
+
+/* ── Helper: Info row for completion screen ── */
+function InfoRow({ icon, label, value, highlight }: { icon: React.ReactNode; label: string; value: string; highlight?: boolean }) {
+  return (
+    <div className="flex items-start gap-2 px-4 py-2.5 text-sm">
+      <span className="text-green-500 flex-shrink-0 mt-0.5">{icon}</span>
+      <span className="text-gray-500 font-medium w-24 flex-shrink-0">{label}</span>
+      <span className={`font-medium break-words ${highlight ? 'font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded font-mono' : 'text-gray-800'}`}>
+        {value}
+      </span>
     </div>
   );
 }
