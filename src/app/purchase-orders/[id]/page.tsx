@@ -2,28 +2,16 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShoppingCart, ArrowLeft, FileText, Calendar, User, Building, PackageCheck, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, FileText, Calendar, User, Building, PackageCheck, CheckCircle2 as CheckBadge, AlertTriangle } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
-import StatusTimeline, { PO_STEPS } from '@/components/StatusTimeline';
 import QRCodeGenerator from '@/components/QRCodeGenerator';
 import type { PurchaseOrder } from '@/types';
-
-const STATUS_ACTIONS: Record<string, { label: string; next: string; color: string }[]> = {
-  received:  [{ label: 'Hoàn thành', next: 'closed', color: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200' }],
-};
 
 export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
   const [po, setPo] = useState<PurchaseOrder | null>(null);
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
-  const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null);
-
-  const showToast = (msg: string, type: 'ok' | 'err') => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3500);
-  };
 
   useEffect(() => {
     fetch(`/api/purchase-orders/${resolvedParams.id}`)
@@ -32,35 +20,6 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [resolvedParams.id]);
-
-  const handleStatusChange = async (nextStatus: string) => {
-    if (!po) return;
-    setUpdating(true);
-
-    try {
-      const res = await fetch(`/api/purchase-orders/${po.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: nextStatus }),
-      });
-      const result = await res.json();
-      if (res.ok) {
-        setPo({ ...po, ...result.data });
-        showToast(
-          nextStatus === 'cancelled' ? 'PO đã bị hủy.' :
-          'Cập nhật trạng thái thành công.',
-          nextStatus === 'cancelled' ? 'err' : 'ok'
-        );
-      } else {
-        showToast(result.error || 'Có lỗi xảy ra.', 'err');
-      }
-    } catch (err) {
-      console.error(err);
-      showToast('Lỗi kết nối server.', 'err');
-    } finally {
-      setUpdating(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -80,20 +39,9 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
     );
   }
 
-  const actions = STATUS_ACTIONS[po.status] || [];
-
   return (
     <PageLayout title="Chi tiết PO" icon={<ShoppingCart size={16} className="text-purple-500" />}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-
-        {/* ── Toast ──────────────────────────────────────────── */}
-        {toast && (
-          <div className={`fixed top-4 right-4 z-50 px-5 py-3 rounded-2xl shadow-xl font-semibold text-sm flex items-center gap-2 transition-all
-            ${toast.type === 'ok' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'}`}>
-            {toast.type === 'ok' ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
-            {toast.msg}
-          </div>
-        )}
 
         {/* Back */}
         <button
@@ -112,7 +60,19 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
                 <span className="font-mono text-purple-600">{po.po_code}</span>
               </h1>
               <div className="mt-3">
-                <StatusTimeline steps={PO_STEPS} current={po.status} />
+                {po.status === 'cancelled' ? (
+                  <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold bg-red-100 text-red-700">
+                    <AlertTriangle size={12} /> Đã hủy
+                  </span>
+                ) : po.status === 'received' || po.status === 'closed' ? (
+                  <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
+                    <CheckBadge size={12} /> {po.status === 'closed' ? 'Hoàn thành' : 'Đã nhận hàng'}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold bg-purple-100 text-purple-700 ring-2 ring-purple-300 ring-offset-1">
+                    <CheckBadge size={12} /> Đã xác nhận
+                  </span>
+                )}
               </div>
             </div>
             {/* QR Code */}
@@ -213,23 +173,7 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
 
-        {/* Action buttons */}
-        {actions.length > 0 && (
-          <div className="flex gap-3">
-            {actions.map((action) => (
-              <button
-                key={action.next}
-                onClick={() => handleStatusChange(action.next)}
-                disabled={updating}
-                className={`flex-1 py-3 rounded-xl font-bold text-sm text-white shadow-lg disabled:opacity-50 transition-all ${action.color}`}
-              >
-                {updating ? 'Đang xử lý...' : action.label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* ── Create GRPO button — appears when PO is approved ── */}
+        {/* ── Create GRPO button — appears when PO is confirmed ── */}
         {po.status === 'confirmed' && (
           <div className="rounded-2xl border-2 border-dashed border-orange-200 bg-orange-50 p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>

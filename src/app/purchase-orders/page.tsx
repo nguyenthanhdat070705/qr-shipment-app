@@ -9,7 +9,7 @@ import {
 import PageLayout from '@/components/PageLayout';
 import { getWarehouseFilter } from '@/config/roles.config';
 import DataTable from '@/components/DataTable';
-import StatusTimeline, { PO_STEPS } from '@/components/StatusTimeline';
+import { CheckCircle2 } from 'lucide-react';
 import type { PurchaseOrder } from '@/types';
 
 /* ── Stat card ─────────────────────────────────────── */
@@ -128,9 +128,20 @@ export default function PurchaseOrdersPage() {
     {
       key: 'status',
       label: 'Trạng thái',
-      render: (row: PurchaseOrder) => (
-        <StatusTimeline steps={PO_STEPS} current={row.status} />
-      ),
+      render: (row: PurchaseOrder) => {
+        const cfg: Record<string, { label: string; bg: string; text: string }> = {
+          confirmed:  { label: 'Đã xác nhận', bg: 'bg-purple-100', text: 'text-purple-700' },
+          received:   { label: 'Đã nhận hàng', bg: 'bg-emerald-100', text: 'text-emerald-700' },
+          closed:     { label: 'Hoàn thành', bg: 'bg-sky-100', text: 'text-sky-700' },
+          cancelled:  { label: 'Đã hủy', bg: 'bg-red-100', text: 'text-red-700' },
+        };
+        const s = cfg[row.status] || cfg.confirmed;
+        return (
+          <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${s.bg} ${s.text}`}>
+            <CheckCircle2 size={12} /> {s.label}
+          </span>
+        );
+      },
     },
     {
       key: 'actions',
