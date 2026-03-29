@@ -216,53 +216,51 @@ function CreateGoodsReceiptForm() {
             </div>
           ) : (
             /* ── Info summary when PO is linked ── */
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Thông tin phiếu nhập</span>
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-2.5 bg-orange-50 border-b border-orange-100">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-orange-600">Thông tin phiếu nhập</span>
                 <button
                   type="button"
                   onClick={() => { setPoId(''); setSearchInput(''); setItems([{ product_code: '', product_name: '', expected_qty: 0, received_qty: 0, note: '' }]); }}
-                  className="text-[10px] text-orange-500 font-bold hover:text-orange-700"
+                  className="text-[11px] text-orange-500 font-bold hover:text-orange-700"
                 >
                   Đổi PO
                 </button>
               </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                <div className="flex items-center gap-1.5">
-                  <FileText size={12} className="text-orange-400 flex-shrink-0" />
-                  <span className="text-gray-500 text-xs">Mã PO</span>
-                  <span className="ml-auto font-bold text-orange-700 font-mono text-xs">{selectedPo?.po_code || searchInput}</span>
+
+              {/* Info rows */}
+              <div className="divide-y divide-gray-50">
+                <div className="flex items-center justify-between px-4 py-2.5">
+                  <span className="text-xs text-gray-500 flex items-center gap-2"><FileText size={13} className="text-orange-400" /> Mã PO</span>
+                  <span className="font-bold text-orange-700 font-mono text-sm">{selectedPo?.po_code || searchInput}</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Calendar size={12} className="text-gray-400 flex-shrink-0" />
-                  <span className="text-gray-500 text-xs">Ngày nhập</span>
-                  <span className="ml-auto font-semibold text-gray-800 text-xs">{new Date().toLocaleDateString('vi-VN')}</span>
+                <div className="flex items-center justify-between px-4 py-2.5">
+                  <span className="text-xs text-gray-500 flex items-center gap-2"><Building size={13} className="text-gray-400" /> Nhà cung cấp</span>
+                  <span className="font-semibold text-gray-800 text-sm text-right max-w-[55%]">{selectedPo?.supplier?.name || '—'}</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Building size={12} className="text-gray-400 flex-shrink-0" />
-                  <span className="text-gray-500 text-xs">NCC</span>
-                  <span className="ml-auto font-semibold text-gray-800 text-xs truncate max-w-[120px]">{selectedPo?.supplier?.name || '—'}</span>
+                <div className="flex items-center justify-between px-4 py-2.5">
+                  <span className="text-xs text-gray-500 flex items-center gap-2"><Warehouse size={13} className="text-gray-400" /> Kho nhận</span>
+                  <span className="font-semibold text-gray-800 text-sm">{selectedKho?.ten_kho || '—'}</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Warehouse size={12} className="text-gray-400 flex-shrink-0" />
-                  <span className="text-gray-500 text-xs">Kho nhận</span>
-                  <span className="ml-auto font-semibold text-gray-800 text-xs">{selectedKho?.ten_kho || '—'}</span>
+                <div className="flex items-center justify-between px-4 py-2.5">
+                  <span className="text-xs text-gray-500 flex items-center gap-2"><Calendar size={13} className="text-gray-400" /> Ngày nhập</span>
+                  <span className="font-semibold text-gray-800 text-sm">{new Date().toLocaleDateString('vi-VN')}</span>
                 </div>
-                <div className="flex items-center gap-1.5 col-span-2">
-                  <User size={12} className="text-gray-400 flex-shrink-0" />
-                  <span className="text-gray-500 text-xs">Người nhập</span>
-                  <span className="ml-auto font-semibold text-gray-800 text-xs">{receivedBy || '—'}</span>
+                <div className="flex items-center justify-between px-4 py-2.5">
+                  <span className="text-xs text-gray-500 flex items-center gap-2"><User size={13} className="text-gray-400" /> Người nhập</span>
+                  <span className="font-semibold text-gray-800 text-sm">{receivedBy || '—'}</span>
                 </div>
               </div>
 
               {/* Note field */}
-              <div className="mt-2 pt-2 border-t border-gray-100">
+              <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50/50">
                 <input
                   type="text"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="Ghi chú (không bắt buộc)..."
-                  className="w-full px-2.5 py-1.5 rounded-lg border border-gray-100 bg-gray-50 text-xs focus:outline-none focus:ring-1 focus:ring-orange-200"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-1 focus:ring-orange-200"
                 />
               </div>
             </div>
