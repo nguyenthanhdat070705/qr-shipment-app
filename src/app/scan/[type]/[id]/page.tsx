@@ -124,12 +124,12 @@ async function POScanPage({ id }: { id: string }) {
           </div>
           <div className="divide-y divide-gray-50">
             {(items || []).map((item: any, i: number) => (
-              <div key={i} className="px-4 py-3 flex items-center justify-between">
+              <div key={i} className="px-4 py-3 flex items-start gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-bold text-purple-600 font-mono">{item.ma_hom || '—'}</p>
-                  <p className="text-sm text-gray-700 font-medium truncate">{item.ten_hom || '—'}</p>
+                  <p className="text-sm text-gray-700 font-medium leading-snug break-words">{item.ten_hom || '—'}</p>
                 </div>
-                <div className="text-right ml-3">
+                <div className="flex-shrink-0 text-right pt-1">
                   <p className="text-lg font-extrabold text-gray-900">x{item.so_luong || 0}</p>
                 </div>
               </div>
