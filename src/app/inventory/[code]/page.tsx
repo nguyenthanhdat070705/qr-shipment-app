@@ -437,7 +437,7 @@ export default async function InventoryDetailPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* ── Transaction History ──────────────────────── */}
+      {/* ── Transaction History grouped by Warehouse ── */}
       <div className="mt-6">
         <SectionCard
           icon={<History size={16} />}
@@ -447,53 +447,77 @@ export default async function InventoryDetailPage({ params }: PageProps) {
         >
           {grpoHistory.length === 0 && itHistory.length === 0 ? (
             <p className="text-sm text-gray-400 italic py-4 text-center">Chưa có lịch sử nhập xuất</p>
-          ) : (
-            <div className="divide-y divide-gray-100">
-              {/* GRPO entries (+) */}
-              {grpoHistory.map((entry, i) => (
-                <div key={`gr-${i}`} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 flex-shrink-0">
-                    <ArrowDownCircle size={16} className="text-emerald-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-mono font-bold text-emerald-700">{entry.code}</span>
-                      <span className="text-[10px] text-gray-400">GRPO</span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-0.5">{entry.warehouse}</p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-sm font-extrabold text-emerald-600">+{entry.qty}</p>
-                    <p className="text-[10px] text-gray-400">
-                      {entry.date ? new Date(entry.date).toLocaleDateString('vi-VN') : '—'}
-                    </p>
-                  </div>
-                </div>
-              ))}
+          ) : (() => {
+            // Combine and group by warehouse
+            type TxEntry = { type: 'grpo' | 'it'; code: string; qty: number; date: string; warehouse: string; note?: string };
+            const allTx: TxEntry[] = [
+              ...grpoHistory.map(e => ({ ...e, type: 'grpo' as const })),
+              ...itHistory.map(e => ({ ...e, type: 'it' as const })),
+            ];
+            const byWarehouse = new Map<string, TxEntry[]>();
+            for (const tx of allTx) {
+              const key = tx.warehouse || '—';
+              if (!byWarehouse.has(key)) byWarehouse.set(key, []);
+              byWarehouse.get(key)!.push(tx);
+            }
+            // Sort transactions within each warehouse by date desc
+            for (const txs of byWarehouse.values()) {
+              txs.sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
+            }
 
-              {/* IT entries (-) */}
-              {itHistory.map((entry, i) => (
-                <div key={`it-${i}`} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 flex-shrink-0">
-                    <ArrowUpCircle size={16} className="text-orange-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-mono font-bold text-orange-700">{entry.code}</span>
-                      <span className="text-[10px] text-gray-400">IT</span>
+            return (
+              <div className="space-y-5">
+                {Array.from(byWarehouse.entries()).map(([whName, txs]) => (
+                  <div key={whName}>
+                    {/* Warehouse header */}
+                    <div className="flex items-center gap-2 mb-2 pb-2 border-b border-indigo-100">
+                      <Warehouse size={14} className="text-indigo-500" />
+                      <span className="text-xs font-bold text-indigo-700 uppercase tracking-wide">{whName}</span>
+                      <span className="text-[10px] text-gray-400 ml-auto">{txs.length} giao dịch</span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-0.5 truncate">{entry.note || entry.warehouse}</p>
+
+                    <div className="divide-y divide-gray-50 pl-1">
+                      {txs.map((tx, i) => (
+                        <div key={i} className="flex items-center gap-3 py-2.5">
+                          <div className={`flex h-7 w-7 items-center justify-center rounded-lg flex-shrink-0 ${
+                            tx.type === 'grpo' ? 'bg-emerald-50' : 'bg-orange-50'
+                          }`}>
+                            {tx.type === 'grpo'
+                              ? <ArrowDownCircle size={14} className="text-emerald-600" />
+                              : <ArrowUpCircle size={14} className="text-orange-600" />
+                            }
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className={`text-xs font-mono font-bold ${tx.type === 'grpo' ? 'text-emerald-700' : 'text-orange-700'}`}>
+                                {tx.code}
+                              </span>
+                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                                tx.type === 'grpo' ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'
+                              }`}>
+                                {tx.type === 'grpo' ? 'Nhập' : 'Xuất'}
+                              </span>
+                            </div>
+                            {tx.type === 'it' && tx.note && (
+                              <p className="text-[11px] text-gray-400 mt-0.5 truncate">{tx.note}</p>
+                            )}
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <p className={`text-sm font-extrabold ${tx.type === 'grpo' ? 'text-emerald-600' : 'text-orange-600'}`}>
+                              {tx.type === 'grpo' ? '+' : '−'}{tx.qty}
+                            </p>
+                            <p className="text-[10px] text-gray-400">
+                              {tx.date ? new Date(tx.date).toLocaleDateString('vi-VN') : '—'}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-sm font-extrabold text-orange-600">−{entry.qty}</p>
-                    <p className="text-[10px] text-gray-400">
-                      {entry.date ? new Date(entry.date).toLocaleDateString('vi-VN') : '—'}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            );
+          })()}
         </SectionCard>
       </div>
     </PageLayout>
