@@ -29,8 +29,8 @@ export default function QRCodeGenerator({
   size = 128,
   showLabel = true,
 }: QRCodeGeneratorProps) {
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-  const scanUrl = `${baseUrl}/scan/${type}/${id}`;
+  const PROD_URL = 'https://blackstone-order-scm.vercel.app';
+  const scanUrl = `${PROD_URL}/scan/${type}/${id}`;
 
   const typeLabels: Record<QRDocType, string> = {
     po: 'Đơn mua hàng',
