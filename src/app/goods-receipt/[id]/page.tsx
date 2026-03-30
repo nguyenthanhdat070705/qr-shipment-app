@@ -79,7 +79,7 @@ export default function GoodsReceiptDetailPage({ params }: { params: Promise<{ i
             Danh sách phiếu nhập
           </button>
           <button
-            onClick={() => window.print()}
+            onClick={() => window.open(`/goods-receipt/${resolvedParams.id}/print`, '_blank')}
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-orange-100 text-orange-700 hover:bg-orange-200 rounded-xl font-bold text-sm transition-colors shadow-sm"
           >
             <Printer size={16} />

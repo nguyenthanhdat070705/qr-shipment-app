@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { PackageCheck, ArrowLeft, Plus, Trash2, Search, Calendar, Building, Warehouse, User, FileText } from 'lucide-react';
+import { PackageCheck, ArrowLeft, Plus, Trash2, Search, Calendar, Building, Warehouse, User, FileText, ClipboardCheck, AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import type { PurchaseOrder } from '@/types';
 
@@ -34,6 +34,8 @@ function CreateGoodsReceiptForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [showCheckModal, setShowCheckModal] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [receivedBy, setReceivedBy] = useState('');
 
@@ -125,19 +127,25 @@ function CreateGoodsReceiptForm() {
     setItems(updated);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleOpenCheck = (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    if (!warehouseId) { setError('Vui lòng chọn kho nhận.'); return; }
+    const validItems = items.filter((item) => item.product_code.trim() && item.product_name.trim());
+    if (validItems.length === 0) { setError('Cần ít nhất 1 sản phẩm.'); return; }
+    setConfirmed(false);
+    setShowCheckModal(true);
+  };
+
+  const handleSubmit = async () => {
     setSubmitting(true);
     setError('');
     setSuccessMsg('');
-
-    if (!warehouseId) { setError('Vui lòng chọn kho nhận.'); setSubmitting(false); return; }
 
     let email = 'unknown';
     try { const raw = localStorage.getItem('auth_user'); if (raw) email = JSON.parse(raw).email || 'unknown'; } catch { /* */ }
 
     const validItems = items.filter((item) => item.product_code.trim() && item.product_name.trim());
-    if (validItems.length === 0) { setError('Cần ít nhất 1 sản phẩm.'); setSubmitting(false); return; }
 
     try {
       const res = await fetch('/api/goods-receipt', {
@@ -149,8 +157,9 @@ function CreateGoodsReceiptForm() {
         }),
       });
       const result = await res.json();
-      if (!res.ok) { setError(result.error || 'Có lỗi xảy ra.'); return; }
+      if (!res.ok) { setShowCheckModal(false); setError(result.error || 'Có lỗi xảy ra.'); return; }
 
+      setShowCheckModal(false);
       const qrCount = result.qr_codes?.length || 0;
       setSuccessMsg(`Nhập kho hoàn tất! Mã: ${result.gr_code || ''}. ${qrCount > 0 ? `${qrCount} mã QR đã tạo.` : ''}`);
       setTimeout(() => {
@@ -175,7 +184,7 @@ function CreateGoodsReceiptForm() {
 
         <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-4">Tạo phiếu nhập kho</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleOpenCheck} className="space-y-4">
 
           {/* ── PO Search (compact) ── */}
           {!poId ? (
@@ -379,13 +388,148 @@ function CreateGoodsReceiptForm() {
 
           <button
             type="submit"
-            disabled={submitting}
-            className="w-full py-3.5 bg-orange-500 text-white rounded-xl font-bold text-sm hover:bg-orange-600 disabled:opacity-50 shadow-lg shadow-orange-200 transition-all"
+            className="w-full py-3.5 bg-[#1B2A4A] text-white rounded-xl font-bold text-sm hover:bg-[#162240] shadow-lg shadow-[#1B2A4A]/20 transition-all flex items-center justify-center gap-2"
           >
-            {submitting ? 'Đang xử lý...' : 'Xác nhận nhập kho'}
+            <ClipboardCheck size={16} />
+            Kiểm tra đơn hàng →
           </button>
         </form>
       </div>
+
+      {/* ══ MODAL KIỂM TRA ĐƠN HÀNG ══ */}
+      {showCheckModal && (() => {
+        const validItems = items.filter(i => i.product_code.trim() && i.product_name.trim());
+        const hasMissing = validItems.some(i => i.received_qty < i.expected_qty);
+        const hasExcess  = validItems.some(i => i.received_qty > i.expected_qty);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.55)' }}>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
+
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-[#1B2A4A] rounded-t-2xl">
+                <div className="flex items-center gap-2">
+                  <ClipboardCheck size={18} className="text-orange-300" />
+                  <h2 className="font-extrabold text-white text-base tracking-wide">KIỂM TRA ĐƠN HÀNG</h2>
+                </div>
+                <button onClick={() => setShowCheckModal(false)} className="text-gray-300 hover:text-white transition-colors">
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+
+                {/* PO & Kho info */}
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-xl bg-gray-50 border border-gray-100 px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase text-gray-400">PO liên kết</p>
+                    <p className="font-bold text-purple-700 font-mono mt-0.5">{selectedPo?.po_code || searchInput || '—'}</p>
+                  </div>
+                  <div className="rounded-xl bg-gray-50 border border-gray-100 px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase text-gray-400">Kho nhận</p>
+                    <p className="font-bold text-gray-800 mt-0.5">{selectedKho?.ten_kho || '—'}</p>
+                  </div>
+                </div>
+
+                {/* Status banner */}
+                {hasMissing ? (
+                  <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-amber-50 border border-amber-200">
+                    <AlertTriangle size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-amber-800 text-sm font-semibold">Có sản phẩm <span className="font-extrabold">nhận thiếu</span> so với yêu cầu. Vui lòng xác nhận trước khi tiếp tục.</p>
+                  </div>
+                ) : hasExcess ? (
+                  <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-blue-50 border border-blue-200">
+                    <AlertTriangle size={16} className="text-blue-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-blue-800 text-sm font-semibold">Có sản phẩm <span className="font-extrabold">nhận dư</span> so với yêu cầu. Vui lòng kiểm tra lại.</p>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                    <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
+                    <p className="text-emerald-800 text-sm font-semibold">Tất cả hàng hóa <span className="font-extrabold">đầy đủ</span> — số lượng khớp với đơn đặt hàng.</p>
+                  </div>
+                )}
+
+                {/* Product table */}
+                <div className="rounded-xl border border-gray-200 overflow-hidden">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-100">
+                        <th className="px-3 py-2 text-left font-bold uppercase text-gray-400 tracking-wide">Mã SP</th>
+                        <th className="px-3 py-2 text-left font-bold uppercase text-gray-400 tracking-wide">Tên SP</th>
+                        <th className="px-3 py-2 text-right font-bold uppercase text-gray-400 tracking-wide">YC</th>
+                        <th className="px-3 py-2 text-right font-bold uppercase text-gray-400 tracking-wide">Nhận</th>
+                        <th className="px-3 py-2 text-center font-bold uppercase text-gray-400 tracking-wide">KQ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {validItems.map((item, idx) => {
+                        const diff = item.received_qty - item.expected_qty;
+                        const ok   = diff === 0;
+                        const miss = diff < 0;
+                        return (
+                          <tr key={idx} className="border-b border-gray-50 last:border-0">
+                            <td className="px-3 py-2.5 font-mono font-bold text-orange-600">{item.product_code}</td>
+                            <td className="px-3 py-2.5 text-gray-700 max-w-[140px]">
+                              <span className="line-clamp-2 leading-snug">{item.product_name}</span>
+                            </td>
+                            <td className="px-3 py-2.5 text-right font-semibold text-gray-600">{item.expected_qty}</td>
+                            <td className="px-3 py-2.5 text-right font-extrabold text-gray-900">{item.received_qty}</td>
+                            <td className="px-3 py-2.5 text-center">
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                ok   ? 'bg-emerald-100 text-emerald-700' :
+                                miss ? 'bg-amber-100 text-amber-700' :
+                                       'bg-blue-100 text-blue-700'
+                              }`}>
+                                {ok ? '✓ Đủ' : miss ? `▼ ${Math.abs(diff)}` : `▲ +${diff}`}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Confirm checkbox */}
+                <label className="flex items-start gap-3 cursor-pointer select-none p-3 rounded-xl border-2 border-dashed transition-colors"
+                  style={{ borderColor: confirmed ? '#10b981' : '#e5e7eb', background: confirmed ? '#f0fdf4' : '#fafafa' }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={confirmed}
+                    onChange={e => setConfirmed(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded accent-emerald-600 flex-shrink-0"
+                  />
+                  <span className="text-sm font-semibold text-gray-700 leading-snug">
+                    Tôi xác nhận đã <span className="font-extrabold text-gray-900">kiểm tra và đếm đúng</span> số lượng hàng hóa thực tế nhận vào kho.
+                  </span>
+                </label>
+
+              </div>
+
+              {/* Footer */}
+              <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
+                <button
+                  onClick={() => setShowCheckModal(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  ← Quay lại chỉnh sửa
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={!confirmed || submitting}
+                  className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-bold hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg shadow-orange-200 flex items-center justify-center gap-2"
+                >
+                  <CheckCircle2 size={15} />
+                  {submitting ? 'Đang xử lý...' : 'Xác nhận nhập kho'}
+                </button>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
+
     </PageLayout>
   );
 }

@@ -233,7 +233,7 @@ export default function ProcurementDashboard() {
         />
         <StatCard
           label="Tổng chi tiêu"
-          value={totalSpend > 0 ? `${(totalSpend / 1_000_000).toFixed(0)}M₫` : '—'}
+          value={totalSpend > 0 ? `${(totalSpend / 1_000_000_000).toFixed(2)} Tỷ` : '—'}
           sub={`${receivedPO} đơn đã giao`}
           icon={<DollarSign size={20} />}
           gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
@@ -310,7 +310,13 @@ export default function ProcurementDashboard() {
                       </td>
                       <td className="px-5 py-3.5 text-right hidden sm:table-cell">
                         <span className="text-sm font-bold text-gray-900">
-                          {Number(po.total_amount || 0).toLocaleString('vi-VN')}₫
+                          {(() => {
+                            const amt = Number(po.total_amount || 0);
+                            if (amt === 0) return '0₫';
+                            if (amt >= 1_000_000_000) return `${(amt / 1_000_000_000).toFixed(2)} Tỷ`;
+                            if (amt >= 1_000_000) return `${(amt / 1_000_000).toFixed(1)}M₫`;
+                            return amt.toLocaleString('vi-VN') + '₫';
+                          })()}
                         </span>
                       </td>
                       <td className="px-4 py-3.5">
