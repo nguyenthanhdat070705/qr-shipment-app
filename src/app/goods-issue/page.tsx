@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Truck, Search, CheckCircle2, Package, Clock, History, AlertCircle } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
-import { getWarehouseFilter } from '@/config/roles.config';
+
 
 interface InventoryItemData {
   inventory_id: string;
@@ -77,19 +77,7 @@ export default function GoodsIssuePage() {
         setMaDam(result.dam_data.ma_dam);
       }
 
-      let data = (result.data || []) as InventoryItemData[];
-
-      // Filter by authorized warehouse if applicable
-      try {
-        const auth = localStorage.getItem('auth_user');
-        if (auth) {
-          const user = JSON.parse(auth);
-          const filter = getWarehouseFilter(user.email);
-          if (filter) {
-            data = data.filter(item => item.warehouse_name?.includes(filter));
-          }
-        }
-      } catch {}
+      const data = (result.data || []) as InventoryItemData[];
 
       if (data.length === 0) {
         setError('Không tìm thấy lô hàng khả dụng nào.');
