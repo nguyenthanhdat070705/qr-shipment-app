@@ -215,9 +215,9 @@ const GENERIC_CONFIG: Record<string, {
   label: string; detailRoute: string; itemsTable?: string; itemsFk?: string;
 }> = {
   grpo: {
-    table: 'fact_nhap_kho', codeField: 'ma_phieu_nhap', color: 'orange',
+    table: 'fact_nhap_hang', codeField: 'ma_phieu_nhap', color: 'orange',
     icon: 'PackageCheck', label: 'Phiếu nhập kho', detailRoute: '/goods-receipt',
-    itemsTable: 'fact_nhap_kho_items', itemsFk: 'phieu_nhap_id',
+    itemsTable: 'fact_nhap_hang_items', itemsFk: 'nhap_hang_id',
   },
   delivery: {
     table: 'fact_xuat_hang', codeField: 'ma_phieu_xuat', color: 'amber',
