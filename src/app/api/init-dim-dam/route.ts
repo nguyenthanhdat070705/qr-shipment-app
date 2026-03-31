@@ -20,6 +20,7 @@ export async function GET() {
       sql: `CREATE TABLE IF NOT EXISTS public.dim_dam (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   ma_dam TEXT UNIQUE NOT NULL,
+  ngay TEXT,
   loai TEXT,
   chi_nhanh TEXT,
   nguoi_mat TEXT,

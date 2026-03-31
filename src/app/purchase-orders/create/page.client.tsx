@@ -35,6 +35,7 @@ interface OrderItem {
   product_name: string;
   quantity: number;
   unit_price: number;
+  hang_ky_gui: boolean;
   note: string;
 }
 
@@ -48,7 +49,7 @@ export default function CreatePurchaseOrderPage() {
   const [expectedDate, setExpectedDate] = useState('');
   const [note, setNote] = useState('');
   const [items, setItems] = useState<OrderItem[]>([
-    { product_code: '', product_name: '', quantity: 1, unit_price: 0, note: '' },
+    { product_code: '', product_name: '', quantity: 1, unit_price: 0, hang_ky_gui: false, note: '' },
   ]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -77,7 +78,7 @@ export default function CreatePurchaseOrderPage() {
   }, []);
 
   const addItem = () => {
-    setItems([...items, { product_code: '', product_name: '', quantity: 1, unit_price: 0, note: '' }]);
+    setItems([...items, { product_code: '', product_name: '', quantity: 1, unit_price: 0, hang_ky_gui: false, note: '' }]);
   };
 
   const removeItem = (index: number) => {
@@ -85,7 +86,7 @@ export default function CreatePurchaseOrderPage() {
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const updateItem = (index: number, field: keyof OrderItem, value: string | number) => {
+  const updateItem = (index: number, field: keyof OrderItem, value: string | number | boolean) => {
     const updated = [...items];
     updated[index] = { ...updated[index], [field]: value };
     setItems(updated);
@@ -303,10 +304,10 @@ export default function CreatePurchaseOrderPage() {
                         type="text"
                         value={item.product_code}
                         readOnly
-                        className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm bg-gray-100 font-mono"
+                        className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm bg-gray-100 font-mono focus:outline-none"
                       />
                     </div>
-                    <div className="col-span-5">
+                    <div className="col-span-4">
                       <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">Tên SP</label>
                       <div className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm bg-gray-100 min-h-[38px] break-words leading-snug">
                         {item.product_name || <span className="text-gray-400">Tên sản phẩm</span>}
@@ -332,14 +333,25 @@ export default function CreatePurchaseOrderPage() {
                         className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200"
                       />
                     </div>
-                    <div className="col-span-1 flex justify-center pt-5">
+                    <div className="col-span-1 pt-[22px]">
+                       <label className="flex items-center gap-1.5 cursor-pointer bg-white border border-gray-200 py-1.5 px-2 rounded-lg shadow-sm hover:border-purple-300 transition-colors h-[38px] group">
+                          <input
+                            type="checkbox"
+                            checked={item.hang_ky_gui}
+                            onChange={(e) => updateItem(i, 'hang_ky_gui', e.target.checked)}
+                            className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500 cursor-pointer"
+                          />
+                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight group-hover:text-purple-600">Ký gửi</span>
+                       </label>
+                    </div>
+                    <div className="col-span-1 flex justify-center pt-[22px]">
                       <button
                         type="button"
                         onClick={() => removeItem(i)}
                         disabled={items.length <= 1}
-                        className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-30 transition-colors"
+                        className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-30 transition-colors h-[38px] w-[38px] flex items-center justify-center"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </div>

@@ -114,6 +114,7 @@ async function main() {
   // Sync to dim_dam for lookup functionality
   const dimDamRows = rowsToInsert.map(r => ({
     ma_dam: r.ma_dam,
+    ngay: r.ngay,
     loai: r.loai,
     chi_nhanh: r.chi_nhanh,
     nguoi_mat: r.nguoi_mat

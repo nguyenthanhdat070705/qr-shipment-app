@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     note?: string;
     created_by: string;
     expected_date?: string;
-    items?: { product_code: string; product_name: string; quantity: number; unit_price: number; note?: string }[];
+    items?: { product_code: string; product_name: string; quantity: number; unit_price: number; note?: string; hang_ky_gui?: boolean }[];
   };
 
   if (!created_by) {
@@ -146,6 +146,7 @@ export async function POST(req: NextRequest) {
       ten_hom: item.product_name,
       so_luong: item.quantity,
       don_gia: item.unit_price,
+      hang_ky_gui: item.hang_ky_gui || false,
       ghi_chu: item.note || null,
     }));
 

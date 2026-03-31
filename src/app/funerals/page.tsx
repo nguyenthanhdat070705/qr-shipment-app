@@ -31,6 +31,7 @@ export default function FuneralsPage() {
   const [funerals, setFunerals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [filterDate, setFilterDate] = useState('');
   const [selectedFuneral, setSelectedFuneral] = useState<any | null>(null);
 
   // Lấy dữ liệu từ dim_dam
@@ -52,11 +53,21 @@ export default function FuneralsPage() {
     fetchFunerals();
   }, []);
 
-  const filtered = funerals.filter(f => 
-    (f.ma_dam && f.ma_dam.toLowerCase().includes(search.toLowerCase())) ||
-    (f.nguoi_mat && f.nguoi_mat.toLowerCase().includes(search.toLowerCase())) ||
-    (f.dia_chi_to_chuc && f.dia_chi_to_chuc.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filtered = funerals.filter(f => {
+    const matchSearch = (f.ma_dam && f.ma_dam.toLowerCase().includes(search.toLowerCase())) ||
+      (f.nguoi_mat && f.nguoi_mat.toLowerCase().includes(search.toLowerCase())) ||
+      (f.dia_chi_to_chuc && f.dia_chi_to_chuc.toLowerCase().includes(search.toLowerCase()));
+    
+    let matchDate = true;
+    if (filterDate) {
+      // Convert filterDate from YYYY-MM-DD to DD/MM/YYYY to match `ngay` format in CSV
+      const [year, month, day] = filterDate.split('-');
+      const formattedFilterDate = `${day}/${month}/${year}`;
+      matchDate = (f.ngay === formattedFilterDate);
+    }
+    
+    return matchSearch && matchDate;
+  });
 
   return (
     <PageLayout title="Danh Sách Đám" icon={<BookOpen size={15} className="text-pink-500" />}>
@@ -77,17 +88,30 @@ export default function FuneralsPage() {
             </p>
           </div>
           
-          <div className="w-full md:w-auto mt-4 md:mt-0 relative max-w-md flex-1">
-             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                <Search size={18} className="text-indigo-300" />
+          <div className="w-full md:w-auto mt-4 md:mt-0 relative max-w-md flex-1 flex gap-2">
+             <div className="relative flex-1">
+               <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                  <Search size={18} className="text-indigo-300" />
+               </div>
+               <input
+                 type="text"
+                 value={search}
+                 onChange={(e) => setSearch(e.target.value)}
+                 placeholder="Mã đám, Người mất..."
+                 className="w-full pl-11 pr-4 py-4 bg-white/10 border border-white/20 focus:bg-white focus:border-indigo-300 rounded-2xl text-sm font-medium text-white focus:text-gray-900 placeholder:text-indigo-200 focus:placeholder:text-gray-400 transition-all shadow-inner outline-none backdrop-blur-md"
+               />
              </div>
-             <input
-               type="text"
-               value={search}
-               onChange={(e) => setSearch(e.target.value)}
-               placeholder="Tìm theo Mã đám, Người mất, Địa chỉ..."
-               className="w-full pl-11 pr-4 py-4 bg-white/10 border border-white/20 focus:bg-white focus:border-indigo-300 rounded-2xl text-sm font-medium text-white focus:text-gray-900 placeholder:text-indigo-200 focus:placeholder:text-gray-400 transition-all shadow-inner outline-none backdrop-blur-md"
-             />
+             
+             {/* Bộ lọc Date */}
+             <div className="relative w-36 sm:w-40 flex-shrink-0">
+               <input
+                 type="date"
+                 value={filterDate}
+                 onChange={(e) => setFilterDate(e.target.value)}
+                 className="w-full px-3 py-4 bg-white/10 border border-white/20 focus:bg-white focus:border-indigo-300 rounded-2xl text-sm font-medium text-white focus:text-gray-900 transition-all shadow-inner outline-none backdrop-blur-md cursor-pointer"
+                 title="Lọc theo ngày"
+               />
+             </div>
           </div>
         </div>
       </div>
@@ -112,6 +136,7 @@ export default function FuneralsPage() {
                <table className="w-full text-left text-sm">
                  <thead>
                    <tr className="bg-gray-50/80 border-b border-gray-100 uppercase text-[10px] font-black tracking-widest text-gray-500 whitespace-nowrap">
+                     <th className="px-3 py-3 lg:px-4 w-[120px]">Ngày</th>
                      <th className="px-3 py-3 lg:px-4">Mã Đám</th>
                      <th className="px-3 py-3 lg:px-4">Người Mất</th>
                      <th className="px-3 py-3 lg:px-4">Phân Loại / CN</th>
@@ -123,6 +148,9 @@ export default function FuneralsPage() {
                  <tbody className="divide-y divide-gray-50">
                    {filtered.map(row => (
                      <tr key={row.id || row.ma_dam} className="hover:bg-indigo-50/30 transition-colors group text-xs sm:text-[13px]">
+                       <td className="px-3 py-3 lg:px-4 font-bold text-gray-600 whitespace-nowrap">
+                         {row.ngay ? <span className="flex items-center gap-1.5"><Calendar size={12} className="text-gray-400" /> {row.ngay}</span> : '—'}
+                       </td>
                        <td className="px-3 py-3 lg:px-4 font-bold text-indigo-700 whitespace-nowrap">{row.ma_dam}</td>
                        <td className="px-3 py-3 lg:px-4 font-semibold text-gray-900 max-w-[180px] lg:max-w-[220px]">
                          <div className="line-clamp-2" title={row.nguoi_mat || '—'}>

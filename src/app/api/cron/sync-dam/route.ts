@@ -154,6 +154,7 @@ export async function GET(request: Request) {
     // 3. Chèn vào dim_dam liên đới
     const dimRows = rows.map(r => ({
       ma_dam:    r.ma_dam,
+      ngay:      r.ngay,
       loai:      r.loai,
       chi_nhanh: r.chi_nhanh,
       nguoi_mat: r.nguoi_mat,

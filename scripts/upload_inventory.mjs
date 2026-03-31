@@ -9,7 +9,7 @@ const SUPABASE_URL = 'https://zspazvdyrrkdosqigomk.supabase.co';
 const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzcGF6dmR5cnJrZG9zcWlnb21rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzgyMjA5NywiZXhwIjoyMDg5Mzk4MDk3fQ.qCT5RKZu8pCXJnxYi87HcfSgXIb5SHxsxYMHjvBNgWY';
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-const CSV_PATH = 'C:\\Users\\Thanh Dat\\Downloads\\Fact_Hom_Inventory - Hòm tồn kho 25.03.2025.csv';
+const CSV_PATH = 'c:\\Users\\Thanh Dat\\OneDrive\\Documents\\BlackStones\\BlackStone_Order_SCM\\Sample data\\Fact_Hom_Inventory new - Hòm tồn kho 25.03.2025.csv';
 
 function parseCSVLine(line) {
   const fields = []; let current = ''; let inQuotes = false;

@@ -7,6 +7,7 @@
 CREATE TABLE IF NOT EXISTS dim_dam (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   ma_dam        text UNIQUE NOT NULL,              -- Mã đám (VD: 260101)
+  ngay          text,                              -- Ngày diễn ra đám
   loai          text,                               -- Loại (Chôn CC, Thiêu TC, ...)
   chi_nhanh     text,                               -- Chi nhánh (CN1, CN2, CN3)
   nguoi_mat     text,                               -- Tên người mất

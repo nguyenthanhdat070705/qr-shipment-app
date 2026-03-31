@@ -55,7 +55,7 @@ async function main() {
   console.log('✅ Bảng dim_dam tồn tại.\n');
 
   const records = dataRows.map(r => ({
-    ma_dam: r[0], loai: r[1] || null, chi_nhanh: r[2] || null, nguoi_mat: r[3] || null,
+    ma_dam: r[0], ngay: r[1] || null, loai: r[2] || null, chi_nhanh: r[3] || null, nguoi_mat: r[4] || null,
   })).filter(r => r.ma_dam);
 
   console.log(`Upsert ${records.length} bản ghi...\n`);
@@ -78,7 +78,7 @@ async function main() {
   const { count } = await supabase.from('dim_dam').select('*', { count: 'exact', head: true });
   console.log(`Tổng bản ghi: ${count}\n`);
 
-  const { data: sample } = await supabase.from('dim_dam').select('ma_dam, loai, chi_nhanh, nguoi_mat').limit(5);
+  const { data: sample } = await supabase.from('dim_dam').select('ma_dam, ngay, loai, chi_nhanh, nguoi_mat').limit(5);
   console.log('Mẫu:');
   console.table(sample);
   process.exit(0);
