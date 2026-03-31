@@ -1,0 +1,175 @@
+import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+
+// Khai báo kiểu cho biến header
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+const GOOGLE_SHEET_ID = '1NySorW3c07R_w7smqMkGbAja6I9rIVLT4s0OGZEOIOg';
+const GOOGLE_SHEET_GID = '1072390539';
+
+// Hàm helper parse CSV chuẩn
+function parseCSVLine(line: string) {
+  const fields = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
+        current += '"'; i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === ',' && !inQuotes) {
+      fields.push(current.trim());
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  fields.push(current.trim());
+  return fields;
+}
+
+export async function GET(request: Request) {
+  try {
+    // Bảo mật: Nếu cần, bạn có thể truyền thêm secret key qua query param
+    // const { searchParams } = new URL(request.url);
+    // const secret = searchParams.get('secret');
+    // if (secret !== process.env.CRON_SECRET) {
+    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // }
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      return NextResponse.json({ error: 'Missing Supabase environment variables' }, { status: 500 });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // 1. Fetch từ Google Sheets
+    const url = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=csv&gid=${GOOGLE_SHEET_GID}`;
+    const res = await fetch(url);
+    
+    if (!res.ok) {
+      throw new Error('Không thể tải CSV từ Google Sheets. Có thể file chưa public.');
+    }
+    
+    const text = await res.text();
+    const lines = text.split('\n').map(l => l.replace(/\r$/, ''));
+    
+    // Tìm Header
+    let headerIdx = 1;
+    for (let i = 0; i < Math.min(10, lines.length); i++) {
+      const lower = lines[i].toLowerCase();
+      if ((lower.startsWith('stt') || lower.match(/^["\s]*stt/)) && (lower.includes('ng') || lower.includes('th'))) {
+        headerIdx = i; break;
+      }
+      if (lower.includes('m\u00e3 \u0111\u00e1m') || lower.includes('ma dam')) {
+        headerIdx = i; break;
+      }
+    }
+
+    // Parse Data
+    const rows = [];
+    for (let i = headerIdx + 1; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line.trim()) continue;
+      
+      const r = parseCSVLine(line);
+      if (!r || r.length < 5) continue;
+      
+      if (!r[0] || r[0].trim() === '') continue; // Skip empty STT
+      const maDam = r[3]?.trim();
+      if (!maDam) continue;
+
+      rows.push({
+        stt:                           r[0]?.trim()  || '',
+        ngay:                          r[1]?.trim()  || '',
+        thang:                         r[2]?.trim()  || '',
+        ma_dam:                        maDam,
+        loai:                          r[4]?.trim()  || '',
+        chi_nhanh:                     r[5]?.trim()  || '',
+        nguoi_mat:                     r[6]?.trim()  || '',
+        dia_chi_to_chuc:               r[7]?.trim()  || '',
+        dia_chi_chon_thieu:            r[8]?.trim()  || '',
+        gio_liem:                      r[9]?.trim()  || '',
+        ngay_liem:                     r[10]?.trim() || '',
+        gio_di_quan:                   r[11]?.trim() || '',
+        ngay_di_quan:                  r[12]?.trim() || '',
+        sale:                          r[13]?.trim() || '',
+        dieu_phoi:                     r[14]?.trim() || '',
+        thay_so_luong:                 r[15]?.trim() || '',
+        thay_ncc:                      r[16]?.trim() || '',
+        thay_ten:                      r[17]?.trim() || '',
+        hom_loai:                      r[18]?.trim() || '',
+        hom_ncc_hay_kho:               r[19]?.trim() || '',
+        hoa:                           r[20]?.trim() || '',
+        da_kho_tiem_focmol:            r[21]?.trim() || '',
+        ken_tay_so_le:                 r[22]?.trim() || '',
+        ken_tay_ncc:                   r[23]?.trim() || '',
+        quay_phim_chup_hinh_goi_dv:    r[24]?.trim() || '',
+        quay_phim_chup_hinh_ncc:       r[25]?.trim() || '',
+        mam_cung_so_luong:             r[26]?.trim() || '',
+        mam_cung_ncc:                  r[27]?.trim() || '',
+        di_anh_cao_pho:                r[28]?.trim() || '',
+        bang_ron:                      r[29]?.trim() || '',
+        la_trieu_bai_vi:               r[30]?.trim() || '',
+        nhac:                          r[31]?.trim() || '',
+        thue_rap_ban_ghe_so_luong:     r[32]?.trim() || '',
+        thue_rap_ban_ghe_ncc:          r[33]?.trim() || '',
+        hu_tro_cot:                    r[34]?.trim() || '',
+        teabreak:                      r[35]?.trim() || '',
+        xe_tang_le_loai:               r[36]?.trim() || '',
+        xe_tang_le_dao_ty:             r[37]?.trim() || '',
+        xe_tang_le_ncc:                r[38]?.trim() || '',
+        xe_khach_loai:                 r[39]?.trim() || '',
+        xe_khach_ncc:                  r[40]?.trim() || '',
+        xe_cap_cuu:                    r[41]?.trim() || '',
+        xe_khac:                       r[42]?.trim() || '',
+        thue_nv_truc:                  r[43]?.trim() || '',
+        bao_don:                       r[44]?.trim() || '',
+        ghi_chu:                       r[45]?.trim() || '',
+        chon_thieu:                    r[46]?.trim() || '',
+      });
+    }
+
+    if (rows.length === 0) {
+      return NextResponse.json({ message: 'Không có dữ liệu hợp lệ.' });
+    }
+
+    // 2. Chèn vào fact_dam theo batch 50 record
+    let successCount = 0;
+    const CHUNK_SIZE = 50;
+    
+    for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+      const chunk = rows.slice(i, i + CHUNK_SIZE);
+      const { data, error } = await supabase.from('fact_dam').upsert(chunk, { onConflict: 'ma_dam' }).select('ma_dam');
+      if (!error) successCount += data?.length || chunk.length;
+    }
+
+    // 3. Chèn vào dim_dam liên đới
+    const dimRows = rows.map(r => ({
+      ma_dam:    r.ma_dam,
+      loai:      r.loai,
+      chi_nhanh: r.chi_nhanh,
+      nguoi_mat: r.nguoi_mat,
+    }));
+    for (let i = 0; i < dimRows.length; i += CHUNK_SIZE) {
+      const chunk = dimRows.slice(i, i + CHUNK_SIZE);
+      await supabase.from('dim_dam').upsert(chunk, { onConflict: 'ma_dam' });
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Đồng bộ tự động thành công!', 
+      processed_records: successCount 
+    });
+
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
