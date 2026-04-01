@@ -41,6 +41,19 @@ interface RecentExport {
   fact_xuat_hang_items?: { ma_hom: string; ten_hom: string }[];
 }
 
+interface PurchaseOrder {
+  id: string;
+  po_code: string;
+  status: string;
+  note: string | null;
+  created_by: string | null;
+  expected_date: string | null;
+  created_at: string;
+  total_amount: number;
+  supplier: { code: string; name: string } | null;
+  warehouse: { code: string; name: string } | null;
+}
+
 /* ─────────────────────────────────────
    Sub-components
 ───────────────────────────────────── */
@@ -87,23 +100,34 @@ function StatCard({
 }
 
 /* ─────────────────────────────────────
-   Drawer: Đơn hàng chờ xử lý
+   Drawer: Đơn nhập hàng cần xử lý (Purchase Orders)
 ───────────────────────────────────── */
 function PendingOrdersDrawer({
   open, onClose, orders,
 }: {
-  open: boolean; onClose: () => void; orders: RecentExport[];
+  open: boolean; onClose: () => void; orders: PurchaseOrder[];
 }) {
   const router = useRouter();
   const [search, setSearch] = useState('');
-  const pending = orders.filter(o => o.trang_thai === 'pending');
-  const filtered = pending.filter(o =>
+  const filtered = orders.filter(o =>
     !search.trim() ||
-    o.ma_phieu_xuat.toLowerCase().includes(search.toLowerCase()) ||
-    (o.fact_xuat_hang_items?.[0]?.ma_hom || '').toLowerCase().includes(search.toLowerCase()) ||
-    (o.fact_xuat_hang_items?.[0]?.ten_hom || '').toLowerCase().includes(search.toLowerCase()) ||
-    (o.ghi_chu || '').toLowerCase().includes(search.toLowerCase())
+    o.po_code.toLowerCase().includes(search.toLowerCase()) ||
+    (o.supplier?.name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (o.note || '').toLowerCase().includes(search.toLowerCase())
   );
+
+  const STATUS_LABEL: Record<string, string> = {
+    confirmed: 'Chưa nhập',
+    partial: 'Nhập một phần',
+    received: 'Đã nhập đủ',
+    cancelled: 'Đã hủy',
+  };
+  const STATUS_COLOR: Record<string, string> = {
+    confirmed: 'bg-amber-50 text-amber-700 border-amber-200',
+    partial: 'bg-blue-50 text-blue-700 border-blue-200',
+    received: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    cancelled: 'bg-red-50 text-red-700 border-red-200',
+  };
 
   return (
     <>
@@ -119,8 +143,8 @@ function PendingOrdersDrawer({
               <Clock size={20} className="text-amber-600" />
             </div>
             <div>
-              <h2 className="text-sm font-extrabold text-gray-900">Đơn hàng chờ xử lý</h2>
-              <p className="text-xs text-amber-600 font-semibold">{pending.length} phiếu cần xử lý</p>
+              <h2 className="text-sm font-extrabold text-gray-900">Đơn nhập hàng cần xử lý</h2>
+              <p className="text-xs text-amber-600 font-semibold">{orders.length} đơn chưa nhập đủ</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 rounded-xl hover:bg-amber-100 text-gray-400 hover:text-gray-700 transition-colors"><X size={18} /></button>
@@ -130,7 +154,7 @@ function PendingOrdersDrawer({
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Tìm theo mã phiếu, mã hòm, tên hòm..."
+              placeholder="Tìm theo mã PO, nhà cung cấp..."
               className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400 transition-all" />
           </div>
         </div>
@@ -139,44 +163,44 @@ function PendingOrdersDrawer({
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-gray-400">
               <Clock size={36} className="mb-3 opacity-30" />
-              <p className="text-sm">{search ? 'Không tìm thấy đơn phù hợp' : 'Không có đơn hàng chờ xử lý'}</p>
+              <p className="text-sm">{search ? 'Không tìm thấy đơn phù hợp' : 'Không có đơn nhập cần xử lý'}</p>
             </div>
-          ) : filtered.map((item) => {
-            const firstItem = item.fact_xuat_hang_items?.[0];
-            const date = new Date(item.created_at);
-            const isToday = date.toDateString() === new Date().toDateString();
+          ) : filtered.map((po) => {
+            const date = new Date(po.created_at);
             return (
               <div
-                key={item.id}
-                onClick={() => { onClose(); router.push('/goods-issue'); }}
-                className="flex items-start gap-4 px-5 py-4 hover:bg-amber-50/50 cursor-pointer transition-colors group"
+                key={po.id}
+                onClick={() => { onClose(); router.push('/purchase-orders/' + po.id); }}
+                className="flex items-start gap-4 px-5 py-4 hover:bg-amber-50/60 cursor-pointer transition-colors group"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 flex-shrink-0 mt-0.5">
                   <Package size={17} className="text-amber-600" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="font-mono text-xs font-bold text-amber-700 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-md">{item.ma_phieu_xuat}</span>
-                    {isToday && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">Hôm nay</span>}
+                    <span className="font-mono text-xs font-bold text-amber-700 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-md">{po.po_code}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${STATUS_COLOR[po.status] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                      {STATUS_LABEL[po.status] || po.status}
+                    </span>
                   </div>
-                  {firstItem ? (
-                    <p className="text-sm font-semibold text-gray-800">
-                      <span className="font-mono text-amber-600">{firstItem.ma_hom}</span> — {firstItem.ten_hom}
+                  {po.supplier && (
+                    <p className="text-sm font-semibold text-gray-800 truncate">
+                      {po.supplier.name}
+                      <span className="font-mono text-xs text-gray-400 ml-1">({po.supplier.code})</span>
                     </p>
-                  ) : (
-                    <p className="text-sm text-gray-500">{item.ghi_chu || 'Chưa có thông tin sản phẩm'}</p>
                   )}
-                  {item.fact_xuat_hang_items && item.fact_xuat_hang_items.length > 1 && (
-                    <p className="text-xs text-gray-400 mt-0.5">+{item.fact_xuat_hang_items.length - 1} sản phẩm khác</p>
+                  {po.expected_date && (
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Dự kiến nhập: {new Date(po.expected_date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                    </p>
                   )}
-                  {item.ghi_chu && firstItem && (
-                    <p className="text-xs text-gray-400 mt-0.5 truncate">{item.ghi_chu}</p>
+                  {po.total_amount > 0 && (
+                    <p className="text-xs font-semibold text-emerald-600 mt-0.5">{po.total_amount.toLocaleString('vi-VN')}₫</p>
                   )}
                 </div>
                 <div className="flex-shrink-0 text-right">
-                  <p className="text-xs font-bold text-gray-700">{date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</p>
-                  <p className="text-[10px] text-gray-400">{date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}</p>
-                  <ArrowRight size={13} className="text-gray-200 group-hover:text-amber-500 transition-colors mt-1 ml-auto" />
+                  <p className="text-xs font-bold text-gray-700">{date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}</p>
+                  <ArrowRight size={13} className="text-gray-200 group-hover:text-amber-500 transition-colors mt-2 ml-auto" />
                 </div>
               </div>
             );
@@ -184,10 +208,10 @@ function PendingOrdersDrawer({
         </div>
         <div className="border-t border-gray-100 p-4 bg-gray-50">
           <button
-            onClick={() => { onClose(); router.push('/goods-issue'); }}
+            onClick={() => { onClose(); router.push('/purchase-orders'); }}
             className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-600 transition-colors shadow-sm"
           >
-            Xem tất cả trong Xuất hàng <ArrowRight size={14} />
+            Xem tất cả đơn đặt hàng <ArrowRight size={14} />
           </button>
         </div>
       </div>
@@ -332,6 +356,7 @@ export default function WarehouseDashboard() {
   const [historyLoading, setHistoryLoading] = useState(true);
   const [stats, setStats] = useState<InventoryStat>({ total: 0, available: 0, outOfStock: 0, totalQuantity: 0, warehouseName: '' });
   const [outOfStockProducts, setOutOfStockProducts] = useState<OutOfStockProduct[]>([]);
+  const [pendingPOs, setPendingPOs] = useState<PurchaseOrder[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [pendingDrawerOpen, setPendingDrawerOpen] = useState(false);
@@ -394,6 +419,19 @@ export default function WarehouseDashboard() {
     finally { setHistoryLoading(false); }
   }, []);
 
+  /* Fetch pending Purchase Orders */
+  const fetchPendingPOs = useCallback(async () => {
+    try {
+      const res = await fetch('/api/purchase-orders');
+      if (res.ok) {
+        const json = await res.json();
+        const all: PurchaseOrder[] = json.data || [];
+        // Chỉ lấy đơn chưa nhập đủ (confirmed = chưa nhập, partial = nhập một phần)
+        setPendingPOs(all.filter(po => po.status === 'confirmed' || po.status === 'partial'));
+      }
+    } catch {}
+  }, []);
+
   /* Fetch inventory stats */
   const fetchStats = useCallback(async () => {
     setStatsLoading(true);
@@ -438,9 +476,10 @@ export default function WarehouseDashboard() {
   useEffect(() => {
     fetchHistory();
     fetchStats();
-  }, [fetchHistory, fetchStats]);
+    fetchPendingPOs();
+  }, [fetchHistory, fetchStats, fetchPendingPOs]);
 
-  const pendingCount = history.filter(h => h.trang_thai === 'pending').length;
+  const pendingCount = pendingPOs.length;
   const todayCount = history.filter(h => {
     const d = new Date(h.created_at);
     const now = new Date();
@@ -450,6 +489,7 @@ export default function WarehouseDashboard() {
   const handleRefresh = () => {
     fetchHistory();
     fetchStats();
+    fetchPendingPOs();
   };
 
   return (
@@ -459,7 +499,7 @@ export default function WarehouseDashboard() {
       <PendingOrdersDrawer
         open={pendingDrawerOpen}
         onClose={() => setPendingDrawerOpen(false)}
-        orders={history}
+        orders={pendingPOs}
       />
       <OutOfStockDrawer
         open={outOfStockDrawerOpen}
@@ -527,6 +567,7 @@ export default function WarehouseDashboard() {
           sub="phiếu xuất kho"
           icon={<Truck size={20} />}
           gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
+          onClick={() => router.push('/goods-issue')}
         />
         <StatCard
           label="Chờ xử lý"
