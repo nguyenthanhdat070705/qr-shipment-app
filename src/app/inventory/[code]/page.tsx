@@ -18,6 +18,7 @@ interface PageProps {
 /* ── helpers ───────────────────────────────────── */
 
 function getCoffinImage(productCode: string): string {
+  if (productCode === '2AQ0106') return '/coffin-3.png';
   let hash = 0;
   for (let i = 0; i < productCode.length; i++) {
     hash = ((hash << 5) - hash + productCode.charCodeAt(i)) | 0;
