@@ -100,14 +100,14 @@ function QuickAction({
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  pending:    'bg-amber-100 text-amber-700 border-amber-200',
+  pending:    'bg-teal-100 text-teal-700 border-teal-200',
   assigned:   'bg-blue-100 text-blue-700 border-blue-200',
   in_transit: 'bg-indigo-100 text-indigo-700 border-indigo-200',
   delivered:  'bg-emerald-100 text-emerald-700 border-emerald-200',
   cancelled:  'bg-red-100 text-red-700 border-red-200',
 };
 const STATUS_LABEL: Record<string, string> = {
-  pending:    'Chờ xử lý',
+  pending:    'Đã hoàn thành',
   assigned:   'Đã phân công',
   in_transit: 'Đang giao',
   delivered:  'Đã giao',
@@ -273,9 +273,9 @@ export default function WarehouseDashboard() {
                 {todayCount} xuất hôm nay
               </div>
               {pendingCount > 0 && (
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-200 text-xs font-semibold">
-                  <Clock size={12} />
-                  {pendingCount} chờ xử lý
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/20 border border-teal-400/30 text-teal-200 text-xs font-semibold">
+                  <CheckCircle2 size={12} />
+                  {pendingCount} đã hoàn thành
                 </div>
               )}
             </div>
@@ -307,11 +307,11 @@ export default function WarehouseDashboard() {
           gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
         />
         <StatCard
-          label="Chờ xử lý"
+          label="Đã hoàn thành"
           value={pendingCount}
-          sub="phiếu cần xử lý"
-          icon={<Clock size={20} />}
-          gradient="bg-gradient-to-br from-amber-400 to-orange-500"
+          sub="phiếu đã xuất"
+          icon={<CheckCircle2 size={20} />}
+          gradient="bg-gradient-to-br from-teal-400 to-emerald-500"
         />
         <StatCard
           label="Tổng loại hòm"

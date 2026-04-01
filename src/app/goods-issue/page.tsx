@@ -426,14 +426,14 @@ export default function GoodsIssuePage() {
                 const timeStr = createdAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
                 const statusColors: Record<string, string> = {
-                  pending: 'bg-amber-100 text-amber-700 border-amber-200',
+                  pending: 'bg-teal-100 text-teal-700 border-teal-200',
                   assigned: 'bg-blue-100 text-blue-700 border-blue-200',
                   in_transit: 'bg-indigo-100 text-indigo-700 border-indigo-200',
                   delivered: 'bg-emerald-100 text-emerald-700 border-emerald-200',
                   cancelled: 'bg-red-100 text-red-700 border-red-200',
                 };
                 const statusLabel: Record<string, string> = {
-                  pending: 'Chờ xử lý',
+                  pending: 'Đã hoàn thành',
                   assigned: 'Đã phân công',
                   in_transit: 'Đang giao',
                   delivered: 'Đã giao',

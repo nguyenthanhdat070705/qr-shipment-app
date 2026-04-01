@@ -234,7 +234,7 @@ function QuickActionCard({
 }
 
 const STATUS_LABEL: Record<string, string> = {
-  pending: 'Chờ xử lý', assigned: 'Đã phân công',
+  pending: 'Đã hoàn thành', assigned: 'Đã phân công',
   in_transit: 'Đang giao', delivered: 'Đã giao', cancelled: 'Đã hủy',
 };
 const STATUS_COLOR: Record<string, string> = {
