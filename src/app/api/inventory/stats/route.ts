@@ -3,9 +3,11 @@ import { getSupabaseAdmin } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const supabase = getSupabaseAdmin();
+    const { searchParams } = new URL(req.url);
+    const warehouseFilter = searchParams.get('warehouse'); // e.g. "Kho Hàm Long"
 
     const [inventoryRes, homRes, khoRes] = await Promise.all([
       supabase.from('fact_inventory').select('*'),
@@ -46,7 +48,29 @@ export async function GET() {
 
     const products = Array.from(productMap.values());
 
-    // Global stats
+    /* ── If warehouse filter provided → return legacy format for WarehouseDashboard ── */
+    if (warehouseFilter) {
+      let total = 0, available = 0, outOfStock = 0, totalQuantity = 0;
+
+      for (const p of products) {
+        const w = p.byWarehouse[warehouseFilter];
+        if (!w) continue;  // SP này không có ở kho này
+        total++;
+        totalQuantity += w.qty;
+        if (w.avail > 0) available++;
+        else outOfStock++;
+      }
+
+      return NextResponse.json({
+        total,
+        available,
+        outOfStock,
+        totalQuantity,
+        warehouseName: warehouseFilter,
+      });
+    }
+
+    /* ── No filter → return full admin stats ── */
     let totalAvailable = 0, totalOutOfStock = 0, totalExported = 0, totalQuantity = 0;
     const outOfStockProducts: { code: string; name: string; warehouse: string; qty: number }[] = [];
 
@@ -60,16 +84,15 @@ export async function GET() {
         totalExported++;
       } else {
         totalOutOfStock++;
-        // Collect per-warehouse out-of-stock entries
         for (const [khoName, { qty }] of Object.entries(p.byWarehouse)) {
-          if (qty > 0) { // có hàng nhưng avail = 0 → đã xuất hết
+          if (qty > 0) {
             outOfStockProducts.push({ code: p.code, name: p.name, warehouse: khoName, qty });
           }
         }
       }
     }
 
-    // Per-warehouse stats
+    // Per-warehouse breakdown
     const khoStats: Record<string, { name: string; total: number; available: number; outOfStock: number }> = {};
     for (const p of products) {
       for (const [khoName, { qty, avail }] of Object.entries(p.byWarehouse)) {

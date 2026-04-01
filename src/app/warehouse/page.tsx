@@ -200,10 +200,24 @@ export default function WarehouseDashboard() {
       const res = await fetch(`/api/inventory/stats${filter}`);
       if (res.ok) {
         const json = await res.json();
-        setStats(json);
+        // API trả về flat object khi có ?warehouse=, còn không thì {stats:{...}}
+        if (json.total !== undefined) {
+          // Chế độ warehouse: flat format { total, available, outOfStock, totalQuantity, warehouseName }
+          setStats(json);
+        } else if (json.stats) {
+          // Chế độ admin: { stats: {...} } → map sang InventoryStat
+          setStats({
+            total: json.stats.totalProducts ?? 0,
+            available: json.stats.totalAvailable ?? 0,
+            outOfStock: json.stats.totalOutOfStock ?? 0,
+            totalQuantity: json.stats.totalQuantity ?? 0,
+            warehouseName: warehouseLabel,
+          });
+        }
       } else {
         setStats({ total: 0, available: 0, outOfStock: 0, totalQuantity: 0, warehouseName: warehouseLabel });
       }
+
     } catch {
       setStats({ total: 0, available: 0, outOfStock: 0, totalQuantity: 0, warehouseName: warehouseLabel });
     } finally {
