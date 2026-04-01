@@ -9,7 +9,7 @@ export async function GET() {
     const { data: factData, error: factError } = await supabase
       .from('fact_dam')
       .select('*')
-      .order('ma_dam', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (!factError && factData && factData.length > 0) {
       return NextResponse.json({ data: factData }, { status: 200 });
@@ -19,7 +19,7 @@ export async function GET() {
     const { data: dimData, error: dimError } = await supabase
       .from('dim_dam')
       .select('*')
-      .order('ma_dam', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (dimError) {
       console.error('[GET /api/funerals] Error fetching dim_dam:', dimError);
