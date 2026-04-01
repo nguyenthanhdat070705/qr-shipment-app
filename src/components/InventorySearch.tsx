@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Search, Package, ChevronDown, MapPin } from 'lucide-react';
+import { Search, Package, ChevronDown, MapPin, Warehouse, CheckCircle, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { getWarehouseFilter } from '@/config/roles.config';
 
@@ -39,7 +39,7 @@ interface InventoryItem {
 type FilterType = 'all' | 'available' | 'exported' | 'out_of_stock';
 type SortType = 'name' | 'price_asc' | 'price_desc' | 'code';
 
-export default function InventorySearch({ items }: { items: InventoryItem[] }) {
+export default function InventorySearch({ items, showStats = false }: { items: InventoryItem[]; showStats?: boolean }) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
   const [sort, setSort] = useState<SortType>('name');
@@ -148,8 +148,57 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
     return result;
   }, [items, query, filter, sort, warehouseFilter]);
 
+  // Stats tính từ items đã filter theo kho (client-side)
+  const warehouseItems = useMemo(() => {
+    if (warehouseFilter === 'all') return items;
+    const filterLower = warehouseFilter.toLowerCase().trim();
+    return items.filter(i => {
+      const warehouses = i.warehouse.split(', ').map(w => w.trim().toLowerCase());
+      return warehouses.some(w => w.includes(filterLower) || filterLower.includes(w));
+    });
+  }, [items, warehouseFilter]);
+
+  const warehouseStats = useMemo(() => ({
+    total: warehouseItems.length,
+    available: warehouseItems.filter(i => i.available).length,
+    outOfStock: warehouseItems.filter(i => i.isOutOfStock).length,
+    warehouseName: lockedWarehouse || 'Tất cả kho',
+  }), [warehouseItems, lockedWarehouse]);
+
   return (
     <div className="space-y-4">
+      {/* Stat cards — hiển thị khi showStats=true hoặc khi có lockedWarehouse */}
+      {(showStats || lockedWarehouse) && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+          <div className="rounded-2xl bg-white border border-[#d5dbe9] p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eef1f7] flex-shrink-0">
+              <Warehouse size={22} className="text-[#1B2A4A]" />
+            </div>
+            <div>
+              <p className="text-2xl font-extrabold text-gray-900 leading-none">{warehouseStats.total}</p>
+              <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">Tổng SP</p>
+            </div>
+          </div>
+          <div className="rounded-2xl bg-white border border-emerald-200 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 flex-shrink-0">
+              <CheckCircle size={22} className="text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-extrabold text-gray-900 leading-none">{warehouseStats.available}</p>
+              <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">Còn hàng</p>
+            </div>
+          </div>
+          <div className="rounded-2xl bg-white border border-red-200 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 flex-shrink-0">
+              <AlertTriangle size={22} className="text-red-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-extrabold text-gray-900 leading-none">{warehouseStats.outOfStock}</p>
+              <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">Hết hàng</p>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Search bar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">

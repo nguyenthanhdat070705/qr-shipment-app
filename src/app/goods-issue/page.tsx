@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Truck, Search, CheckCircle2, Package, Clock, History, AlertCircle } from 'lucide-react';
+import { Truck, Search, CheckCircle2, Package, Clock, History, AlertCircle, MapPin } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
-
+import { getWarehouseFilter } from '@/config/roles.config';
 
 interface InventoryItemData {
   inventory_id: string;
@@ -18,8 +17,8 @@ interface InventoryItemData {
 }
 
 export default function GoodsIssuePage() {
-  const router = useRouter();
   const [searchInput, setSearchInput] = useState('');
+  const [lockedWarehouse, setLockedWarehouse] = useState<string | null>(null);
 
   const [scannedItems, setScannedItems] = useState<InventoryItemData[]>([]);
   const [selectedInventoryId, setSelectedInventoryId] = useState<string>('');
@@ -27,6 +26,18 @@ export default function GoodsIssuePage() {
   const [maDam, setMaDam] = useState('');
   const [nguoiNhan, setNguoiNhan] = useState('');
   const [error, setError] = useState('');
+
+  // Đọc warehouse của user từ localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('auth_user');
+      if (raw) {
+        const u = JSON.parse(raw);
+        const wf = getWarehouseFilter(u.email || '');
+        if (wf) setLockedWarehouse(wf);
+      }
+    } catch {}
+  }, []);
 
   // History
   const [history, setHistory] = useState<any[]>([]);
@@ -64,7 +75,9 @@ export default function GoodsIssuePage() {
     if (!code) return;
 
     try {
-      const res = await fetch(`/api/goods-issue/search?q=${encodeURIComponent(code)}`);
+      // Thêm warehouse param nếu có filter kho
+      const warehouseParam = lockedWarehouse ? `&warehouse=${encodeURIComponent(lockedWarehouse)}` : '';
+      const res = await fetch(`/api/goods-issue/search?q=${encodeURIComponent(code)}${warehouseParam}`);
       const result = await res.json();
 
       if (!res.ok) {
@@ -77,7 +90,22 @@ export default function GoodsIssuePage() {
         setMaDam(result.dam_data.ma_dam);
       }
 
-      const data = (result.data || []) as InventoryItemData[];
+      let data = (result.data || []) as InventoryItemData[];
+
+      // Lọc chỉ hiển hàng thuộc kho của user (client-side safety check)
+      if (lockedWarehouse) {
+        const filterLower = lockedWarehouse.toLowerCase();
+        const filtered = data.filter(item =>
+          item.warehouse_name?.toLowerCase().includes(filterLower) ||
+          filterLower.includes(item.warehouse_name?.toLowerCase() || '')
+        );
+        // Nếu sau filter không còn hàng nào trong kho mình
+        if (filtered.length === 0 && data.length > 0) {
+          setError(`Sản phẩm này không có trong ${lockedWarehouse} (chỉ có ở: ${data.map(d => d.warehouse_name).join(', ')}).`);
+          return;
+        }
+        data = filtered.length > 0 ? filtered : data;
+      }
 
       if (data.length === 0) {
         setError('Không tìm thấy lô hàng khả dụng nào.');
@@ -172,13 +200,23 @@ export default function GoodsIssuePage() {
         <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-72 h-72 bg-blue-500/20 rounded-full blur-[60px] translate-y-1/3 -translate-x-1/4"></div>
         <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md mb-4 shadow-sm">
-            <Truck size={14} className="text-emerald-400" />
-            <span className="text-[11px] font-bold text-white tracking-widest uppercase">Xuất Kho Nội Bộ</span>
+          <div className="flex items-center gap-3 flex-wrap mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md shadow-sm">
+              <Truck size={14} className="text-emerald-400" />
+              <span className="text-[11px] font-bold text-white tracking-widest uppercase">Xuất Kho Nội Bộ</span>
+            </div>
+            {lockedWarehouse && (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 backdrop-blur-md shadow-sm">
+                <MapPin size={13} className="text-emerald-300" />
+                <span className="text-[11px] font-bold text-emerald-200 tracking-wide">{lockedWarehouse}</span>
+              </div>
+            )}
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold mb-3 tracking-tight">Chuyển Kho Nội Bộ (IT)</h1>
+          <h1 className="text-3xl sm:text-4xl font-extrabold mb-3 tracking-tight">Xuất hàng</h1>
           <p className="text-indigo-100 text-sm max-w-md leading-relaxed">
-            Nhập mã sản phẩm hoặc mã đám, điền thông tin người nhận, xác nhận xuất kho.
+            {lockedWarehouse
+              ? `Chỉ xuất hàng từ ${lockedWarehouse}. Nhập mã sản phẩm hoặc mã đám, xác nhận xuất kho.`
+              : 'Nhập mã sản phẩm hoặc mã đám, điền thông tin người nhận, xác nhận xuất kho.'}
           </p>
         </div>
       </div>

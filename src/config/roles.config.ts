@@ -174,13 +174,20 @@ export function getRoleConfig(email: string): RoleConfig {
  * Get specific warehouse data filter for the given email.
  * If it returns null, the user is allowed to see data from ALL warehouses.
  *
- * NOTE: Tên kho thực trong DB là 'Kho Hàm Long', 'Kho Kha Vạn Cân', 'Kho Kinh Dương Vương'
- * Các tài khoản kho1/kho2/kho3 được phép xem toàn bộ tồn kho.
+ * Mapping (tên thực trong DB → dim_kho.ten_kho):
+ *   kho1 → Kho Hàm Long
+ *   kho2 → Kho Kha Vạn Cân
+ *   kho3 → Kho Kinh Dương Vương
  */
 export function getWarehouseFilter(email: string): string | null {
   if (!email) return null;
-  // Tất cả tài khoản kho (kho1, kho2, kho3) và admin đều xem được toàn bộ kho
-  // Không filter theo kho cụ thể vì tên kho trong DB không khớp với pattern
+  const lower = email.toLowerCase();
+
+  if (lower.includes('kho1')) return 'Kho Hàm Long';
+  if (lower.includes('kho2')) return 'Kho Kha Vạn Cân';
+  if (lower.includes('kho3')) return 'Kho Kinh Dương Vương';
+
+  // Admin, procurement, operations, và các role khác xem tất cả kho
   return null;
 }
 

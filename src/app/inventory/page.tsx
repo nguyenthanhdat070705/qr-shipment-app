@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { Warehouse, CheckCircle, PackageOpen, AlertTriangle } from 'lucide-react';
+import { Warehouse } from 'lucide-react';
 import InventorySearch from '@/components/InventorySearch';
 import PageLayout from '@/components/PageLayout';
 
@@ -14,7 +14,8 @@ export const dynamic = 'force-dynamic';
 /**
  * Hash-based coffin image selector
  */
-function getCoffinImage(productCode: string): string {
+function getCoffinImage(productCode: string): string {\n  if (productCode === '2AQ0106') return '/coffin-3.png';
+  if (productCode === '2AQ0106') return '/coffin-3.png';
   if (productCode === '2AQ0106') return '/coffin-3.png';
   let hash = 0;
   for (let i = 0; i < productCode.length; i++) {
@@ -24,24 +25,6 @@ function getCoffinImage(productCode: string): string {
   return `/coffin-${index}.png`;
 }
 
-function StatCard({
-  label, value, icon, color, bg, border,
-}: {
-  label: string; value: number;
-  icon: React.ReactNode; color: string; bg: string; border: string;
-}) {
-  return (
-    <div className={`rounded-2xl bg-white border ${border} p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow`}>
-      <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${bg} flex-shrink-0`}>
-        <span className={color}>{icon}</span>
-      </div>
-      <div>
-        <p className="text-2xl font-extrabold text-gray-900 leading-none">{value}</p>
-        <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">{label}</p>
-      </div>
-    </div>
-  );
-}
 
 interface FactInventoryRow {
   'Mã': string;
@@ -211,10 +194,6 @@ export default async function InventoryPage() {
     };
   });
 
-  const totalProducts = items.length;
-  const availableCount = items.filter((i) => i.available).length;
-  const outOfStockCount = items.filter((i) => i.isOutOfStock).length;
-  const exportedCount = items.filter((i) => i.isExported).length;
 
   return (
     <PageLayout title="Kho hàng" icon={<Warehouse size={15} className="text-sky-500" />}>
@@ -225,15 +204,8 @@ export default async function InventoryPage() {
         </div>
       </div>
 
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <StatCard label="Tổng SP" value={totalProducts} icon={<Warehouse size={22} />} color="text-[#1B2A4A]" bg="bg-[#eef1f7]" border="border-[#d5dbe9]" />
-        <StatCard label="Còn hàng" value={availableCount} icon={<CheckCircle size={22} />} color="text-emerald-600" bg="bg-emerald-50" border="border-emerald-200" />
-        <StatCard label="Hết hàng" value={outOfStockCount} icon={<AlertTriangle size={22} />} color="text-red-600" bg="bg-red-50" border="border-red-200" />
-      </div>
-
-      {/* Search + Table — Client Component */}
-      <InventorySearch items={JSON.parse(JSON.stringify(items))} />
+      {/* Search + Table + Stats — Client Component (stats tính theo kho của user) */}
+      <InventorySearch items={JSON.parse(JSON.stringify(items))} showStats={true} />
     </PageLayout>
   );
 }
