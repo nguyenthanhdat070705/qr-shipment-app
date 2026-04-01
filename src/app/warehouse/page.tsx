@@ -19,6 +19,7 @@ interface InventoryStat {
   total: number;
   available: number;
   outOfStock: number;
+  totalQuantity: number;
   warehouseName: string;
 }
 
@@ -124,7 +125,7 @@ export default function WarehouseDashboard() {
   const [nowStr, setNowStr] = useState('');
   const [history, setHistory] = useState<RecentExport[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
-  const [stats, setStats] = useState<InventoryStat>({ total: 0, available: 0, outOfStock: 0, warehouseName: '' });
+  const [stats, setStats] = useState<InventoryStat>({ total: 0, available: 0, outOfStock: 0, totalQuantity: 0, warehouseName: '' });
   const [statsLoading, setStatsLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(new Date());
 
@@ -201,10 +202,10 @@ export default function WarehouseDashboard() {
         const json = await res.json();
         setStats(json);
       } else {
-        setStats({ total: 0, available: 0, outOfStock: 0, warehouseName: warehouseLabel });
+        setStats({ total: 0, available: 0, outOfStock: 0, totalQuantity: 0, warehouseName: warehouseLabel });
       }
     } catch {
-      setStats({ total: 0, available: 0, outOfStock: 0, warehouseName: warehouseLabel });
+      setStats({ total: 0, available: 0, outOfStock: 0, totalQuantity: 0, warehouseName: warehouseLabel });
     } finally {
       setStatsLoading(false);
       setLastRefresh(new Date());
@@ -283,7 +284,7 @@ export default function WarehouseDashboard() {
       </div>
 
       {/* ── KPI Cards ────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <StatCard
           label="Xuất hôm nay"
           value={todayCount}
@@ -301,9 +302,16 @@ export default function WarehouseDashboard() {
         <StatCard
           label="Tổng SP trong kho"
           value={statsLoading ? '...' : stats.total}
-          sub={`${stats.available} còn hàng`}
+          sub={`${stats.available} mã còn hàng`}
           icon={<Boxes size={20} />}
           gradient="bg-gradient-to-br from-sky-500 to-blue-600"
+        />
+        <StatCard
+          label="Tổng lượng tồn"
+          value={statsLoading ? '...' : stats.totalQuantity}
+          sub="sản phẩm thực tế"
+          icon={<PackageCheck size={20} />}
+          gradient="bg-gradient-to-br from-indigo-500 to-violet-600"
         />
         <StatCard
           label="Hết hàng"

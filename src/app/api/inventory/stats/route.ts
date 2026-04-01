@@ -61,11 +61,13 @@ export async function GET(request: NextRequest) {
     const total = groups.length;
     const available = groups.filter(g => g.avail > 0).length;
     const outOfStock = groups.filter(g => g.avail <= 0).length;
+    const totalQuantity = groups.reduce((acc, g) => acc + g.qty, 0);
 
     return NextResponse.json({
       total,
       available,
       outOfStock,
+      totalQuantity,
       warehouseName: warehouseFilter || 'Tất cả',
     });
   } catch (err) {
