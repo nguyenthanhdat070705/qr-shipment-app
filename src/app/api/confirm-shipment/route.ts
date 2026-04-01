@@ -118,17 +118,33 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // ── Bước 2.5: Đối chiếu mã đám trong dim_dam ───────────────────
+  // ── Bước 2.5: Đối chiếu mã đám trong fact_dam (nguồn chính từ Google Sheets) ───
   if (trimmedMaDonHang) {
     const { data: damItem, error: damError } = await supabaseAdmin
-      .from('dim_dam')
+      .from('fact_dam')
       .select('ma_dam')
       .eq('ma_dam', trimmedMaDonHang)
-      .single();
+      .maybeSingle();
 
     if (damError || !damItem) {
       return errorResponse(
         `Mã đám "${trimmedMaDonHang}" không tồn tại trong hệ thống. Vui lòng nhập chính xác mã đám hợp lệ.`,
+        'VALIDATION_ERROR',
+        400
+      );
+    }
+
+    // Kiểm tra mã đám đã được xuất chưa (mỗi đám chỉ xuất 1 lần)
+    const { data: existingExport } = await supabaseAdmin
+      .from('export_confirmations')
+      .select('stt, ma_san_pham, created_at')
+      .ilike('ghi_chu', `%${trimmedMaDonHang}%`)
+      .limit(1);
+
+    if (existingExport && existingExport.length > 0) {
+      const prev = existingExport[0];
+      return errorResponse(
+        `Mã đám "${trimmedMaDonHang}" đã được xuất hàng trước đó (SP: ${prev.ma_san_pham}). Mỗi đám chỉ được xuất 1 lần.`,
         'VALIDATION_ERROR',
         400
       );
