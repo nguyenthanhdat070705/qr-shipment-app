@@ -314,9 +314,9 @@ export default function WarehouseDashboard() {
           gradient="bg-gradient-to-br from-amber-400 to-orange-500"
         />
         <StatCard
-          label="Tổng SP trong kho"
+          label="Tổng loại hòm"
           value={statsLoading ? '...' : stats.total}
-          sub={`${stats.available} mã còn hàng`}
+          sub={`${stats.available} loại còn hàng`}
           icon={<Boxes size={20} />}
           gradient="bg-gradient-to-br from-sky-500 to-blue-600"
         />
