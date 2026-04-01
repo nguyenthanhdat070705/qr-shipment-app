@@ -56,7 +56,8 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
           const filterValue = getWarehouseFilter(user.email);
           if (filterValue) {
             setLockedWarehouse(filterValue);
-            setWarehouseFilter(filterValue);
+            // Không set warehouseFilter ngay — chờ uniqueWarehouses tính xong
+            // sẽ được set trong useEffect bên dưới theo uniqueWarehouses thực tế
           }
         }
       }
@@ -74,6 +75,22 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
     });
     return Array.from(ws).sort();
   }, [items]);
+
+  // Sau khi uniqueWarehouses có dữ liệu, tìm tên kho thực tế match với lockedWarehouse
+  useEffect(() => {
+    if (!lockedWarehouse || uniqueWarehouses.length === 0) return;
+    // Tìm tên kho trong DB chứa chuỗi lockedWarehouse (case-insensitive)
+    const matched = uniqueWarehouses.find(
+      w => w.toLowerCase().includes(lockedWarehouse.toLowerCase()) ||
+           lockedWarehouse.toLowerCase().includes(w.toLowerCase())
+    );
+    if (matched) {
+      setWarehouseFilter(matched);
+    } else {
+      // Nếu không tìm thấy tên khớp, giữ lockedWarehouse để filter
+      setWarehouseFilter(lockedWarehouse);
+    }
+  }, [lockedWarehouse, uniqueWarehouses]);
 
   const filtered = useMemo(() => {
     let result = [...items];
@@ -102,9 +119,14 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
         break;
     }
 
-    // Warehouse Filter
+    // Warehouse Filter — so sánh case-insensitive và trim
     if (warehouseFilter !== 'all') {
-      result = result.filter(i => i.warehouse.includes(warehouseFilter));
+      const filterLower = warehouseFilter.toLowerCase().trim();
+      result = result.filter(i => {
+        // Kiểm tra theo từng tên kho trong warehouse string (split bởi ', ')
+        const warehouses = i.warehouse.split(', ').map(w => w.trim().toLowerCase());
+        return warehouses.some(w => w.includes(filterLower) || filterLower.includes(w));
+      });
     }
 
     // Sort
@@ -174,7 +196,7 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
             >
               {!lockedWarehouse && <option value="all">Tất cả kho</option>}
               {uniqueWarehouses
-                .filter(w => !lockedWarehouse || w.includes(lockedWarehouse))
+                .filter(w => !lockedWarehouse || w.toLowerCase().includes(lockedWarehouse.toLowerCase()) || lockedWarehouse.toLowerCase().includes(w.toLowerCase()))
                 .map(w => (
                   <option key={w} value={w}>{w}</option>
               ))}

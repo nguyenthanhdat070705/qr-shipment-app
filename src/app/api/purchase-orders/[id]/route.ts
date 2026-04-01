@@ -73,6 +73,7 @@ export async function GET(
       unit_price: item.don_gia,
       total_price: (Number(item.so_luong) || 0) * (Number(item.don_gia) || 0),
       received_qty: item.so_luong_nhan || 0,
+      hang_ky_gui: item.hang_ky_gui || false,
       note: item.ghi_chu,
       created_at: item.created_at,
     })),

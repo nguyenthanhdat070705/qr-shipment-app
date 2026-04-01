@@ -128,6 +128,55 @@ export async function POST(req: NextRequest) {
     nguoiNhanId = account?.id || null;
   }
 
+  // ── Auto-Correction: Revert old GRPO inventory if re-scanning same PO in same warehouse ──
+  if (po_id) {
+    const { data: existingGrs } = await supabase
+      .from('fact_nhap_hang')
+      .select('id')
+      .eq('don_hang_id', po_id)
+      .eq('kho_id', warehouse_id)
+      .eq('trang_thai', 'completed');
+      
+    if (existingGrs && existingGrs.length > 0) {
+      // Find old items to revert their inventory
+      const { data: oldItemsData } = await supabase
+        .from('fact_nhap_hang_items')
+        .select('ma_hom, so_luong_thuc_nhan')
+        .in('nhap_hang_id', existingGrs.map(g => g.id));
+        
+      if (oldItemsData && oldItemsData.length > 0) {
+        const rawOldHomCodes = oldItemsData.map(i => i.ma_hom);
+        const { data: oldHomData } = await supabase.from('dim_hom').select('id, ma_hom').in('ma_hom', rawOldHomCodes);
+        const oldHomMap = new Map<string, string>();
+        if (oldHomData) for (const h of oldHomData) oldHomMap.set(h.ma_hom, h.id);
+        
+        for (const oldItem of oldItemsData) {
+          if ((oldItem.so_luong_thuc_nhan || 0) <= 0) continue;
+          const homId = oldHomMap.get(oldItem.ma_hom);
+          if (!homId) continue;
+          
+          const { data: currentInvData } = await supabase.from('fact_inventory').select('*').eq('Tên hàng hóa', homId).eq('Kho', warehouse_id);
+          if (currentInvData && currentInvData.length > 0) {
+            const invRow = currentInvData[0];
+            const newQty = Math.max(0, (Number(invRow['Số lượng']) || 0) - oldItem.so_luong_thuc_nhan);
+            const newKhadung = Math.max(0, (Number(invRow['Ghi chú']) || 0) - oldItem.so_luong_thuc_nhan);
+            await supabase.from('fact_inventory').delete().eq('Mã', invRow['Mã']);
+            await supabase.from('fact_inventory').insert({
+              'Mã': invRow['Mã'], 'Tên hàng hóa': invRow['Tên hàng hóa'], 'Kho': invRow['Kho'],
+              'Số lượng': newQty, 'Ghi chú': newKhadung, 'Loại hàng': invRow['Loại hàng'],
+            });
+          }
+        }
+      }
+      
+      // Delete the old GRPOs and their items to replace them with the new one
+      for (const oldGr of existingGrs) {
+         await supabase.from('fact_nhap_hang_items').delete().eq('nhap_hang_id', oldGr.id);
+         await supabase.from('fact_nhap_hang').delete().eq('id', oldGr.id);
+      }
+    }
+  }
+
   // Generate GR code: GR-YYYYMMDD-XXX
   const now = new Date();
   const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
@@ -233,8 +282,8 @@ export async function POST(req: NextRequest) {
 
         if (existingInv && existingInv.length > 0) {
           const invRow = existingInv[0];
-          const newQty = (invRow['Số lượng'] || 0) + qty;
-          const newKhadung = (invRow['Ghi chú'] || 0) + qty;
+          const newQty = (Number(invRow['Số lượng']) || 0) + qty;
+          const newKhadung = (Number(invRow['Ghi chú']) || 0) + qty;
           await supabase.from('fact_inventory').delete().eq('Mã', invRow['Mã']);
           await supabase.from('fact_inventory').insert({
             'Mã': invRow['Mã'],
