@@ -93,7 +93,39 @@ export default function InventorySearch({ items, showStats = false }: { items: I
   }, [lockedWarehouse, uniqueWarehouses]);
 
   const filtered = useMemo(() => {
-    let result = [...items];
+    let result: InventoryItem[];
+
+    // Warehouse Filter: nếu có filter kho, re-map items theo tồn kho riêng của kho đó
+    if (warehouseFilter !== 'all') {
+      const filterLower = warehouseFilter.toLowerCase().trim();
+
+      result = items
+        .map(item => {
+          // Tìm breakdown của đúng kho này
+          const breakdown = item.warehouseBreakdown?.find(w =>
+            w.name.toLowerCase().includes(filterLower) ||
+            filterLower.includes(w.name.toLowerCase())
+          );
+          if (!breakdown) return null; // Sản phẩm không có trong kho này → loại bỏ
+
+          // Override quantities với dữ liệu riêng của kho
+          const avail = breakdown.avail;
+          const qty = breakdown.qty;
+          return {
+            ...item,
+            tonKho: String(qty),
+            khaDung: String(avail),
+            warehouse: breakdown.name,
+            warehouseBreakdown: [breakdown], // Chỉ show kho này
+            available: avail > 0,
+            isOutOfStock: avail <= 0,
+            isExported: qty > 0 && avail <= 0,
+          } as InventoryItem;
+        })
+        .filter((item): item is InventoryItem => item !== null);
+    } else {
+      result = [...items];
+    }
 
     // Search
     if (query.trim()) {
@@ -106,7 +138,7 @@ export default function InventorySearch({ items, showStats = false }: { items: I
       );
     }
 
-    // Filter
+    // Status Filter (dùng sau khi đã re-map quantities)
     switch (filter) {
       case 'available':
         result = result.filter((i) => i.available);
@@ -117,16 +149,6 @@ export default function InventorySearch({ items, showStats = false }: { items: I
       case 'out_of_stock':
         result = result.filter((i) => i.isOutOfStock && !i.isExported);
         break;
-    }
-
-    // Warehouse Filter — so sánh case-insensitive và trim
-    if (warehouseFilter !== 'all') {
-      const filterLower = warehouseFilter.toLowerCase().trim();
-      result = result.filter(i => {
-        // Kiểm tra theo từng tên kho trong warehouse string (split bởi ', ')
-        const warehouses = i.warehouse.split(', ').map(w => w.trim().toLowerCase());
-        return warehouses.some(w => w.includes(filterLower) || filterLower.includes(w));
-      });
     }
 
     // Sort
@@ -148,22 +170,31 @@ export default function InventorySearch({ items, showStats = false }: { items: I
     return result;
   }, [items, query, filter, sort, warehouseFilter]);
 
-  // Stats tính từ items đã filter theo kho (client-side)
-  const warehouseItems = useMemo(() => {
-    if (warehouseFilter === 'all') return items;
-    const filterLower = warehouseFilter.toLowerCase().trim();
-    return items.filter(i => {
-      const warehouses = i.warehouse.split(', ').map(w => w.trim().toLowerCase());
-      return warehouses.some(w => w.includes(filterLower) || filterLower.includes(w));
-    });
-  }, [items, warehouseFilter]);
 
-  const warehouseStats = useMemo(() => ({
-    total: warehouseItems.length,
-    available: warehouseItems.filter(i => i.available).length,
-    outOfStock: warehouseItems.filter(i => i.isOutOfStock).length,
-    warehouseName: lockedWarehouse || 'Tất cả kho',
-  }), [warehouseItems, lockedWarehouse]);
+  // Stats tính từ filtered — đã có per-warehouse quantities chính xác
+  const warehouseStats = useMemo(() => {
+    // Khi có search/filter status, stats vẫn nên dựa trên tất cả items của kho (không bị ảnh hưởng bởi search)
+    // Nên tính riêng từ base warehouse-filtered items
+    const baseItems = warehouseFilter === 'all'
+      ? items
+      : items
+          .map(item => {
+            const filterLower = warehouseFilter.toLowerCase().trim();
+            const bd = item.warehouseBreakdown?.find(w =>
+              w.name.toLowerCase().includes(filterLower) ||
+              filterLower.includes(w.name.toLowerCase())
+            );
+            if (!bd) return null;
+            return { ...item, available: bd.avail > 0, isOutOfStock: bd.avail <= 0, isExported: bd.qty > 0 && bd.avail <= 0 } as InventoryItem;
+          })
+          .filter((i): i is InventoryItem => i !== null);
+    return {
+      total: baseItems.length,
+      available: baseItems.filter(i => i.available).length,
+      outOfStock: baseItems.filter(i => i.isOutOfStock).length,
+      warehouseName: lockedWarehouse || 'Tất cả kho',
+    };
+  }, [items, warehouseFilter, lockedWarehouse]);
 
   return (
     <div className="space-y-4">
