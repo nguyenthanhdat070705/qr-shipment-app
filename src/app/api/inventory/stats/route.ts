@@ -52,13 +52,17 @@ export async function GET(req: Request) {
     if (warehouseFilter) {
       let total = 0, available = 0, outOfStock = 0, totalQuantity = 0;
 
+      const outOfStockList: { code: string; name: string; warehouse: string; qty: number }[] = [];
       for (const p of products) {
         const w = p.byWarehouse[warehouseFilter];
-        if (!w) continue;  // SP này không có ở kho này
+        if (!w) continue;
         total++;
         totalQuantity += w.qty;
         if (w.avail > 0) available++;
-        else outOfStock++;
+        else {
+          outOfStock++;
+          outOfStockList.push({ code: p.code, name: p.name, warehouse: warehouseFilter, qty: w.qty });
+        }
       }
 
       return NextResponse.json({
@@ -67,6 +71,7 @@ export async function GET(req: Request) {
         outOfStock,
         totalQuantity,
         warehouseName: warehouseFilter,
+        outOfStockProducts: outOfStockList.sort((a, b) => a.name.localeCompare(b.name)),
       });
     }
 

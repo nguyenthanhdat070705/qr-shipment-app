@@ -7,7 +7,7 @@ import {
   ScanLine, RefreshCw, ArrowRight,
   ChevronRight, Package, CheckCircle2, AlertTriangle,
   Clock, User, MapPin, BarChart3, QrCode, TrendingUp,
-  Boxes, ArrowUpRight,
+  Boxes, ArrowUpRight, X,
 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import { getWarehouseFilter } from '@/config/roles.config';
@@ -21,6 +21,13 @@ interface InventoryStat {
   outOfStock: number;
   totalQuantity: number;
   warehouseName: string;
+}
+
+interface OutOfStockProduct {
+  code: string;
+  name: string;
+  warehouse: string;
+  qty: number;
 }
 
 interface RecentExport {
@@ -38,7 +45,7 @@ interface RecentExport {
    Sub-components
 ───────────────────────────────────── */
 function StatCard({
-  label, value, sub, icon, gradient, badge,
+  label, value, sub, icon, gradient, badge, onClick,
 }: {
   label: string;
   value: string | number;
@@ -46,9 +53,15 @@ function StatCard({
   icon: React.ReactNode;
   gradient: string;
   badge?: { text: string; color: string };
+  onClick?: () => void;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-white border border-gray-100 p-5 shadow-sm hover:shadow-lg transition-all duration-300">
+    <div
+      onClick={onClick}
+      className={`relative overflow-hidden rounded-2xl bg-white border border-gray-100 p-5 shadow-sm transition-all duration-300 group
+        ${onClick ? 'cursor-pointer hover:shadow-xl hover:-translate-y-0.5 hover:border-gray-200' : 'hover:shadow-lg'}
+      `}
+    >
       <div className={`absolute top-0 right-0 w-32 h-32 rounded-full opacity-[0.06] -translate-y-8 translate-x-8 ${gradient}`} />
       <div className="flex items-start justify-between">
         <div className="flex-1">
@@ -61,12 +74,204 @@ function StatCard({
               {badge.text}
             </div>
           )}
+          {onClick && (
+            <p className="text-[11px] text-gray-300 group-hover:text-gray-500 mt-1.5 transition-colors">Nhấn để xem chi tiết →</p>
+          )}
         </div>
-        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${gradient} text-white shadow-lg flex-shrink-0`}>
+        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${gradient} text-white shadow-lg flex-shrink-0 group-hover:scale-110 transition-transform`}>
           {icon}
         </div>
       </div>
     </div>
+  );
+}
+
+/* ─────────────────────────────────────
+   Drawer: Đơn hàng chờ xử lý
+───────────────────────────────────── */
+function PendingOrdersDrawer({
+  open, onClose, orders,
+}: {
+  open: boolean; onClose: () => void; orders: RecentExport[];
+}) {
+  const router = useRouter();
+  const [search, setSearch] = useState('');
+  const pending = orders.filter(o => o.trang_thai === 'pending');
+  const filtered = pending.filter(o =>
+    !search.trim() ||
+    o.ma_phieu_xuat.toLowerCase().includes(search.toLowerCase()) ||
+    (o.fact_xuat_hang_items?.[0]?.ma_hom || '').toLowerCase().includes(search.toLowerCase()) ||
+    (o.fact_xuat_hang_items?.[0]?.ten_hom || '').toLowerCase().includes(search.toLowerCase()) ||
+    (o.ghi_chu || '').toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <>
+      <div
+        className={`fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={onClose}
+      />
+      <div className={`fixed right-0 top-0 bottom-0 z-50 w-full sm:w-[520px] bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}>
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-amber-50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100">
+              <Clock size={20} className="text-amber-600" />
+            </div>
+            <div>
+              <h2 className="text-sm font-extrabold text-gray-900">Đơn hàng chờ xử lý</h2>
+              <p className="text-xs text-amber-600 font-semibold">{pending.length} phiếu cần xử lý</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-amber-100 text-gray-400 hover:text-gray-700 transition-colors"><X size={18} /></button>
+        </div>
+        {/* Search */}
+        <div className="px-5 py-3 border-b border-gray-100">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Tìm theo mã phiếu, mã hòm, tên hòm..."
+              className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400 transition-all" />
+          </div>
+        </div>
+        {/* List */}
+        <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+              <Clock size={36} className="mb-3 opacity-30" />
+              <p className="text-sm">{search ? 'Không tìm thấy đơn phù hợp' : 'Không có đơn hàng chờ xử lý'}</p>
+            </div>
+          ) : filtered.map((item) => {
+            const firstItem = item.fact_xuat_hang_items?.[0];
+            const date = new Date(item.created_at);
+            const isToday = date.toDateString() === new Date().toDateString();
+            return (
+              <div
+                key={item.id}
+                onClick={() => { onClose(); router.push('/goods-issue'); }}
+                className="flex items-start gap-4 px-5 py-4 hover:bg-amber-50/50 cursor-pointer transition-colors group"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 flex-shrink-0 mt-0.5">
+                  <Package size={17} className="text-amber-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="font-mono text-xs font-bold text-amber-700 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-md">{item.ma_phieu_xuat}</span>
+                    {isToday && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">Hôm nay</span>}
+                  </div>
+                  {firstItem ? (
+                    <p className="text-sm font-semibold text-gray-800">
+                      <span className="font-mono text-amber-600">{firstItem.ma_hom}</span> — {firstItem.ten_hom}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-500">{item.ghi_chu || 'Chưa có thông tin sản phẩm'}</p>
+                  )}
+                  {item.fact_xuat_hang_items && item.fact_xuat_hang_items.length > 1 && (
+                    <p className="text-xs text-gray-400 mt-0.5">+{item.fact_xuat_hang_items.length - 1} sản phẩm khác</p>
+                  )}
+                  {item.ghi_chu && firstItem && (
+                    <p className="text-xs text-gray-400 mt-0.5 truncate">{item.ghi_chu}</p>
+                  )}
+                </div>
+                <div className="flex-shrink-0 text-right">
+                  <p className="text-xs font-bold text-gray-700">{date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</p>
+                  <p className="text-[10px] text-gray-400">{date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}</p>
+                  <ArrowRight size={13} className="text-gray-200 group-hover:text-amber-500 transition-colors mt-1 ml-auto" />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="border-t border-gray-100 p-4 bg-gray-50">
+          <button
+            onClick={() => { onClose(); router.push('/goods-issue'); }}
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-600 transition-colors shadow-sm"
+          >
+            Xem tất cả trong Xuất hàng <ArrowRight size={14} />
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ─────────────────────────────────────
+   Drawer: Hết hàng
+───────────────────────────────────── */
+function OutOfStockDrawer({
+  open, onClose, products, warehouseLabel,
+}: {
+  open: boolean; onClose: () => void; products: OutOfStockProduct[]; warehouseLabel: string;
+}) {
+  const router = useRouter();
+  const [search, setSearch] = useState('');
+  const filtered = products.filter(p =>
+    !search.trim() ||
+    p.code.toLowerCase().includes(search.toLowerCase()) ||
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <>
+      <div
+        className={`fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={onClose}
+      />
+      <div className={`fixed right-0 top-0 bottom-0 z-50 w-full sm:w-[480px] bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}>
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-red-50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100">
+              <AlertTriangle size={20} className="text-red-600" />
+            </div>
+            <div>
+              <h2 className="text-sm font-extrabold text-gray-900">Loại hòm hết hàng</h2>
+              <p className="text-xs text-red-600 font-semibold">{products.length} loại cần nhập thêm · {warehouseLabel}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-red-100 text-gray-400 hover:text-gray-700 transition-colors"><X size={18} /></button>
+        </div>
+        {/* Search */}
+        <div className="px-5 py-3 border-b border-gray-100">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Tìm theo mã hòm hoặc tên..."
+              className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition-all" />
+          </div>
+        </div>
+        {/* List */}
+        <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+              <AlertTriangle size={36} className="mb-3 opacity-30" />
+              <p className="text-sm">{search ? 'Không tìm thấy' : 'Không có loại hòm nào hết hàng'}</p>
+            </div>
+          ) : filtered.map((p, i) => (
+            <div key={i} className="flex items-center gap-4 px-5 py-4 hover:bg-red-50/50 transition-colors">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 flex-shrink-0">
+                <Package size={17} className="text-red-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="mb-0.5">
+                  <span className="font-mono text-xs font-bold text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded-md">{p.code}</span>
+                </div>
+                <p className="text-sm font-semibold text-gray-800 truncate">{p.name}</p>
+              </div>
+              <span className="flex-shrink-0 px-2 py-1 rounded-lg bg-red-100 text-red-700 text-xs font-bold">Hết hàng</span>
+            </div>
+          ))}
+        </div>
+        <div className="border-t border-gray-100 p-4 bg-gray-50">
+          <button
+            onClick={() => { onClose(); router.push('/inventory'); }}
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors shadow-sm"
+          >
+            Xem trong Kho hàng <ArrowRight size={14} />
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -126,8 +331,11 @@ export default function WarehouseDashboard() {
   const [history, setHistory] = useState<RecentExport[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [stats, setStats] = useState<InventoryStat>({ total: 0, available: 0, outOfStock: 0, totalQuantity: 0, warehouseName: '' });
+  const [outOfStockProducts, setOutOfStockProducts] = useState<OutOfStockProduct[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [pendingDrawerOpen, setPendingDrawerOpen] = useState(false);
+  const [outOfStockDrawerOpen, setOutOfStockDrawerOpen] = useState(false);
 
   /* Live clock */
   useEffect(() => {
@@ -202,10 +410,11 @@ export default function WarehouseDashboard() {
         const json = await res.json();
         // API trả về flat object khi có ?warehouse=, còn không thì {stats:{...}}
         if (json.total !== undefined) {
-          // Chế độ warehouse: flat format { total, available, outOfStock, totalQuantity, warehouseName }
+          // Chế độ warehouse: flat format
           setStats(json);
+          setOutOfStockProducts(json.outOfStockProducts || []);
         } else if (json.stats) {
-          // Chế độ admin: { stats: {...} } → map sang InventoryStat
+          // Chế độ admin
           setStats({
             total: json.stats.totalProducts ?? 0,
             available: json.stats.totalAvailable ?? 0,
@@ -213,11 +422,11 @@ export default function WarehouseDashboard() {
             totalQuantity: json.stats.totalQuantity ?? 0,
             warehouseName: warehouseLabel,
           });
+          setOutOfStockProducts(json.outOfStockProducts || []);
         }
       } else {
         setStats({ total: 0, available: 0, outOfStock: 0, totalQuantity: 0, warehouseName: warehouseLabel });
       }
-
     } catch {
       setStats({ total: 0, available: 0, outOfStock: 0, totalQuantity: 0, warehouseName: warehouseLabel });
     } finally {
@@ -245,6 +454,19 @@ export default function WarehouseDashboard() {
 
   return (
     <PageLayout title={`Kho — ${warehouseLabel}`} icon={<Warehouse size={16} className="text-emerald-500" />}>
+
+      {/* ── Drawers ──────────────────────────────── */}
+      <PendingOrdersDrawer
+        open={pendingDrawerOpen}
+        onClose={() => setPendingDrawerOpen(false)}
+        orders={history}
+      />
+      <OutOfStockDrawer
+        open={outOfStockDrawerOpen}
+        onClose={() => setOutOfStockDrawerOpen(false)}
+        products={outOfStockProducts}
+        warehouseLabel={warehouseLabel}
+      />
 
       {/* ── Welcome Banner ─────────────────────────────── */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f2417] via-emerald-900 to-[#1a3a28] p-6 mb-6 shadow-xl">
@@ -307,11 +529,12 @@ export default function WarehouseDashboard() {
           gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
         />
         <StatCard
-          label="Đã hoàn thành"
+          label="Chờ xử lý"
           value={pendingCount}
-          sub="phiếu đã xuất"
-          icon={<CheckCircle2 size={20} />}
-          gradient="bg-gradient-to-br from-teal-400 to-emerald-500"
+          sub="phiếu cần xử lý"
+          icon={<Clock size={20} />}
+          gradient="bg-gradient-to-br from-amber-400 to-orange-500"
+          onClick={() => setPendingDrawerOpen(true)}
         />
         <StatCard
           label="Tổng loại hòm"
