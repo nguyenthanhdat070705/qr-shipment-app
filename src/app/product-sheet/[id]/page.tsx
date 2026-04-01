@@ -171,13 +171,13 @@ export default async function ProductSheetPage({
               <div className="text-gray-900 font-bold uppercase text-[16px] leading-[1.1]">{hom.nhom_san_pham || 'AN TÁNG'}</div>
 
               <div className="font-bold text-gray-900 uppercase tracking-widest text-[16px] self-start pt-1">Mã sản phẩm:</div>
-              <div className="text-gray-900 font-black uppercase text-[26px] leading-[1.1]">{hom.ma_hom}</div>
+              <div className="text-gray-900 font-black uppercase text-[26px] leading-[1.1] font-times">{hom.ma_hom}</div>
 
               <div className="font-bold text-gray-900 uppercase tracking-widest text-[16px] self-start pt-1">Tên sản phẩm:</div>
-              <div className="text-gray-900 font-black uppercase text-[26px] leading-[1.1]">{hom.ten_hom?.split('-')[0]?.trim() || hom.ten_hom}</div>
+              <div className="text-gray-900 font-black uppercase text-[26px] leading-[1.1] font-times">{hom.ten_hom?.split('-')[0]?.trim() || hom.ten_hom}</div>
 
               <div className="font-bold text-gray-900 uppercase tracking-widest text-[16px] self-start pt-1">Tên kỹ thuật:</div>
-              <div className="text-gray-900 font-black uppercase text-[26px] leading-[1.1]">{hom.ten_hom}</div>
+              <div className="text-gray-900 font-black uppercase text-[26px] leading-[1.1] font-times">{hom.ten_hom}</div>
             </div>
 
             {/* Middle Section */}
@@ -256,9 +256,12 @@ export default async function ProductSheetPage({
                 size: A4;
                 margin: 0;
               }
-              body * {
+              body *:not(.font-times) {
                 font-family: 'Montserrat', sans-serif !important;
               }
+            }
+            .font-times {
+              font-family: 'Times New Roman', Times, serif !important;
             }
           `,
         }}

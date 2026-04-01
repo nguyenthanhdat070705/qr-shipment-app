@@ -123,6 +123,7 @@ export interface PurchaseOrderItem {
   unit_price: number;
   total_price: number;
   received_qty: number;
+  hang_ky_gui?: boolean;
   note: string | null;
   created_at: string;
 }

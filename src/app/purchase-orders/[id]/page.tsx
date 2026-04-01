@@ -165,7 +165,12 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
                 {(po.items || []).map((item) => (
                   <tr key={item.id} className="border-b border-gray-50">
                     <td className="px-4 py-3 font-mono font-semibold text-purple-600">{item.product_code}</td>
-                    <td className="px-4 py-3">{item.product_name}</td>
+                    <td className="px-4 py-3 flex items-center gap-2">
+                      {item.product_name}
+                      {item.hang_ky_gui && (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest bg-purple-100 text-purple-700">Ký gửi</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-right">{item.quantity}</td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">{Number(item.unit_price).toLocaleString('vi-VN')} ₫</td>
                     <td className="px-4 py-3 text-right font-semibold whitespace-nowrap">{Number(item.total_price).toLocaleString('vi-VN')} ₫</td>

@@ -204,6 +204,9 @@ export default async function GRPrintPage({
               font-size: 11px; font-weight: 700;
               padding: 3px 10px; border-radius: 999px;
             }
+            .font-times {
+              font-family: 'Times New Roman', Times, serif !important;
+            }
             @media print {
               body { background: white !important; padding: 0 !important; }
               .gr-print-toolbar { display: none !important; }
@@ -390,15 +393,15 @@ export default async function GRPrintPage({
                 <div style={{ fontWeight: 700, fontSize: '15px', textTransform: 'uppercase', color: '#111' }}>{slide.nhom_san_pham || 'AN TÁNG'}</div>
 
                 <div style={{ fontWeight: 800, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111', alignSelf: 'start', paddingTop: '4px' }}>Mã sản phẩm:</div>
-                <div style={{ fontWeight: 900, fontSize: '26px', textTransform: 'uppercase', color: '#111' }}>{slide.product_code}</div>
+                <div className="font-times" style={{ fontWeight: 900, fontSize: '26px', textTransform: 'uppercase', color: '#111' }}>{slide.product_code}</div>
 
                 <div style={{ fontWeight: 800, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111', alignSelf: 'start', paddingTop: '4px' }}>Tên sản phẩm:</div>
-                <div style={{ fontWeight: 900, fontSize: '22px', textTransform: 'uppercase', color: '#111', lineHeight: 1.1 }}>
+                <div className="font-times" style={{ fontWeight: 900, fontSize: '22px', textTransform: 'uppercase', color: '#111', lineHeight: 1.1 }}>
                   {slide.ten_hom?.split('-')[0]?.trim() || slide.ten_hom}
                 </div>
 
                 <div style={{ fontWeight: 800, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111', alignSelf: 'start', paddingTop: '4px' }}>Tên kỹ thuật:</div>
-                <div style={{ fontWeight: 900, fontSize: '22px', textTransform: 'uppercase', color: '#111', lineHeight: 1.1 }}>{slide.ten_hom}</div>
+                <div className="font-times" style={{ fontWeight: 900, fontSize: '22px', textTransform: 'uppercase', color: '#111', lineHeight: 1.1 }}>{slide.ten_hom}</div>
               </div>
 
               {/* Middle specs */}
