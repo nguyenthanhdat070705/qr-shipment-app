@@ -1,77 +1,79 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 
-/**
- * GET /api/inventory/stats
- * Returns aggregate inventory stats.
- * Optional query param: ?warehouse=Kho+1  (filter by warehouse name)
- */
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const warehouseFilter = searchParams.get('warehouse');
+export const dynamic = 'force-dynamic';
 
+export async function GET() {
+  try {
     const supabase = getSupabaseAdmin();
 
-    // Fetch fact_inventory + dim_kho
-    const [invRes, khoRes] = await Promise.all([
+    const [inventoryRes, homRes, khoRes] = await Promise.all([
       supabase.from('fact_inventory').select('*'),
+      supabase.from('dim_hom').select('id, ma_hom, ten_hom'),
       supabase.from('dim_kho').select('id, ma_kho, ten_kho'),
     ]);
 
-    if (invRes.error) {
-      return NextResponse.json({ error: invRes.error.message }, { status: 500 });
-    }
+    const inventory = inventoryRes.data || [];
+    const homMap = new Map((homRes.data || []).map((h: any) => [h.id, h]));
+    const khoMap = new Map((khoRes.data || []).map((k: any) => [k.id, k]));
 
-    const inventory = invRes.data || [];
-    const khoMap = new Map<string, { ma_kho: string; ten_kho: string }>();
-    for (const k of (khoRes.data || [])) {
-      khoMap.set(k.id, k);
-    }
-
-    // Group by (product, warehouse) same as inventory page
-    const groupMap = new Map<string, { qty: number; avail: number; khoId: string }>();
+    // Group by product code, track per-warehouse quantities
+    type ProductEntry = {
+      code: string;
+      name: string;
+      byWarehouse: Record<string, { qty: number; avail: number }>;
+    };
+    const productMap = new Map<string, ProductEntry>();
 
     for (const row of inventory) {
-      const homId = row['Tên hàng hóa'];
-      const khoId = row['Kho'] || 'unknown';
-      const kho = khoMap.get(khoId);
+      const hom = homMap.get(row['Tên hàng hóa']) as any;
+      const kho = khoMap.get(row['Kho']) as any;
+      if (!hom) continue;
 
-      // Apply warehouse filter if provided
-      if (warehouseFilter) {
-        const khoName = kho?.ten_kho || '';
-        if (!khoName.toLowerCase().includes(warehouseFilter.toLowerCase())) continue;
+      const code = hom.ma_hom;
+      const khoName = kho?.ten_kho || 'Không rõ';
+      const qty = Number(row['Số lượng'] || 0);
+      const avail = Number(row['Ghi chú'] || 0);
+
+      if (!productMap.has(code)) {
+        productMap.set(code, { code, name: hom.ten_hom, byWarehouse: {} });
       }
+      const entry = productMap.get(code)!;
+      if (!entry.byWarehouse[khoName]) entry.byWarehouse[khoName] = { qty: 0, avail: 0 };
+      entry.byWarehouse[khoName].qty += qty;
+      entry.byWarehouse[khoName].avail += avail;
+    }
 
-      const key = `${homId}_${khoId}`;
-      const existing = groupMap.get(key);
-      if (existing) {
-        existing.qty += Number(row['Số lượng'] || 0);
-        existing.avail += Number(row['Ghi chú'] || 0);
-      } else {
-        groupMap.set(key, {
-          qty: Number(row['Số lượng'] || 0),
-          avail: Number(row['Ghi chú'] || 0),
-          khoId,
-        });
+    const products = Array.from(productMap.values());
+
+    // Global stats
+    let totalAvailable = 0, totalOutOfStock = 0, totalExported = 0, totalQuantity = 0;
+    for (const p of products) {
+      const avail = Object.values(p.byWarehouse).reduce((s, w) => s + w.avail, 0);
+      const qty = Object.values(p.byWarehouse).reduce((s, w) => s + w.qty, 0);
+      totalQuantity += qty;
+      if (avail > 0) totalAvailable++;
+      else if (qty > 0) totalExported++;
+      else totalOutOfStock++;
+    }
+
+    // Per-warehouse breakdown
+    const khoStats: Record<string, { name: string; total: number; available: number; outOfStock: number }> = {};
+    for (const p of products) {
+      for (const [khoName, { qty, avail }] of Object.entries(p.byWarehouse)) {
+        if (!khoStats[khoName]) khoStats[khoName] = { name: khoName, total: 0, available: 0, outOfStock: 0 };
+        khoStats[khoName].total++;
+        if (avail > 0) khoStats[khoName].available++;
+        else if (qty <= 0) khoStats[khoName].outOfStock++;
       }
     }
 
-    const groups = Array.from(groupMap.values());
-    const total = groups.length;
-    const available = groups.filter(g => g.avail > 0).length;
-    const outOfStock = groups.filter(g => g.avail <= 0).length;
-    const totalQuantity = groups.reduce((acc, g) => acc + g.qty, 0);
-
     return NextResponse.json({
-      total,
-      available,
-      outOfStock,
-      totalQuantity,
-      warehouseName: warehouseFilter || 'Tất cả',
+      stats: { totalProducts: products.length, totalAvailable, totalOutOfStock, totalExported, totalQuantity },
+      byWarehouse: Object.values(khoStats).sort((a, b) => b.total - a.total),
     });
-  } catch (err) {
-    console.error('[inventory/stats]', err);
-    return NextResponse.json({ error: 'Lỗi hệ thống.' }, { status: 500 });
+  } catch (err: any) {
+    console.error('[inventory stats]', err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

@@ -63,6 +63,16 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   const warehouseRole   = userRole === 'warehouse';
 
   const allMenuItems: MenuItem[] = [
+    /* ── Admin Dashboard (chỉ hiện với admin) ── */
+    ...(userRole === 'admin' ? [{
+      icon: <BarChart3 size={18} />,
+      label: 'Admin Dashboard',
+      desc: 'Tổng quan toàn hệ thống',
+      href: '/admin',
+      color: 'text-red-400',
+      iconBg: 'bg-red-500/15',
+      section: 'Quản trị',
+    } as MenuItem] : []),
     /* ── Procurement Dashboard (ận hành) ── */
     ...(procurementRole ? [{
       icon: <BarChart3 size={18} />,
