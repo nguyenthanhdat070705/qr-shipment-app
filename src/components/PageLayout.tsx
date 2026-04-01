@@ -358,6 +358,7 @@ function TopBar({
   icon?: React.ReactNode;
 }) {
   const [userEmail, setUserEmail] = useState('');
+  const [userName, setUserName] = useState('');
   const [userRole, setUserRole] = useState<UserRole>('sales');
   const [searchVal, setSearchVal] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
@@ -368,6 +369,7 @@ function TopBar({
       if (authRaw) {
         const u = JSON.parse(authRaw);
         setUserEmail(u.email || '');
+        setUserName(u.ho_ten || '');
         setUserRole(getUserRole(u.email || ''));
       }
       const avatarRaw = localStorage.getItem('avatar_url');
@@ -439,7 +441,7 @@ function TopBar({
             )}
             <div className="hidden sm:block">
               <p className="text-xs font-bold text-gray-800 leading-none truncate max-w-[100px]">
-                {userEmail.split('@')[0] || 'User'}
+                {userName || userEmail.split('@')[0] || 'User'}
               </p>
               <div className={`inline-flex items-center gap-0.5 mt-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${roleColor.bg} ${roleColor.text}`}>
                 {roleConfig.label}

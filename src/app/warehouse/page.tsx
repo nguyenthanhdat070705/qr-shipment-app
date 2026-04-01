@@ -165,22 +165,20 @@ export default function WarehouseDashboard() {
   const fetchHistory = useCallback(async () => {
     setHistoryLoading(true);
     try {
-      const res = await fetch('/api/goods-issue/history');
+      let filter = '';
+      try {
+        const raw = localStorage.getItem('auth_user');
+        if (raw) {
+          const u = JSON.parse(raw);
+          const wf = getWarehouseFilter(u.email || '');
+          if (wf) filter = `?warehouse=${encodeURIComponent(wf)}`;
+        }
+      } catch {}
+
+      const res = await fetch(`/api/goods-issue/history${filter}`);
       const json = await res.json();
       if (res.ok) {
         let data: RecentExport[] = json.data || [];
-        // Filter by warehouse if applicable
-        try {
-          const raw = localStorage.getItem('auth_user');
-          if (raw) {
-            const u = JSON.parse(raw);
-            const filter = getWarehouseFilter(u.email || '');
-            if (filter) {
-              // history items may not have warehouse info directly; show all for now
-              // but limit to 10 most recent
-            }
-          }
-        } catch {}
         setHistory(data.slice(0, 8));
       }
     } catch {}
