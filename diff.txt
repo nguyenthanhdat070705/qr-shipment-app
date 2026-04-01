@@ -1,0 +1,52 @@
+diff --git a/src/app/api/goods-issue/scan/route.ts b/src/app/api/goods-issue/scan/route.ts
+index c835e0e..2526ede 100644
+--- a/src/app/api/goods-issue/scan/route.ts
++++ b/src/app/api/goods-issue/scan/route.ts
+@@ -1,7 +1,7 @@
+ import { NextRequest, NextResponse } from 'next/server';
+ import { getSupabaseAdmin } from '@/lib/supabase/server';
+ 
+-function getCoffinImage(productCode: string): string {
++function getCoffinImage(productCode: string): string {\n  if (productCode === '2AQ0106') return '/coffin-3.png';
+   let hash = 0;
+   for (let i = 0; i < productCode.length; i++) {
+     hash = ((hash << 5) - hash + productCode.charCodeAt(i)) | 0;
+diff --git a/src/app/inventory/[code]/page.tsx b/src/app/inventory/[code]/page.tsx
+index ccb7bcc..a85381b 100644
+--- a/src/app/inventory/[code]/page.tsx
++++ b/src/app/inventory/[code]/page.tsx
+@@ -17,7 +17,7 @@ interface PageProps {
+ 
+ /* ── helpers ───────────────────────────────────── */
+ 
+-function getCoffinImage(productCode: string): string {
++function getCoffinImage(productCode: string): string {\n  if (productCode === '2AQ0106') return '/coffin-3.png';
+   let hash = 0;
+   for (let i = 0; i < productCode.length; i++) {
+     hash = ((hash << 5) - hash + productCode.charCodeAt(i)) | 0;
+diff --git a/src/app/inventory/page.tsx b/src/app/inventory/page.tsx
+index 39b087f..1551606 100644
+--- a/src/app/inventory/page.tsx
++++ b/src/app/inventory/page.tsx
+@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
+ /**
+  * Hash-based coffin image selector
+  */
+-function getCoffinImage(productCode: string): string {
++function getCoffinImage(productCode: string): string {\n  if (productCode === '2AQ0106') return '/coffin-3.png';
+   let hash = 0;
+   for (let i = 0; i < productCode.length; i++) {
+     hash = ((hash << 5) - hash + productCode.charCodeAt(i)) | 0;
+diff --git a/src/components/ProductDetailCard.tsx b/src/components/ProductDetailCard.tsx
+index 3951a87..6ed0646 100644
+--- a/src/components/ProductDetailCard.tsx
++++ b/src/components/ProductDetailCard.tsx
+@@ -32,7 +32,7 @@ function formatTimestamp(value: unknown): string {
+  * Get a placeholder coffin image based on product code hash.
+  * This gives each product a different but consistent image.
+  */
+-function getCoffinImage(productCode: string): string {
++function getCoffinImage(productCode: string): string {\n  if (productCode === '2AQ0106') return '/coffin-3.png';
+   let hash = 0;
+   for (let i = 0; i < productCode.length; i++) {
+     hash = ((hash << 5) - hash + productCode.charCodeAt(i)) | 0;

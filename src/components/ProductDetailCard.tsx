@@ -32,8 +32,7 @@ function formatTimestamp(value: unknown): string {
  * Get a placeholder coffin image based on product code hash.
  * This gives each product a different but consistent image.
  */
-function getCoffinImage(productCode: string): string {\n  if (productCode === '2AQ0106') return '/coffin-3.png';
-  if (productCode === '2AQ0106') return '/coffin-3.png';
+function getCoffinImage(productCode: string): string {
   if (productCode === '2AQ0106') return '/coffin-3.png';
   let hash = 0;
   for (let i = 0; i < productCode.length; i++) {

@@ -151,7 +151,7 @@ export default function WarehouseDashboard() {
         setUserEmail(u.email || '');
         setUserName(u.ho_ten || u.email?.split('@')[0] || 'Thủ kho');
 
-        const filter = getWarehouseFilter(u.email || '');
+        const filter = getWarehouseFilter(u.email || '', u.ho_ten || '');
         if (filter) {
           setWarehouseLabel(filter);
         } else {
@@ -170,7 +170,7 @@ export default function WarehouseDashboard() {
         const raw = localStorage.getItem('auth_user');
         if (raw) {
           const u = JSON.parse(raw);
-          const wf = getWarehouseFilter(u.email || '');
+          const wf = getWarehouseFilter(u.email || '', u.ho_ten || '');
           if (wf) filter = `?warehouse=${encodeURIComponent(wf)}`;
         }
       } catch {}
@@ -193,7 +193,7 @@ export default function WarehouseDashboard() {
       let filter = '';
       if (raw) {
         const u = JSON.parse(raw);
-        const wf = getWarehouseFilter(u.email || '');
+        const wf = getWarehouseFilter(u.email || '', u.ho_ten || '');
         if (wf) filter = `?warehouse=${encodeURIComponent(wf)}`;
       }
       const res = await fetch(`/api/inventory/stats${filter}`);

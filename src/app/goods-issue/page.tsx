@@ -75,11 +75,7 @@ export default function GoodsIssuePage() {
     if (!code) return;
 
     try {
-<<<<<<< Updated upstream
-      // Thêm warehouse param nếu có filter kho
-=======
       // Truyền warehouse filter để API chỉ trả về hàng trong kho của user
->>>>>>> Stashed changes
       const warehouseParam = lockedWarehouse ? `&warehouse=${encodeURIComponent(lockedWarehouse)}` : '';
       const res = await fetch(`/api/goods-issue/search?q=${encodeURIComponent(code)}${warehouseParam}`);
       const result = await res.json();

@@ -171,21 +171,16 @@ export function getRoleConfig(email: string): RoleConfig {
 }
 
 /**
- * Get specific warehouse data filter for the given email.
+ * Get specific warehouse data filter for the given email or name.
  * If it returns null, the user is allowed to see data from ALL warehouses.
- *
- * Mapping (tên thực trong DB → dim_kho.ten_kho):
- *   kho1 → Kho Hàm Long
- *   kho2 → Kho Kha Vạn Cân
- *   kho3 → Kho Kinh Dương Vương
  */
-export function getWarehouseFilter(email: string): string | null {
-  if (!email) return null;
-  const lower = email.toLowerCase();
+export function getWarehouseFilter(email: string, name?: string): string | null {
+  const lowerEmail = (email || '').toLowerCase();
+  const lowerName = (name || '').toLowerCase();
 
-  if (lower.includes('kho1')) return 'Kho Hàm Long';
-  if (lower.includes('kho2')) return 'Kho Kha Vạn Cân';
-  if (lower.includes('kho3')) return 'Kho Kinh Dương Vương';
+  if (lowerEmail.includes('kho1') || lowerName.includes('kho 1')) return 'Kho Hàm Long';
+  if (lowerEmail.includes('kho2') || lowerName.includes('kho 2')) return 'Kho Kha Vạn Cân';
+  if (lowerEmail.includes('kho3') || lowerName.includes('kho 3')) return 'Kho Kinh Dương Vương';
 
   // Admin, procurement, operations, và các role khác xem tất cả kho
   return null;

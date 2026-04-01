@@ -1,0 +1,45 @@
+{
+  "KHO": [
+    {
+      "id": "5d05ea62-125f-48b8-870b-52e916d1a5f9",
+      "ma_kho": "KHO-03",
+      "ten_kho": "Kho Kinh Dương Vương",
+      "dia_chi": "34 Kinh Dương Vương, Phường Phú Lâm, TP.HCM",
+      "is_active": true,
+      "created_at": "2026-03-26T09:25:51.455945+00:00",
+      "updated_at": "2026-03-26T10:17:59.473543+00:00"
+    },
+    {
+      "id": "d8808bcf-7ba4-45cb-879f-fc409f463fdd",
+      "ma_kho": "KHO-01",
+      "ten_kho": "Kho Hàm Long",
+      "dia_chi": "Số 5, Đường 103-TML, Phường Cát Lái, TP.HCM",
+      "is_active": true,
+      "created_at": "2026-03-26T09:25:51.455945+00:00",
+      "updated_at": "2026-03-26T10:17:59.557032+00:00"
+    },
+    {
+      "id": "cc42cba4-185e-4a0c-901a-a81e7f7de374",
+      "ma_kho": "KHO-02",
+      "ten_kho": "Kho Kha Vạn Cân",
+      "dia_chi": "124 Kha Vạn Cân, phường Hiệp Bình, TP.HCM",
+      "is_active": true,
+      "created_at": "2026-03-26T09:25:51.455945+00:00",
+      "updated_at": "2026-03-26T10:17:59.62796+00:00"
+    }
+  ],
+  "ACC": [
+    {
+      "id": "2915db4c-1a29-4260-8eca-17896ed0f2ad",
+      "email": "kho1@blackstone.com.vn",
+      "ho_ten": "Kho 1",
+      "chuc_vu": "Thủ kho",
+      "phong_ban": "Kho",
+      "sdt": "",
+      "role": "warehouse",
+      "is_active": true,
+      "created_at": "2026-03-26T11:04:14.73956+00:00",
+      "updated_at": "2026-03-28T08:51:00.230375+00:00"
+    }
+  ]
+}

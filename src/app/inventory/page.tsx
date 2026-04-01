@@ -14,8 +14,7 @@ export const dynamic = 'force-dynamic';
 /**
  * Hash-based coffin image selector
  */
-function getCoffinImage(productCode: string): string {\n  if (productCode === '2AQ0106') return '/coffin-3.png';
-  if (productCode === '2AQ0106') return '/coffin-3.png';
+function getCoffinImage(productCode: string): string {
   if (productCode === '2AQ0106') return '/coffin-3.png';
   let hash = 0;
   for (let i = 0; i < productCode.length; i++) {
