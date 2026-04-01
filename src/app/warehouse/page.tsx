@@ -556,6 +556,7 @@ export default function WarehouseDashboard() {
           sub="cần bổ sung"
           icon={<AlertTriangle size={20} />}
           gradient="bg-gradient-to-br from-red-500 to-rose-600"
+          onClick={() => setOutOfStockDrawerOpen(true)}
         />
       </div>
 
