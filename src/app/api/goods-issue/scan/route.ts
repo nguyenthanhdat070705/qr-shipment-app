@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 
-function getCoffinImage(productCode: string): string {
+function getCoffinImage(productCode: string): string {\n  if (productCode === '2AQ0106') return '/coffin-3.png';
+  if (productCode === '2AQ0106') return '/coffin-3.png';
   if (productCode === '2AQ0106') return '/coffin-3.png';
   let hash = 0;
   for (let i = 0; i < productCode.length; i++) {
