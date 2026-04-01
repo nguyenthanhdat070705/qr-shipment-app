@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-  BarChart3, Package, Truck, TrendingUp, Users, ShoppingCart,
-  PackageCheck, AlertTriangle, CheckCircle, Clock, ArrowRight,
+  BarChart3, Package, Truck, Users, ShoppingCart,
+  PackageCheck, AlertTriangle, CheckCircle, ArrowRight,
   Warehouse, RefreshCw, Activity, Shield, Database,
-  ArrowUpRight, Boxes, BookOpen, MapPin,
+  ArrowUpRight, Boxes, BookOpen, MapPin, X, Search,
 } from 'lucide-react';
 import Link from 'next/link';
 import PageLayout from '@/components/PageLayout';
@@ -19,6 +19,13 @@ interface SystemStats {
   totalOutOfStock: number;
   totalExported: number;
   totalQuantity: number;
+}
+
+interface OutOfStockProduct {
+  code: string;
+  name: string;
+  warehouse: string;
+  qty: number;       // tổng số lượng (đã xuất hết)
 }
 
 interface RecentExport {
@@ -40,10 +47,127 @@ interface WarehouseStat {
 }
 
 /* ─────────────────────────────────────────────────────
-   Sub-components
+   Out-of-Stock Drawer
+───────────────────────────────────────────────────── */
+function OutOfStockDrawer({
+  open, onClose, products,
+}: {
+  open: boolean;
+  onClose: () => void;
+  products: OutOfStockProduct[];
+}) {
+  const [search, setSearch] = useState('');
+  const filtered = products.filter(p =>
+    !search.trim() ||
+    p.code.toLowerCase().includes(search.toLowerCase()) ||
+    p.name.toLowerCase().includes(search.toLowerCase()) ||
+    p.warehouse.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className={`fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={onClose}
+      />
+
+      {/* Drawer */}
+      <div className={`
+        fixed right-0 top-0 bottom-0 z-50 w-full sm:w-[480px]
+        bg-white shadow-2xl flex flex-col
+        transition-transform duration-300 ease-out
+        ${open ? 'translate-x-0' : 'translate-x-full'}
+      `}>
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-red-50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100">
+              <AlertTriangle size={20} className="text-red-600" />
+            </div>
+            <div>
+              <h2 className="text-sm font-extrabold text-gray-900">Sản phẩm hết hàng</h2>
+              <p className="text-xs text-red-600 font-semibold">{products.length} sản phẩm cần nhập thêm</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl hover:bg-red-100 text-gray-400 hover:text-gray-700 transition-colors"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="px-5 py-3 border-b border-gray-100">
+          <div className="relative">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Tìm theo mã, tên hoặc kho..."
+              className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition-all"
+            />
+          </div>
+        </div>
+
+        {/* List */}
+        <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+              <AlertTriangle size={36} className="mb-3 opacity-30" />
+              <p className="text-sm">{search ? 'Không tìm thấy sản phẩm phù hợp' : 'Không có sản phẩm hết hàng'}</p>
+            </div>
+          ) : filtered.map((p, i) => (
+            <div key={i} className="flex items-center gap-4 px-5 py-4 hover:bg-red-50/50 transition-colors">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 flex-shrink-0">
+                <Package size={17} className="text-red-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="font-mono text-xs font-bold text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded-md flex-shrink-0">
+                    {p.code}
+                  </span>
+                </div>
+                <p className="text-sm font-semibold text-gray-800 truncate">{p.name}</p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <MapPin size={10} className="text-gray-400 flex-shrink-0" />
+                  <span className="text-xs text-gray-400 truncate">{p.warehouse}</span>
+                </div>
+              </div>
+              <div className="flex-shrink-0 text-right">
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-red-100 text-red-700 text-xs font-bold">
+                  Hết hàng
+                </span>
+                {p.qty > 0 && (
+                  <p className="text-[10px] text-gray-400 mt-0.5">Tổng đã nhập: {p.qty}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-gray-100 p-4 bg-gray-50">
+          <Link
+            href="/inventory?filter=out_of_stock"
+            onClick={onClose}
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors shadow-sm"
+          >
+            Xem trong Kho hàng <ArrowRight size={14} />
+          </Link>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ─────────────────────────────────────────────────────
+   KPI Card
 ───────────────────────────────────────────────────── */
 function KpiCard({
-  label, value, sub, icon, gradient, delta,
+  label, value, sub, icon, gradient, delta, onClick, clickable,
 }: {
   label: string;
   value: string | number;
@@ -51,9 +175,16 @@ function KpiCard({
   icon: React.ReactNode;
   gradient: string;
   delta?: { text: string; positive: boolean };
+  onClick?: () => void;
+  clickable?: boolean;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-white border border-gray-100 p-5 shadow-sm hover:shadow-lg transition-all duration-300 group">
+    <div
+      onClick={onClick}
+      className={`relative overflow-hidden rounded-2xl bg-white border border-gray-100 p-5 shadow-sm transition-all duration-300 group
+        ${clickable ? 'cursor-pointer hover:shadow-lg hover:border-red-200 hover:-translate-y-0.5' : 'hover:shadow-lg'}
+      `}
+    >
       <div className={`absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-[0.07] ${gradient}`} />
       <div className="flex items-start justify-between relative z-10">
         <div className="flex-1">
@@ -66,6 +197,11 @@ function KpiCard({
             }`}>
               <ArrowUpRight size={10} className={delta.positive ? '' : 'rotate-90'} />
               {delta.text}
+            </div>
+          )}
+          {clickable && (
+            <div className="inline-flex items-center gap-1 mt-2 ml-2 text-[11px] text-red-400 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+              Xem chi tiết →
             </div>
           )}
         </div>
@@ -115,14 +251,15 @@ const STATUS_COLOR: Record<string, string> = {
 export default function AdminDashboard() {
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [warehouseStats, setWarehouseStats] = useState<WarehouseStat[]>([]);
+  const [outOfStockProducts, setOutOfStockProducts] = useState<OutOfStockProduct[]>([]);
   const [recentExports, setRecentExports] = useState<RecentExport[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch inventory stats
       const [invRes, exportRes] = await Promise.all([
         fetch('/api/inventory/stats'),
         fetch('/api/goods-issue/history'),
@@ -132,6 +269,7 @@ export default function AdminDashboard() {
         const invData = await invRes.json();
         setStats(invData.stats || null);
         setWarehouseStats(invData.byWarehouse || []);
+        setOutOfStockProducts(invData.outOfStockProducts || []);
       }
 
       if (exportRes.ok) {
@@ -146,14 +284,19 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const timeStr = lastRefresh.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
   return (
     <PageLayout title="Admin Dashboard" icon={<Shield size={15} className="text-red-500" />}>
+      {/* Out-of-stock drawer */}
+      <OutOfStockDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        products={outOfStockProducts}
+      />
+
       {/* ── Header ── */}
       <div className="mb-8 p-8 sm:p-10 rounded-[2rem] bg-gradient-to-br from-[#1B2A4A] via-[#243660] to-[#1e3a8a] text-white shadow-xl shadow-indigo-900/20 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-red-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3" />
@@ -185,7 +328,6 @@ export default function AdminDashboard() {
       </div>
 
       {loading && !stats ? (
-        /* Loading skeleton */
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="h-32 rounded-2xl bg-white border border-gray-100 animate-pulse" />
@@ -210,6 +352,7 @@ export default function AdminDashboard() {
               gradient="bg-emerald-500"
               delta={{ text: 'Sẵn sàng', positive: true }}
             />
+            {/* ── Clickable out-of-stock card ── */}
             <KpiCard
               label="Hết hàng"
               value={stats?.totalOutOfStock ?? '—'}
@@ -217,6 +360,8 @@ export default function AdminDashboard() {
               icon={<AlertTriangle size={22} />}
               gradient="bg-red-500"
               delta={{ text: 'Cần nhập', positive: false }}
+              clickable
+              onClick={() => setDrawerOpen(true)}
             />
             <KpiCard
               label="Đã xuất"

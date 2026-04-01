@@ -17,13 +17,13 @@ export async function GET() {
     const homMap = new Map((homRes.data || []).map((h: any) => [h.id, h]));
     const khoMap = new Map((khoRes.data || []).map((k: any) => [k.id, k]));
 
-    // Group by product code, track per-warehouse quantities
-    type ProductEntry = {
+    // Group by (product + warehouse)
+    type Entry = {
       code: string;
       name: string;
       byWarehouse: Record<string, { qty: number; avail: number }>;
     };
-    const productMap = new Map<string, ProductEntry>();
+    const productMap = new Map<string, Entry>();
 
     for (const row of inventory) {
       const hom = homMap.get(row['Tên hàng hóa']) as any;
@@ -48,16 +48,28 @@ export async function GET() {
 
     // Global stats
     let totalAvailable = 0, totalOutOfStock = 0, totalExported = 0, totalQuantity = 0;
+    const outOfStockProducts: { code: string; name: string; warehouse: string; qty: number }[] = [];
+
     for (const p of products) {
-      const avail = Object.values(p.byWarehouse).reduce((s, w) => s + w.avail, 0);
-      const qty = Object.values(p.byWarehouse).reduce((s, w) => s + w.qty, 0);
-      totalQuantity += qty;
-      if (avail > 0) totalAvailable++;
-      else if (qty > 0) totalExported++;
-      else totalOutOfStock++;
+      const totalAvail = Object.values(p.byWarehouse).reduce((s, w) => s + w.avail, 0);
+      const totalQty = Object.values(p.byWarehouse).reduce((s, w) => s + w.qty, 0);
+      totalQuantity += totalQty;
+      if (totalAvail > 0) {
+        totalAvailable++;
+      } else if (totalQty > 0) {
+        totalExported++;
+      } else {
+        totalOutOfStock++;
+        // Collect per-warehouse out-of-stock entries
+        for (const [khoName, { qty }] of Object.entries(p.byWarehouse)) {
+          if (qty > 0) { // có hàng nhưng avail = 0 → đã xuất hết
+            outOfStockProducts.push({ code: p.code, name: p.name, warehouse: khoName, qty });
+          }
+        }
+      }
     }
 
-    // Per-warehouse breakdown
+    // Per-warehouse stats
     const khoStats: Record<string, { name: string; total: number; available: number; outOfStock: number }> = {};
     for (const p of products) {
       for (const [khoName, { qty, avail }] of Object.entries(p.byWarehouse)) {
@@ -71,6 +83,7 @@ export async function GET() {
     return NextResponse.json({
       stats: { totalProducts: products.length, totalAvailable, totalOutOfStock, totalExported, totalQuantity },
       byWarehouse: Object.values(khoStats).sort((a, b) => b.total - a.total),
+      outOfStockProducts: outOfStockProducts.sort((a, b) => a.name.localeCompare(b.name)),
     });
   } catch (err: any) {
     console.error('[inventory stats]', err);
