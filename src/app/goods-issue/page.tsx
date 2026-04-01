@@ -75,17 +75,22 @@ export default function GoodsIssuePage() {
     if (!code) return;
 
     try {
+<<<<<<< Updated upstream
       // Thêm warehouse param nếu có filter kho
+=======
+      // Truyền warehouse filter để API chỉ trả về hàng trong kho của user
+>>>>>>> Stashed changes
       const warehouseParam = lockedWarehouse ? `&warehouse=${encodeURIComponent(lockedWarehouse)}` : '';
       const res = await fetch(`/api/goods-issue/search?q=${encodeURIComponent(code)}${warehouseParam}`);
       const result = await res.json();
 
+      // Nếu lỗi kỹ thuật 500 → báo lỗi server. Còn 404 (không tìm thấy) → im lặng
       if (!res.ok) {
-        setError(result.error || `Mã "${code}" không tồn tại hoặc đã hết hàng.`);
-        return;
+        if (res.status === 500) setError('Lỗi kết nối cơ sở dữ liệu.');
+        return; // Không lộ thông tin kho khác
       }
 
-      // If search returned dam_data with ma_dam, auto-fill
+      // Nếu có ma_dam → auto-fill
       if (result.dam_data?.ma_dam) {
         setMaDam(result.dam_data.ma_dam);
       }
@@ -107,19 +112,18 @@ export default function GoodsIssuePage() {
         data = filtered.length > 0 ? filtered : data;
       }
 
-      if (data.length === 0) {
-        setError('Không tìm thấy lô hàng khả dụng nào.');
-        return;
-      }
+      // Không có hàng trong kho mình → không hiện gì (không lộ kho khác)
+      if (data.length === 0) return;
 
       setScannedItems(data);
       setSelectedInventoryId(data[0].inventory_id);
       setSearchInput(code);
     } catch (err) {
       console.error(err);
-      setError('Lỗi kết nối cơ sở dữ liệu khi tra cứu tồn kho.');
+      setError('Lỗi kết nối server.');
     }
   };
+
 
   const selectedItem = scannedItems.find(i => i.inventory_id === selectedInventoryId);
 
@@ -220,6 +224,7 @@ export default function GoodsIssuePage() {
           </p>
         </div>
       </div>
+
 
       <div className="max-w-4xl mx-auto space-y-8 pb-12">
         {/* Success message */}

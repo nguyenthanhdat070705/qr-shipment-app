@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, Printer, Search, Filter } from 'lucide-react';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
 import DownloadAllQR from '@/components/DownloadAllQR';
+import { getWarehouseFilter } from '@/config/roles.config';
 
 interface ProductItem {
   productCode: string;
@@ -18,6 +19,22 @@ interface ProductItem {
 export default function ProductListClient({ products }: { products: ProductItem[] }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState('');
+  const [lockedWarehouse, setLockedWarehouse] = useState<string | null>(null);
+
+  // Đọc warehouse của user từ localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('auth_user');
+      if (raw) {
+        const u = JSON.parse(raw);
+        const wf = getWarehouseFilter(u.email || '');
+        if (wf) {
+          setLockedWarehouse(wf);
+          setSelectedWarehouse(wf); // Tự động chọn kho của user
+        }
+      }
+    } catch {}
+  }, []);
 
   // Tự động tạo danh sách kho có sẵn
   const warehouses = useMemo(() => {
@@ -25,18 +42,23 @@ export default function ProductListClient({ products }: { products: ProductItem[
     return list.sort();
   }, [products]);
 
-  // Lọc sản phẩm
+  // Lọc sản phẩm theo search + warehouse
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const matchSearch =
         p.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.productCode.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchWarehouse = selectedWarehouse ? p.warehouse === selectedWarehouse : true;
+      // Nếu có lockedWarehouse, chỉ hiển sản phẩm có trong kho đó
+      const effectiveWarehouse = lockedWarehouse || selectedWarehouse;
+      const matchWarehouse = effectiveWarehouse
+        ? p.warehouse.toLowerCase().includes(effectiveWarehouse.toLowerCase()) ||
+          effectiveWarehouse.toLowerCase().includes(p.warehouse.toLowerCase())
+        : true;
 
       return matchSearch && matchWarehouse;
     });
-  }, [products, searchTerm, selectedWarehouse]);
+  }, [products, searchTerm, selectedWarehouse, lockedWarehouse]);
 
   const downloadProducts = filteredProducts.map((p) => ({
     productCode: p.productCode,
@@ -133,6 +155,8 @@ export default function ProductListClient({ products }: { products: ProductItem[
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          {/* Chỉ hiện filter kho nếu user được xem tất cả kho */}
+          {!lockedWarehouse && (
           <div className="relative sm:w-64 flex-shrink-0">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Filter size={18} className="text-gray-400" />
@@ -148,6 +172,7 @@ export default function ProductListClient({ products }: { products: ProductItem[
               ))}
             </select>
           </div>
+          )}
         </div>
 
         {/* Product Grid */}
