@@ -8,11 +8,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runFullSync } from '@/lib/1office/sync';
 
 export async function GET(req: NextRequest) {
-  // Vercel Cron tự động gửi header: Authorization: Bearer <CRON_SECRET>
+  // Xác thực: chấp nhận cả header Authorization HOẶC query param ?secret=
   const authHeader = req.headers.get('authorization');
+  const querySecret = req.nextUrl.searchParams.get('secret');
   const cronSecret = process.env.CRON_SECRET;
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  const isAuthorized = !cronSecret 
+    || authHeader === `Bearer ${cronSecret}` 
+    || querySecret === cronSecret;
+
+  if (!isAuthorized) {
     console.warn('[Cron] Unauthorized access attempt');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

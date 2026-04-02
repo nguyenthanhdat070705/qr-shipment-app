@@ -38,11 +38,16 @@ function parseCSVLine(line: string) {
 }
 
 export async function GET(request: NextRequest) {
-  // Vercel Cron tự động gửi header: Authorization: Bearer <CRON_SECRET>
+  // Xác thực: chấp nhận cả header Authorization HOẶC query param ?secret=
   const authHeader = request.headers.get('authorization');
+  const querySecret = request.nextUrl.searchParams.get('secret');
   const cronSecret = process.env.CRON_SECRET;
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  const isAuthorized = !cronSecret 
+    || authHeader === `Bearer ${cronSecret}` 
+    || querySecret === cronSecret;
+
+  if (!isAuthorized) {
     console.warn('[Cron sync-dam] Unauthorized access attempt');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
