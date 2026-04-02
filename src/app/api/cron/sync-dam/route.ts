@@ -156,9 +156,17 @@ export async function GET(request: NextRequest) {
 
     for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
       const chunk = rows.slice(i, i + CHUNK_SIZE);
-      const { data, error } = await supabase.from('fact_dam').upsert(chunk, { onConflict: 'ma_dam' }).select('ma_dam');
-      if (!error) factDamCount += data?.length || chunk.length;
-      else console.error('[Cron sync-dam] fact_dam error:', error.message);
+      const { data, error, count, status, statusText } = await supabase
+        .from('fact_dam')
+        .upsert(chunk, { onConflict: 'ma_dam', ignoreDuplicates: false })
+        .select('ma_dam');
+      if (!error) {
+        factDamCount += data?.length || chunk.length;
+      } else {
+        console.error(`[Cron sync-dam] fact_dam chunk ${i} error:`, error.message, error.code, error.details);
+        // Log first row of failed chunk for debugging
+        console.error(`[Cron sync-dam] First row of failed chunk:`, JSON.stringify(chunk[0]));
+      }
     }
 
     // 3. Upsert vào dim_dam (các cột cơ bản)
