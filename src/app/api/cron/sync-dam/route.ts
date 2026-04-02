@@ -184,11 +184,15 @@ export async function GET(request: NextRequest) {
     }));
 
     let dimDamCount = 0;
+    let dimDamError = '';
     for (let i = 0; i < dimRows.length; i += CHUNK_SIZE) {
       const chunk = dimRows.slice(i, i + CHUNK_SIZE);
       const { error } = await supabase.from('dim_dam').upsert(chunk, { onConflict: 'ma_dam' });
       if (!error) dimDamCount += chunk.length;
-      else console.error('[Cron sync-dam] dim_dam error:', error.message);
+      else {
+        dimDamError = `chunk ${i}: ${error.message} (code: ${error.code}, details: ${error.details})`;
+        console.error('[Cron sync-dam] dim_dam error:', dimDamError);
+      }
     }
 
     const summary = {
@@ -198,6 +202,7 @@ export async function GET(request: NextRequest) {
       sheet_rows_parsed: rows.length,
       fact_dam_upserted: factDamCount,
       dim_dam_upserted: dimDamCount,
+      ...(dimDamError ? { dim_dam_error: dimDamError } : {}),
     };
 
     console.log('[Cron sync-dam] ✅ Sync hoàn thành:', JSON.stringify(summary));
