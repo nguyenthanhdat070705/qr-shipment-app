@@ -175,13 +175,23 @@ export async function GET(request: NextRequest) {
     }
 
     // 3. Upsert vào dim_dam (các cột cơ bản)
-    const dimRows = rows.map(r => ({
-      ma_dam:    r.ma_dam,
-      ngay:      r.ngay,
-      loai:      r.loai,
-      chi_nhanh: r.chi_nhanh,
-      nguoi_mat: r.nguoi_mat,
-    }));
+    // Kiểm tra xem cột 'ngay' đã tồn tại trong dim_dam chưa
+    const { error: ngayCheck } = await supabase.from('dim_dam').select('ngay').limit(1);
+    const hasNgayCol = !ngayCheck || ngayCheck.code !== '42703';
+    if (!hasNgayCol) {
+      console.warn('[Cron sync-dam] dim_dam chưa có cột "ngay" - bỏ qua cột này');
+    }
+
+    const dimRows = rows.map(r => {
+      const row: any = {
+        ma_dam:    r.ma_dam,
+        loai:      r.loai,
+        chi_nhanh: r.chi_nhanh,
+        nguoi_mat: r.nguoi_mat,
+      };
+      if (hasNgayCol) row.ngay = r.ngay;
+      return row;
+    });
 
     let dimDamCount = 0;
     let dimDamError = '';
