@@ -155,12 +155,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Không có dữ liệu hợp lệ.' });
     }
 
-    // 2. Upsert vào fact_dam theo batch 50 record
+    // 2. Deduplicate rows by ma_dam (giữ lại dòng cuối cùng nếu trùng)
+    const deduped = new Map<string, any>();
+    for (const r of rows) {
+      deduped.set(r.ma_dam, r);
+    }
+    const uniqueRows = Array.from(deduped.values());
+    const dupeCount = rows.length - uniqueRows.length;
+    if (dupeCount > 0) {
+      console.warn(`[Cron sync-dam] ${dupeCount} dòng trùng ma_dam đã bị loại bỏ`);
+    }
+
+    // 3. Upsert vào fact_dam theo batch 50 record
     let factDamCount = 0;
     const CHUNK_SIZE = 50;
 
-    for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
-      const chunk = rows.slice(i, i + CHUNK_SIZE);
+    for (let i = 0; i < uniqueRows.length; i += CHUNK_SIZE) {
+      const chunk = uniqueRows.slice(i, i + CHUNK_SIZE);
       const { data, error, count, status, statusText } = await supabase
         .from('fact_dam')
         .upsert(chunk, { onConflict: 'ma_dam', ignoreDuplicates: false })
@@ -182,7 +193,7 @@ export async function GET(request: NextRequest) {
       console.warn('[Cron sync-dam] dim_dam chưa có cột "ngay" - bỏ qua cột này');
     }
 
-    const dimRows = rows.map(r => {
+    const dimRows = uniqueRows.map(r => {
       const row: any = {
         ma_dam:    r.ma_dam,
         loai:      r.loai,
@@ -210,6 +221,8 @@ export async function GET(request: NextRequest) {
       success: true,
       message: 'Đồng bộ tự động thành công!',
       sheet_rows_parsed: rows.length,
+      unique_rows: uniqueRows.length,
+      duplicates_removed: dupeCount,
       fact_dam_upserted: factDamCount,
       dim_dam_upserted: dimDamCount,
       ...(dimDamError ? { dim_dam_error: dimDamError } : {}),
