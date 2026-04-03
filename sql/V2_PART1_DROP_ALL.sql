@@ -1,0 +1,61 @@
+-- ═══════════════════════════════════════════
+-- PHẦN 1/3: XÓA BẢNG CŨ + UTILITY FUNCTIONS
+-- Chạy PHẦN NÀY TRƯỚC
+-- ═══════════════════════════════════════════
+
+DROP TABLE IF EXISTS fact_xuat_hang_items CASCADE;
+DROP TABLE IF EXISTS fact_xuat_hang CASCADE;
+DROP TABLE IF EXISTS fact_nhap_hang_items CASCADE;
+DROP TABLE IF EXISTS fact_nhap_hang CASCADE;
+DROP TABLE IF EXISTS fact_don_hang_items CASCADE;
+DROP TABLE IF EXISTS fact_don_hang CASCADE;
+DROP TABLE IF EXISTS fact_inventory CASCADE;
+DROP TABLE IF EXISTS fact_dam CASCADE;
+DROP TABLE IF EXISTS delivery_order_items CASCADE;
+DROP TABLE IF EXISTS delivery_orders CASCADE;
+DROP TABLE IF EXISTS export_confirmations CASCADE;
+DROP TABLE IF EXISTS notifications CASCADE;
+DROP TABLE IF EXISTS qr_codes CASCADE;
+DROP TABLE IF EXISTS product_logs CASCADE;
+DROP TABLE IF EXISTS sync_logs CASCADE;
+DROP TABLE IF EXISTS warehouses_1office CASCADE;
+DROP TABLE IF EXISTS goods_receipts_1office CASCADE;
+DROP TABLE IF EXISTS inventory_1office CASCADE;
+DROP TABLE IF EXISTS sale_orders CASCADE;
+DROP TABLE IF EXISTS goods_receipt_items CASCADE;
+DROP TABLE IF EXISTS goods_receipts CASCADE;
+DROP TABLE IF EXISTS purchase_order_items CASCADE;
+DROP TABLE IF EXISTS purchase_orders CASCADE;
+DROP TABLE IF EXISTS suppliers CASCADE;
+DROP TABLE IF EXISTS warehouses CASCADE;
+DROP TABLE IF EXISTS products CASCADE;
+DROP TABLE IF EXISTS stocktakes CASCADE;
+DROP TABLE IF EXISTS sale_contracts CASCADE;
+DROP TABLE IF EXISTS sale_quotations CASCADE;
+DROP TABLE IF EXISTS user_profiles CASCADE;
+DROP TABLE IF EXISTS dim_hom CASCADE;
+DROP TABLE IF EXISTS dim_kho CASCADE;
+DROP TABLE IF EXISTS dim_ncc CASCADE;
+DROP TABLE IF EXISTS dim_account CASCADE;
+DROP TABLE IF EXISTS dim_dam CASCADE;
+
+CREATE OR REPLACE FUNCTION trigger_set_updated_at()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION exec_sql(sql text)
+RETURNS json LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  result json;
+BEGIN
+  EXECUTE sql;
+  result := '[]'::json;
+  RETURN result;
+EXCEPTION WHEN OTHERS THEN
+  RAISE;
+END;
+$$;
