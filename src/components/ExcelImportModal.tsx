@@ -342,7 +342,6 @@ export default function ExcelImportModal({ isOpen, onClose, onImportDone, userEm
                 </div>
                 {excelHeaders.map(header => {
                   const mapped = columnMapping[header] || '';
-                  const dbInfo = DB_COLUMNS.find(c => c.key === mapped);
                   const sample = excelData[0]?.[header];
                   return (
                     <div key={header} className={`excel-mapping-row ${mapped ? 'mapped' : 'unmapped'}`}>
@@ -375,7 +374,6 @@ export default function ExcelImportModal({ isOpen, onClose, onImportDone, userEm
                       </div>
                     </div>
                   );
-                  return null;
                 })}
               </div>
 

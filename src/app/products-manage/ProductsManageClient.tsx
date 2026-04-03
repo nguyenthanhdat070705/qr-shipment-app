@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Search, Package, Edit2, X, Check, ChevronDown, ChevronUp, Upload, Image as ImageIcon, Loader2, Trash2 } from 'lucide-react';
+import { Plus, Search, Package, Edit2, X, Check, ChevronDown, ChevronUp, Upload, Image as ImageIcon, Loader2, Trash2, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import ExcelImportModal from '@/components/ExcelImportModal';
 import './products-manage.css';
 
@@ -275,6 +276,10 @@ export default function ProductsManagePage() {
             <p className="pm-subtitle">Tạo mã & quản lý danh mục hòm ({products.length} sản phẩm)</p>
           </div>
         </div>
+        <Link href="/" className="pm-btn-back">
+          <ArrowLeft size={18} />
+          Trang chủ
+        </Link>
         <div className="pm-header-actions">
           <button className="pm-btn-upload" onClick={() => setShowExcelImport(true)}>
             <Upload size={18} />

@@ -49,6 +49,28 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
 }
+.pm-btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #64748b;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.pm-btn-back:hover {
+  background: #f8fafc;
+  border-color: #8b5cf6;
+  color: #7c3aed;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.12);
+}
 
 /* ── Message ────────────────────────────── */
 .pm-message {
