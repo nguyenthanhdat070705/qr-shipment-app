@@ -103,6 +103,16 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       iconBg: 'bg-emerald-500/15',
       section: 'Kho vận',
     } as MenuItem] : []),
+    /* ── Sales Dashboard ── */
+    ...(userRole === 'sales' ? [{
+      icon: <BarChart3 size={18} />,
+      label: 'Dashboard Bán hàng',
+      desc: 'Tổng quan bộ phận bán hàng',
+      href: '/sales',
+      color: 'text-blue-400',
+      iconBg: 'bg-blue-500/15',
+      section: 'Bán hàng',
+    } as MenuItem] : []),
     /* ── Core SCM Flow ── */
     {
       icon: <Search size={18} />,

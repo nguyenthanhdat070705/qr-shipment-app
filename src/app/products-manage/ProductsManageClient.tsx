@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Search, Package, Edit2, X, Check, ChevronDown, ChevronUp, Upload, Image as ImageIcon, Loader2, Trash2, ArrowLeft } from 'lucide-react';
+import { Plus, Search, Package, Edit2, X, Check, ChevronDown, ChevronUp, Upload, Image as ImageIcon, Loader2, Trash2, ArrowLeft, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import ExcelImportModal from '@/components/ExcelImportModal';
 import './products-manage.css';
@@ -60,6 +60,10 @@ export default function ProductsManagePage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Delete state
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     try {
@@ -537,6 +541,44 @@ export default function ProductsManagePage() {
         </div>
       )}
 
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="pm-form-overlay" onClick={() => !deleting && setDeleteTarget(null)}>
+          <div className="pm-delete-modal" onClick={e => e.stopPropagation()}>
+            <div className="pm-delete-header">
+              <AlertTriangle size={24} className="pm-delete-icon" />
+              <div>
+                <h3>Xóa sản phẩm hòm</h3>
+                <p>Hành động này không thể hoàn tác</p>
+              </div>
+            </div>
+            <div className="pm-delete-body">
+              <p>Bạn có chắc muốn xóa hòm <strong>{deleteTarget.ma_hom}</strong> — <strong>{deleteTarget.ten_hom}</strong>?</p>
+              <p className="pm-delete-warning">⚠ Sản phẩm sẽ bị xóa khỏi kho hàng và danh sách.</p>
+            </div>
+            <div className="pm-delete-actions">
+              <button className="pm-btn-cancel" onClick={() => setDeleteTarget(null)} disabled={deleting}>Hủy</button>
+              <button className="pm-btn-delete" onClick={async () => {
+                setDeleting(true);
+                try {
+                  const res = await fetch('/api/products', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: deleteTarget.id, email: userEmail }),
+                  });
+                  const json = await res.json();
+                  if (!res.ok) { setMessage({ type: 'error', text: json.error || 'Xóa thất bại' }); }
+                  else { setMessage({ type: 'success', text: `Đã xóa hòm "${deleteTarget.ma_hom}"` }); fetchProducts(); }
+                } catch { setMessage({ type: 'error', text: 'Lỗi kết nối' }); }
+                finally { setDeleting(false); setDeleteTarget(null); }
+              }} disabled={deleting}>
+                {deleting ? <><Loader2 size={14} className="pm-spin" /> Đang xóa...</> : <><Trash2 size={14} /> Xác nhận xóa</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Search */}
       <div className="pm-search-bar">
         <Search size={18} />
@@ -606,6 +648,9 @@ export default function ProductsManagePage() {
                     <td className="pm-td-actions">
                       <button className="pm-btn-icon" title="Chỉnh sửa" onClick={() => handleEdit(p)}>
                         <Edit2 size={15} />
+                      </button>
+                      <button className="pm-btn-icon pm-btn-icon-danger" title="Xóa" onClick={() => setDeleteTarget(p)}>
+                        <Trash2 size={15} />
                       </button>
                       <button
                         className="pm-btn-icon"

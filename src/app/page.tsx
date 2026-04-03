@@ -32,6 +32,10 @@ export default function HomePage() {
           router.replace('/warehouse');
           return;
         }
+        if (role === 'sales') {
+          router.replace('/sales');
+          return;
+        }
       }
     } catch { /* ignore */ }
   }, [router]);

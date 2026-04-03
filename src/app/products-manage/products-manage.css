@@ -1044,6 +1044,45 @@
   align-items: center;
 }
 
+/* ── Delete Modal ── */
+.pm-delete-modal {
+  background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  width: 100%; max-width: 440px; overflow: hidden;
+}
+.pm-delete-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 20px 24px; background: #fef2f2; border-bottom: 1px solid #fecaca;
+}
+.pm-delete-icon { color: #dc2626; flex-shrink: 0; }
+.pm-delete-header h3 { margin: 0; font-size: 1.05rem; font-weight: 700; color: #991b1b; }
+.pm-delete-header p { margin: 2px 0 0; font-size: 0.82rem; color: #b91c1c; }
+.pm-delete-body { padding: 20px 24px; font-size: 0.9rem; color: #475569; }
+.pm-delete-body strong { color: #1e293b; }
+.pm-delete-warning { color: #b91c1c; font-size: 0.82rem; margin-top: 8px; }
+.pm-delete-actions {
+  display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px; border-top: 1px solid #f1f5f9;
+}
+.pm-btn-delete {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border: none; border-radius: 10px;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: #fff; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.pm-btn-delete:hover { box-shadow: 0 4px 12px rgba(220,38,38,0.4); }
+.pm-btn-delete:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Action buttons ── */
+.pm-td-actions { display: flex; gap: 6px; }
+.pm-btn-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border: 1px solid #e2e8f0; border-radius: 8px;
+  background: #fff; color: #64748b; cursor: pointer; transition: all 0.2s;
+}
+.pm-btn-icon:hover { background: #ede9fe; color: #7c3aed; border-color: #c4b5fd; }
+.pm-btn-icon-danger:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+.pm-spin { animation: pm-spin 1s linear infinite; }
+@keyframes pm-spin { to { transform: rotate(360deg); } }
+
 /* ── Responsive ────────────────────────── */
 @media (max-width: 768px) {
   .pm-form-grid { grid-template-columns: 1fr; }
