@@ -288,7 +288,7 @@ function OutOfStockDrawer({
         </div>
         <div className="border-t border-gray-100 p-4 bg-gray-50">
           <button
-            onClick={() => { onClose(); router.push('/inventory'); }}
+            onClick={() => { onClose(); router.push('/inventory?filter=out_of_stock'); }}
             className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors shadow-sm"
           >
             Xem trong Kho hàng <ArrowRight size={14} />

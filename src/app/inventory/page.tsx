@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 import { Warehouse } from 'lucide-react';
@@ -204,7 +205,9 @@ export default async function InventoryPage() {
       </div>
 
       {/* Search + Table + Stats — Client Component (stats tính theo kho của user) */}
-      <InventorySearch items={JSON.parse(JSON.stringify(items))} showStats={true} />
+      <Suspense fallback={<div className="py-10 text-center text-gray-400">Đang tải...</div>}>
+        <InventorySearch items={JSON.parse(JSON.stringify(items))} showStats={true} />
+      </Suspense>
     </PageLayout>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Search, Package, ChevronDown, MapPin, Warehouse, CheckCircle, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { getWarehouseFilter } from '@/config/roles.config';
@@ -40,8 +41,10 @@ type FilterType = 'all' | 'available' | 'exported' | 'out_of_stock';
 type SortType = 'name' | 'price_asc' | 'price_desc' | 'code';
 
 export default function InventorySearch({ items, showStats = false }: { items: InventoryItem[]; showStats?: boolean }) {
+  const searchParams = useSearchParams();
+  const initialFilter = (searchParams.get('filter') as FilterType) || 'all';
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<FilterType>('all');
+  const [filter, setFilter] = useState<FilterType>(initialFilter);
   const [sort, setSort] = useState<SortType>('name');
   const [warehouseFilter, setWarehouseFilter] = useState<string>('all');
   const [lockedWarehouse, setLockedWarehouse] = useState<string | null>(null);
@@ -147,7 +150,7 @@ export default function InventorySearch({ items, showStats = false }: { items: I
         result = result.filter((i) => i.isExported);
         break;
       case 'out_of_stock':
-        result = result.filter((i) => i.isOutOfStock && !i.isExported);
+        result = result.filter((i) => i.isOutOfStock);
         break;
     }
 

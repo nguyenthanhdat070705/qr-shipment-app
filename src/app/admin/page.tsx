@@ -346,11 +346,11 @@ export default function AdminDashboard() {
             />
             <KpiCard
               label="Còn hàng"
-              value={stats?.totalAvailable ?? '—'}
-              sub="Khả dụng xuất kho"
+              value={stats?.totalQuantity ?? '—'}
+              sub={`${stats?.totalAvailable ?? 0} loại SP còn hàng`}
               icon={<CheckCircle size={22} />}
               gradient="bg-emerald-500"
-              delta={{ text: 'Sẵn sàng', positive: true }}
+              delta={{ text: 'Tổng hòm tồn kho', positive: true }}
             />
             {/* ── Clickable out-of-stock card ── */}
             <KpiCard
