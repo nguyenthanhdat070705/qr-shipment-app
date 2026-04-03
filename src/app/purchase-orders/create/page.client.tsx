@@ -195,6 +195,55 @@ export default function CreatePurchaseOrderPage() {
     }
   };
 
+  // ── Quick product search: search hòm → auto-select NCC ──
+  const [quickSearch, setQuickSearch] = useState('');
+  const [quickOpen, setQuickOpen] = useState(false);
+  const quickRef = useRef<HTMLDivElement>(null);
+
+  const quickFiltered = (() => {
+    const q = quickSearch.toLowerCase().trim();
+    if (!q) return homList.slice(0, 30);
+    return homList.filter(h =>
+      h.ma_hom.toLowerCase().includes(q) ||
+      h.ten_hom.toLowerCase().includes(q)
+    );
+  })();
+
+  const handleQuickSelect = (hom: DimHom) => {
+    // Auto set NCC if product has one
+    if (hom.NCC) {
+      setSupplierId(hom.NCC);
+    }
+    // Add product to items list (replace first empty row or add new)
+    const emptyIdx = items.findIndex(item => !item.product_code);
+    if (emptyIdx >= 0) {
+      const updated = [...items];
+      updated[emptyIdx] = {
+        ...updated[emptyIdx],
+        product_code: hom.ma_hom,
+        product_name: hom.ten_hom,
+        unit_price: hom.gia_von || hom.gia_ban || 0,
+      };
+      setItems(updated);
+      const searches = [...itemSearches];
+      searches[emptyIdx] = `${hom.ma_hom} — ${hom.ten_hom}`;
+      setItemSearches(searches);
+    } else {
+      setItems([...items, {
+        product_code: hom.ma_hom,
+        product_name: hom.ten_hom,
+        quantity: 1,
+        unit_price: hom.gia_von || hom.gia_ban || 0,
+        hang_ky_gui: false,
+        note: '',
+      }]);
+      setItemSearches([...itemSearches, `${hom.ma_hom} — ${hom.ten_hom}`]);
+      setOpenDropdowns([...openDropdowns, false]);
+    }
+    setQuickSearch(`${hom.ma_hom} — ${hom.ten_hom}`);
+    setQuickOpen(false);
+  };
+
   const selectedNcc = nccList.find(n => n.id === supplierId);
   const selectedKho = khoList.find(k => k.id === warehouseId);
 
@@ -212,6 +261,85 @@ export default function CreatePurchaseOrderPage() {
         <h1 className="text-2xl font-extrabold text-gray-900 mb-6">Tạo đơn mua hàng mới</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+
+          {/* ── Quick Product Search — tìm hòm trước, auto set NCC ── */}
+          <div className="rounded-2xl border-2 border-dashed border-purple-200 bg-gradient-to-r from-purple-50/50 to-indigo-50/50 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-1.5 bg-purple-100 rounded-lg">
+                <Search size={14} className="text-purple-600" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-purple-900">Tìm nhanh theo sản phẩm</h2>
+                <p className="text-[11px] text-purple-500">Chọn sản phẩm → tự động xác định nhà cung cấp</p>
+              </div>
+            </div>
+            <div ref={quickRef} className="relative">
+              <div
+                className={`flex items-center w-full px-3 py-2.5 rounded-xl border bg-white text-sm gap-2 cursor-text transition-all ${
+                  quickOpen ? 'border-purple-400 ring-2 ring-purple-100 shadow-sm' : 'border-gray-200 hover:border-purple-300'
+                }`}
+                onClick={() => setQuickOpen(true)}
+              >
+                <Search size={14} className="text-gray-400 flex-shrink-0" />
+                <input
+                  type="text"
+                  value={quickSearch}
+                  onChange={(e) => { setQuickSearch(e.target.value); setQuickOpen(true); }}
+                  onFocus={() => setQuickOpen(true)}
+                  placeholder="Gõ mã hoặc tên hòm để tìm nhanh..."
+                  className="flex-1 bg-transparent outline-none text-sm placeholder:text-gray-400 min-w-0"
+                  onClick={(e) => e.stopPropagation()}
+                />
+                {quickSearch && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setQuickSearch(''); setQuickOpen(true); }}
+                    className="flex-shrink-0 text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+
+              {quickOpen && (
+                <>
+                  <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden">
+                    <div className="max-h-64 overflow-y-auto">
+                      {quickFiltered.length === 0 ? (
+                        <div className="px-3 py-4 text-sm text-gray-400 text-center">Không tìm thấy sản phẩm</div>
+                      ) : (
+                        quickFiltered.map((h) => {
+                          const ncc = nccList.find(n => n.id === h.NCC);
+                          return (
+                            <button
+                              key={h.id}
+                              type="button"
+                              onMouseDown={(e) => { e.preventDefault(); handleQuickSelect(h); }}
+                              className="w-full text-left px-3 py-2.5 text-sm hover:bg-purple-50 transition-colors flex items-center gap-3 group border-b border-gray-50 last:border-0"
+                            >
+                              <span className="font-mono text-xs font-bold text-purple-500 bg-purple-50 px-1.5 py-0.5 rounded flex-shrink-0">{h.ma_hom}</span>
+                              <span className="flex-1 truncate">{h.ten_hom}</span>
+                              {ncc && (
+                                <span className="text-[10px] text-gray-400 flex-shrink-0 bg-gray-100 px-1.5 py-0.5 rounded">
+                                  {ncc.ten_ncc}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                    <div className="border-t border-gray-100 px-3 py-1.5 flex justify-between items-center">
+                      <span className="text-[10px] text-gray-400">{quickFiltered.length} sản phẩm</span>
+                      <button type="button" onMouseDown={(e) => { e.preventDefault(); setQuickOpen(false); }} className="text-xs text-gray-400 hover:text-gray-600">Đóng</button>
+                    </div>
+                  </div>
+                  <div className="fixed inset-0 z-40" onMouseDown={() => setQuickOpen(false)} />
+                </>
+              )}
+            </div>
+          </div>
+
           {/* General Info */}
           <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 space-y-4">
             <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400">Thông tin chung</h2>
