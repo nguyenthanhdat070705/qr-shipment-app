@@ -5,7 +5,7 @@ import {
   Menu, X, ChevronRight, Shield, LogOut,
   Truck, Warehouse, LayoutGrid, User,
   ShoppingCart, PackageCheck, TruckIcon,
-  Bell, Search, BarChart3, Settings, BookOpen, Users
+  Bell, Search, BarChart3, Settings, BookOpen, Users, Package
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -187,6 +187,15 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       iconBg: 'bg-teal-500/15',
       requiresPermission: 'canViewProducts',
     },
+    /* ── Quản lý sản phẩm (admin + procurement) ── */
+    ...((userRole === 'admin' || userRole === 'procurement') ? [{
+      icon: <Package size={18} />,
+      label: 'Quản lý sản phẩm',
+      desc: 'Tạo mã & thêm sản phẩm',
+      href: '/products-manage',
+      color: 'text-purple-400',
+      iconBg: 'bg-purple-500/15',
+    } as MenuItem] : []),
     /* ── Hệ thống ── */
     {
       icon: <User size={18} />,
