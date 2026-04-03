@@ -130,3 +130,40 @@ export async function PUT(req: NextRequest) {
 
   return NextResponse.json({ success: true, data: updated });
 }
+
+export async function DELETE(req: NextRequest) {
+  const supabase = getSupabaseAdmin();
+
+  let body: Record<string, unknown>;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
+
+  const email = (body.email as string) || '';
+  const role = getUserRole(email);
+  if (role !== 'admin' && role !== 'procurement') {
+    return NextResponse.json(
+      { error: 'Bạn không có quyền xóa NCC.' },
+      { status: 403 }
+    );
+  }
+
+  const id = body.id as string;
+  if (!id) {
+    return NextResponse.json({ error: 'ID NCC là bắt buộc.' }, { status: 400 });
+  }
+
+  const { error: deleteError } = await supabase
+    .from('dim_ncc')
+    .delete()
+    .eq('id', id);
+
+  if (deleteError) {
+    console.error('[suppliers] DELETE error:', deleteError.message);
+    return NextResponse.json({ error: deleteError.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}
