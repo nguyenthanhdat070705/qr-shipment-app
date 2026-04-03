@@ -190,8 +190,8 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
     /* ── Quản lý sản phẩm (admin + procurement) ── */
     ...((userRole === 'admin' || userRole === 'procurement') ? [{
       icon: <Package size={18} />,
-      label: 'Quản lý sản phẩm',
-      desc: 'Tạo mã & thêm sản phẩm',
+      label: 'Quản lý hòm',
+      desc: 'Tạo mã & thêm sản phẩm hòm',
       href: '/products-manage',
       color: 'text-purple-400',
       iconBg: 'bg-purple-500/15',
