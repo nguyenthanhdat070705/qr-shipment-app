@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   PackageCheck, ArrowLeft, Warehouse as WarehouseIcon,
   Calendar, User, FileText, Printer, CheckCircle2,
-  AlertTriangle
+  AlertTriangle, XCircle, Loader2, ShieldAlert
 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import StatusTimeline, { GR_STEPS } from '@/components/StatusTimeline';
@@ -18,6 +18,9 @@ export default function GoodsReceiptDetailPage({ params }: { params: Promise<{ i
   const [gr, setGr] = useState<GoodsReceipt | null>(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   const showToast = (msg: string, type: 'ok' | 'err') => {
     setToast({ msg, type });
@@ -31,6 +34,42 @@ export default function GoodsReceiptDetailPage({ params }: { params: Promise<{ i
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [resolvedParams.id]);
+
+  // Check if user is admin
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('auth_user');
+      if (raw) {
+        const u = JSON.parse(raw);
+        setIsAdmin(u.vai_tro === 'admin');
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  // Cancel GRPO handler
+  const handleCancelGR = async () => {
+    if (!gr) return;
+    setCancelling(true);
+    try {
+      const res = await fetch(`/api/goods-receipt/${gr.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'cancelled' }),
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        showToast(result.error || 'Hủy phiếu thất bại!', 'err');
+      } else {
+        showToast('Đã hủy phiếu nhập và trừ tồn kho thành công!', 'ok');
+        setGr({ ...gr, status: 'cancelled' });
+      }
+    } catch {
+      showToast('Lỗi kết nối mạng.', 'err');
+    } finally {
+      setCancelling(false);
+      setShowCancelConfirm(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -199,6 +238,91 @@ export default function GoodsReceiptDetailPage({ params }: { params: Promise<{ i
             </table>
           </div>
         </div>
+
+        {/* Admin-only: Cancel GRPO */}
+        {isAdmin && gr.status !== 'cancelled' && (
+          <div className="rounded-2xl border border-red-200 bg-red-50/50 p-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <ShieldAlert size={20} className="text-red-500" />
+                <div>
+                  <p className="text-sm font-bold text-red-800">Hủy phiếu nhập hàng</p>
+                  <p className="text-xs text-red-600">Tồn kho sẽ tự động trừ theo số lượng đã nhận. Chỉ Admin mới thấy chức năng này.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowCancelConfirm(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-xl font-bold text-sm transition-colors shadow-sm"
+              >
+                <XCircle size={16} />
+                Hủy phiếu
+              </button>
+            </div>
+          </div>
+        )}
+
+        {gr.status === 'cancelled' && (
+          <div className="rounded-2xl border border-red-300 bg-red-50 p-5">
+            <div className="flex items-center gap-3">
+              <XCircle size={20} className="text-red-500" />
+              <div>
+                <p className="text-sm font-bold text-red-800">Phiếu đã bị hủy</p>
+                <p className="text-xs text-red-600">Tồn kho đã được trừ tương ứng.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Cancel Confirmation Modal */}
+        {showCancelConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+              <div className="bg-red-50 p-5 border-b border-red-100">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-red-100 rounded-xl">
+                    <AlertTriangle size={24} className="text-red-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-red-900 text-lg">Xác nhận hủy phiếu</h3>
+                    <p className="text-sm text-red-600 mt-0.5">Hành động này không thể hoàn tác</p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-5">
+                <p className="text-sm text-gray-700">
+                  Bạn có chắc muốn hủy phiếu nhập <strong className="text-orange-600 font-mono">{gr.gr_code}</strong>?
+                </p>
+                <div className="mt-3 p-3 bg-amber-50 rounded-xl border border-amber-200">
+                  <p className="text-xs text-amber-800 font-semibold">⚠️ Lưu ý:</p>
+                  <ul className="text-xs text-amber-700 mt-1 space-y-0.5 list-disc list-inside">
+                    <li>Tồn kho sẽ tự động giảm theo SL đã nhận</li>
+                    <li>Không thể phục hồi phiếu sau khi hủy</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="flex gap-3 p-5 pt-0">
+                <button
+                  onClick={() => setShowCancelConfirm(false)}
+                  disabled={cancelling}
+                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  Quay lại
+                </button>
+                <button
+                  onClick={handleCancelGR}
+                  disabled={cancelling}
+                  className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  {cancelling ? (
+                    <><Loader2 size={16} className="animate-spin" /> Đang hủy…</>
+                  ) : (
+                    <><XCircle size={16} /> Xác nhận hủy</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </PageLayout>

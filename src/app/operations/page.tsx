@@ -14,7 +14,7 @@ import type { DeliveryOrder } from '@/types';
 
 /* ── Helpers ────────────────────────────────────────────── */
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string; dot: string }> = {
-  pending:    { label: 'Chờ xử lý',   color: 'text-amber-700',   bg: 'bg-amber-50 border-amber-200',   dot: 'bg-amber-400' },
+  pending:    { label: 'Đã hoàn thành', color: 'text-teal-700',   bg: 'bg-teal-50 border-teal-200',   dot: 'bg-teal-400' },
   assigned:   { label: 'Đã phân công', color: 'text-blue-700',    bg: 'bg-blue-50 border-blue-200',     dot: 'bg-blue-400'  },
   in_transit: { label: 'Đang giao',    color: 'text-indigo-700',  bg: 'bg-indigo-50 border-indigo-200', dot: 'bg-indigo-500 animate-pulse' },
   delivered:  { label: 'Đã giao',      color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500' },

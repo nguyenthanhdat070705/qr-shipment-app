@@ -39,6 +39,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Thiếu dữ liệu: Lô hàng tồn kho.' }, { status: 400 });
   }
 
+  // Kiểm tra mã đám đã xuất chưa (mỗi đám chỉ xuất 1 lần)
+  if (ma_dam && ma_dam.trim()) {
+    const { data: existingExport } = await supabase
+      .from('fact_xuat_hang')
+      .select('id, ma_phieu_xuat')
+      .ilike('ghi_chu', `%${ma_dam.trim()}%`)
+      .limit(1);
+
+    if (existingExport && existingExport.length > 0) {
+      return NextResponse.json(
+        { error: `Mã đám "${ma_dam.trim()}" đã được xuất hàng trước đó (Phiếu: ${existingExport[0].ma_phieu_xuat}). Mỗi đám chỉ được xuất 1 lần.` },
+        { status: 400 }
+      );
+    }
+  }
+
   try {
     // 1. Verify inventory row
     const { data: invRow, error: invErr } = await supabase

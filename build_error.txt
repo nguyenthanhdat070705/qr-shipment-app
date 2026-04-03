@@ -1,0 +1,86 @@
+
+> qr-shipment-app@0.1.0 build
+> next build
+
+â–² Next.js 16.2.1 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 5 errors:
+./src/app/inventory/page.tsx:17:55
+Expected unicode escape
+  15 | ...ed coffin image selector
+  16 | ...
+> 17 | ...tCoffinImage(productCode: string): string {\n  if (productCode === '2AQ0106') return '/...
+     |                                               ^
+  18 | ...ctCode === '2AQ0106') return '/coffin-3.png';
+  19 | ...ctCode === '2AQ0106') return '/coffin-3.png';
+  20 | ...= 0;
+
+Parsing ecmascript source code failed
+
+
+./src/components/ProductDetailCard.tsx:35:55
+Expected unicode escape
+  33 | ...es each product a different but consistent image.
+  34 | ...
+> 35 | ...tCoffinImage(productCode: string): string {\n  if (productCode === '2AQ0106') return '/...
+     |                                               ^
+  36 | ...ctCode === '2AQ0106') return '/coffin-3.png';
+  37 | ...ctCode === '2AQ0106') return '/coffin-3.png';
+  38 | ...= 0;
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/ProductDetailCard.tsx
+    ./src/app/product/[qrCode]/page.tsx
+
+
+./src/app/goods-issue/page.tsx:78:1
+Merge conflict marker encountered.
+  76 |
+  77 |     try {
+> 78 | <<<<<<< Updated upstream
+     | ^^^^^^^
+  79 |       // ThĂªm warehouse param náº¿u cĂ³ filter kho
+  80 | =======
+  81 |       // Truyá»n warehouse filter Ä‘á»ƒ API chá»‰ tráº£ vá» hĂ ng trong kho cá»§a user
+
+Parsing ecmascript source code failed
+
+
+./src/app/goods-issue/page.tsx:80:1
+Merge conflict marker encountered.
+  78 | <<<<<<< Updated upstream
+  79 |       // ThĂªm warehouse param náº¿u cĂ³ filter kho
+> 80 | =======
+     | ^^^^^^^
+  81 |       // Truyá»n warehouse filter Ä‘á»ƒ API chá»‰ tráº£ vá» hĂ ng trong kho cá»§a user
+  82 | >>>>>>> Stashed changes
+  83 |       const warehouseParam = lockedWarehouse ? `&warehouse=${encodeURIComponent(lockedWare...
+
+Parsing ecmascript source code failed
+
+
+./src/app/goods-issue/page.tsx:82:1
+Merge conflict marker encountered.
+  80 | =======
+  81 |       // Truyá»n warehouse filter Ä‘á»ƒ API chá»‰ tráº£ vá» hĂ ng trong kho cá»§a user
+> 82 | >>>>>>> Stashed changes
+     | ^^^^^^^
+  83 |       const warehouseParam = lockedWarehouse ? `&warehouse=${encodeURIComponent(lockedWare...
+  84 |       const res = await fetch(`/api/goods-issue/search?q=${encodeURIComponent(code)}${ware...
+  85 |       const result = await res.json();
+
+Parsing ecmascript source code failed
+
+
+    at <unknown> (./src/app/inventory/page.tsx:17:55)
+    at <unknown> (./src/components/ProductDetailCard.tsx:35:55)
+    at <unknown> (./src/app/goods-issue/page.tsx:78:1)
+    at <unknown> (./src/app/goods-issue/page.tsx:80:1)
+    at <unknown> (./src/app/goods-issue/page.tsx:82:1)

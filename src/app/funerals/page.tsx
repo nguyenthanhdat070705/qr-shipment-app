@@ -136,7 +136,7 @@ export default function FuneralsPage() {
                <table className="w-full text-left text-sm">
                  <thead>
                    <tr className="bg-gray-50/80 border-b border-gray-100 uppercase text-[10px] font-black tracking-widest text-gray-500 whitespace-nowrap">
-                     <th className="px-3 py-3 lg:px-4 w-[120px]">Ngày</th>
+                     <th className="px-3 py-3 lg:px-4 w-[120px]">Ngày / Tạo</th>
                      <th className="px-3 py-3 lg:px-4">Mã Đám</th>
                      <th className="px-3 py-3 lg:px-4">Người Mất</th>
                      <th className="px-3 py-3 lg:px-4">Phân Loại / CN</th>
@@ -149,7 +149,14 @@ export default function FuneralsPage() {
                    {filtered.map(row => (
                      <tr key={row.id || row.ma_dam} className="hover:bg-indigo-50/30 transition-colors group text-xs sm:text-[13px]">
                        <td className="px-3 py-3 lg:px-4 font-bold text-gray-600 whitespace-nowrap">
-                         {row.ngay ? <span className="flex items-center gap-1.5"><Calendar size={12} className="text-gray-400" /> {row.ngay}</span> : '—'}
+                         <div className="flex flex-col gap-1">
+                           {row.ngay ? <span className="flex items-center gap-1.5"><Calendar size={12} className="text-gray-400" /> {row.ngay}</span> : <span className="text-gray-300">—</span>}
+                           {row.created_at && (
+                             <span className="text-[10px] text-gray-400 font-semibold tracking-wider bg-gray-100/50 px-1.5 py-0.5 rounded w-fit">
+                               Tạo: {new Date(row.created_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                             </span>
+                           )}
+                         </div>
                        </td>
                        <td className="px-3 py-3 lg:px-4 font-bold text-indigo-700 whitespace-nowrap">{row.ma_dam}</td>
                        <td className="px-3 py-3 lg:px-4 font-semibold text-gray-900 max-w-[180px] lg:max-w-[220px]">

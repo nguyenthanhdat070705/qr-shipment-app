@@ -171,18 +171,18 @@ export function getRoleConfig(email: string): RoleConfig {
 }
 
 /**
- * Get specific warehouse data filter for the given email.
+ * Get specific warehouse data filter for the given email or name.
  * If it returns null, the user is allowed to see data from ALL warehouses.
  */
-export function getWarehouseFilter(email: string): string | null {
-  if (!email) return null;
-  const lower = email.toLowerCase();
+export function getWarehouseFilter(email: string, name?: string): string | null {
+  const lowerEmail = (email || '').toLowerCase();
+  const lowerName = (name || '').toLowerCase();
 
-  if (lower.includes('kho1')) return 'Kho 1';
-  if (lower.includes('kho2')) return 'Kho 2';
-  if (lower.includes('kho3')) return 'Kho 3';
+  if (lowerEmail.includes('kho1') || lowerName.includes('kho 1')) return 'Kho Hàm Long';
+  if (lowerEmail.includes('kho2') || lowerName.includes('kho 2')) return 'Kho Kha Vạn Cân';
+  if (lowerEmail.includes('kho3') || lowerName.includes('kho 3')) return 'Kho Kinh Dương Vương';
 
-  // Master warehouse (Tổng kho) and other roles like admin/procurement see everything
+  // Admin, procurement, operations, và các role khác xem tất cả kho
   return null;
 }
 

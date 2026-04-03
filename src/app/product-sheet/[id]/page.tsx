@@ -5,6 +5,7 @@ import Link from 'next/link';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
 import { ArrowLeft, Printer, Truck } from 'lucide-react';
 import { notFound } from 'next/navigation';
+import ProductSheetDynamic from './ProductSheetDynamic';
 
 export const metadata: Metadata = {
   title: 'Phiếu thông tin sản phẩm',
@@ -91,13 +92,83 @@ export default async function ProductSheetPage({
     .select('id, ma_kho, ten_kho')
     .order('ten_kho');
 
+  // ── Fetch Ngày nhập kho (latest goods receipt date for this product) ──
+  let ngayNhapKho: string | null = null;
+  try {
+    // 1. Find receipt items for this product code
+    const { data: receiptItems } = await supabase
+      .from('fact_nhap_hang_items')
+      .select('nhap_hang_id, created_at')
+      .eq('ma_hom', decodedId)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (receiptItems && receiptItems.length > 0) {
+      // 2. Get the receipt date from fact_nhap_hang
+      const { data: receipt } = await supabase
+        .from('fact_nhap_hang')
+        .select('ngay_nhan, created_at')
+        .eq('id', receiptItems[0].nhap_hang_id)
+        .single();
+
+      if (receipt) {
+        ngayNhapKho = receipt.ngay_nhan || receipt.created_at || null;
+      }
+    }
+  } catch (e) {
+    console.warn('[product-sheet] Could not fetch ngay_nhap_kho:', e);
+  }
+
+  // ── Fetch Ngày xuất kho (latest goods issue date for this product) ──
+  let ngayXuatKho: string | null = null;
+  try {
+    const { data: exportItems } = await supabase
+      .from('fact_xuat_hang_items')
+      .select('xuat_hang_id, created_at')
+      .eq('ma_hom', decodedId)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (exportItems && exportItems.length > 0) {
+      const { data: exportRecord } = await supabase
+        .from('fact_xuat_hang')
+        .select('created_at')
+        .eq('id', exportItems[0].xuat_hang_id)
+        .single();
+
+      if (exportRecord) {
+        ngayXuatKho = exportRecord.created_at || null;
+      }
+    }
+  } catch (e) {
+    console.warn('[product-sheet] Could not fetch ngay_xuat_kho:', e);
+  }
+
+  // ── Fetch active warehouse IDs (where this product currently has inventory) ──
+  let activeWarehouseIds: string[] = [];
+  try {
+    const { data: invRows } = await supabase
+      .from('fact_inventory')
+      .select('Kho, "Số lượng"')
+      .eq('Tên hàng hóa', hom.id);
+
+    if (invRows) {
+      activeWarehouseIds = invRows
+        .filter((r: any) => Number(r['Số lượng'] || 0) > 0)
+        .map((r: any) => r['Kho'])
+        .filter(Boolean);
+    }
+  } catch (e) {
+    console.warn('[product-sheet] Could not fetch active warehouses:', e);
+  }
+
   const { material, color, feature, size, thickness } = parseProductName(hom.ten_hom || '');
 
   return (
-    <main className="min-h-screen bg-gray-100 flex flex-col items-center py-8 print:bg-white print:py-0">
+    <main className="min-h-screen bg-gray-100 flex flex-col items-center py-6 print:bg-white print:py-0">
       
       {/* ── Toolbar for print/back ───────────────────── */}
-      <div className="w-[210mm] max-w-full flex items-center justify-between mb-6 px-4 print:hidden">
+      <div className="w-[210mm] max-w-full flex items-center justify-between mb-4 px-4 print:hidden">
         <Link
           href="/product/fullproductlist"
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-gray-900 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-200"
@@ -131,15 +202,14 @@ export default async function ProductSheetPage({
         }}
       />
 
-      {/* ── A4 Sheet Container ───────────────────────── */}
-      <div className="w-[210mm] min-h-[297mm] bg-white shadow-xl flex flex-col relative print:shadow-none print:w-full print:h-screen print:m-0 overflow-hidden box-border">
+      {/* ── Landscape Sheet Container ───────────────────────── */}
+      <div className="w-[210mm] min-h-[297mm] bg-white shadow-xl flex flex-col relative print:shadow-none print:w-full print:min-h-screen print:m-0 overflow-hidden box-border">
         
-        {/* Subtle decorative border or pure white depending on preference. Setting to pure white with padding. */}
-        <div className="flex-1 p-[10mm] border-[8px] border-gray-100/50 print:border-8 print:border-gray-50 flex flex-col">
+        <div className="flex-1 p-[8mm] border-[6px] border-gray-100/50 print:border-6 print:border-gray-50 flex flex-col">
           
-          {/* Header */}
-          <div className="flex justify-start mb-6">
-            <div className="w-48 relative h-10">
+          {/* Header row: logo left, title center */}
+          <div className="flex items-center gap-6 mb-4">
+            <div className="w-44 relative h-9 shrink-0">
               <Image 
                 src="/blackstones-logo.webp"
                 alt="Blackstones"
@@ -148,93 +218,76 @@ export default async function ProductSheetPage({
                 style={{ filter: 'invert(1) brightness(0.1)' }}
               />
             </div>
+            <h1 className="flex-1 text-center font-extrabold text-[#111] text-xl tracking-wide">
+              PHIẾU THÔNG TIN SẢN PHẨM
+            </h1>
           </div>
 
-          <h1 className="text-center font-extrabold text-[#111] text-2xl mb-8 tracking-wide mt-2">
-            PHIẾU THÔNG TIN SẢN PHẨM
-          </h1>
+          {/* ── Single-column body with absolute QR ────── */}
+          <div className="flex flex-col gap-3 relative">
 
-          {/* Grid Layout for Specifications combining Table & QR layout */}
-          <div className="flex flex-col gap-6 relative">
-            
-            {/* QR Code Block (Absolute positioning over the right side) */}
-            <div className="absolute right-0 top-[60px] bg-white p-2 z-20">
-              <div className="flex flex-col items-center bg-white">
-                <p className="text-[11px] text-gray-600 italic mb-2 print:text-[10px]">Quét QR code xuất hàng</p>
-                <QRCodeDisplay code={hom.ma_hom} size={130} />
+            {/* QR Code — absolute top-right */}
+            <div className="absolute right-0 top-[55px] bg-white p-1 z-20">
+              <div className="flex flex-col items-center">
+                <p className="text-[10px] text-gray-600 italic mb-1.5">Quét QR code xuất hàng</p>
+                <QRCodeDisplay code={hom.ma_hom} size={120} />
               </div>
             </div>
 
-            {/* Top Section */}
-            <div className="grid grid-cols-[170px_1fr] gap-y-2.5 gap-x-4 text-[15px] font-medium leading-[1.1] pr-[180px]">
-              <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px]">Phân loại:</div>
-              <div className="text-gray-900 font-bold uppercase text-[16px] leading-[1.1]">{hom.nhom_san_pham || 'AN TÁNG'}</div>
+            {/* Product identity */}
+            <div className="grid grid-cols-[140px_1fr] gap-y-2 gap-x-4 text-[14px] font-medium leading-[1.15] pr-[150px]">
+              <div className="font-bold text-gray-900 uppercase tracking-widest text-[13px]">Phân loại:</div>
+              <div className="text-gray-900 font-bold uppercase text-[15px] leading-[1.15]">{hom.nhom_san_pham || 'AN TÁNG'}</div>
 
-              <div className="font-bold text-gray-900 uppercase tracking-widest text-[16px] self-start pt-1">Mã sản phẩm:</div>
-              <div className="text-gray-900 font-black uppercase text-[26px] leading-[1.1] font-times">{hom.ma_hom}</div>
+              <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px] self-start">Mã sản phẩm:</div>
+              <div className="text-gray-900 font-black uppercase text-[22px] leading-[1.15] font-times">{hom.ma_hom}</div>
 
-              <div className="font-bold text-gray-900 uppercase tracking-widest text-[16px] self-start pt-1">Tên sản phẩm:</div>
-              <div className="text-gray-900 font-black uppercase text-[26px] leading-[1.1] font-times">{hom.ten_hom?.split('-')[0]?.trim() || hom.ten_hom}</div>
+              <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px] self-start">Tên sản phẩm:</div>
+              <div className="text-gray-900 font-black uppercase text-[20px] leading-[1.15] font-times">{hom.ten_hom?.split('-')[0]?.trim() || hom.ten_hom}</div>
 
-              <div className="font-bold text-gray-900 uppercase tracking-widest text-[16px] self-start pt-1">Tên kỹ thuật:</div>
-              <div className="text-gray-900 font-black uppercase text-[26px] leading-[1.1] font-times">{hom.ten_hom}</div>
+              <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px] self-start">Tên kỹ thuật:</div>
+              <div className="text-gray-900 font-black uppercase text-[16px] leading-[1.2] font-times">{hom.ten_hom}</div>
             </div>
 
-            {/* Middle Section */}
-            <div className="pt-4 border-t border-gray-100 mt-2">
-              <div className="grid grid-cols-[170px_1fr] gap-y-3 gap-x-4 text-[15px] font-medium pr-[180px]">
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[13px]">Kích thước kỹ thuật</div>
+            {/* Specs table — compact, 4 columns */}
+            <div className="pt-2 border-t border-gray-100">
+              <div className="grid grid-cols-[130px_1fr_130px_1fr] gap-y-1 gap-x-3 text-[11px] font-medium">
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Kích thước KT</div>
                 <div className="text-gray-800">{size}</div>
-
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[13px]">Chất liệu</div>
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Chất liệu</div>
                 <div className="text-gray-800">{material}</div>
 
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[13px]">Màu sắc</div>
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Màu sắc</div>
                 <div className="text-gray-800">{color}</div>
-
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[13px]">Đặc điểm</div>
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Đặc điểm</div>
                 <div className="text-gray-800">{feature}</div>
 
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[13px]">Nguồn gốc</div>
-                <div className="text-gray-800 border-b border-dotted border-gray-300 min-w-[200px] inline-block"></div>
-
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[13px]">Dày thành</div>
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Nguồn gốc</div>
+                <div className="text-gray-800 border-b border-dotted border-gray-300 min-w-[100px] inline-block"></div>
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Dày thành</div>
                 <div className="text-gray-800">{thickness || '......'}</div>
-
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[13px] pt-2">Các thông số khác:</div>
-                <div className="text-gray-800 border-b border-dotted border-gray-400 w-full pt-2"></div>
+              </div>
+              <div className="grid grid-cols-[130px_1fr] gap-x-3 mt-1 text-[11px] font-medium">
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Các thông số khác:</div>
+                <div className="text-gray-800 border-b border-dotted border-gray-400 w-full"></div>
               </div>
             </div>
 
-            {/* Bottom Section */}
-            <div className="grid grid-cols-[170px_1fr] gap-y-5 gap-x-4 pt-8 text-[15px] font-medium">
-              <div className="font-bold text-gray-900 uppercase tracking-widest text-[13px]">Ngày nhập kho</div>
-              <div className="border-b border-dotted border-gray-400 w-64 max-w-full"></div>
-
-              <div className="font-bold text-gray-900 uppercase tracking-widest text-[13px]">Ngày xuất kho</div>
-              <div className="border-b border-dotted border-gray-400 w-64 max-w-full"></div>
-
-              <div className="font-bold text-gray-900 uppercase tracking-widest text-[13px] pt-1">Lưu kho tại</div>
-              <div className="flex flex-col gap-2 pt-1 font-bold">
-                {warehouses?.map((k, i) => (
-                  <label key={i} className="flex items-center gap-3 cursor-pointer">
-                    <div className="w-5 h-5 border-[1.5px] border-gray-400 rounded-sm flex items-center justify-center text-transparent hover:border-gray-900 print:border-gray-600">
-                      {/* Checkbox box */}
-                    </div>
-                    <span className="text-gray-800">{k.ten_kho}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
+            {/* Dates + Warehouses */}
+            <ProductSheetDynamic
+              warehouses={warehouses || []}
+              ngayNhapKho={ngayNhapKho}
+              ngayXuatKho={ngayXuatKho}
+              activeWarehouseIds={activeWarehouseIds}
+            />
           </div>
 
-          {/* Footer (Pushed to bottom) */}
-          <div className="mt-auto pt-20 pb-4 text-center flex flex-col items-center">
-            <h3 className="font-bold text-[#111] uppercase tracking-wide text-[15px]">
+          {/* Footer */}
+          <div className="mt-auto pt-2 pb-1 text-center flex flex-col items-center border-t border-gray-100">
+            <h3 className="font-bold text-[#111] uppercase tracking-wide text-[11px]">
               CÔNG TY CỔ PHẦN DỊCH VỤ TANG LỄ BLACKSTONES
             </h3>
-            <p className="font-bold text-[14px] text-gray-800 mt-1">
+            <p className="font-bold text-[10px] text-gray-800 mt-0">
               0868 57 67 77 - www.blackstones.vn
             </p>
           </div>
@@ -251,6 +304,14 @@ export default async function ProductSheetPage({
                 background: white !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
+              * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
               }
               @page {
                 size: A4;

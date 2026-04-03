@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Search, Package, ChevronDown, MapPin } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { Search, Package, ChevronDown, MapPin, Warehouse, CheckCircle, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { getWarehouseFilter } from '@/config/roles.config';
 
@@ -39,9 +40,11 @@ interface InventoryItem {
 type FilterType = 'all' | 'available' | 'exported' | 'out_of_stock';
 type SortType = 'name' | 'price_asc' | 'price_desc' | 'code';
 
-export default function InventorySearch({ items }: { items: InventoryItem[] }) {
+export default function InventorySearch({ items, showStats = false }: { items: InventoryItem[]; showStats?: boolean }) {
+  const searchParams = useSearchParams();
+  const initialFilter = (searchParams.get('filter') as FilterType) || 'all';
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<FilterType>('all');
+  const [filter, setFilter] = useState<FilterType>(initialFilter);
   const [sort, setSort] = useState<SortType>('name');
   const [warehouseFilter, setWarehouseFilter] = useState<string>('all');
   const [lockedWarehouse, setLockedWarehouse] = useState<string | null>(null);
@@ -93,7 +96,39 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
   }, [lockedWarehouse, uniqueWarehouses]);
 
   const filtered = useMemo(() => {
-    let result = [...items];
+    let result: InventoryItem[];
+
+    // Warehouse Filter: nếu có filter kho, re-map items theo tồn kho riêng của kho đó
+    if (warehouseFilter !== 'all') {
+      const filterLower = warehouseFilter.toLowerCase().trim();
+
+      result = items
+        .map(item => {
+          // Tìm breakdown của đúng kho này
+          const breakdown = item.warehouseBreakdown?.find(w =>
+            w.name.toLowerCase().includes(filterLower) ||
+            filterLower.includes(w.name.toLowerCase())
+          );
+          if (!breakdown) return null; // Sản phẩm không có trong kho này → loại bỏ
+
+          // Override quantities với dữ liệu riêng của kho
+          const avail = breakdown.avail;
+          const qty = breakdown.qty;
+          return {
+            ...item,
+            tonKho: String(qty),
+            khaDung: String(avail),
+            warehouse: breakdown.name,
+            warehouseBreakdown: [breakdown], // Chỉ show kho này
+            available: avail > 0,
+            isOutOfStock: avail <= 0,
+            isExported: qty > 0 && avail <= 0,
+          } as InventoryItem;
+        })
+        .filter((item): item is InventoryItem => item !== null);
+    } else {
+      result = [...items];
+    }
 
     // Search
     if (query.trim()) {
@@ -106,27 +141,19 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
       );
     }
 
-    // Filter
+    // Status Filter — tính trực tiếp từ tonKho/khaDung để tránh flag stale
     switch (filter) {
       case 'available':
-        result = result.filter((i) => i.available);
+        result = result.filter((i) => Number(i.khaDung || '0') > 0);
         break;
       case 'exported':
-        result = result.filter((i) => i.isExported);
+        // Đã xuất: còn hàng trong kho (tonKho > 0) nhưng không khả dụng (khaDung = 0)
+        result = result.filter((i) => Number(i.tonKho || '0') > 0 && Number(i.khaDung || '0') <= 0);
         break;
       case 'out_of_stock':
-        result = result.filter((i) => i.isOutOfStock && !i.isExported);
+        // Hết hàng thật sự: không còn gì cả (tonKho = 0 và khaDung = 0)
+        result = result.filter((i) => Number(i.tonKho || '0') <= 0 && Number(i.khaDung || '0') <= 0);
         break;
-    }
-
-    // Warehouse Filter — so sánh case-insensitive và trim
-    if (warehouseFilter !== 'all') {
-      const filterLower = warehouseFilter.toLowerCase().trim();
-      result = result.filter(i => {
-        // Kiểm tra theo từng tên kho trong warehouse string (split bởi ', ')
-        const warehouses = i.warehouse.split(', ').map(w => w.trim().toLowerCase());
-        return warehouses.some(w => w.includes(filterLower) || filterLower.includes(w));
-      });
     }
 
     // Sort
@@ -148,8 +175,67 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
     return result;
   }, [items, query, filter, sort, warehouseFilter]);
 
+
+  // Stats tính từ dữ liệu kho — dùng bd.qty/avail trực tiếp để nhất quán
+  const warehouseStats = useMemo(() => {
+    const baseItems = warehouseFilter === 'all'
+      ? items
+      : items
+          .map(item => {
+            const filterLower = warehouseFilter.toLowerCase().trim();
+            const bd = item.warehouseBreakdown?.find(w =>
+              w.name.toLowerCase().includes(filterLower) ||
+              filterLower.includes(w.name.toLowerCase())
+            );
+            if (!bd) return null;
+            // Override tonKho/khaDung với giá trị của kho cụ thể
+            return { ...item, tonKho: String(bd.qty), khaDung: String(bd.avail) } as InventoryItem;
+          })
+          .filter((i): i is InventoryItem => i !== null);
+    return {
+      total: baseItems.length,
+      // Còn hàng: khaDung > 0
+      available: baseItems.filter(i => Number(i.khaDung || '0') > 0).length,
+      // Hết hàng thật sự: tonKho = 0 VÀ khaDung = 0
+      outOfStock: baseItems.filter(i => Number(i.tonKho || '0') <= 0 && Number(i.khaDung || '0') <= 0).length,
+      warehouseName: lockedWarehouse || 'Tất cả kho',
+    };
+  }, [items, warehouseFilter, lockedWarehouse]);
+
   return (
     <div className="space-y-4">
+      {/* Stat cards — hiển thị khi showStats=true hoặc khi có lockedWarehouse */}
+      {(showStats || lockedWarehouse) && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+          <div className="rounded-2xl bg-white border border-[#d5dbe9] p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eef1f7] flex-shrink-0">
+              <Warehouse size={22} className="text-[#1B2A4A]" />
+            </div>
+            <div>
+              <p className="text-2xl font-extrabold text-gray-900 leading-none">{warehouseStats.total}</p>
+              <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">Tổng SP</p>
+            </div>
+          </div>
+          <div className="rounded-2xl bg-white border border-emerald-200 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 flex-shrink-0">
+              <CheckCircle size={22} className="text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-extrabold text-gray-900 leading-none">{warehouseStats.available}</p>
+              <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">Còn hàng</p>
+            </div>
+          </div>
+          <div className="rounded-2xl bg-white border border-red-200 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 flex-shrink-0">
+              <AlertTriangle size={22} className="text-red-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-extrabold text-gray-900 leading-none">{warehouseStats.outOfStock}</p>
+              <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">Hết hàng</p>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Search bar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
@@ -312,17 +398,22 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
                         )}
                       </td>
                       <td className="py-3 px-3 text-center">
-                        <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full
-                          ${item.available
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : item.isExported
-                            ? 'bg-orange-100 text-orange-700'
-                            : 'bg-red-100 text-red-700'
-                          }`}
-                        >
-                          <span className={`w-1.5 h-1.5 rounded-full ${item.available ? 'bg-emerald-500' : item.isExported ? 'bg-orange-500' : 'bg-red-500'}`} />
-                          {item.available ? 'Còn hàng' : item.isExported ? 'Đã xuất' : 'Hết hàng'}
-                        </span>
+                        {(() => {
+                          const _avail = Number(item.khaDung || '0');
+                          const _qty   = Number(item.tonKho   || '0');
+                          const _ok  = _avail > 0;
+                          const _exp = !_ok && _qty > 0;
+                          return (
+                            <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full
+                              ${_ok  ? 'bg-emerald-100 text-emerald-700'
+                              : _exp ? 'bg-orange-100 text-orange-700'
+                              :        'bg-red-100 text-red-700'}`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${_ok ? 'bg-emerald-500' : _exp ? 'bg-orange-500' : 'bg-red-500'}`} />
+                              {_ok ? 'Còn hàng' : _exp ? 'Đã xuất' : 'Hết hàng'}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="py-3 px-3">
                         <Link
@@ -362,11 +453,19 @@ export default function InventorySearch({ items }: { items: InventoryItem[] }) {
                           {item.code}
                         </span>
                         <span className="text-xs font-bold text-gray-800">Tồn: {item.khaDung || '0'}</span>
-                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full
-                          ${item.available ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}
-                        >
-                          {item.available ? 'Còn hàng' : 'Hết hàng'}
-                        </span>
+                        {(() => {
+                          const _avail = Number(item.khaDung || '0');
+                          const _qty   = Number(item.tonKho   || '0');
+                          const _ok  = _avail > 0;
+                          const _exp = !_ok && _qty > 0;
+                          return (
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full
+                              ${_ok ? 'bg-emerald-100 text-emerald-700' : _exp ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}
+                            >
+                              {_ok ? 'Còn hàng' : _exp ? 'Đã xuất' : 'Hết hàng'}
+                            </span>
+                          );
+                        })()}
                       </div>
                     </div>
                   </Link>

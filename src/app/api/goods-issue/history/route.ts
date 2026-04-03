@@ -1,12 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const supabase = getSupabaseAdmin();
 
   try {
+    const { searchParams } = new URL(request.url);
+    const warehouseFilter = searchParams.get('warehouse');
+
     // Fetch recent goods issue records with items
-    const { data: issues, error } = await supabase
+    let query = supabase
       .from('fact_xuat_hang')
       .select(`
         id,
@@ -15,6 +18,7 @@ export async function GET() {
         ghi_chu,
         trang_thai,
         created_at,
+        dim_kho!inner ( ten_kho ),
         fact_xuat_hang_items (
           ma_hom,
           ten_hom,
@@ -23,7 +27,14 @@ export async function GET() {
         )
       `)
       .order('created_at', { ascending: false })
-      .limit(20);
+      .limit(60);
+
+    // Apply warehouse filtering if active
+    if (warehouseFilter && warehouseFilter !== 'Tổng kho') {
+      query = query.ilike('dim_kho.ten_kho', `%${warehouseFilter}%`);
+    }
+
+    const { data: issues, error } = await query;
 
     if (error) throw error;
 

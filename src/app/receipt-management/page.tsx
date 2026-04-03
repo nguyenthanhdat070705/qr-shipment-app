@@ -41,7 +41,7 @@ export default function ReceiptManagementPage() {
   }, []);
 
   const total = receipts.length;
-  const pendingCount = receipts.filter((r) => r.status === 'pending' || r.status === 'inspecting').length;
+  const pendingCount = receipts.filter((r) => (r.status as string) === 'pending' || (r.status as string) === 'inspecting').length;
   const completedCount = receipts.filter((r) => r.status === 'completed').length;
 
   const columns = [

@@ -13,6 +13,7 @@ import { getSupabaseAdmin } from '@/lib/supabase/server';
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get('q');
+  const warehouseFilter = searchParams.get('warehouse'); // Tên kho thực trong DB (ví dụ: 'Kho Hàm Long')
 
   if (!q) {
     return NextResponse.json({ error: 'Thiếu tham số tìm kiếm' }, { status: 400 });
@@ -95,6 +96,17 @@ export async function GET(req: NextRequest) {
 
     const khoMap = new Map<string, any>();
     (khoData || []).forEach((k: any) => khoMap.set(k.id, k));
+
+    // 3b. Nếu có warehouse filter, chỉ giữ lại hàng thuộc kho đó
+    if (warehouseFilter && matchingRows.length > 0) {
+      const filterLower = warehouseFilter.toLowerCase().trim();
+      matchingRows = matchingRows.filter((row: any) => {
+        const kho = khoMap.get(row['Kho']);
+        if (!kho) return false;
+        const khoName = (kho.ten_kho || '').toLowerCase();
+        return khoName.includes(filterLower) || filterLower.includes(khoName);
+      });
+    }
 
     // 4. Resolve dim_hom for each row (use cached targetHom if available)
     const homIds = [...new Set(matchingRows.map((r: any) => r['Tên hàng hóa']).filter(Boolean))];

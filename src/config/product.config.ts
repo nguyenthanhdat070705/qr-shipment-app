@@ -74,7 +74,7 @@ export const PRODUCT_CONFIG = {
     exported:   'Đã xuất',
     delivered:  'Đã giao',
     returned:   'Đã trả lại',
-    pending:    'Chờ xử lý',
+    pending:    'Đã hoàn thành',
     cancelled:  'Đã hủy',
     processing: 'Đang xử lý',
     available:  'Sẵn sàng xuất',

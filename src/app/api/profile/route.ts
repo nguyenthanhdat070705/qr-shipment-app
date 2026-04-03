@@ -50,7 +50,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     };
   }
 
-  // Get export history
+  // Get export history from export_confirmations
   let exportHistory: Record<string, unknown>[] = [];
   const { data: exports, error: exportsError } = await supabase
     .from('export_confirmations')
@@ -59,7 +59,74 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     .order('created_at', { ascending: false });
 
   if (!exportsError && exports) {
-    exportHistory = exports as Record<string, unknown>[];
+    exportHistory = exports.map((ex: any) => ({ ...ex, source: 'qr_scan' }));
+  }
+
+  // Get export history from fact_xuat_hang based on warehouse or user
+  if (profile) {
+    let factXuatHang: any = null;
+    const tenKho = profile.ho_ten as string;
+
+    // Map ho_ten directly to warehouse ten_kho if possible
+    if (tenKho && tenKho.toLowerCase().includes('kho')) {
+      const { data: matchedKho } = await supabase
+        .from('dim_kho')
+        .select('id')
+        .ilike('ten_kho', `%${tenKho}%`)
+        .maybeSingle();
+
+      if (matchedKho) {
+        const { data: fxh } = await supabase
+          .from('fact_xuat_hang')
+          .select('id, ma_phieu_xuat, ghi_chu, created_at, fact_xuat_hang_items ( ma_hom, ten_hom, so_luong )')
+          .eq('kho_id', matchedKho.id)
+          .order('created_at', { ascending: false });
+        factXuatHang = fxh;
+      }
+    }
+
+    // Fallback to nguoi_xuat_id if no matching dim_kho
+    if (!factXuatHang && profile.id) {
+      const { data: fxh } = await supabase
+        .from('fact_xuat_hang')
+        .select('id, ma_phieu_xuat, ghi_chu, created_at, fact_xuat_hang_items ( ma_hom, ten_hom, so_luong )')
+        .eq('nguoi_xuat_id', profile.id)
+        .order('created_at', { ascending: false });
+      factXuatHang = fxh;
+    }
+
+    if (factXuatHang) {
+      factXuatHang.forEach((doRow: any) => {
+        let maSP = doRow.ma_phieu_xuat;
+        let itemsDesc = '';
+        if (doRow.fact_xuat_hang_items && doRow.fact_xuat_hang_items.length > 0) {
+          const items: any[] = doRow.fact_xuat_hang_items;
+          if (items.length === 1) {
+            maSP = items[0].ma_hom;
+          } else {
+            maSP = `Nhiều SP (${items.length})`;
+            itemsDesc = items.map((i: any) => i.ma_hom).join(', ');
+          }
+        }
+
+        const dateObj = new Date(doRow.created_at || new Date());
+        exportHistory.push({
+          stt: Math.floor(Math.random() * 1000000), // Random ID since we merge
+          ma_san_pham: maSP,
+          ho_ten: profile?.ho_ten || 'N/A',
+          email: profile?.email || email,
+          chuc_vu: profile?.chuc_vu || '',
+          ghi_chu: `Phiếu: ${doRow.ma_phieu_xuat}` + (doRow.ghi_chu ? ` - ${doRow.ghi_chu}` : '') + (itemsDesc ? ` (${itemsDesc})` : ''),
+          ngay_xuat: dateObj.toISOString().split('T')[0],
+          thoi_gian_xuat: dateObj.toTimeString().slice(0, 8),
+          created_at: doRow.created_at,
+          source: 'fact_xuat_hang'
+        });
+      });
+    }
+
+    // Sort by created_at descending
+    exportHistory.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }
 
   return NextResponse.json({

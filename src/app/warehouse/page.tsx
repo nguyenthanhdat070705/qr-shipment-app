@@ -7,7 +7,7 @@ import {
   ScanLine, RefreshCw, ArrowRight,
   ChevronRight, Package, CheckCircle2, AlertTriangle,
   Clock, User, MapPin, BarChart3, QrCode, TrendingUp,
-  Boxes, ArrowUpRight,
+  Boxes, ArrowUpRight, X,
 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import { getWarehouseFilter } from '@/config/roles.config';
@@ -19,7 +19,15 @@ interface InventoryStat {
   total: number;
   available: number;
   outOfStock: number;
+  totalQuantity: number;
   warehouseName: string;
+}
+
+interface OutOfStockProduct {
+  code: string;
+  name: string;
+  warehouse: string;
+  qty: number;
 }
 
 interface RecentExport {
@@ -33,11 +41,24 @@ interface RecentExport {
   fact_xuat_hang_items?: { ma_hom: string; ten_hom: string }[];
 }
 
+interface PurchaseOrder {
+  id: string;
+  po_code: string;
+  status: string;
+  note: string | null;
+  created_by: string | null;
+  expected_date: string | null;
+  created_at: string;
+  total_amount: number;
+  supplier: { code: string; name: string } | null;
+  warehouse: { code: string; name: string } | null;
+}
+
 /* ─────────────────────────────────────
    Sub-components
 ───────────────────────────────────── */
 function StatCard({
-  label, value, sub, icon, gradient, badge,
+  label, value, sub, icon, gradient, badge, onClick,
 }: {
   label: string;
   value: string | number;
@@ -45,9 +66,15 @@ function StatCard({
   icon: React.ReactNode;
   gradient: string;
   badge?: { text: string; color: string };
+  onClick?: () => void;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-white border border-gray-100 p-5 shadow-sm hover:shadow-lg transition-all duration-300">
+    <div
+      onClick={onClick}
+      className={`relative overflow-hidden rounded-2xl bg-white border border-gray-100 p-5 shadow-sm transition-all duration-300 group
+        ${onClick ? 'cursor-pointer hover:shadow-xl hover:-translate-y-0.5 hover:border-gray-200' : 'hover:shadow-lg'}
+      `}
+    >
       <div className={`absolute top-0 right-0 w-32 h-32 rounded-full opacity-[0.06] -translate-y-8 translate-x-8 ${gradient}`} />
       <div className="flex items-start justify-between">
         <div className="flex-1">
@@ -60,12 +87,215 @@ function StatCard({
               {badge.text}
             </div>
           )}
+          {onClick && (
+            <p className="text-[11px] text-gray-300 group-hover:text-gray-500 mt-1.5 transition-colors">Nhấn để xem chi tiết →</p>
+          )}
         </div>
-        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${gradient} text-white shadow-lg flex-shrink-0`}>
+        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${gradient} text-white shadow-lg flex-shrink-0 group-hover:scale-110 transition-transform`}>
           {icon}
         </div>
       </div>
     </div>
+  );
+}
+
+/* ─────────────────────────────────────
+   Drawer: Đơn nhập hàng cần xử lý (Purchase Orders)
+───────────────────────────────────── */
+function PendingOrdersDrawer({
+  open, onClose, orders,
+}: {
+  open: boolean; onClose: () => void; orders: PurchaseOrder[];
+}) {
+  const router = useRouter();
+  const [search, setSearch] = useState('');
+  const filtered = orders.filter(o =>
+    !search.trim() ||
+    o.po_code.toLowerCase().includes(search.toLowerCase()) ||
+    (o.supplier?.name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (o.note || '').toLowerCase().includes(search.toLowerCase())
+  );
+
+  const STATUS_LABEL: Record<string, string> = {
+    confirmed: 'Chưa nhập',
+    partial: 'Nhập một phần',
+    received: 'Đã nhập đủ',
+    cancelled: 'Đã hủy',
+  };
+  const STATUS_COLOR: Record<string, string> = {
+    confirmed: 'bg-amber-50 text-amber-700 border-amber-200',
+    partial: 'bg-blue-50 text-blue-700 border-blue-200',
+    received: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    cancelled: 'bg-red-50 text-red-700 border-red-200',
+  };
+
+  return (
+    <>
+      <div
+        className={`fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={onClose}
+      />
+      <div className={`fixed right-0 top-0 bottom-0 z-50 w-full sm:w-[520px] bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}>
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-amber-50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100">
+              <Clock size={20} className="text-amber-600" />
+            </div>
+            <div>
+              <h2 className="text-sm font-extrabold text-gray-900">Đơn nhập hàng cần xử lý</h2>
+              <p className="text-xs text-amber-600 font-semibold">{orders.length} đơn chưa nhập đủ</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-amber-100 text-gray-400 hover:text-gray-700 transition-colors"><X size={18} /></button>
+        </div>
+        {/* Search */}
+        <div className="px-5 py-3 border-b border-gray-100">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Tìm theo mã PO, nhà cung cấp..."
+              className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400 transition-all" />
+          </div>
+        </div>
+        {/* List */}
+        <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+              <Clock size={36} className="mb-3 opacity-30" />
+              <p className="text-sm">{search ? 'Không tìm thấy đơn phù hợp' : 'Không có đơn nhập cần xử lý'}</p>
+            </div>
+          ) : filtered.map((po) => {
+            const date = new Date(po.created_at);
+            return (
+              <div
+                key={po.id}
+                onClick={() => { onClose(); router.push('/purchase-orders/' + po.id); }}
+                className="flex items-start gap-4 px-5 py-4 hover:bg-amber-50/60 cursor-pointer transition-colors group"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 flex-shrink-0 mt-0.5">
+                  <Package size={17} className="text-amber-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="font-mono text-xs font-bold text-amber-700 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-md">{po.po_code}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${STATUS_COLOR[po.status] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                      {STATUS_LABEL[po.status] || po.status}
+                    </span>
+                  </div>
+                  {po.supplier && (
+                    <p className="text-sm font-semibold text-gray-800 truncate">
+                      {po.supplier.name}
+                      <span className="font-mono text-xs text-gray-400 ml-1">({po.supplier.code})</span>
+                    </p>
+                  )}
+                  {po.expected_date && (
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Dự kiến nhập: {new Date(po.expected_date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                    </p>
+                  )}
+                  {po.total_amount > 0 && (
+                    <p className="text-xs font-semibold text-emerald-600 mt-0.5">{po.total_amount.toLocaleString('vi-VN')}₫</p>
+                  )}
+                </div>
+                <div className="flex-shrink-0 text-right">
+                  <p className="text-xs font-bold text-gray-700">{date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}</p>
+                  <ArrowRight size={13} className="text-gray-200 group-hover:text-amber-500 transition-colors mt-2 ml-auto" />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="border-t border-gray-100 p-4 bg-gray-50">
+          <button
+            onClick={() => { onClose(); router.push('/purchase-orders'); }}
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-600 transition-colors shadow-sm"
+          >
+            Xem tất cả đơn đặt hàng <ArrowRight size={14} />
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ─────────────────────────────────────
+   Drawer: Hết hàng
+───────────────────────────────────── */
+function OutOfStockDrawer({
+  open, onClose, products, warehouseLabel,
+}: {
+  open: boolean; onClose: () => void; products: OutOfStockProduct[]; warehouseLabel: string;
+}) {
+  const router = useRouter();
+  const [search, setSearch] = useState('');
+  const filtered = products.filter(p =>
+    !search.trim() ||
+    p.code.toLowerCase().includes(search.toLowerCase()) ||
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <>
+      <div
+        className={`fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={onClose}
+      />
+      <div className={`fixed right-0 top-0 bottom-0 z-50 w-full sm:w-[480px] bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}>
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-red-50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100">
+              <AlertTriangle size={20} className="text-red-600" />
+            </div>
+            <div>
+              <h2 className="text-sm font-extrabold text-gray-900">Loại hòm hết hàng</h2>
+              <p className="text-xs text-red-600 font-semibold">{products.length} loại cần nhập thêm · {warehouseLabel}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-red-100 text-gray-400 hover:text-gray-700 transition-colors"><X size={18} /></button>
+        </div>
+        {/* Search */}
+        <div className="px-5 py-3 border-b border-gray-100">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Tìm theo mã hòm hoặc tên..."
+              className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition-all" />
+          </div>
+        </div>
+        {/* List */}
+        <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+              <AlertTriangle size={36} className="mb-3 opacity-30" />
+              <p className="text-sm">{search ? 'Không tìm thấy' : 'Không có loại hòm nào hết hàng'}</p>
+            </div>
+          ) : filtered.map((p, i) => (
+            <div key={i} className="flex items-center gap-4 px-5 py-4 hover:bg-red-50/50 transition-colors">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 flex-shrink-0">
+                <Package size={17} className="text-red-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="mb-0.5">
+                  <span className="font-mono text-xs font-bold text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded-md">{p.code}</span>
+                </div>
+                <p className="text-sm font-semibold text-gray-800 truncate">{p.name}</p>
+              </div>
+              <span className="flex-shrink-0 px-2 py-1 rounded-lg bg-red-100 text-red-700 text-xs font-bold">Hết hàng</span>
+            </div>
+          ))}
+        </div>
+        <div className="border-t border-gray-100 p-4 bg-gray-50">
+          <button
+            onClick={() => { onClose(); router.push('/inventory?filter=out_of_stock'); }}
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors shadow-sm"
+          >
+            Xem trong Kho hàng <ArrowRight size={14} />
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -99,14 +329,14 @@ function QuickAction({
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  pending:    'bg-amber-100 text-amber-700 border-amber-200',
+  pending:    'bg-teal-100 text-teal-700 border-teal-200',
   assigned:   'bg-blue-100 text-blue-700 border-blue-200',
   in_transit: 'bg-indigo-100 text-indigo-700 border-indigo-200',
   delivered:  'bg-emerald-100 text-emerald-700 border-emerald-200',
   cancelled:  'bg-red-100 text-red-700 border-red-200',
 };
 const STATUS_LABEL: Record<string, string> = {
-  pending:    'Chờ xử lý',
+  pending:    'Đã hoàn thành',
   assigned:   'Đã phân công',
   in_transit: 'Đang giao',
   delivered:  'Đã giao',
@@ -124,9 +354,13 @@ export default function WarehouseDashboard() {
   const [nowStr, setNowStr] = useState('');
   const [history, setHistory] = useState<RecentExport[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
-  const [stats, setStats] = useState<InventoryStat>({ total: 0, available: 0, outOfStock: 0, warehouseName: '' });
+  const [stats, setStats] = useState<InventoryStat>({ total: 0, available: 0, outOfStock: 0, totalQuantity: 0, warehouseName: '' });
+  const [outOfStockProducts, setOutOfStockProducts] = useState<OutOfStockProduct[]>([]);
+  const [pendingPOs, setPendingPOs] = useState<PurchaseOrder[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [pendingDrawerOpen, setPendingDrawerOpen] = useState(false);
+  const [outOfStockDrawerOpen, setOutOfStockDrawerOpen] = useState(false);
 
   /* Live clock */
   useEffect(() => {
@@ -151,7 +385,7 @@ export default function WarehouseDashboard() {
         setUserEmail(u.email || '');
         setUserName(u.ho_ten || u.email?.split('@')[0] || 'Thủ kho');
 
-        const filter = getWarehouseFilter(u.email || '');
+        const filter = getWarehouseFilter(u.email || '', u.ho_ten || '');
         if (filter) {
           setWarehouseLabel(filter);
         } else {
@@ -165,26 +399,37 @@ export default function WarehouseDashboard() {
   const fetchHistory = useCallback(async () => {
     setHistoryLoading(true);
     try {
-      const res = await fetch('/api/goods-issue/history');
+      let filter = '';
+      try {
+        const raw = localStorage.getItem('auth_user');
+        if (raw) {
+          const u = JSON.parse(raw);
+          const wf = getWarehouseFilter(u.email || '', u.ho_ten || '');
+          if (wf) filter = `?warehouse=${encodeURIComponent(wf)}`;
+        }
+      } catch {}
+
+      const res = await fetch(`/api/goods-issue/history${filter}`);
       const json = await res.json();
       if (res.ok) {
         let data: RecentExport[] = json.data || [];
-        // Filter by warehouse if applicable
-        try {
-          const raw = localStorage.getItem('auth_user');
-          if (raw) {
-            const u = JSON.parse(raw);
-            const filter = getWarehouseFilter(u.email || '');
-            if (filter) {
-              // history items may not have warehouse info directly; show all for now
-              // but limit to 10 most recent
-            }
-          }
-        } catch {}
         setHistory(data.slice(0, 8));
       }
     } catch {}
     finally { setHistoryLoading(false); }
+  }, []);
+
+  /* Fetch pending Purchase Orders */
+  const fetchPendingPOs = useCallback(async () => {
+    try {
+      const res = await fetch('/api/purchase-orders');
+      if (res.ok) {
+        const json = await res.json();
+        const all: PurchaseOrder[] = json.data || [];
+        // Chỉ lấy đơn chưa nhập đủ (confirmed = chưa nhập, partial = nhập một phần)
+        setPendingPOs(all.filter(po => po.status === 'confirmed' || po.status === 'partial'));
+      }
+    } catch {}
   }, []);
 
   /* Fetch inventory stats */
@@ -195,18 +440,33 @@ export default function WarehouseDashboard() {
       let filter = '';
       if (raw) {
         const u = JSON.parse(raw);
-        const wf = getWarehouseFilter(u.email || '');
+        const wf = getWarehouseFilter(u.email || '', u.ho_ten || '');
         if (wf) filter = `?warehouse=${encodeURIComponent(wf)}`;
       }
       const res = await fetch(`/api/inventory/stats${filter}`);
       if (res.ok) {
         const json = await res.json();
-        setStats(json);
+        // API trả về flat object khi có ?warehouse=, còn không thì {stats:{...}}
+        if (json.total !== undefined) {
+          // Chế độ warehouse: flat format
+          setStats(json);
+          setOutOfStockProducts(json.outOfStockProducts || []);
+        } else if (json.stats) {
+          // Chế độ admin
+          setStats({
+            total: json.stats.totalProducts ?? 0,
+            available: json.stats.totalAvailable ?? 0,
+            outOfStock: json.stats.totalOutOfStock ?? 0,
+            totalQuantity: json.stats.totalQuantity ?? 0,
+            warehouseName: warehouseLabel,
+          });
+          setOutOfStockProducts(json.outOfStockProducts || []);
+        }
       } else {
-        setStats({ total: 0, available: 0, outOfStock: 0, warehouseName: warehouseLabel });
+        setStats({ total: 0, available: 0, outOfStock: 0, totalQuantity: 0, warehouseName: warehouseLabel });
       }
     } catch {
-      setStats({ total: 0, available: 0, outOfStock: 0, warehouseName: warehouseLabel });
+      setStats({ total: 0, available: 0, outOfStock: 0, totalQuantity: 0, warehouseName: warehouseLabel });
     } finally {
       setStatsLoading(false);
       setLastRefresh(new Date());
@@ -216,9 +476,10 @@ export default function WarehouseDashboard() {
   useEffect(() => {
     fetchHistory();
     fetchStats();
-  }, [fetchHistory, fetchStats]);
+    fetchPendingPOs();
+  }, [fetchHistory, fetchStats, fetchPendingPOs]);
 
-  const pendingCount = history.filter(h => h.trang_thai === 'pending').length;
+  const pendingCount = pendingPOs.length;
   const todayCount = history.filter(h => {
     const d = new Date(h.created_at);
     const now = new Date();
@@ -228,10 +489,24 @@ export default function WarehouseDashboard() {
   const handleRefresh = () => {
     fetchHistory();
     fetchStats();
+    fetchPendingPOs();
   };
 
   return (
     <PageLayout title={`Kho — ${warehouseLabel}`} icon={<Warehouse size={16} className="text-emerald-500" />}>
+
+      {/* ── Drawers ──────────────────────────────── */}
+      <PendingOrdersDrawer
+        open={pendingDrawerOpen}
+        onClose={() => setPendingDrawerOpen(false)}
+        orders={pendingPOs}
+      />
+      <OutOfStockDrawer
+        open={outOfStockDrawerOpen}
+        onClose={() => setOutOfStockDrawerOpen(false)}
+        products={outOfStockProducts}
+        warehouseLabel={warehouseLabel}
+      />
 
       {/* ── Welcome Banner ─────────────────────────────── */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f2417] via-emerald-900 to-[#1a3a28] p-6 mb-6 shadow-xl">
@@ -260,9 +535,9 @@ export default function WarehouseDashboard() {
                 {todayCount} xuất hôm nay
               </div>
               {pendingCount > 0 && (
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-200 text-xs font-semibold">
-                  <Clock size={12} />
-                  {pendingCount} chờ xử lý
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/20 border border-teal-400/30 text-teal-200 text-xs font-semibold">
+                  <CheckCircle2 size={12} />
+                  {pendingCount} đã hoàn thành
                 </div>
               )}
             </div>
@@ -285,13 +560,14 @@ export default function WarehouseDashboard() {
       </div>
 
       {/* ── KPI Cards ────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <StatCard
           label="Xuất hôm nay"
           value={todayCount}
           sub="phiếu xuất kho"
           icon={<Truck size={20} />}
           gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
+          onClick={() => router.push('/goods-issue')}
         />
         <StatCard
           label="Chờ xử lý"
@@ -299,13 +575,21 @@ export default function WarehouseDashboard() {
           sub="phiếu cần xử lý"
           icon={<Clock size={20} />}
           gradient="bg-gradient-to-br from-amber-400 to-orange-500"
+          onClick={() => setPendingDrawerOpen(true)}
         />
         <StatCard
-          label="Tổng SP trong kho"
+          label="Tổng loại hòm"
           value={statsLoading ? '...' : stats.total}
-          sub={`${stats.available} còn hàng`}
+          sub={`${stats.available} loại còn hàng`}
           icon={<Boxes size={20} />}
           gradient="bg-gradient-to-br from-sky-500 to-blue-600"
+        />
+        <StatCard
+          label="Tổng lượng tồn"
+          value={statsLoading ? '...' : stats.totalQuantity}
+          sub="sản phẩm thực tế"
+          icon={<PackageCheck size={20} />}
+          gradient="bg-gradient-to-br from-indigo-500 to-violet-600"
         />
         <StatCard
           label="Hết hàng"
@@ -313,6 +597,7 @@ export default function WarehouseDashboard() {
           sub="cần bổ sung"
           icon={<AlertTriangle size={20} />}
           gradient="bg-gradient-to-br from-red-500 to-rose-600"
+          onClick={() => setOutOfStockDrawerOpen(true)}
         />
       </div>
 
