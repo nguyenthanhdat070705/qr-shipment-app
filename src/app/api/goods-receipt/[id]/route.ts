@@ -128,7 +128,7 @@ export async function PATCH(
   const { id } = await params;
   const supabase = getSupabaseAdmin();
 
-  let body: { status?: string };
+  let body: { status?: string; cancelled_by?: string };
   try {
     body = await req.json();
   } catch {
@@ -142,6 +142,67 @@ export async function PATCH(
   const validStatuses = ['completed', 'cancelled'];
   if (!validStatuses.includes(body.status)) {
     return NextResponse.json({ error: `Trạng thái không hợp lệ: ${body.status}` }, { status: 400 });
+  }
+
+  // Check current status - prevent re-cancelling
+  const { data: currentGr } = await supabase
+    .from('fact_nhap_hang')
+    .select('trang_thai, kho_id')
+    .eq('id', id)
+    .single();
+
+  if (!currentGr) {
+    return NextResponse.json({ error: 'Không tìm thấy phiếu nhập.' }, { status: 404 });
+  }
+
+  if (currentGr.trang_thai === 'cancelled') {
+    return NextResponse.json({ error: 'Phiếu này đã bị hủy trước đó.' }, { status: 400 });
+  }
+
+  // If cancelling → deduct inventory
+  if (body.status === 'cancelled') {
+    // Get all items of this GRPO
+    const { data: grItems } = await supabase
+      .from('fact_nhap_hang_items')
+      .select('ma_hom, so_luong_thuc_nhan')
+      .eq('nhap_hang_id', id);
+
+    if (grItems && grItems.length > 0) {
+      // For each item, find the matching product in dim_hom and deduct from fact_inventory
+      for (const item of grItems) {
+        const qty = Number(item.so_luong_thuc_nhan || 0);
+        if (qty <= 0 || !item.ma_hom) continue;
+
+        // Get dim_hom id from ma_hom
+        const { data: hom } = await supabase
+          .from('dim_hom')
+          .select('id')
+          .eq('ma_hom', item.ma_hom)
+          .maybeSingle();
+
+        if (!hom) continue;
+
+        // Find matching inventory row (same product + same warehouse)
+        const { data: invRows } = await supabase
+          .from('fact_inventory')
+          .select('Mã, Số lượng, Ghi chú')
+          .eq('Tên hàng hóa', hom.id)
+          .eq('Kho', currentGr.kho_id);
+
+        if (invRows && invRows.length > 0) {
+          const invRow = invRows[0] as any;
+          const currentQty = Number(invRow['Số lượng'] || 0);
+          const newQty = Math.max(0, currentQty - qty);
+
+          await supabase
+            .from('fact_inventory')
+            .update({ 'Số lượng': newQty, 'Ghi chú': newQty })
+            .eq('Mã', invRow['Mã']);
+
+          console.log(`[GRPO Cancel] Deducted ${qty} from inventory: ${item.ma_hom} (${currentQty} → ${newQty})`);
+        }
+      }
+    }
   }
 
   const { data, error } = await supabase

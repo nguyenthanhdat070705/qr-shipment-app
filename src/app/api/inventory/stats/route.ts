@@ -58,8 +58,13 @@ export async function GET(req: Request) {
         if (!w) continue;
         total++;
         totalQuantity += w.qty;
-        if (w.avail > 0) available++;
-        else {
+        if (w.avail > 0) {
+          // Còn hàng (khả dụng > 0)
+          available++;
+        } else if (w.qty > 0 && w.avail <= 0) {
+          // Đã xuất hết (có hàng trong kho nhưng khả dụng = 0) → không tính vào hết hàng
+        } else {
+          // Hết hàng thật sự: qty = 0 và avail = 0
           outOfStock++;
           outOfStockList.push({ code: p.code, name: p.name, warehouse: warehouseFilter, qty: w.qty });
         }

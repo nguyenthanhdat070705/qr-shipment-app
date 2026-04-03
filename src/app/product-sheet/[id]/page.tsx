@@ -168,7 +168,7 @@ export default async function ProductSheetPage({
     <main className="min-h-screen bg-gray-100 flex flex-col items-center py-6 print:bg-white print:py-0">
       
       {/* ── Toolbar for print/back ───────────────────── */}
-      <div className="w-[297mm] max-w-full flex items-center justify-between mb-4 px-4 print:hidden">
+      <div className="w-[210mm] max-w-full flex items-center justify-between mb-4 px-4 print:hidden">
         <Link
           href="/product/fullproductlist"
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-gray-900 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-200"
@@ -203,11 +203,11 @@ export default async function ProductSheetPage({
       />
 
       {/* ── Landscape Sheet Container ───────────────────────── */}
-      <div className="w-[297mm] min-h-[210mm] bg-white shadow-xl flex flex-col relative print:shadow-none print:w-full print:min-h-screen print:m-0 overflow-hidden box-border">
+      <div className="w-[210mm] min-h-[297mm] bg-white shadow-xl flex flex-col relative print:shadow-none print:w-full print:min-h-screen print:m-0 overflow-hidden box-border">
         
         <div className="flex-1 p-[8mm] border-[6px] border-gray-100/50 print:border-6 print:border-gray-50 flex flex-col">
           
-          {/* Header row: logo + title inline */}
+          {/* Header row: logo left, title center */}
           <div className="flex items-center gap-6 mb-4">
             <div className="w-44 relative h-9 shrink-0">
               <Image 
@@ -221,78 +221,73 @@ export default async function ProductSheetPage({
             <h1 className="flex-1 text-center font-extrabold text-[#111] text-xl tracking-wide">
               PHIẾU THÔNG TIN SẢN PHẨM
             </h1>
-            <div className="w-44 shrink-0" />{/* spacer to center the title */}
           </div>
 
-          {/* ── Two‑column body ──────────────────────── */}
-          <div className="grid grid-cols-[1fr_280px] gap-6 flex-1">
-            
-            {/* ═══ LEFT COLUMN ═══ */}
-            <div className="flex flex-col gap-3">
-              
-              {/* Product identity */}
-              <div className="grid grid-cols-[150px_1fr] gap-y-2 gap-x-4 text-[14px] font-medium leading-[1.15]">
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[13px]">Phân loại:</div>
-                <div className="text-gray-900 font-bold uppercase text-[15px] leading-[1.15]">{hom.nhom_san_pham || 'AN TÁNG'}</div>
+          {/* ── Single-column body with absolute QR ────── */}
+          <div className="flex flex-col gap-3 relative">
 
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px] self-start">Mã sản phẩm:</div>
-                <div className="text-gray-900 font-black uppercase text-[22px] leading-[1.15] font-times">{hom.ma_hom}</div>
-
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px] self-start">Tên sản phẩm:</div>
-                <div className="text-gray-900 font-black uppercase text-[20px] leading-[1.15] font-times">{hom.ten_hom?.split('-')[0]?.trim() || hom.ten_hom}</div>
-
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px] self-start">Tên kỹ thuật:</div>
-                <div className="text-gray-900 font-black uppercase text-[16px] leading-[1.2] font-times">{hom.ten_hom}</div>
-              </div>
-
-              {/* Specs table */}
-              <div className="pt-3 border-t border-gray-100">
-                <div className="grid grid-cols-[150px_1fr_150px_1fr] gap-y-2 gap-x-4 text-[13px] font-medium">
-                  <div className="font-bold text-gray-900 uppercase tracking-widest text-[12px]">Kích thước KT</div>
-                  <div className="text-gray-800">{size}</div>
-                  <div className="font-bold text-gray-900 uppercase tracking-widest text-[12px]">Chất liệu</div>
-                  <div className="text-gray-800">{material}</div>
-
-                  <div className="font-bold text-gray-900 uppercase tracking-widest text-[12px]">Màu sắc</div>
-                  <div className="text-gray-800">{color}</div>
-                  <div className="font-bold text-gray-900 uppercase tracking-widest text-[12px]">Đặc điểm</div>
-                  <div className="text-gray-800">{feature}</div>
-
-                  <div className="font-bold text-gray-900 uppercase tracking-widest text-[12px]">Nguồn gốc</div>
-                  <div className="text-gray-800 border-b border-dotted border-gray-300 min-w-[120px] inline-block"></div>
-                  <div className="font-bold text-gray-900 uppercase tracking-widest text-[12px]">Dày thành</div>
-                  <div className="text-gray-800">{thickness || '......'}</div>
-                </div>
-                <div className="grid grid-cols-[150px_1fr] gap-x-4 mt-2 text-[13px] font-medium">
-                  <div className="font-bold text-gray-900 uppercase tracking-widest text-[12px]">Các thông số khác:</div>
-                  <div className="text-gray-800 border-b border-dotted border-gray-400 w-full"></div>
-                </div>
-              </div>
-
-              {/* Dates row — inline instead of stacked */}
-              <ProductSheetDynamic
-                warehouses={warehouses || []}
-                ngayNhapKho={ngayNhapKho}
-                ngayXuatKho={ngayXuatKho}
-                activeWarehouseIds={activeWarehouseIds}
-              />
-            </div>
-
-            {/* ═══ RIGHT COLUMN — QR + Warehouse ═══ */}
-            <div className="flex flex-col items-center gap-4 pt-2 border-l border-gray-100 pl-6">
+            {/* QR Code — absolute top-right */}
+            <div className="absolute right-0 top-[55px] bg-white p-1 z-20">
               <div className="flex flex-col items-center">
-                <p className="text-[11px] text-gray-600 italic mb-2 print:text-[10px]">Quét QR code xuất hàng</p>
-                <QRCodeDisplay code={hom.ma_hom} size={150} />
+                <p className="text-[10px] text-gray-600 italic mb-1.5">Quét QR code xuất hàng</p>
+                <QRCodeDisplay code={hom.ma_hom} size={120} />
               </div>
             </div>
+
+            {/* Product identity */}
+            <div className="grid grid-cols-[140px_1fr] gap-y-2 gap-x-4 text-[14px] font-medium leading-[1.15] pr-[150px]">
+              <div className="font-bold text-gray-900 uppercase tracking-widest text-[13px]">Phân loại:</div>
+              <div className="text-gray-900 font-bold uppercase text-[15px] leading-[1.15]">{hom.nhom_san_pham || 'AN TÁNG'}</div>
+
+              <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px] self-start">Mã sản phẩm:</div>
+              <div className="text-gray-900 font-black uppercase text-[22px] leading-[1.15] font-times">{hom.ma_hom}</div>
+
+              <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px] self-start">Tên sản phẩm:</div>
+              <div className="text-gray-900 font-black uppercase text-[20px] leading-[1.15] font-times">{hom.ten_hom?.split('-')[0]?.trim() || hom.ten_hom}</div>
+
+              <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px] self-start">Tên kỹ thuật:</div>
+              <div className="text-gray-900 font-black uppercase text-[16px] leading-[1.2] font-times">{hom.ten_hom}</div>
+            </div>
+
+            {/* Specs table — compact, 4 columns */}
+            <div className="pt-2 border-t border-gray-100">
+              <div className="grid grid-cols-[130px_1fr_130px_1fr] gap-y-1 gap-x-3 text-[11px] font-medium">
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Kích thước KT</div>
+                <div className="text-gray-800">{size}</div>
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Chất liệu</div>
+                <div className="text-gray-800">{material}</div>
+
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Màu sắc</div>
+                <div className="text-gray-800">{color}</div>
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Đặc điểm</div>
+                <div className="text-gray-800">{feature}</div>
+
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Nguồn gốc</div>
+                <div className="text-gray-800 border-b border-dotted border-gray-300 min-w-[100px] inline-block"></div>
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Dày thành</div>
+                <div className="text-gray-800">{thickness || '......'}</div>
+              </div>
+              <div className="grid grid-cols-[130px_1fr] gap-x-3 mt-1 text-[11px] font-medium">
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Các thông số khác:</div>
+                <div className="text-gray-800 border-b border-dotted border-gray-400 w-full"></div>
+              </div>
+            </div>
+
+            {/* Dates + Warehouses */}
+            <ProductSheetDynamic
+              warehouses={warehouses || []}
+              ngayNhapKho={ngayNhapKho}
+              ngayXuatKho={ngayXuatKho}
+              activeWarehouseIds={activeWarehouseIds}
+            />
           </div>
 
           {/* Footer */}
-          <div className="mt-auto pt-4 pb-2 text-center flex flex-col items-center border-t border-gray-100">
-            <h3 className="font-bold text-[#111] uppercase tracking-wide text-[13px]">
+          <div className="mt-auto pt-2 pb-1 text-center flex flex-col items-center border-t border-gray-100">
+            <h3 className="font-bold text-[#111] uppercase tracking-wide text-[11px]">
               CÔNG TY CỔ PHẦN DỊCH VỤ TANG LỄ BLACKSTONES
             </h3>
-            <p className="font-bold text-[12px] text-gray-800 mt-0.5">
+            <p className="font-bold text-[10px] text-gray-800 mt-0">
               0868 57 67 77 - www.blackstones.vn
             </p>
           </div>
@@ -309,9 +304,17 @@ export default async function ProductSheetPage({
                 background: white !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
+              * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
               }
               @page {
-                size: A4 landscape;
+                size: A4;
                 margin: 0;
               }
               body *:not(.font-times) {
