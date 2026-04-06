@@ -144,31 +144,32 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   {
     let totalStock = 0;
     try {
-      // Dùng raw SQL để đảm bảo đọc đúng cột tiếng Việt
-      const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('exec_sql', {
-        sql: `
-          SELECT COALESCE(SUM(CAST("Số lượng" AS INTEGER)), 0) AS total_stock
-          FROM fact_inventory
-          WHERE "Tên hàng hóa" = '${productId}'
-        `
-      });
+      // Dùng SDK query trực tiếp — đáng tin cậy hơn exec_sql
+      const { data: invRows, error: invErr } = await supabaseAdmin
+        .from('fact_inventory')
+        .select('*')
+        .eq('Tên hàng hóa', productId);
 
-      if (!rpcErr && rpcData) {
-        const rows = Array.isArray(rpcData) ? rpcData : [];
-        totalStock = rows.length > 0 ? Number(rows[0].total_stock || 0) : 0;
+      if (!invErr && invRows) {
+        totalStock = invRows.reduce((sum: number, r: Record<string, unknown>) => sum + (Number(r['Số lượng']) || 0), 0);
+        console.log(`[confirm-shipment] SDK query OK: ${invRows.length} rows, totalStock=${totalStock}, productId=${productId}`);
       } else {
-        // Fallback: dùng REST SDK
-        const { data: invRows } = await supabaseAdmin
-          .from('fact_inventory')
-          .select('Số lượng')
-          .eq('Tên hàng hóa', productId);
+        console.error(`[confirm-shipment] SDK query ERROR:`, invErr?.message, `rows:`, invRows);
+      }
 
-        if (invRows) {
-          totalStock = invRows.reduce((sum: number, r: any) => sum + (Number(r['Số lượng']) || 0), 0);
+      // Nếu SDK thất bại, thử fallback bằng RPC
+      if (totalStock === 0 && invErr) {
+        console.warn('[confirm-shipment] SDK query failed, trying RPC:', invErr.message);
+        const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('exec_sql', {
+          sql: `SELECT COALESCE(SUM(CAST("Số lượng" AS INTEGER)), 0) AS total_stock FROM fact_inventory WHERE "Tên hàng hóa" = '${productId}'`
+        });
+        if (!rpcErr && rpcData) {
+          const rows = Array.isArray(rpcData) ? rpcData : [];
+          totalStock = rows.length > 0 ? Number(rows[0].total_stock || 0) : 0;
         }
       }
-    } catch (invErr) {
-      console.warn('[confirm-shipment] Lỗi kiểm tra tồn kho:', invErr);
+    } catch (invCheckErr) {
+      console.warn('[confirm-shipment] Lỗi kiểm tra tồn kho:', invCheckErr);
     }
 
     if (totalStock < soLuong) {
@@ -260,52 +261,32 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (!confirmation.created_at) confirmation.created_at = new Date().toISOString();
   if (!confirmation.stt) confirmation.stt = 0;
 
-  // ── Bước 5.5: Trừ tồn kho trong fact_inventory (dùng SQL trực tiếp) ─────
+  // ── Bước 5.5: Trừ tồn kho trong fact_inventory ─────
   try {
-    // Dùng raw SQL để tránh lỗi encoding tên cột tiếng Việt
-    const { error: deductErr } = await supabaseAdmin.rpc('exec_sql', {
-      sql: `
-        UPDATE fact_inventory
-        SET "Số lượng" = GREATEST(0, CAST("Số lượng" AS INTEGER) - ${soLuong}),
-            "Ghi chú"  = GREATEST(0, CAST("Số lượng" AS INTEGER) - ${soLuong})
-        WHERE "Tên hàng hóa" = '${productId}'
-          AND CAST("Số lượng" AS INTEGER) > 0
-          AND ctid = (
-            SELECT ctid FROM fact_inventory
-            WHERE "Tên hàng hóa" = '${productId}'
-              AND CAST("Số lượng" AS INTEGER) > 0
-            ORDER BY CAST("Số lượng" AS INTEGER) DESC
-            LIMIT 1
-          )
-      `
-    });
+    // Dùng SDK trực tiếp — đáng tin cậy hơn exec_sql
+    const { data: allRows } = await supabaseAdmin
+      .from('fact_inventory')
+      .select('*')
+      .eq('Tên hàng hóa', productId);
 
-    if (deductErr) {
-      // exec_sql không có → fallback dùng REST API không filter .gt()
-      console.warn('[confirm-shipment] exec_sql thất bại, thử REST fallback:', deductErr.message);
-
-      const { data: allRows } = await supabaseAdmin
+    const validRows = (allRows || []).filter((r: Record<string, unknown>) => Number(r['Số lượng']) > 0);
+    
+    if (validRows.length > 0) {
+      // Ưu tiên trừ từ kho có nhiều nhất
+      validRows.sort((a: Record<string, unknown>, b: Record<string, unknown>) => Number(b['Số lượng']) - Number(a['Số lượng']));
+      const best = validRows[0];
+      const newQty = Math.max(0, Number(best['Số lượng']) - soLuong);
+      const { error: updateErr } = await supabaseAdmin
         .from('fact_inventory')
-        .select('Mã, Số lượng')
-        .eq('Tên hàng hóa', productId);
-
-      const validRows = (allRows || []).filter((r: any) => Number(r['Số lượng']) > 0);
-      if (validRows.length > 0) {
-        validRows.sort((a: any, b: any) => Number(b['Số lượng']) - Number(a['Số lượng']));
-        const best = validRows[0] as any;
-        const newQty = Math.max(0, Number(best['Số lượng']) - soLuong);
-        const { error: restErr } = await supabaseAdmin
-          .from('fact_inventory')
-          .update({ 'Số lượng': newQty, 'Ghi chú': newQty })
-          .eq('Mã', best['Mã']);
-        if (restErr) {
-          console.error('[confirm-shipment] REST fallback cũng thất bại:', restErr.message);
-        } else {
-          console.log(`[confirm-shipment] ✅ REST fallback: SL ${best['Số lượng']} → ${newQty}`);
-        }
+        .update({ 'Số lượng': newQty, 'Ghi chú': newQty })
+        .eq('Mã', best['Mã'] as string);
+      if (updateErr) {
+        console.error('[confirm-shipment] Lỗi trừ kho:', updateErr.message);
+      } else {
+        console.log(`[confirm-shipment] ✅ Trừ kho: ${best['Mã']} | SL ${best['Số lượng']} → ${newQty}`);
       }
     } else {
-      console.log(`[confirm-shipment] ✅ SQL trực tiếp trừ kho thành công cho productId=${productId}, SL=${soLuong}`);
+      console.warn('[confirm-shipment] Không tìm thấy dòng inventory có tồn > 0 để trừ');
     }
   } catch (invDeductErr) {
     console.error('[confirm-shipment] Exception trừ kho:', invDeductErr);

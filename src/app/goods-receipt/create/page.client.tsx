@@ -356,19 +356,31 @@ function CreateGoodsReceiptForm() {
                 <div key={i} className="p-3 rounded-lg bg-gray-50 border border-gray-100 space-y-2">
                   {/* Row 1: Product info */}
                   <div className="flex items-start gap-2">
-                    <div className="flex-shrink-0">
-                      <p className="text-[10px] font-bold uppercase text-gray-400">Mã SP</p>
-                      <p className="font-mono text-sm font-bold text-orange-700">{item.product_code || '—'}</p>
+                    <div className="flex-shrink-0" style={{ minWidth: '80px' }}>
+                      <p className="text-[10px] font-bold uppercase text-gray-400 mb-0.5">Mã SP</p>
+                      <input
+                        type="text"
+                        value={item.product_code}
+                        onChange={(e) => updateItem(i, 'product_code', e.target.value)}
+                        placeholder="Nhập mã..."
+                        className="w-full px-2 py-1.5 rounded-md border border-gray-200 bg-white text-sm font-mono font-bold text-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-300 placeholder:text-gray-300 placeholder:font-normal"
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-bold uppercase text-gray-400">Tên SP</p>
-                      <p className="text-sm text-gray-800 font-medium leading-snug break-words">{item.product_name || '—'}</p>
+                      <p className="text-[10px] font-bold uppercase text-gray-400 mb-0.5">Tên SP</p>
+                      <input
+                        type="text"
+                        value={item.product_name}
+                        onChange={(e) => updateItem(i, 'product_name', e.target.value)}
+                        placeholder="Nhập tên sản phẩm..."
+                        className="w-full px-2 py-1.5 rounded-md border border-gray-200 bg-white text-sm text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-300 placeholder:text-gray-300 placeholder:font-normal"
+                      />
                     </div>
                     <button
                       type="button"
                       onClick={() => removeItem(i)}
                       disabled={items.length <= 1}
-                      className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 disabled:opacity-20 transition-colors flex-shrink-0 mt-2"
+                      className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 disabled:opacity-20 transition-colors flex-shrink-0 mt-4"
                     >
                       <Trash2 size={14} />
                     </button>
