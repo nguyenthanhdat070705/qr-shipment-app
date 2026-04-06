@@ -47,7 +47,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const supabaseAdmin = getSupabaseAdmin();
 
   // ── Bước 1: Phân tích request body ──────────────────────
-  let body: Partial<ConfirmShipmentRequest>;
+  let body: Partial<ConfirmShipmentRequest & { soLuong?: number }>;
   try {
     body = await req.json();
   } catch {
@@ -55,6 +55,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const { qrCode, hoTen, email, note, chucVu, maSanPhamXacNhan, maDonHang } = body;
+  const soLuong = Math.max(1, Number(body.soLuong) || 1);
 
   if (!qrCode || typeof qrCode !== 'string' || qrCode.trim() === '') {
     return errorResponse('Không xác định được mã QR hiện tại.', 'VALIDATION_ERROR', 400);
@@ -118,18 +119,61 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // ── Bước 2.5: Kiểm tra mã đám đã xuất chưa (mỗi đám chỉ xuất 1 lần) ───
-  if (trimmedMaDonHang) {
+  // ── Bước 2.5: Kiểm tra mã sản phẩm đã xuất chưa (mỗi mã SP chỉ xuất 1 lần) ───
+  {
     const { data: existingExport } = await supabaseAdmin
       .from('export_confirmations')
       .select('stt, ma_san_pham, created_at')
-      .ilike('ghi_chu', `%${trimmedMaDonHang}%`)
+      .eq('ma_san_pham', maSanPham)
       .limit(1);
 
     if (existingExport && existingExport.length > 0) {
       const prev = existingExport[0];
+      const exportDate = prev.created_at 
+        ? new Date(prev.created_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : '';
       return errorResponse(
-        `Mã đám "${trimmedMaDonHang}" đã được xuất hàng trước đó (SP: ${prev.ma_san_pham}). Mỗi đám chỉ được xuất 1 lần.`,
+        `Mã sản phẩm "${maSanPham}" đã được xuất kho trước đó (Phiếu #${prev.stt}${exportDate ? `, ngày ${exportDate}` : ''}). Mỗi mã sản phẩm chỉ được xuất 1 lần.`,
+        'ALREADY_EXPORTED',
+        400
+      );
+    }
+  }
+
+  // ── Bước 2.6: Kiểm tra tồn kho >= số lượng xuất ───
+  {
+    let totalStock = 0;
+    try {
+      // Dùng raw SQL để đảm bảo đọc đúng cột tiếng Việt
+      const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('exec_sql', {
+        sql: `
+          SELECT COALESCE(SUM(CAST("Số lượng" AS INTEGER)), 0) AS total_stock
+          FROM fact_inventory
+          WHERE "Tên hàng hóa" = '${productId}'
+        `
+      });
+
+      if (!rpcErr && rpcData) {
+        const rows = Array.isArray(rpcData) ? rpcData : [];
+        totalStock = rows.length > 0 ? Number(rows[0].total_stock || 0) : 0;
+      } else {
+        // Fallback: dùng REST SDK
+        const { data: invRows } = await supabaseAdmin
+          .from('fact_inventory')
+          .select('Số lượng')
+          .eq('Tên hàng hóa', productId);
+
+        if (invRows) {
+          totalStock = invRows.reduce((sum: number, r: any) => sum + (Number(r['Số lượng']) || 0), 0);
+        }
+      }
+    } catch (invErr) {
+      console.warn('[confirm-shipment] Lỗi kiểm tra tồn kho:', invErr);
+    }
+
+    if (totalStock < soLuong) {
+      return errorResponse(
+        `Không đủ tồn kho để xuất. Tồn kho hiện tại: ${totalStock}, số lượng yêu cầu xuất: ${soLuong}. Vui lòng kiểm tra lại.`,
         'VALIDATION_ERROR',
         400
       );
@@ -222,8 +266,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const { error: deductErr } = await supabaseAdmin.rpc('exec_sql', {
       sql: `
         UPDATE fact_inventory
-        SET "Số lượng" = GREATEST(0, CAST("Số lượng" AS INTEGER) - 1),
-            "Ghi chú"  = GREATEST(0, CAST("Số lượng" AS INTEGER) - 1)
+        SET "Số lượng" = GREATEST(0, CAST("Số lượng" AS INTEGER) - ${soLuong}),
+            "Ghi chú"  = GREATEST(0, CAST("Số lượng" AS INTEGER) - ${soLuong})
         WHERE "Tên hàng hóa" = '${productId}'
           AND CAST("Số lượng" AS INTEGER) > 0
           AND ctid = (
@@ -249,7 +293,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       if (validRows.length > 0) {
         validRows.sort((a: any, b: any) => Number(b['Số lượng']) - Number(a['Số lượng']));
         const best = validRows[0] as any;
-        const newQty = Math.max(0, Number(best['Số lượng']) - 1);
+        const newQty = Math.max(0, Number(best['Số lượng']) - soLuong);
         const { error: restErr } = await supabaseAdmin
           .from('fact_inventory')
           .update({ 'Số lượng': newQty, 'Ghi chú': newQty })
@@ -261,7 +305,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         }
       }
     } else {
-      console.log(`[confirm-shipment] ✅ SQL trực tiếp trừ kho thành công cho productId=${productId}`);
+      console.log(`[confirm-shipment] ✅ SQL trực tiếp trừ kho thành công cho productId=${productId}, SL=${soLuong}`);
     }
   } catch (invDeductErr) {
     console.error('[confirm-shipment] Exception trừ kho:', invDeductErr);
@@ -279,6 +323,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         ma_san_pham: maSanPham,
         note:        trimmedNote,
         stt:         confirmation.stt,
+        so_luong:    soLuong,
       },
     })
     .then(({ error }) => {
@@ -287,7 +332,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // ── Bước 6.5: Gửi email thông báo phòng mua hàng ────────────────
   const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const displayDonHang = typeof maDonHang === 'string' ? maDonHang : 'Không xác định';
+  const displayDonHang = trimmedMaDonHang || 'Không có mã đám';
   
   try {
     await fetch(`${origin}/api/send-email`, {
@@ -297,13 +342,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       },
       body: JSON.stringify({
         to: 'phongmuahang@blackstones.vn', // Mặc định hoặc cấu hình
-        subject: `[Thông báo xuất kho] Mã đám: ${displayDonHang}`,
+        subject: `[Thông báo xuất kho] SP: ${maSanPham}${trimmedMaDonHang ? ` — Đám: ${trimmedMaDonHang}` : ''}`,
         html: `
           <h3>Thông báo xuất kho mới</h3>
-          <p><strong>Mã đám (Đơn hàng):</strong> ${displayDonHang}</p>
+          <p><strong>Mã sản phẩm:</strong> ${maSanPham}</p>
+          <p><strong>Tên sản phẩm:</strong> ${productName}</p>
+          ${trimmedMaDonHang ? `<p><strong>Mã đám:</strong> ${trimmedMaDonHang}</p>` : ''}
           <p><strong>Người xuất:</strong> ${trimmedHoTen} (${trimmedEmail})</p>
-          <p><strong>Sản phẩm:</strong> ${productName} (Mã: ${maSanPham})</p>
-          <p><strong>Số lượng xuất:</strong> 1</p>
+          <p><strong>Số lượng xuất:</strong> ${soLuong}</p>
           <p><strong>Ngày xuất:</strong> ${confirmation.ngay_xuat} ${confirmation.thoi_gian_xuat}</p>
           <hr/>
           <p><a href="${origin}/operations">Bấm vào đây để xem / chỉnh sửa thông tin xuất kho</a></p>

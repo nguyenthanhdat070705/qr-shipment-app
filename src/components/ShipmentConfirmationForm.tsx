@@ -6,7 +6,7 @@ import type { ConfirmShipmentResponse } from '@/types';
 import {
   Send, AlertCircle, Loader2, Lock,
   Clock, User, Package,
-  ChevronDown
+  ChevronDown, Hash
 } from 'lucide-react';
 
 interface ShipmentConfirmationFormProps {
@@ -17,14 +17,6 @@ interface ShipmentConfirmationFormProps {
 }
 
 type FormState = 'idle' | 'submitting' | 'error';
-
-interface DamOption {
-  ma_dam: string;
-  nguoi_mat: string | null;
-  ngay_liem: string | null;
-  loai: string | null;
-  chi_nhanh: string | null;
-}
 
 function formatDate(iso: string): string {
   try {
@@ -52,10 +44,11 @@ export default function ShipmentConfirmationForm({
   const [userName, setUserName] = useState('');
   const [userDepartment, setUserDepartment] = useState('');
 
-  // Mã đám
+  // Mã đám — now a simple text input (optional)
   const [maDam, setMaDam] = useState('');
-  const [damList, setDamList] = useState<DamOption[]>([]);
-  const [damLoading, setDamLoading] = useState(true);
+
+  // Số lượng xuất
+  const [soLuong, setSoLuong] = useState(1);
 
   // Warehouse selector
   const [warehouses, setWarehouses] = useState<{ id: string; ten_kho: string; ma_kho: string }[]>([]);
@@ -88,37 +81,31 @@ export default function ShipmentConfirmationForm({
     } catch { /* ignore */ }
   }, []);
 
-  // Load dam list + warehouses
+  // Load warehouses
   useEffect(() => {
-    Promise.all([
-      fetch('/api/dam').then(r => r.json()).catch(() => ({ data: [] })),
-      fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/dim_kho?select=id,ma_kho,ten_kho&order=ten_kho.asc`, {
-        headers: {
-          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''}`,
-        },
-      }).then(r => r.json()).catch(() => []),
-    ]).then(([damRes, khoData]) => {
-      setDamList(damRes.data || []);
+    fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/dim_kho?select=id,ma_kho,ten_kho&order=ten_kho.asc`, {
+      headers: {
+        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+        Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''}`,
+      },
+    }).then(r => r.json()).then(khoData => {
       setWarehouses(Array.isArray(khoData) ? khoData : []);
-      setDamLoading(false);
-    });
+    }).catch(() => {});
   }, []);
 
-  const selectedDam = damList.find(d => d.ma_dam === maDam);
   const isAlreadyExported = currentStatus === 'exported';
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    if (!maDam.trim()) {
-      setErrorMsg('Vui lòng chọn Mã Đám trước khi xác nhận xuất hàng.');
+    if (!selectedWarehouse) {
+      setErrorMsg('Vui lòng chọn kho xuất hàng.');
       setFormState('error');
       return;
     }
 
-    if (!selectedWarehouse) {
-      setErrorMsg('Vui lòng chọn kho xuất hàng.');
+    if (soLuong < 1) {
+      setErrorMsg('Số lượng xuất phải ít nhất là 1.');
       setFormState('error');
       return;
     }
@@ -136,9 +123,9 @@ export default function ShipmentConfirmationForm({
           email: userEmail,
           chucVu: userDepartment || 'Nhân viên xuất kho',
           maSanPhamXacNhan: qrCode,
-          maDonHang: maDam.trim(),
-          soLuong: 1,
-          note: `Xuất kho SP: ${productName} — Đám: ${maDam.trim()} — Kho: ${warehouses.find(w => w.id === selectedWarehouse)?.ten_kho || ''}`,
+          maDonHang: maDam.trim() || undefined,
+          soLuong: soLuong,
+          note: `Xuất kho SP: ${productName}${maDam.trim() ? ` — Đám: ${maDam.trim()}` : ''} — Kho: ${warehouses.find(w => w.id === selectedWarehouse)?.ten_kho || ''} — SL: ${soLuong}`,
         }),
       });
 
@@ -148,7 +135,7 @@ export default function ShipmentConfirmationForm({
         const viMessages: Record<string, string> = {
           VALIDATION_ERROR: data.error,
           PRODUCT_NOT_FOUND: 'Không tìm thấy sản phẩm với mã này.',
-          ALREADY_EXPORTED: 'Sản phẩm này đã được xuất kho trước đó.',
+          ALREADY_EXPORTED: data.error || 'Mã sản phẩm này đã được xuất kho trước đó. Không thể xuất lại.',
           DATABASE_ERROR: data.error || 'Lỗi cơ sở dữ liệu.',
           INTERNAL_ERROR: 'Lỗi hệ thống.',
         };
@@ -162,7 +149,7 @@ export default function ShipmentConfirmationForm({
         await fetch('/api/inventory/deduct', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ma_hom: qrCode, quantity: 1 }),
+          body: JSON.stringify({ ma_hom: qrCode, quantity: soLuong }),
         });
       } catch (deductErr) {
         console.warn('Inventory deduct call failed (non-blocking):', deductErr);
@@ -176,7 +163,6 @@ export default function ShipmentConfirmationForm({
       const completionParams = new URLSearchParams({
         stt: String(data.confirmation.stt || ''),
         ma_dam: maDam.trim(),
-        nguoi_mat: selectedDam?.nguoi_mat || '',
         product_code: qrCode,
         product_name: productName,
         kho_xuat: khoName,
@@ -184,7 +170,7 @@ export default function ShipmentConfirmationForm({
         email: data.confirmation.email || userEmail,
         ngay_xuat: data.confirmation.ngay_xuat ? formatDate(data.confirmation.ngay_xuat) : new Date().toLocaleDateString('vi-VN'),
         thoi_gian: data.confirmation.thoi_gian_xuat ? formatTime(data.confirmation.thoi_gian_xuat) : '',
-        so_luong: '1',
+        so_luong: String(soLuong),
       });
       router.push(`/transfer-complete?${completionParams.toString()}`);
     } catch {
@@ -234,8 +220,8 @@ export default function ShipmentConfirmationForm({
         </div>
         <div className="flex items-center gap-2 text-xs">
           <Package size={12} className="text-gray-400" />
-          <span className="text-gray-400 w-24">Số lượng:</span>
-          <span className="font-medium text-gray-700">1</span>
+          <span className="text-gray-400 w-24">Mã sản phẩm:</span>
+          <span className="font-mono font-bold text-gray-900">{qrCode}</span>
         </div>
       </div>
 
@@ -264,58 +250,43 @@ export default function ShipmentConfirmationForm({
           </div>
         </div>
 
-        {/* ── Mã Đám selector ── */}
+        {/* ── Số lượng xuất ── */}
         <div>
           <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">
-            Mã Đám <span className="text-red-500">*</span>
+            Số lượng xuất <span className="text-red-500">*</span>
           </label>
-          {damLoading ? (
-            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-400">
-              <Loader2 size={14} className="animate-spin" /> Đang tải danh sách đám...
+          <div className="relative">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+              <Hash size={16} />
             </div>
-          ) : damList.length > 0 ? (
-            <>
-              <div className="relative">
-                <select
-                  value={maDam}
-                  onChange={(e) => { setMaDam(e.target.value); if (formState === 'error') setFormState('idle'); }}
-                  required
-                  className={`w-full rounded-xl border px-4 py-3 text-sm font-medium appearance-none
-                    focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all
-                    ${formState === 'error' && !maDam.trim() ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white'}`}
-                >
-                  <option value="">— Chọn mã đám —</option>
-                  {damList.map((d) => (
-                    <option key={d.ma_dam} value={d.ma_dam}>
-                      {d.ma_dam} — {d.nguoi_mat || 'N/A'} {d.ngay_liem ? `(Liệm: ${new Date(d.ngay_liem).toLocaleDateString('vi-VN')})` : ''}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-              </div>
-              {selectedDam && (
-                <div className="mt-2 p-2.5 rounded-lg bg-indigo-50 border border-indigo-100 text-xs space-y-0.5">
-                  <p className="font-bold text-indigo-800">{selectedDam.ma_dam} — {selectedDam.nguoi_mat || 'N/A'}</p>
-                  {selectedDam.ngay_liem && <p className="text-indigo-600">📅 Ngày liệm: {new Date(selectedDam.ngay_liem).toLocaleDateString('vi-VN')}</p>}
-                  {selectedDam.loai && <p className="text-indigo-600">📋 Loại: {selectedDam.loai}</p>}
-                  {selectedDam.chi_nhanh && <p className="text-indigo-600">🏢 Chi nhánh: {selectedDam.chi_nhanh}</p>}
-                </div>
-              )}
-            </>
-          ) : (
-            /* Fallback to text input if no dam data */
             <input
-              type="text"
-              value={maDam}
-              onChange={(e) => { setMaDam(e.target.value); if (formState === 'error') setFormState('idle'); }}
-              placeholder="Nhập mã đám (vd: 260108, 260334...)"
+              type="number"
+              min={1}
+              value={soLuong}
+              onChange={(e) => { setSoLuong(Math.max(1, parseInt(e.target.value) || 1)); if (formState === 'error') setFormState('idle'); }}
               required
-              className={`w-full rounded-xl border px-4 py-3 text-sm font-medium
+              className={`w-full rounded-xl border pl-10 pr-4 py-3 text-sm font-bold
                 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all
-                ${formState === 'error' && !maDam.trim() ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white'}`}
+                ${formState === 'error' && soLuong < 1 ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white'}`}
             />
-          )}
-          <p className="text-[10px] text-gray-400 mt-1">Chỉ hiển thị đám có ngày liệm chưa diễn ra</p>
+          </div>
+          <p className="text-[10px] text-gray-400 mt-1">Số lượng tồn kho phải lớn hơn số lượng xuất</p>
+        </div>
+
+        {/* ── Mã Đám input ── */}
+        <div>
+          <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">
+            Mã Đám <span className="text-gray-400 text-[10px] font-normal normal-case">(không bắt buộc)</span>
+          </label>
+          <input
+            type="text"
+            value={maDam}
+            onChange={(e) => { setMaDam(e.target.value); if (formState === 'error') setFormState('idle'); }}
+            placeholder="Nhập mã đám (vd: 260108, 260334...)"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium
+              focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:bg-white transition-all"
+          />
+          <p className="text-[10px] text-gray-400 mt-1">Nhập mã đám nếu có, bỏ trống nếu không cần</p>
         </div>
 
         {/* Error */}
@@ -329,7 +300,7 @@ export default function ShipmentConfirmationForm({
         {/* Submit */}
         <button
           type="submit"
-          disabled={formState === 'submitting' || !maDam.trim() || !selectedWarehouse}
+          disabled={formState === 'submitting' || !selectedWarehouse || soLuong < 1}
           className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#1B2A4A] px-6 py-3.5
                      text-sm font-bold text-white shadow-sm
                      hover:bg-[#162240] active:scale-95
