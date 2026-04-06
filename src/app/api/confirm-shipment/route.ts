@@ -119,12 +119,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // ── Bước 2.5: Kiểm tra mã sản phẩm đã xuất chưa (mỗi mã SP chỉ xuất 1 lần) ───
-  {
+  // ── Bước 2.5: Kiểm tra mã đám đã xuất chưa (mỗi mã đám chỉ xuất 1 lần) ───
+  if (trimmedMaDonHang) {
+    const damTag = `[DAM:${trimmedMaDonHang}]`;
     const { data: existingExport } = await supabaseAdmin
       .from('export_confirmations')
-      .select('stt, ma_san_pham, created_at')
-      .eq('ma_san_pham', maSanPham)
+      .select('stt, ma_san_pham, ghi_chu, created_at')
+      .like('ghi_chu', `%${damTag}%`)
       .limit(1);
 
     if (existingExport && existingExport.length > 0) {
@@ -133,7 +134,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         ? new Date(prev.created_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
         : '';
       return errorResponse(
-        `Mã sản phẩm "${maSanPham}" đã được xuất kho trước đó (Phiếu #${prev.stt}${exportDate ? `, ngày ${exportDate}` : ''}). Mỗi mã sản phẩm chỉ được xuất 1 lần.`,
+        `Mã đám "${trimmedMaDonHang}" đã được xuất kho trước đó (Phiếu #${prev.stt}, SP: ${prev.ma_san_pham}${exportDate ? `, ngày ${exportDate}` : ''}). Mỗi mã đám chỉ được xuất 1 lần.`,
         'ALREADY_EXPORTED',
         400
       );
@@ -198,12 +199,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const escStr = (s: string | null) =>
     s == null ? 'NULL' : `'${String(s).replace(/'/g, "''")}'`;
 
+  // Build ghi_chu with embedded [DAM:xxx] tag for reliable duplicate checking
+  const damMarker = trimmedMaDonHang ? `[DAM:${trimmedMaDonHang}]` : '';
+  const finalNote = [damMarker, trimmedNote].filter(Boolean).join(' ') || null;
+
   const rawInsertSql = `
     INSERT INTO export_confirmations
       (ma_san_pham, ho_ten, email, chuc_vu, ghi_chu, ngay_xuat, thoi_gian_xuat)
     VALUES
       (${escStr(maSanPham)}, ${escStr(trimmedHoTen)}, ${escStr(trimmedEmail)},
-       ${escStr(trimmedChucVu)}, ${escStr(trimmedNote)},
+       ${escStr(trimmedChucVu)}, ${escStr(finalNote)},
        '${ngayXuat}', '${thoiGianXuat}')
     RETURNING stt, ho_ten, email, ngay_xuat, thoi_gian_xuat, created_at;
   `;
@@ -231,7 +236,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       ho_ten:      trimmedHoTen,
       email:       trimmedEmail,
       chuc_vu:     trimmedChucVu,
-      ghi_chu:     trimmedNote,
+      ghi_chu:     finalNote,
       ngay_xuat:   ngayXuat,
       thoi_gian_xuat: thoiGianXuat,
     };
