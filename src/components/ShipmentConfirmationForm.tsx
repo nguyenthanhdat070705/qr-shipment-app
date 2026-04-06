@@ -186,16 +186,7 @@ export default function ShipmentConfirmationForm({
         return;
       }
 
-      // Deduct inventory
-      try {
-        await fetch('/api/inventory/deduct', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ma_hom: qrCode, quantity: soLuong }),
-        });
-      } catch (deductErr) {
-        console.warn('Inventory deduct call failed (non-blocking):', deductErr);
-      }
+      // Inventory đã được trừ trong API confirm-shipment (bước 5.5)
 
       const khoName = warehouses.find(w => w.id === selectedWarehouse)?.ten_kho || '';
 
