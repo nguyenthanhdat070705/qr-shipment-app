@@ -1,5 +1,52 @@
+# Dependencies
 node_modules
 .next
+
+# Git
 .git
+.gitignore
+
+# Environment (secrets - inject via docker-compose env)
 .env.local
 .env.local.example
+.env.v1
+.env.vercel
+.env.vercel.prod
+.env.prod
+
+# IDE / Editor
+.agent
+.vscode
+*.swp
+*.swo
+
+# Build artifacts & logs
+build
+build_error.log
+build_error.txt
+clone_log.txt
+col_log.txt
+diff.txt
+discover_output.txt
+final_clone*.txt
+kho_output.json
+output.json
+teams.txt
+tmp_git.txt
+tsconfig.tsbuildinfo
+vercel_deploy*.txt
+
+# Temporary data files (not needed in image)
+1office_contracts.json
+1office_products.json
+1office_receipts.json
+
+# Docker files (prevent recursive copy)
+docker-compose.yml
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Vercel
+.vercel
