@@ -85,6 +85,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const trimmedMaSanPhamXacNhan = maSanPhamXacNhan.trim();
   const trimmedMaDonHang = typeof maDonHang === 'string' ? maDonHang.trim() : '';
 
+  // Validate mã đám: bắt buộc, đúng 6 số
+  if (!trimmedMaDonHang) {
+    return errorResponse('Vui lòng nhập mã đám (bắt buộc).', 'VALIDATION_ERROR', 400);
+  }
+  if (!/^\d{6}$/.test(trimmedMaDonHang)) {
+    return errorResponse('Mã đám phải đúng 6 chữ số (vd: 260108).', 'VALIDATION_ERROR', 400);
+  }
+
   // ── Bước 2: Tìm sản phẩm trong dim_hom ──────────────────────────────
   const { data: product, error: fetchError } = await supabaseAdmin
     .from('dim_hom')

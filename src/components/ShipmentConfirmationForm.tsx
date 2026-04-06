@@ -127,6 +127,19 @@ export default function ShipmentConfirmationForm({
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
+    // Validate mã đám: bắt buộc, đúng 6 số
+    const trimmedMaDam = maDam.trim();
+    if (!trimmedMaDam) {
+      setErrorMsg('Vui lòng nhập mã đám (bắt buộc).');
+      setFormState('error');
+      return;
+    }
+    if (!/^\d{6}$/.test(trimmedMaDam)) {
+      setErrorMsg('Mã đám phải đúng 6 chữ số (vd: 260108).');
+      setFormState('error');
+      return;
+    }
+
     if (!selectedWarehouse) {
       setErrorMsg('Vui lòng chọn kho xuất hàng.');
       setFormState('error');
@@ -308,20 +321,32 @@ export default function ShipmentConfirmationForm({
           <p className="text-[10px] text-gray-400 mt-1">Số lượng xuất mặc định là 1 cho mỗi sản phẩm</p>
         </div>
 
-        {/* ── Mã Đám input ── */}
+        {/* ── Mã Đám input (bắt buộc, 6 số) ── */}
         <div>
           <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">
-            Mã Đám <span className="text-gray-400 text-[10px] font-normal normal-case">(không bắt buộc)</span>
+            Mã Đám <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
+            inputMode="numeric"
+            maxLength={6}
             value={maDam}
-            onChange={(e) => { setMaDam(e.target.value); if (formState === 'error') setFormState('idle'); }}
-            placeholder="Nhập mã đám (vd: 260108, 260334...)"
-            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium
-              focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:bg-white transition-all"
+            onChange={(e) => {
+              const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+              setMaDam(val);
+              if (formState === 'error') setFormState('idle');
+            }}
+            placeholder="Nhập 6 số (vd: 260108)"
+            className={`w-full rounded-xl border px-4 py-3 text-sm font-bold font-mono tracking-widest text-center text-lg
+              focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all
+              ${maDam.length === 6 ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 
+                formState === 'error' && maDam.length < 6 ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white'}`}
           />
-          <p className="text-[10px] text-gray-400 mt-1">Nhập mã đám nếu có, bỏ trống nếu không cần</p>
+          <div className="flex items-center justify-between mt-1">
+            <p className={`text-[10px] ${maDam.length === 6 ? 'text-emerald-500 font-bold' : 'text-gray-400'}`}>
+              {maDam.length === 6 ? '✓ Đã nhập đủ 6 số' : `${maDam.length}/6 số — Bắt buộc nhập đủ 6 chữ số`}
+            </p>
+          </div>
         </div>
 
         {/* Error */}
@@ -335,7 +360,7 @@ export default function ShipmentConfirmationForm({
         {/* Submit */}
         <button
           type="submit"
-          disabled={formState === 'submitting' || !selectedWarehouse || soLuong < 1}
+          disabled={formState === 'submitting' || !selectedWarehouse || soLuong < 1 || maDam.trim().length !== 6}
           className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#1B2A4A] px-6 py-3.5
                      text-sm font-bold text-white shadow-sm
                      hover:bg-[#162240] active:scale-95
