@@ -62,7 +62,8 @@ export default function GoodsIssuePage() {
   const fetchHistory = async () => {
     setHistoryLoading(true);
     try {
-      const res = await fetch('/api/goods-issue/history');
+      const warehouseParam = lockedWarehouse ? `?warehouse=${encodeURIComponent(lockedWarehouse)}` : '';
+      const res = await fetch(`/api/goods-issue/history${warehouseParam}`);
       const json = await res.json();
       if (res.ok) setHistory(json.data || []);
     } catch {}
@@ -409,7 +410,7 @@ export default function GoodsIssuePage() {
               </div>
               <div>
                 <h2 className="text-sm font-extrabold text-gray-900 uppercase tracking-wide">Lịch sử xuất hàng</h2>
-                <p className="text-[11px] text-gray-400 font-medium">{history.length} phiếu gần nhất</p>
+                <p className="text-[11px] text-gray-400 font-medium">Tổng: {history.length} phiếu{lockedWarehouse ? ` — ${lockedWarehouse}` : ''}</p>
               </div>
             </div>
             <button
@@ -454,10 +455,21 @@ export default function GoodsIssuePage() {
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusColors[item.trang_thai] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
                           {statusLabel[item.trang_thai] || item.trang_thai}
                         </span>
+                        {firstItem?.so_luong && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100">SL: {firstItem.so_luong}</span>
+                        )}
                       </div>
                       <p className="text-sm font-semibold text-gray-800 mt-0.5 truncate">
                         {firstItem ? `${firstItem.ma_hom} — ${firstItem.ten_hom}` : item.ten_khach || 'N/A'}
                       </p>
+                      <div className="flex items-center gap-2 mt-0.5 text-[11px] text-gray-400 font-medium">
+                        {item.nguoi_tao && item.nguoi_tao !== '—' && (
+                          <span>Người xuất: <span className="text-gray-600 font-semibold">{item.nguoi_tao}</span></span>
+                        )}
+                        {item.ten_khach && (
+                          <span>• Người nhận: <span className="text-gray-600 font-semibold">{item.ten_khach}</span></span>
+                        )}
+                      </div>
                       {item.ghi_chu && (
                         <p className="text-xs text-gray-400 font-medium truncate mt-0.5">{item.ghi_chu}</p>
                       )}

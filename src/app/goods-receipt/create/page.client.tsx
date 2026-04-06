@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PackageCheck, ArrowLeft, Plus, Trash2, Search, Calendar, Building, Warehouse, User, FileText, ClipboardCheck, AlertTriangle, CheckCircle2, X, ClipboardList } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
@@ -10,6 +10,12 @@ interface DimKhoItem {
   id: string;
   ma_kho: string;
   ten_kho: string;
+}
+
+interface DimHom {
+  id: string;
+  ma_hom: string;
+  ten_hom: string;
 }
 
 interface ReceiptItem {
@@ -39,6 +45,11 @@ function CreateGoodsReceiptForm() {
   const [searchInput, setSearchInput] = useState('');
   const [receivedBy, setReceivedBy] = useState('');
   const isTemporary = searchParams.get('temporary') === 'true';
+
+  // Product autocomplete
+  const [allProducts, setAllProducts] = useState<DimHom[]>([]);
+  const [activeSuggestion, setActiveSuggestion] = useState<number | null>(null);
+  const suggestionRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Get current user
   useEffect(() => {
@@ -79,9 +90,11 @@ function CreateGoodsReceiptForm() {
 
     Promise.all([
       fetch(`${supabaseUrl}/rest/v1/dim_kho?select=id,ma_kho,ten_kho&order=ten_kho.asc`, { headers }).then(r => r.json()),
+      fetch(`${supabaseUrl}/rest/v1/dim_hom?select=id,ma_hom,ten_hom&order=ma_hom`, { headers }).then(r => r.json()),
       fetch('/api/purchase-orders').then(r => r.json()),
-    ]).then(([khoData, poRes]) => {
+    ]).then(([khoData, homData, poRes]) => {
       setWarehouses(Array.isArray(khoData) ? khoData : []);
+      setAllProducts(Array.isArray(homData) ? homData : []);
       const allPOs = poRes.data || [];
       setPurchaseOrders(allPOs);
 
@@ -352,29 +365,71 @@ function CreateGoodsReceiptForm() {
             </div>
 
             <div className="space-y-2">
-              {items.map((item, i) => (
+              {items.map((item, i) => {
+                // Filter suggestions based on what user typed
+                const q = (item.product_code + ' ' + item.product_name).toLowerCase().trim();
+                const suggestions = activeSuggestion === i && q
+                  ? allProducts.filter(p =>
+                      p.ma_hom.toLowerCase().includes(q) ||
+                      p.ten_hom.toLowerCase().includes(q) ||
+                      (item.product_code && p.ma_hom.toLowerCase().includes(item.product_code.toLowerCase())) ||
+                      (item.product_name && p.ten_hom.toLowerCase().includes(item.product_name.toLowerCase()))
+                    ).slice(0, 8)
+                  : [];
+
+                return (
                 <div key={i} className="p-3 rounded-lg bg-gray-50 border border-gray-100 space-y-2">
-                  {/* Row 1: Product info */}
+                  {/* Row 1: Product info with autocomplete */}
                   <div className="flex items-start gap-2">
-                    <div className="flex-shrink-0" style={{ minWidth: '80px' }}>
+                    <div className="flex-shrink-0" style={{ minWidth: '100px' }}>
                       <p className="text-[10px] font-bold uppercase text-gray-400 mb-0.5">Mã SP</p>
                       <input
                         type="text"
                         value={item.product_code}
-                        onChange={(e) => updateItem(i, 'product_code', e.target.value)}
+                        onChange={(e) => { updateItem(i, 'product_code', e.target.value); setActiveSuggestion(i); }}
+                        onFocus={() => setActiveSuggestion(i)}
                         placeholder="Nhập mã..."
                         className="w-full px-2 py-1.5 rounded-md border border-gray-200 bg-white text-sm font-mono font-bold text-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-300 placeholder:text-gray-300 placeholder:font-normal"
                       />
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 relative" ref={(el) => { suggestionRefs.current[i] = el; }}>
                       <p className="text-[10px] font-bold uppercase text-gray-400 mb-0.5">Tên SP</p>
                       <input
                         type="text"
                         value={item.product_name}
-                        onChange={(e) => updateItem(i, 'product_name', e.target.value)}
+                        onChange={(e) => { updateItem(i, 'product_name', e.target.value); setActiveSuggestion(i); }}
+                        onFocus={() => setActiveSuggestion(i)}
                         placeholder="Nhập tên sản phẩm..."
                         className="w-full px-2 py-1.5 rounded-md border border-gray-200 bg-white text-sm text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-300 placeholder:text-gray-300 placeholder:font-normal"
                       />
+                      {/* Suggestion dropdown */}
+                      {suggestions.length > 0 && (
+                        <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden">
+                          <div className="max-h-48 overflow-y-auto">
+                            {suggestions.map((p) => (
+                              <button
+                                key={p.id}
+                                type="button"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  const updated = [...items];
+                                  updated[i] = { ...updated[i], product_code: p.ma_hom, product_name: p.ten_hom };
+                                  setItems(updated);
+                                  setActiveSuggestion(null);
+                                }}
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-orange-50 transition-colors flex items-center gap-2 border-b border-gray-50 last:border-0"
+                              >
+                                <span className="font-mono text-xs font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded flex-shrink-0">{p.ma_hom}</span>
+                                <span className="flex-1 truncate text-gray-700">{p.ten_hom}</span>
+                              </button>
+                            ))}
+                          </div>
+                          <div className="border-t border-gray-100 px-3 py-1 flex justify-between items-center">
+                            <span className="text-[10px] text-gray-400">{suggestions.length} gợi ý</span>
+                            <button type="button" onMouseDown={(e) => { e.preventDefault(); setActiveSuggestion(null); }} className="text-[10px] text-gray-400 hover:text-gray-600">Đóng</button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <button
                       type="button"
@@ -410,9 +465,15 @@ function CreateGoodsReceiptForm() {
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
           </div>
+
+          {/* Click outside to close suggestions */}
+          {activeSuggestion !== null && (
+            <div className="fixed inset-0 z-40" onMouseDown={() => setActiveSuggestion(null)} />
+          )}
 
           {error && (
             <div className="px-3 py-2.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
