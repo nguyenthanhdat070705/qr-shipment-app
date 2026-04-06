@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { PackageCheck, ArrowLeft, Plus, Trash2, Search, Calendar, Building, Warehouse, User, FileText, ClipboardCheck, AlertTriangle, CheckCircle2, X } from 'lucide-react';
+import { PackageCheck, ArrowLeft, Plus, Trash2, Search, Calendar, Building, Warehouse, User, FileText, ClipboardCheck, AlertTriangle, CheckCircle2, X, ClipboardList } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import type { PurchaseOrder } from '@/types';
 
@@ -38,6 +38,7 @@ function CreateGoodsReceiptForm() {
   const [confirmed, setConfirmed] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [receivedBy, setReceivedBy] = useState('');
+  const isTemporary = searchParams.get('temporary') === 'true';
 
   // Get current user
   useEffect(() => {
@@ -133,6 +134,11 @@ function CreateGoodsReceiptForm() {
     if (!warehouseId) { setError('Vui lòng chọn kho nhận.'); return; }
     const validItems = items.filter((item) => item.product_code.trim() && item.product_name.trim());
     if (validItems.length === 0) { setError('Cần ít nhất 1 sản phẩm.'); return; }
+    // For temporary mode, items must have received_qty > 0
+    if (isTemporary) {
+      const hasQty = validItems.some(i => i.received_qty > 0);
+      if (!hasQty) { setError('Cần nhập số lượng thực tế đã nhận.'); return; }
+    }
     setConfirmed(false);
     setShowCheckModal(true);
   };
@@ -152,19 +158,27 @@ function CreateGoodsReceiptForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          po_id: poId || null, warehouse_id: warehouseId,
-          note: note || null, received_by: email, items: validItems,
+          po_id: isTemporary ? null : (poId || null),
+          warehouse_id: warehouseId,
+          note: note || null,
+          received_by: email,
+          items: validItems,
+          is_temporary: isTemporary,
         }),
       });
       const result = await res.json();
       if (!res.ok) { setShowCheckModal(false); setError(result.error || 'Có lỗi xảy ra.'); return; }
 
       setShowCheckModal(false);
-      const qrCount = result.qr_codes?.length || 0;
-      setSuccessMsg(`Nhập kho hoàn tất! Mã: ${result.gr_code || ''}. ${qrCount > 0 ? `${qrCount} mã QR đã tạo.` : ''}`);
+      if (result.is_temporary) {
+        setSuccessMsg(`Phiếu nhập tạm đã tạo! Mã: ${result.gr_code || ''}. Đang thông báo tới bộ phận thu mua để tạo PO.`);
+      } else {
+        const qrCount = result.qr_codes?.length || 0;
+        setSuccessMsg(`Nhập kho hoàn tất! Mã: ${result.gr_code || ''}. ${qrCount > 0 ? `${qrCount} mã QR đã tạo.` : ''}`);
+      }
       setTimeout(() => {
         router.push(result.data?.id ? `/goods-receipt/${result.data.id}` : '/goods-receipt');
-      }, 1500);
+      }, 1800);
     } catch { setError('Lỗi kết nối server.'); } finally { setSubmitting(false); }
   };
 
@@ -172,7 +186,7 @@ function CreateGoodsReceiptForm() {
   const selectedKho = warehouses.find(w => w.id === warehouseId);
 
   return (
-    <PageLayout title="Tạo phiếu nhập kho" icon={<PackageCheck size={16} className="text-orange-500" />}>
+    <PageLayout title={isTemporary ? 'Tạo phiếu nhập tạm' : 'Tạo phiếu nhập kho'} icon={isTemporary ? <ClipboardList size={16} className="text-amber-500" /> : <PackageCheck size={16} className="text-orange-500" />}>
       <div className="max-w-2xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
         <button
           onClick={() => router.push('/goods-receipt')}
@@ -182,12 +196,26 @@ function CreateGoodsReceiptForm() {
           Danh sách phiếu nhập
         </button>
 
-        <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-4">Tạo phiếu nhập kho</h1>
+        {isTemporary && (
+          <div className="mb-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 flex-shrink-0">
+                <ClipboardList size={20} className="text-amber-600" />
+              </div>
+              <div>
+                <h2 className="font-extrabold text-amber-900 text-base">Phiếu nhập hàng tạm</h2>
+                <p className="text-xs text-amber-700 mt-0.5">Hàng đã đến nhưng chưa có PO. Phiếu này sẽ <strong>không cộng tồn kho</strong> — thông báo sẽ gửi đến thu mua để tạo PO.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-4">{isTemporary ? 'Nhập hàng tạm (chưa có PO)' : 'Tạo phiếu nhập kho'}</h1>
 
         <form onSubmit={handleOpenCheck} className="space-y-4">
 
           {/* ── PO Search (compact) ── */}
-          {!poId ? (
+          {!isTemporary && !poId ? (
             <div className="rounded-xl border border-orange-200 bg-orange-50/50 p-3 space-y-2">
               <label className="block text-xs font-bold text-gray-600">Liên kết mã PO</label>
               <div className="flex gap-2">
@@ -275,8 +303,8 @@ function CreateGoodsReceiptForm() {
             </div>
           )}
 
-          {/* Warehouse selector — only when no PO linked */}
-          {!poId && (
+          {/* Warehouse selector — when temporary or no PO linked */}
+          {(isTemporary || !poId) && (
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-3 space-y-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -388,10 +416,14 @@ function CreateGoodsReceiptForm() {
 
           <button
             type="submit"
-            className="w-full py-3.5 bg-[#1B2A4A] text-white rounded-xl font-bold text-sm hover:bg-[#162240] shadow-lg shadow-[#1B2A4A]/20 transition-all flex items-center justify-center gap-2"
+            className={`w-full py-3.5 text-white rounded-xl font-bold text-sm shadow-lg transition-all flex items-center justify-center gap-2 ${
+              isTemporary 
+                ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-200'
+                : 'bg-[#1B2A4A] hover:bg-[#162240] shadow-[#1B2A4A]/20'
+            }`}
           >
-            <ClipboardCheck size={16} />
-            Kiểm tra đơn hàng →
+            {isTemporary ? <ClipboardList size={16} /> : <ClipboardCheck size={16} />}
+            {isTemporary ? 'Tạo phiếu nhập tạm →' : 'Kiểm tra đơn hàng →'}
           </button>
         </form>
       </div>
@@ -406,10 +438,10 @@ function CreateGoodsReceiptForm() {
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
 
               {/* Header */}
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-[#1B2A4A] rounded-t-2xl">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 rounded-t-2xl" style={{ background: isTemporary ? '#f59e0b' : '#1B2A4A' }}>
                 <div className="flex items-center gap-2">
-                  <ClipboardCheck size={18} className="text-orange-300" />
-                  <h2 className="font-extrabold text-white text-base tracking-wide">KIỂM TRA ĐƠN HÀNG</h2>
+                  {isTemporary ? <ClipboardList size={18} className="text-white" /> : <ClipboardCheck size={18} className="text-orange-300" />}
+                  <h2 className="font-extrabold text-white text-base tracking-wide">{isTemporary ? 'XÁC NHẬN NHẬP TẠM' : 'KIỂM TRA ĐƠN HÀNG'}</h2>
                 </div>
                 <button onClick={() => setShowCheckModal(false)} className="text-gray-300 hover:text-white transition-colors">
                   <X size={18} />
@@ -501,7 +533,10 @@ function CreateGoodsReceiptForm() {
                     className="mt-0.5 w-4 h-4 rounded accent-emerald-600 flex-shrink-0"
                   />
                   <span className="text-sm font-semibold text-gray-700 leading-snug">
-                    Tôi xác nhận đã <span className="font-extrabold text-gray-900">kiểm tra và đếm đúng</span> số lượng hàng hóa thực tế nhận vào kho.
+                    {isTemporary
+                      ? <>Tôi xác nhận hàng <span className="font-extrabold text-gray-900">đã nhận vào kho</span> và chưa có PO liên kết. Phiếu này sẽ <span className="font-extrabold text-amber-700">không cộng tồn kho</span>.</>
+                      : <>Tôi xác nhận đã <span className="font-extrabold text-gray-900">kiểm tra và đếm đúng</span> số lượng hàng hóa thực tế nhận vào kho.</>
+                    }
                   </span>
                 </label>
 
@@ -518,10 +553,14 @@ function CreateGoodsReceiptForm() {
                 <button
                   onClick={handleSubmit}
                   disabled={!confirmed || submitting}
-                  className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-bold hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg shadow-orange-200 flex items-center justify-center gap-2"
+                  className={`flex-1 py-2.5 rounded-xl text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg flex items-center justify-center gap-2 ${
+                    isTemporary
+                      ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-200'
+                      : 'bg-orange-500 hover:bg-orange-600 shadow-orange-200'
+                  }`}
                 >
-                  <CheckCircle2 size={15} />
-                  {submitting ? 'Đang xử lý...' : 'Xác nhận nhập kho'}
+                  {isTemporary ? <ClipboardList size={15} /> : <CheckCircle2 size={15} />}
+                  {submitting ? 'Đang xử lý...' : (isTemporary ? 'Xác nhận nhập tạm' : 'Xác nhận nhập kho')}
                 </button>
               </div>
 

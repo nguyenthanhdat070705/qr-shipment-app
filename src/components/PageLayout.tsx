@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Menu, X, ChevronRight, Shield, LogOut,
   Truck, Warehouse, LayoutGrid, User,
   ShoppingCart, PackageCheck, TruckIcon,
-  Bell, Search, BarChart3, Settings, BookOpen, Users
+  Bell, Search, BarChart3, Settings, BookOpen, Users,
+  Package, Clock, ExternalLink, CheckCheck,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -393,6 +394,58 @@ function TopBar({
   const roleConfig = ROLE_CONFIGS[userRole];
   const initial = userEmail ? userEmail[0].toUpperCase() : 'U';
 
+  /* ── Notification State ── */
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState<{ id: string; title: string; message: string; type: string; reference_id?: string; is_read: boolean; created_at: string }[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const notifRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  const fetchNotifications = useCallback(async () => {
+    if (!userRole) return;
+    try {
+      const res = await fetch(`/api/notifications?role=${userRole}&unread=false`);
+      const json = await res.json();
+      setNotifications(json.data || []);
+      setUnreadCount(json.unread_count || 0);
+    } catch { /* ignore */ }
+  }, [userRole]);
+
+  // Poll every 30s
+  useEffect(() => {
+    if (!userRole) return;
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [userRole, fetchNotifications]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleDismiss = async (id: string) => {
+    await fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, action: 'dismiss' }),
+    });
+    fetchNotifications();
+  };
+
+  const handleMarkAllRead = async () => {
+    await fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'read_all', role: userRole }),
+    });
+    fetchNotifications();
+  };
+
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
       <div className="flex items-center justify-between h-14 px-4 lg:px-6">
@@ -428,10 +481,110 @@ function TopBar({
 
         {/* Right: notifications + user */}
         <div className="flex items-center gap-2">
-          <button className="relative p-2 rounded-xl hover:bg-gray-100 text-gray-500 transition-colors">
-            <Bell size={18} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-400 rounded-full" />
-          </button>
+          {/* ── Live Notification Bell ── */}
+          <div className="relative" ref={notifRef}>
+            <button
+              onClick={() => setNotifOpen(!notifOpen)}
+              className="relative p-2 rounded-xl hover:bg-gray-100 text-gray-500 transition-colors"
+            >
+              <Bell size={18} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold animate-pulse">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Dropdown */}
+            {notifOpen && (
+              <div className="absolute right-0 top-12 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
+                  <h3 className="text-sm font-extrabold text-gray-800">Thông báo</h3>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={handleMarkAllRead}
+                      className="flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+                    >
+                      <CheckCheck size={12} /> Đọc tất cả
+                    </button>
+                  )}
+                </div>
+
+                {/* List */}
+                <div className="max-h-80 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="py-8 text-center text-sm text-gray-400">
+                      <Bell size={24} className="mx-auto mb-2 text-gray-300" />
+                      Không có thông báo
+                    </div>
+                  ) : (
+                    notifications.slice(0, 15).map((n) => (
+                      <div
+                        key={n.id}
+                        className={`flex items-start gap-3 px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer ${
+                          !n.is_read ? 'bg-blue-50/50' : ''
+                        }`}
+                        onClick={() => {
+                          if (n.reference_id) {
+                            router.push(`/goods-receipt/${n.reference_id}`);
+                            setNotifOpen(false);
+                          }
+                        }}
+                      >
+                        {/* Icon */}
+                        <div className={`flex h-9 w-9 items-center justify-center rounded-xl flex-shrink-0 ${
+                          n.type === 'temporary_receipt' ? 'bg-amber-100' : 'bg-blue-100'
+                        }`}>
+                          {n.type === 'temporary_receipt' 
+                            ? <Package size={16} className="text-amber-600" />
+                            : <PackageCheck size={16} className="text-blue-600" />
+                          }
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-gray-800 truncate">
+                            {!n.is_read && <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5" />}
+                            {n.title}
+                          </p>
+                          <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5">{n.message}</p>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <span className="text-[10px] text-gray-400">
+                              <Clock size={10} className="inline mr-0.5" />
+                              {new Date(n.created_at).toLocaleDateString('vi-VN')} {new Date(n.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            {n.type === 'temporary_receipt' && (userRole === 'admin' || userRole === 'procurement') && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  router.push('/purchase-orders/create');
+                                  setNotifOpen(false);
+                                }}
+                                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 text-[10px] font-bold hover:bg-amber-200 transition-colors"
+                              >
+                                <ExternalLink size={9} /> Tạo PO
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Dismiss */}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDismiss(n.id); }}
+                          className="p-1 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0"
+                          title="Xóa"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
           <button className="p-2 rounded-xl hover:bg-gray-100 text-gray-500 transition-colors hidden sm:flex">
             <Settings size={18} />
           </button>

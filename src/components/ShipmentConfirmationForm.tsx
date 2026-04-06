@@ -8,6 +8,7 @@ import {
   Clock, User, Package,
   ChevronDown, Hash
 } from 'lucide-react';
+import { getUserRole, getWarehouseFilter } from '@/config/roles.config';
 
 interface ShipmentConfirmationFormProps {
   qrCode: string;
@@ -53,6 +54,7 @@ export default function ShipmentConfirmationForm({
   // Warehouse selector
   const [warehouses, setWarehouses] = useState<{ id: string; ten_kho: string; ma_kho: string }[]>([]);
   const [selectedWarehouse, setSelectedWarehouse] = useState('');
+  const [warehouseLocked, setWarehouseLocked] = useState(false);
 
   // Live clock
   const [nowStr, setNowStr] = useState('');
@@ -81,7 +83,7 @@ export default function ShipmentConfirmationForm({
     } catch { /* ignore */ }
   }, []);
 
-  // Load warehouses
+  // Load warehouses & auto-select based on user role
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/dim_kho?select=id,ma_kho,ten_kho&order=ten_kho.asc`, {
       headers: {
@@ -89,9 +91,36 @@ export default function ShipmentConfirmationForm({
         Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''}`,
       },
     }).then(r => r.json()).then(khoData => {
-      setWarehouses(Array.isArray(khoData) ? khoData : []);
+      const list = Array.isArray(khoData) ? khoData : [];
+      setWarehouses(list);
+
+      // Auto-select warehouse based on user email
+      if (userEmail && list.length > 0) {
+        const warehouseFilter = getWarehouseFilter(userEmail);
+
+        if (warehouseFilter) {
+          // User has a specific warehouse — find and lock it
+          const matched = list.find((w: { ten_kho: string }) =>
+            w.ten_kho.toLowerCase().includes(warehouseFilter.toLowerCase()) ||
+            warehouseFilter.toLowerCase().includes(w.ten_kho.toLowerCase())
+          );
+          if (matched) {
+            setSelectedWarehouse(matched.id);
+            setWarehouseLocked(true);
+          }
+        } else {
+          // All other roles: default to Hàm Long and lock
+          const hamLong = list.find((w: { ten_kho: string }) =>
+            w.ten_kho.toLowerCase().includes('hàm long') || w.ten_kho.toLowerCase().includes('ham long')
+          );
+          if (hamLong) {
+            setSelectedWarehouse(hamLong.id);
+            setWarehouseLocked(true);
+          }
+        }
+      }
     }).catch(() => {});
-  }, []);
+  }, [userEmail]);
 
   const isAlreadyExported = currentStatus === 'exported';
 
@@ -231,29 +260,37 @@ export default function ShipmentConfirmationForm({
         <div>
           <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">
             Kho xuất hàng <span className="text-red-500">*</span>
+            {warehouseLocked && <span className="ml-2 text-[10px] text-emerald-600 font-normal normal-case">🔒 Tự động theo tài khoản</span>}
           </label>
           <div className="relative">
             <select
               value={selectedWarehouse}
-              onChange={(e) => { setSelectedWarehouse(e.target.value); if (formState === 'error') setFormState('idle'); }}
+              onChange={(e) => { if (!warehouseLocked) { setSelectedWarehouse(e.target.value); if (formState === 'error') setFormState('idle'); } }}
+              disabled={warehouseLocked}
               required
               className={`w-full rounded-xl border px-4 py-3 text-sm font-medium appearance-none
                 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all
-                ${formState === 'error' && !selectedWarehouse ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white'}`}
+                ${warehouseLocked ? 'bg-emerald-50 border-emerald-200 text-emerald-800 cursor-not-allowed font-bold' : ''}
+                ${formState === 'error' && !selectedWarehouse ? 'border-red-300 bg-red-50' : !warehouseLocked ? 'border-gray-200 bg-gray-50 focus:bg-white' : ''}`}
             >
               <option value="">— Chọn kho xuất —</option>
               {warehouses.map((w) => (
                 <option key={w.id} value={w.id}>{w.ten_kho} ({w.ma_kho})</option>
               ))}
             </select>
-            <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            {warehouseLocked ? (
+              <Lock size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500 pointer-events-none" />
+            ) : (
+              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            )}
           </div>
         </div>
 
-        {/* ── Số lượng xuất ── */}
+        {/* ── Số lượng xuất (locked to 1) ── */}
         <div>
           <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">
             Số lượng xuất <span className="text-red-500">*</span>
+            <span className="ml-2 text-[10px] text-gray-400 font-normal normal-case">🔒 Mặc định 1</span>
           </label>
           <div className="relative">
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -262,15 +299,13 @@ export default function ShipmentConfirmationForm({
             <input
               type="number"
               min={1}
-              value={soLuong}
-              onChange={(e) => { setSoLuong(Math.max(1, parseInt(e.target.value) || 1)); if (formState === 'error') setFormState('idle'); }}
-              required
-              className={`w-full rounded-xl border pl-10 pr-4 py-3 text-sm font-bold
-                focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all
-                ${formState === 'error' && soLuong < 1 ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white'}`}
+              max={1}
+              value={1}
+              readOnly
+              className="w-full rounded-xl border border-gray-200 bg-gray-100 pl-10 pr-4 py-3 text-sm font-bold text-gray-700 cursor-not-allowed"
             />
           </div>
-          <p className="text-[10px] text-gray-400 mt-1">Số lượng tồn kho phải lớn hơn số lượng xuất</p>
+          <p className="text-[10px] text-gray-400 mt-1">Số lượng xuất mặc định là 1 cho mỗi sản phẩm</p>
         </div>
 
         {/* ── Mã Đám input ── */}

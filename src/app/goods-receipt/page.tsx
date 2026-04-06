@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { PackageCheck, Plus, Eye, CheckCircle, PackageOpen } from 'lucide-react';
+import { PackageCheck, Plus, Eye, CheckCircle, PackageOpen, ClipboardList, Clock } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import { getWarehouseFilter } from '@/config/roles.config';
 import DataTable from '@/components/DataTable';
-import StatusTimeline, { GR_STEPS } from '@/components/StatusTimeline';
+import StatusTimeline, { GR_STEPS, GR_TEMP_STEPS } from '@/components/StatusTimeline';
 import type { GoodsReceipt } from '@/types';
 
 function StatCard({
@@ -56,6 +56,7 @@ export default function GoodsReceiptPage() {
 
   const total = receipts.length;
   const completedCount = receipts.filter((r) => r.status === 'completed').length;
+  const pendingPoCount = receipts.filter((r) => r.status === 'pending_po').length;
 
   const columns = [
     {
@@ -95,20 +96,26 @@ export default function GoodsReceiptPage() {
     {
       key: 'status',
       label: 'Trạng thái',
-      render: (row: GoodsReceipt & { is_missing_goods?: boolean }) => (
-        <StatusTimeline 
-          steps={GR_STEPS} 
-          current={row.status} 
-          stepOverrides={{
-            completed: {
-              label: row.is_missing_goods ? 'Thiếu hàng' : 'Đầy đủ',
-              color: row.is_missing_goods 
-                ? 'bg-yellow-200 text-red-600 font-extrabold ring-red-300' 
-                : 'bg-emerald-100 text-emerald-700'
-            }
-          }}
-        />
-      ),
+      render: (row: GoodsReceipt & { is_missing_goods?: boolean }) => {
+        // Temporary receipt → use GR_TEMP_STEPS
+        if (row.status === 'pending_po' || row.status === 'pending_confirm') {
+          return <StatusTimeline steps={GR_TEMP_STEPS} current={row.status} />;
+        }
+        return (
+          <StatusTimeline 
+            steps={GR_STEPS} 
+            current={row.status} 
+            stepOverrides={{
+              completed: {
+                label: row.is_missing_goods ? 'Thiếu hàng' : 'Đầy đủ',
+                color: row.is_missing_goods 
+                  ? 'bg-yellow-200 text-red-600 font-extrabold ring-red-300' 
+                  : 'bg-emerald-100 text-emerald-700'
+              }
+            }}
+          />
+        );
+      },
     },
     {
       key: 'received_date',
@@ -137,24 +144,36 @@ export default function GoodsReceiptPage() {
 
   return (
     <PageLayout title="Nhập hàng" icon={<PackageCheck size={15} className="text-orange-500" />}>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900">Danh sách phiếu nhập</h1>
           <p className="text-sm text-gray-500 mt-0.5">Quản lý nhập hàng (GRPO) từ các PO đã xác nhận</p>
         </div>
-        <button
-          onClick={() => router.push('/goods-receipt/create')}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1B2A4A] text-white rounded-xl font-bold text-sm hover:bg-[#162240] shadow-lg shadow-[#1B2A4A]/20 transition-all"
-        >
-          <Plus size={16} />
-          Tạo phiếu nhập
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => router.push('/goods-receipt/create?temporary=true')}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 text-white rounded-xl font-bold text-sm hover:bg-amber-600 shadow-lg shadow-amber-200 transition-all"
+          >
+            <ClipboardList size={16} />
+            Nhập tạm
+          </button>
+          <button
+            onClick={() => router.push('/goods-receipt/create')}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1B2A4A] text-white rounded-xl font-bold text-sm hover:bg-[#162240] shadow-lg shadow-[#1B2A4A]/20 transition-all"
+          >
+            <Plus size={16} />
+            Tạo phiếu nhập
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard label="Tổng phiếu" value={total} icon={<PackageOpen size={22} />} color="text-[#1B2A4A]" bg="bg-[#eef1f7]" border="border-[#d5dbe9]" />
         <StatCard label="Hoàn tất" value={completedCount} icon={<CheckCircle size={22} />} color="text-emerald-600" bg="bg-emerald-50" border="border-emerald-200" />
+        {pendingPoCount > 0 && (
+          <StatCard label="Chờ PO" value={pendingPoCount} icon={<Clock size={22} />} color="text-amber-600" bg="bg-amber-50" border="border-amber-200" />
+        )}
       </div>
 
       {loading ? (
