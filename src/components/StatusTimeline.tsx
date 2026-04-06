@@ -62,6 +62,12 @@ export const GR_STEPS: TimelineStep[] = [
   { key: 'completed',  label: 'Hoàn tất',     color: 'bg-emerald-100 text-emerald-700' },
 ];
 
+export const GR_TEMP_STEPS: TimelineStep[] = [
+  { key: 'pending_po',      label: 'Chờ PO',       color: 'bg-amber-100 text-amber-700' },
+  { key: 'pending_confirm', label: 'Chờ xác nhận', color: 'bg-blue-100 text-blue-700' },
+  { key: 'completed',       label: 'Hoàn tất',     color: 'bg-emerald-100 text-emerald-700' },
+];
+
 export const DELIVERY_STEPS: TimelineStep[] = [
   { key: 'pending',    label: 'Chờ',          color: 'bg-yellow-100 text-yellow-700' },
   { key: 'assigned',   label: 'Đã giao việc', color: 'bg-blue-100 text-blue-700' },

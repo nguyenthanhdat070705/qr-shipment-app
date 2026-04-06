@@ -105,12 +105,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { po_id, warehouse_id, note, received_by, items } = body as {
+  const { po_id, warehouse_id, note, received_by, items, is_temporary } = body as {
     po_id?: string;
     warehouse_id: string;
     note?: string;
     received_by: string;
     items?: { product_code: string; product_name: string; expected_qty: number; received_qty: number; note?: string }[];
+    is_temporary?: boolean;
   };
 
   if (!warehouse_id || !received_by) {
@@ -127,6 +128,131 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
     nguoiNhanId = account?.id || null;
   }
+
+  // ══════════════════════════════════════════════
+  // TEMPORARY GOODS RECEIPT (Phiếu nhập hàng tạm)
+  // ══════════════════════════════════════════════
+  if (is_temporary) {
+    // Generate GR code: TGR-YYYYMMDD-XXX (T = Temporary)
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+    const { count } = await supabase.from('fact_nhap_hang').select('*', { count: 'exact', head: true });
+    const seq = String((count || 0) + 1).padStart(3, '0');
+    const ma_phieu_nhap = `TGR-${dateStr}-${seq}`;
+
+    const { data: gr, error: grError } = await supabase
+      .from('fact_nhap_hang')
+      .insert({
+        ma_phieu_nhap,
+        don_hang_id: null,
+        kho_id: warehouse_id,
+        ghi_chu: note ? `[TẠM] ${note} | Nhận bởi: ${received_by}` : `[TẠM] Nhận bởi: ${received_by}`,
+        nguoi_nhan_id: nguoiNhanId,
+        trang_thai: 'pending_po',
+        ngay_nhan: now.toISOString().slice(0, 10),
+      })
+      .select()
+      .single();
+
+    if (grError) {
+      return NextResponse.json({ error: grError.message }, { status: 500 });
+    }
+
+    // Insert items (if any)
+    if (items && items.length > 0) {
+      const itemRows = items.map((item) => ({
+        nhap_hang_id: gr.id,
+        ma_hom: item.product_code,
+        ten_hom: item.product_name,
+        so_luong_yeu_cau: item.expected_qty,
+        so_luong_thuc_nhan: item.received_qty,
+        ghi_chu: item.note || null,
+      }));
+
+      const { error: itemsError } = await supabase.from('fact_nhap_hang_items').insert(itemRows);
+      if (itemsError) console.error('[goods-receipt TEMP] Items insert error:', itemsError);
+    }
+
+    // ── NO inventory update for temporary receipts ──
+    // ── NO PO status update ──
+    // ── NO QR code generation ──
+
+    // Send Notification to Procurement
+    try {
+      // Get warehouse name
+      let warehouseName = '';
+      const { data: khoData } = await supabase.from('dim_kho').select('ten_kho').eq('id', warehouse_id).single();
+      if (khoData) warehouseName = khoData.ten_kho;
+
+      const itemSummary = (items || []).map(i => `${i.product_name} (x${i.received_qty})`).join(', ');
+
+      await supabase.from('notifications').insert({
+        sender_email: received_by,
+        receiver_role: 'procurement',
+        title: '📦 Phiếu nhập tạm - Cần tạo PO',
+        message: `Kho "${warehouseName}" đã tạo phiếu nhập tạm ${ma_phieu_nhap}. Hàng: ${itemSummary || 'N/A'}. Vui lòng tạo PO và liên kết.`,
+        type: 'temporary_receipt',
+        reference_id: gr.id,
+      });
+    } catch (err) {
+      console.error('[goods-receipt TEMP] Notification error:', err);
+    }
+
+    // Send Email to Procurement
+    try {
+      const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      let warehouseName = '';
+      const { data: khoData } = await supabase.from('dim_kho').select('ten_kho').eq('id', warehouse_id).single();
+      if (khoData) warehouseName = khoData.ten_kho;
+
+      const itemsHtml = (items || []).map(i => 
+        `<tr><td style="padding:4px 8px;border:1px solid #eee">${i.product_code}</td><td style="padding:4px 8px;border:1px solid #eee">${i.product_name}</td><td style="padding:4px 8px;border:1px solid #eee;text-align:center">${i.received_qty}</td></tr>`
+      ).join('');
+
+      await fetch(`${origin}/api/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: 'phongmuahang@blackstones.vn',
+          subject: `[KHẨN] Phiếu nhập tạm ${ma_phieu_nhap} - Cần tạo PO`,
+          html: `
+            <h3>📦 Thông báo phiếu nhập hàng tạm</h3>
+            <p>Kho <strong>${warehouseName}</strong> đã nhận hàng và tạo phiếu nhập tạm.</p>
+            <p><strong>Mã phiếu:</strong> ${ma_phieu_nhap}</p>
+            <p><strong>Người nhận:</strong> ${received_by}</p>
+            <p><strong>Ngày nhận:</strong> ${new Date().toLocaleDateString('vi-VN')}</p>
+            ${note ? `<p><strong>Ghi chú:</strong> ${note}</p>` : ''}
+            <hr/>
+            <h4>Danh sách hàng hóa:</h4>
+            <table style="border-collapse:collapse;width:100%">
+              <thead><tr style="background:#f5f5f5">
+                <th style="padding:6px 8px;border:1px solid #ddd;text-align:left">Mã SP</th>
+                <th style="padding:6px 8px;border:1px solid #ddd;text-align:left">Tên SP</th>
+                <th style="padding:6px 8px;border:1px solid #ddd;text-align:center">SL nhận</th>
+              </tr></thead>
+              <tbody>${itemsHtml}</tbody>
+            </table>
+            <hr/>
+            <p><strong>⚠️ Vui lòng tạo PO và liên kết vào phiếu nhập này để kho có thể nhập chính thức.</strong></p>
+            <p><a href="${origin}/goods-receipt/${gr.id}">Xem chi tiết phiếu nhập</a></p>
+          `
+        })
+      });
+    } catch (emailError) {
+      console.error('[goods-receipt TEMP] Email error:', emailError);
+    }
+
+    return NextResponse.json({
+      data: { id: gr.id, gr_code: ma_phieu_nhap },
+      gr_code: ma_phieu_nhap,
+      is_temporary: true,
+      qr_codes: [],
+    }, { status: 201 });
+  }
+
+  // ══════════════════════════════════════════════
+  // NORMAL GOODS RECEIPT (existing logic)
+  // ══════════════════════════════════════════════
 
   // ── Auto-Correction: Revert old GRPO inventory if re-scanning same PO in same warehouse ──
   if (po_id) {

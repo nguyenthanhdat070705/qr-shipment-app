@@ -130,7 +130,7 @@ export interface PurchaseOrderItem {
 }
 
 /** Trạng thái GRPO */
-export type GRStatus = 'completed' | 'cancelled' | 'pending' | 'inspecting';
+export type GRStatus = 'completed' | 'cancelled' | 'pending' | 'inspecting' | 'pending_po' | 'pending_confirm';
 
 /** Phiếu nhập kho — Goods Receipt PO */
 export interface GoodsReceipt {

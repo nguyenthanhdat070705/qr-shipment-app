@@ -1,0 +1,18 @@
+# ══════════════════════════════════════════════════════════════
+# CRON SCHEDULE — BlackStone SCM
+# Thay thế Vercel Cron / cron-job.org
+# ══════════════════════════════════════════════════════════════
+
+# ── Sync 1Office → Supabase (daily at 00:00 Vietnam) ─────────
+0 0 * * * /usr/bin/curl -sf -X POST "${APP_URL}/api/cron/sync-1office?key=${CRON_SECRET}" >> /var/log/cron.log 2>&1
+
+# ── Sync Google Sheets → fact_dam (daily at 00:30 Vietnam) ───
+30 0 * * * /usr/bin/curl -sf -X POST "${APP_URL}/api/cron/sync-dam?key=${CRON_SECRET}" >> /var/log/cron.log 2>&1
+
+# ── Sync Google Sheets → fact_inventory (daily at 01:00) ─────
+0 1 * * * /usr/bin/curl -sf -X POST "${APP_URL}/api/sync-inventory" >> /var/log/cron.log 2>&1
+
+# ── Keep log clean (weekly on Sunday) ─────────────────────────
+0 2 * * 0 echo "--- Log rotated $(date) ---" > /var/log/cron.log 2>&1
+
+# Empty line required
