@@ -1,16 +1,17 @@
 # ══════════════════════════════════════════════════════════════
 # BlackStone Order SCM — Docker Compose
-# 3 Containers: App + DB + Cron
+# Containers: App + Cron + Tunnel + Seed(optional)
 # ══════════════════════════════════════════════════════════════
 # 
 # CÁCH SỬ DỤNG:
-#   1. Copy .env.production.example → .env.production, điền giá trị
-#   2. docker compose up -d --build
-#   3. Truy cập: http://localhost:3000
+#   1. Đảm bảo file .env.production đã có (nằm cùng thư mục)
+#   2. docker compose --env-file .env.production up -d --build
+#   3. Truy cập LAN:  http://<IP-máy>:3000
+#   4. Truy cập ngoài: xem log tunnel để lấy URL
+#      docker compose logs tunnel
 #
-# Lần đầu chạy trên server mới:
-#   docker compose up -d
-#   docker compose exec app node scripts/init-db.mjs   (nếu cần)
+# Lần đầu chạy trên server mới (import data):
+#   docker compose --env-file .env.production --profile seed up seed
 # ══════════════════════════════════════════════════════════════
 
 services:
@@ -82,7 +83,31 @@ services:
       - "com.blackstone.description=Scheduled sync jobs (1Office, Google Sheets)"
 
   # ┌────────────────────────────────────────────────────────────┐
-  # │  CONTAINER 3: DATA SEED / MIGRATION RUNNER (run-once)      │
+  # │  CONTAINER 3: CLOUDFLARE TUNNEL (Truy cập từ bên ngoài)   │
+  # │  Tạo tunnel miễn phí → URL public truy cập được từ mọi nơi│
+  # │  Không cần mở port, không cần domain riêng                 │
+  # │                                                            │
+  # │  QUICK MODE (mặc định): URL random *.trycloudflare.com    │
+  # │  TOKEN MODE: Dùng Cloudflare Dashboard để có URL cố định  │
+  # │    → Đổi command thành: tunnel run                         │
+  # │    → Thêm env: TUNNEL_TOKEN=<token-từ-dashboard>           │
+  # └────────────────────────────────────────────────────────────┘
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: blackstone-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --url http://app:3000
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - blackstone-net
+    labels:
+      - "com.blackstone.service=cloudflare-tunnel"
+      - "com.blackstone.description=External access via Cloudflare Tunnel"
+
+  # ┌────────────────────────────────────────────────────────────┐
+  # │  CONTAINER 4: DATA SEED / MIGRATION RUNNER (run-once)      │
   # │  Chạy các script upload data ban đầu:                      │
   # │  - Import CSV → dim_hom, dim_ncc, dim_kho                  │
   # │  - Sync inventory từ Google Sheets                         │
@@ -110,26 +135,6 @@ services:
     labels:
       - "com.blackstone.service=data-seeder"
       - "com.blackstone.description=One-time data import (CSV, Google Sheets)"
-
-  # ┌────────────────────────────────────────────────────────────┐
-  # │  CONTAINER 4: NGINX REVERSE PROXY (optional)               │
-  # │  SSL termination + caching + gzip                          │
-  # │  Bỏ comment nếu cần chạy trên domain với HTTPS             │
-  # └────────────────────────────────────────────────────────────┘
-  # nginx:
-  #   image: nginx:alpine
-  #   container_name: blackstone-nginx
-  #   restart: unless-stopped
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   volumes:
-  #     - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-  #     - ./docker/nginx/certs:/etc/nginx/certs:ro
-  #   depends_on:
-  #     - app
-  #   networks:
-  #     - blackstone-net
 
 networks:
   blackstone-net:

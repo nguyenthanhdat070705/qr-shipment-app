@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
         trang_thai,
         nguoi_xuat_id,
         created_at,
-        dim_kho!inner ( id, ten_kho ),
+        dim_kho ( id, ten_kho ),
         dim_account ( ho_ten, email ),
         fact_xuat_hang_items (
           ma_hom,
@@ -34,7 +34,15 @@ export async function GET(request: NextRequest) {
 
     // Apply warehouse filtering if active
     if (warehouseFilter && warehouseFilter !== 'Tổng kho') {
-      query = query.ilike('dim_kho.ten_kho', `%${warehouseFilter}%`);
+      // Look up warehouse ID by name
+      const { data: khoData } = await supabase
+        .from('dim_kho')
+        .select('id')
+        .ilike('ten_kho', `%${warehouseFilter}%`);
+      
+      if (khoData && khoData.length > 0) {
+        query = query.in('kho_id', khoData.map(k => k.id));
+      }
     }
 
     // Filter by creator if specified
