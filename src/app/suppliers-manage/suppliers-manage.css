@@ -1,0 +1,450 @@
+.ncc-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* ── Header ────────────────────────────── */
+.ncc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.ncc-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #1e293b;
+}
+.ncc-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+.ncc-subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 2px 0 0;
+}
+.ncc-header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.ncc-btn-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #64748b;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ncc-btn-upload:hover {
+  background: #fff7ed;
+  border-color: #f97316;
+  color: #ea580c;
+  transform: translateY(-1px);
+}
+.ncc-btn-create {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+}
+.ncc-btn-create:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.4);
+}
+
+/* ── Message ────────────────────────────── */
+.ncc-message {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  position: relative;
+}
+.ncc-message-success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+.ncc-message-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+.ncc-message-close {
+  position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: inherit; opacity: 0.6;
+}
+
+/* ── Form Overlay ────────────────────────── */
+.ncc-form-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.ncc-form-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 720px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.ncc-form-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 20px 24px; border-bottom: 1px solid #e2e8f0;
+}
+.ncc-form-header h2 { margin: 0; font-size: 1.2rem; font-weight: 700; color: #1e293b; }
+.ncc-form-close { background: none; border: none; cursor: pointer; color: #94a3b8; transition: color 0.2s; }
+.ncc-form-close:hover { color: #ef4444; }
+
+.ncc-form { padding: 24px; }
+.ncc-form-section { margin-bottom: 24px; }
+.ncc-form-section-title {
+  font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;
+  color: #f97316; font-weight: 700; margin: 0 0 12px; padding-bottom: 8px;
+  border-bottom: 2px solid #f1f5f9;
+}
+.ncc-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.ncc-field { display: flex; flex-direction: column; gap: 4px; }
+.ncc-field-full { grid-column: 1 / -1; }
+.ncc-field label { font-size: 0.82rem; font-weight: 600; color: #475569; }
+.ncc-required { color: #ef4444; }
+.ncc-field input, .ncc-field textarea {
+  padding: 8px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px;
+  font-size: 0.9rem; color: #1e293b; transition: border-color 0.2s;
+  font-family: inherit; resize: vertical;
+}
+.ncc-field input:focus, .ncc-field textarea:focus {
+  outline: none; border-color: #f97316; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+.ncc-field input:disabled { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
+
+.ncc-form-actions {
+  display: flex; justify-content: flex-end; gap: 12px;
+  padding-top: 16px; border-top: 1px solid #e2e8f0;
+}
+.ncc-btn-cancel {
+  padding: 10px 20px; border: 1.5px solid #e2e8f0; border-radius: 10px;
+  background: #fff; color: #64748b; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.ncc-btn-cancel:hover { background: #f8fafc; border-color: #cbd5e1; }
+.ncc-btn-save {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 24px; border: none; border-radius: 10px;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: #fff; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.ncc-btn-save:hover { box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4); }
+.ncc-btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Search ────────────────────────────── */
+.ncc-search-bar {
+  display: flex; align-items: center; gap: 10px; background: #fff;
+  border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 10px 16px;
+  margin-bottom: 20px; transition: border-color 0.2s;
+}
+.ncc-search-bar:focus-within { border-color: #f97316; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.08); }
+.ncc-search-bar svg { color: #94a3b8; flex-shrink: 0; }
+.ncc-search-bar input { flex: 1; border: none; outline: none; font-size: 0.9rem; color: #1e293b; background: transparent; }
+.ncc-search-clear { background: none; border: none; cursor: pointer; color: #94a3b8; padding: 2px; }
+
+/* ── Table ────────────────────────────── */
+.ncc-table-wrap { background: #fff; border-radius: 14px; border: 1px solid #e2e8f0; overflow: auto; }
+.ncc-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.ncc-table thead { background: #fff7ed; }
+.ncc-table th {
+  padding: 12px 14px; text-align: left; font-weight: 700; color: #9a3412;
+  font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em;
+  border-bottom: 2px solid #fed7aa; white-space: nowrap;
+}
+.ncc-table td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+.ncc-table tbody tr:hover { background: #fff7ed; }
+.ncc-row-expanded { background: #fff7ed !important; }
+.ncc-td-center { text-align: center; color: #94a3b8; }
+.ncc-code {
+  display: inline-block; padding: 3px 8px; background: #ffedd5; color: #c2410c;
+  border-radius: 6px; font-weight: 700; font-size: 0.82rem;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+.ncc-td-name { font-weight: 600; max-width: 200px; }
+.ncc-td-content { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #64748b; font-size: 0.84rem; }
+.ncc-contact-name { font-weight: 500; color: #334155; }
+.ncc-phone { display: inline-flex; align-items: center; gap: 4px; color: #0d9488; font-weight: 500; font-size: 0.84rem; }
+.ncc-td-actions { display: flex; gap: 6px; }
+.ncc-btn-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border: 1px solid #e2e8f0; border-radius: 8px;
+  background: #fff; color: #64748b; cursor: pointer; transition: all 0.2s;
+}
+.ncc-btn-icon:hover { background: #ffedd5; color: #c2410c; border-color: #fed7aa; }
+.ncc-btn-icon-danger:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+
+/* ── Detail Row ────────────────────────── */
+.ncc-detail-row td { padding: 0 14px 14px !important; background: #fff7ed; border-bottom: 2px solid #fed7aa; }
+.ncc-detail-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;
+  padding: 14px 16px; background: #fff; border-radius: 10px; border: 1px solid #ffedd5;
+}
+.ncc-detail-item { display: flex; align-items: flex-start; gap: 8px; font-size: 0.84rem; }
+.ncc-detail-icon { color: #f97316; flex-shrink: 0; margin-top: 2px; }
+.ncc-detail-item strong { color: #c2410c; font-weight: 600; display: block; font-size: 0.78rem; margin-bottom: 2px; }
+.ncc-detail-item span { color: #475569; }
+.ncc-detail-full { grid-column: 1 / -1; }
+
+/* ── Delete Modal ────────────────────────── */
+.ncc-delete-modal {
+  background: #fff; border-radius: 16px; padding: 0;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  width: 100%; max-width: 440px; overflow: hidden;
+}
+.ncc-delete-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 20px 24px; background: #fef2f2; border-bottom: 1px solid #fecaca;
+}
+.ncc-delete-icon { color: #dc2626; flex-shrink: 0; }
+.ncc-delete-header h3 { margin: 0; font-size: 1.05rem; font-weight: 700; color: #991b1b; }
+.ncc-delete-header p { margin: 2px 0 0; font-size: 0.82rem; color: #b91c1c; }
+.ncc-delete-body { padding: 20px 24px; font-size: 0.9rem; color: #475569; }
+.ncc-delete-body strong { color: #1e293b; }
+.ncc-delete-actions {
+  display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px;
+  border-top: 1px solid #f1f5f9;
+}
+.ncc-btn-delete {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border: none; border-radius: 10px;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: #fff; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.ncc-btn-delete:hover { box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4); }
+.ncc-btn-delete:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Excel Import Modal ────────────────── */
+.ncc-excel-modal {
+  background: #fff; border-radius: 16px; width: 100%; max-width: 800px;
+  max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+.ncc-excel-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 20px 24px; border-bottom: 1px solid #e2e8f0;
+}
+.ncc-excel-header-left { display: flex; align-items: center; gap: 12px; color: #1e293b; }
+.ncc-excel-header h2 { margin: 0; font-size: 1.15rem; font-weight: 700; }
+.ncc-excel-subtitle { margin: 2px 0 0; font-size: 0.82rem; color: #64748b; }
+.ncc-excel-body { padding: 24px; }
+.ncc-excel-error {
+  display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+  background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;
+  border-radius: 8px; font-size: 0.85rem; margin-bottom: 16px;
+}
+
+/* Upload area */
+.ncc-excel-upload {
+  border: 2px dashed #fed7aa; border-radius: 14px; padding: 48px 20px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  cursor: pointer; background: #fffbf5; transition: all 0.2s; text-align: center;
+}
+.ncc-excel-upload:hover { border-color: #f97316; background: #fff7ed; }
+.ncc-excel-upload-icon { color: #fdba74; }
+.ncc-excel-upload h3 { margin: 0; color: #c2410c; font-size: 1rem; }
+.ncc-excel-upload p { margin: 0; color: #94a3b8; font-size: 0.85rem; }
+
+/* Mapping */
+.ncc-excel-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.ncc-badge {
+  display: inline-block; padding: 4px 10px; border-radius: 6px;
+  font-size: 0.78rem; font-weight: 600;
+}
+.ncc-badge-info { background: #eff6ff; color: #1d4ed8; }
+.ncc-badge-ok { background: #ecfdf5; color: #065f46; }
+.ncc-badge-warn { background: #fffbeb; color: #b45309; }
+
+.ncc-excel-map-table-wrap {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+.ncc-excel-map-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+.ncc-excel-map-table thead {
+  background: #f8fafc;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.ncc-excel-map-table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 700;
+  color: #64748b;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+}
+.ncc-excel-map-table td {
+  padding: 8px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+.ncc-excel-map-table tbody tr:hover {
+  background: #fafafa;
+}
+.ncc-map-row-mapped {
+  background: #fff7ed !important;
+}
+.ncc-map-col-name {
+  font-weight: 600;
+  color: #334155;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ncc-map-arrow {
+  color: #94a3b8;
+  text-align: center;
+  width: 30px;
+}
+.ncc-map-select {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  color: #64748b;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ncc-map-select.has-value {
+  border-color: #f97316;
+  color: #c2410c;
+  font-weight: 600;
+  background: #fffbf5;
+}
+.ncc-map-select:focus {
+  outline: none;
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+.ncc-map-sample {
+  color: #94a3b8;
+  font-size: 0.78rem;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-style: italic;
+}
+
+.ncc-excel-actions {
+  display: flex; justify-content: flex-end; gap: 10px;
+  padding-top: 16px; margin-top: 16px; border-top: 1px solid #e2e8f0;
+}
+
+/* Preview */
+.ncc-excel-table-wrap { max-height: 360px; overflow: auto; border: 1px solid #e2e8f0; border-radius: 10px; margin: 12px 0; }
+.ncc-excel-more { text-align: center; color: #94a3b8; font-size: 0.82rem; padding: 8px; }
+.ncc-btn-import {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 22px; border: none; border-radius: 10px;
+  background: linear-gradient(135deg, #059669, #047857);
+  color: #fff; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.ncc-btn-import:hover { box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4); }
+
+/* Importing spinner */
+.ncc-excel-importing {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 48px 20px; text-align: center;
+}
+.ncc-excel-importing h3 { color: #1e293b; margin: 0; }
+.ncc-excel-importing p { color: #94a3b8; margin: 0; }
+
+/* Done */
+.ncc-excel-done { text-align: center; padding: 20px 0; }
+.ncc-excel-done-icon {
+  width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 16px;
+  background: linear-gradient(135deg, #059669, #047857);
+  display: flex; align-items: center; justify-content: center; color: #fff;
+}
+.ncc-excel-done h3 { margin: 0 0 20px; color: #065f46; font-size: 1.15rem; }
+.ncc-excel-stats {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;
+}
+.ncc-excel-stats > div {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 12px 8px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;
+}
+.ncc-stat-num { font-size: 1.5rem; font-weight: 800; color: #1e293b; }
+.ncc-stat-ok { color: #059669; }
+.ncc-stat-up { color: #2563eb; }
+.ncc-stat-skip { color: #94a3b8; }
+.ncc-excel-stats span:last-child { font-size: 0.78rem; color: #64748b; }
+.ncc-excel-errors {
+  background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px;
+  padding: 12px 16px; text-align: left; margin-bottom: 16px; font-size: 0.82rem;
+}
+.ncc-excel-errors h4 { margin: 0 0 8px; color: #991b1b; }
+.ncc-excel-errors ul { margin: 0; padding-left: 20px; color: #b91c1c; }
+
+/* ── Spinner ────────────────────────────── */
+.ncc-spin { animation: ncc-spin 1s linear infinite; }
+@keyframes ncc-spin { to { transform: rotate(360deg); } }
+
+/* ── Loading & Empty ────────────────────── */
+.ncc-loading {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 60px 20px; color: #94a3b8;
+}
+.ncc-spinner {
+  width: 32px; height: 32px; border: 3px solid #e2e8f0; border-top-color: #f97316;
+  border-radius: 50%; animation: ncc-spin 0.8s linear infinite;
+}
+.ncc-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 60px 20px; color: #94a3b8; text-align: center;
+}
+.ncc-empty h3 { color: #475569; margin: 0; }
+.ncc-empty p { color: #94a3b8; margin: 0; }
+
+/* ── Responsive ────────────────────────── */
+@media (max-width: 768px) {
+  .ncc-form-grid { grid-template-columns: 1fr; }
+  .ncc-detail-grid { grid-template-columns: 1fr; }
+  .ncc-header { flex-direction: column; align-items: flex-start; }
+  .ncc-excel-map-row { grid-template-columns: 1fr; }
+  .ncc-excel-stats { grid-template-columns: repeat(2, 1fr); }
+}

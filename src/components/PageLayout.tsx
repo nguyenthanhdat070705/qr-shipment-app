@@ -188,6 +188,24 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       iconBg: 'bg-teal-500/15',
       requiresPermission: 'canViewProducts',
     },
+    /* ── Quản lý sản phẩm (admin + procurement) ── */
+    ...((userRole === 'admin' || userRole === 'procurement') ? [{
+      icon: <Package size={18} />,
+      label: 'Quản lý hòm',
+      desc: 'Tạo mã & thêm sản phẩm hòm',
+      href: '/products-manage',
+      color: 'text-purple-400',
+      iconBg: 'bg-purple-500/15',
+    } as MenuItem] : []),
+    /* ── Quản lý NCC (admin + procurement) ── */
+    ...((userRole === 'admin' || userRole === 'procurement') ? [{
+      icon: <Truck size={18} />,
+      label: 'Quản lý NCC',
+      desc: 'Nhà cung cấp',
+      href: '/suppliers-manage',
+      color: 'text-orange-400',
+      iconBg: 'bg-orange-500/15',
+    } as MenuItem] : []),
     /* ── Hệ thống ── */
     {
       icon: <User size={18} />,
