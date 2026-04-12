@@ -206,6 +206,15 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-orange-400',
       iconBg: 'bg-orange-500/15',
     } as MenuItem] : []),
+    /* ── Quản lý kho (admin only) ── */
+    ...(userRole === 'admin' ? [{
+      icon: <Warehouse size={18} />,
+      label: 'Quản lý kho',
+      desc: 'Tạo & quản lý kho hàng',
+      href: '/warehouses-manage',
+      color: 'text-emerald-400',
+      iconBg: 'bg-emerald-500/15',
+    } as MenuItem] : []),
     /* ── Hệ thống ── */
     {
       icon: <User size={18} />,
