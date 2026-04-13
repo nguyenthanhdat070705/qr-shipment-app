@@ -139,23 +139,23 @@ export async function POST(req: NextRequest) {
       if (!doErr && doData) {
         doId = doData.id;
 
-        // 6. Record items
-        if (doId && homData) {
-          await supabase.from('fact_xuat_hang_items').insert({
+        if (homData) {
+          const { error: itemsErr } = await supabase.from('fact_xuat_hang_items').insert({
             xuat_hang_id: doId,
             hom_id: homData.id,
             ma_hom: maHom,
             ten_hom: tenHom,
             so_luong: quantity,
-            inventory_id: null, // avoid FK constraint since inventory uses old PK format
+            inventory_id: null,
             ghi_chu: note || 'Xuất từ hệ thống SCM',
           });
+          if (itemsErr) throw new Error('Lỗi thêm items xuất hàng: ' + itemsErr.message);
         }
       } else if (doErr) {
-        console.warn('[goods-issue] fact_xuat_hang insert skipped:', doErr.message);
+        throw new Error('Lỗi thêm phiếu xuất hàng: ' + doErr.message);
       }
     } catch (e: any) {
-      console.warn('[goods-issue] fact_xuat_hang not available, skipping:', e.message);
+      throw new Error('Không thể ghi phiếu xuất: ' + e.message);
     }
 
     // 7. Notify operations (optional)

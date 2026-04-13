@@ -200,8 +200,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   let insertError: { message: string; code?: string } | null = null;
 
   const now = new Date();
-  const ngayXuat = now.toISOString().split('T')[0]; // YYYY-MM-DD
-  const thoiGianXuat = now.toTimeString().slice(0, 8); // HH:MM:SS
+  const options = { timeZone: 'Asia/Ho_Chi_Minh', hour12: false };
+  const ngayXuat = now.toLocaleDateString('en-CA', options); // YYYY-MM-DD in VN time
+  const thoiGianXuat = now.toLocaleTimeString('en-GB', options); // HH:MM:SS in VN time
 
   // Escape single quotes to prevent SQL injection
   const escStr = (s: string | null) =>
@@ -269,8 +270,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // Gán giá trị mặc định nếu raw SQL không trả về đủ fields
-  if (!confirmation.ngay_xuat) confirmation.ngay_xuat = new Date().toISOString().split('T')[0];
-  if (!confirmation.thoi_gian_xuat) confirmation.thoi_gian_xuat = new Date().toTimeString().slice(0, 8);
+  if (!confirmation.ngay_xuat) confirmation.ngay_xuat = ngayXuat;
+  if (!confirmation.thoi_gian_xuat) confirmation.thoi_gian_xuat = thoiGianXuat;
   if (!confirmation.created_at) confirmation.created_at = new Date().toISOString();
   if (!confirmation.stt) confirmation.stt = 0;
 

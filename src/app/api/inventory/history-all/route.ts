@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic'; // Trigger hot reload
 
 export async function GET(request: Request) {
   try {
