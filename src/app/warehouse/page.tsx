@@ -352,7 +352,7 @@ export default function WarehouseDashboard() {
   const [userEmail, setUserEmail] = useState('');
   const [warehouseLabel, setWarehouseLabel] = useState('Kho');
   const [nowStr, setNowStr] = useState('');
-  const [history, setHistory] = useState<RecentExport[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [stats, setStats] = useState<InventoryStat>({ total: 0, available: 0, outOfStock: 0, totalQuantity: 0, warehouseName: '' });
   const [outOfStockProducts, setOutOfStockProducts] = useState<OutOfStockProduct[]>([]);
@@ -409,11 +409,11 @@ export default function WarehouseDashboard() {
         }
       } catch {}
 
-      const res = await fetch(`/api/goods-issue/history${filter}`);
+      const res = await fetch(`/api/inventory/history-all${filter}`);
       const json = await res.json();
       if (res.ok) {
-        let data: RecentExport[] = json.data || [];
-        setHistory(data.slice(0, 8));
+        let data = json.data || [];
+        setHistory(data.slice(0, 50)); // Show up to 50 combined
       }
     } catch {}
     finally { setHistoryLoading(false); }
@@ -483,7 +483,7 @@ export default function WarehouseDashboard() {
   const todayCount = history.filter(h => {
     const d = new Date(h.created_at);
     const now = new Date();
-    return d.toDateString() === now.toDateString();
+    return d.toDateString() === now.toDateString() && h.type === 'export';
   }).length;
 
   const handleRefresh = () => {
@@ -604,26 +604,26 @@ export default function WarehouseDashboard() {
       {/* ── Main Grid ────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* ── Left: Recent exports (2/3 width) ── */}
+        {/* ── Left: Combined History Table (2/3 width) ── */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-1 h-5 rounded-full bg-emerald-500" />
-              <h2 className="font-extrabold text-gray-900 text-base">Lịch sử xuất hàng gần đây</h2>
+              <h2 className="font-extrabold text-gray-900 text-base">Lịch sử xuất / nhập kho gần đây</h2>
             </div>
             <button
-              onClick={() => router.push('/goods-issue')}
+              onClick={() => handleRefresh()}
               className="flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
             >
-              Xem tất cả <ArrowRight size={13} />
+              Làm mới <RefreshCw size={12} className={historyLoading ? 'animate-spin' : ''} />
             </button>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden overflow-x-auto">
             {historyLoading ? (
               <div className="flex items-center justify-center gap-3 py-14 text-gray-300">
                 <span className="animate-spin h-6 w-6 border-3 border-emerald-400 border-t-transparent rounded-full" />
-                <span className="text-sm font-medium text-gray-400">Đang tải...</span>
+                <span className="text-sm font-medium text-gray-400">Đang tải dữ liệu...</span>
               </div>
             ) : history.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
@@ -631,59 +631,89 @@ export default function WarehouseDashboard() {
                   <Package size={28} className="text-gray-200" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-400">Chưa có phiếu xuất hàng</p>
-                  <p className="text-xs text-gray-300 mt-1">Tạo phiếu xuất hàng đầu tiên ngay</p>
+                  <p className="text-sm font-bold text-gray-400">Chưa có dữ liệu lịch sử</p>
                 </div>
-                <button
-                  onClick={() => router.push('/goods-issue')}
-                  className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 text-emerald-600 text-sm font-bold hover:bg-emerald-100 transition-colors"
-                >
-                  <Truck size={14} /> Xuất hàng ngay
-                </button>
               </div>
             ) : (
-              <div className="divide-y divide-gray-50">
-                {history.map((item) => {
-                  const firstItem = item.fact_xuat_hang_items?.[0];
-                  const createdAt = new Date(item.created_at);
-                  const dateStr = createdAt.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-                  const timeStr = createdAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-                  const isToday = createdAt.toDateString() === new Date().toDateString();
+              <div className="min-w-[900px]">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-extrabold text-gray-500 uppercase tracking-widest">
+                      <th className="p-3 text-center w-12">STT</th>
+                      <th className="p-3">Ngày nhập/xuất</th>
+                      <th className="p-3">Loại</th>
+                      <th className="p-3">Số phiếu</th>
+                      <th className="p-3">Mã sản phẩm</th>
+                      <th className="p-3">Tên sản phẩm</th>
+                      <th className="p-3 text-center">ĐVT</th>
+                      <th className="p-3 text-right">Số lượng</th>
+                      <th className="p-3">Mã đám</th>
+                      <th className="p-3 text-right">Đơn giá</th>
+                      <th className="p-3">Ghi chú</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 text-sm">
+                    {history.map((item: any, i) => {
+                      const createdAt = new Date(item.created_at);
+                      const dateStr = createdAt.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                      const timeStr = createdAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                      const isImport = item.type === 'import';
 
-                  return (
-                    <div
-                      key={item.id}
-                      onClick={() => router.push('/goods-issue')}
-                      className="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50/60 transition-colors cursor-pointer group"
-                    >
-                      <div className="flex-shrink-0 h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
-                        <Package size={18} className="text-emerald-500" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                          <span className="font-mono text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">{item.ma_phieu_xuat}</span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${STATUS_COLORS[item.trang_thai] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
-                            {STATUS_LABEL[item.trang_thai] || item.trang_thai}
-                          </span>
-                          {isToday && (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">Hôm nay</span>
-                          )}
-                        </div>
-                        <p className="text-sm font-semibold text-gray-800 truncate">
-                          {firstItem ? `${firstItem.ma_hom} — ${firstItem.ten_hom}` : item.ten_khach || 'N/A'}
-                        </p>
-                        {item.ghi_chu && (
-                          <p className="text-xs text-gray-400 truncate mt-0.5">{item.ghi_chu}</p>
-                        )}
-                      </div>
-                      <div className="flex-shrink-0 text-right">
-                        <p className="text-xs font-bold text-gray-700">{timeStr}</p>
-                        <p className="text-[10px] text-gray-400">{dateStr}</p>
-                      </div>
-                      <ArrowUpRight size={14} className="text-gray-200 group-hover:text-emerald-400 transition-colors flex-shrink-0" />
-                    </div>
-                  );
-                })}
+                      return (
+                        <tr key={item.id} className="hover:bg-gray-50/60 transition-colors">
+                          <td className="p-3 text-center text-xs font-bold text-gray-400">{i + 1}</td>
+                          <td className="p-3 text-xs">
+                            <span className="font-semibold text-gray-700">{dateStr}</span>
+                            <span className="text-gray-400 ml-1 block text-[10px] sm:inline">{timeStr}</span>
+                          </td>
+                          <td className="p-3">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${isImport ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                              {isImport ? 'NHẬP' : 'XUẤT'}
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            <span className="font-mono text-[11px] font-bold text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded">
+                              {isImport ? `GRPO • ${item.voucher}` : `IT • ${item.voucher}`}
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            <span className="font-mono text-xs font-bold text-gray-900">{item.ma_sp}</span>
+                          </td>
+                          <td className="p-3">
+                            <span className="font-semibold text-gray-700 text-[13px]">{item.ten_sp}</span>
+                          </td>
+                          <td className="p-3 text-center text-xs text-gray-500 font-medium">cái</td>
+                          <td className="p-3 text-right font-extrabold text-[13px]">
+                            {isImport ? (
+                              <span className="text-emerald-600 inline-flex items-center gap-0.5">
+                                <ArrowRight size={12} className="-rotate-90 stroke-[3]" />
+                                {item.so_luong}
+                              </span>
+                            ) : (
+                              <span className="text-red-500 inline-flex items-center gap-0.5">
+                                <ArrowRight size={12} className="rotate-90 stroke-[3]" />
+                                {item.so_luong}
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3">
+                            <span className="text-xs font-semibold text-gray-600">
+                              {item.ma_dam || '-'}
+                            </span>
+                          </td>
+                          <td className="p-3 text-right text-xs text-gray-400 italic">
+                            Chờ cập nhật
+                          </td>
+                          <td className="p-3">
+                            <span className="text-[11px] text-gray-500 line-clamp-2" title={item.ghi_chu}>
+                              {item.ghi_chu || ''}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
