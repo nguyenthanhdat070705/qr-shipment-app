@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Search, Package, Edit2, X, Check, ChevronDown, ChevronUp, Upload, Image as ImageIcon, Loader2, Trash2, ArrowLeft, AlertTriangle } from 'lucide-react';
+import { Plus, Minus, Search, Package, Edit2, X, Check, ChevronDown, ChevronUp, Upload, Image as ImageIcon, Loader2, Trash2, ArrowLeft, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import ExcelImportModal from '@/components/ExcelImportModal';
 import './products-manage.css';
@@ -22,6 +22,7 @@ interface Product {
   don_vi_tinh: string;
   tinh_chat: string;
   muc_dich_su_dung: string;
+  so_luong: number;
   is_active: boolean;
   created_at: string;
 }
@@ -64,6 +65,9 @@ export default function ProductsManagePage() {
   // Delete state
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Quantity adjustment state
+  const [adjustingQty, setAdjustingQty] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -248,6 +252,33 @@ export default function ProductsManagePage() {
     setMessage(null);
     setImagePreview(null);
     setPendingFile(null);
+  };
+
+  // ── Quantity adjustment handler ──
+  const handleQuantityChange = async (productId: string, delta: number) => {
+    setAdjustingQty(productId);
+    try {
+      const res = await fetch('/api/products/quantity', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: productId, delta, email: userEmail }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setMessage({ type: 'error', text: json.error || 'Lỗi cập nhật số lượng' });
+      } else {
+        // Update local state immediately for snappy UX
+        setProducts(prev => prev.map(p =>
+          p.id === productId
+            ? { ...p, so_luong: json.new_qty }
+            : p
+        ));
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'Lỗi kết nối khi cập nhật số lượng' });
+    } finally {
+      setAdjustingQty(null);
+    }
   };
 
   const filtered = products.filter(p => {
@@ -616,6 +647,7 @@ export default function ProductsManagePage() {
                 <th>Mã hòm</th>
                 <th>Tên hòm</th>
                 <th>Kích thước</th>
+                <th className="pm-th-qty">Số lượng</th>
                 <th>Tính chất</th>
                 <th>ĐVT</th>
                 <th>NCC</th>
@@ -641,6 +673,29 @@ export default function ProductsManagePage() {
                     <td><span className="pm-code">{p.ma_hom}</span></td>
                     <td className="pm-td-name">{p.ten_hom}</td>
                     <td>{p.kich_thuoc || '—'}</td>
+                    <td className="pm-td-qty">
+                      <div className="pm-qty-controls">
+                        <button
+                          className="pm-qty-btn pm-qty-minus"
+                          onClick={() => handleQuantityChange(p.id, -1)}
+                          disabled={adjustingQty === p.id || (p.so_luong || 0) <= 0}
+                          title="Trừ 1"
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span className={`pm-qty-value ${(p.so_luong || 0) > 0 ? 'pm-qty-positive' : ''}`}>
+                          {adjustingQty === p.id ? <Loader2 size={14} className="pm-spin" /> : (p.so_luong || 0)}
+                        </span>
+                        <button
+                          className="pm-qty-btn pm-qty-plus"
+                          onClick={() => handleQuantityChange(p.id, 1)}
+                          disabled={adjustingQty === p.id}
+                          title="Cộng 1"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    </td>
                     <td>{p.tinh_chat || '—'}</td>
                     <td>{p.don_vi_tinh || 'Cái'}</td>
                     <td>{p.NCC || '—'}</td>
@@ -663,7 +718,7 @@ export default function ProductsManagePage() {
                   </tr>
                   {expandedRow === p.id && (
                     <tr key={`${p.id}-detail`} className="pm-detail-row">
-                      <td colSpan={9}>
+                      <td colSpan={10}>
                         <div className="pm-detail-grid">
                           <div><strong>Độ dày thành:</strong> {p.do_day_thanh || '—'}</div>
                           <div><strong>Loại hòm:</strong> {p.loai_hom || '—'}</div>

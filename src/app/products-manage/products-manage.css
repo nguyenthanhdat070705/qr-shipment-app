@@ -1083,6 +1083,82 @@
 .pm-spin { animation: pm-spin 1s linear infinite; }
 @keyframes pm-spin { to { transform: rotate(360deg); } }
 
+/* ── Quantity Controls ────────────────────── */
+.pm-th-qty {
+  text-align: center;
+  min-width: 130px;
+}
+.pm-td-qty {
+  text-align: center;
+  padding: 6px 8px !important;
+}
+.pm-qty-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f8fafc;
+  transition: all 0.2s;
+}
+.pm-qty-controls:hover {
+  border-color: #c4b5fd;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.12);
+}
+.pm-qty-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: #64748b;
+  flex-shrink: 0;
+}
+.pm-qty-btn:hover:not(:disabled) {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+.pm-qty-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+.pm-qty-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.pm-qty-minus:hover:not(:disabled) {
+  background: #fef2f2;
+  color: #dc2626;
+}
+.pm-qty-plus:hover:not(:disabled) {
+  background: #ecfdf5;
+  color: #059669;
+}
+.pm-qty-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 32px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #94a3b8;
+  border-left: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
+  background: #fff;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  transition: all 0.2s;
+}
+.pm-qty-positive {
+  color: #059669;
+  background: #ecfdf5;
+  font-weight: 800;
+}
+
 /* ── Responsive ────────────────────────── */
 @media (max-width: 768px) {
   .pm-form-grid { grid-template-columns: 1fr; }
@@ -1095,4 +1171,7 @@
   .excel-arrow { display: none; }
   .excel-done-stats { flex-wrap: wrap; }
   .pm-header-actions { flex-wrap: wrap; }
+  .pm-qty-controls { border-radius: 8px; }
+  .pm-qty-btn { width: 28px; height: 28px; }
+  .pm-qty-value { min-width: 32px; height: 28px; font-size: 0.82rem; }
 }
