@@ -11,12 +11,13 @@ export async function GET(req: Request) {
 
     const [inventoryRes, homRes, khoRes] = await Promise.all([
       supabase.from('fact_inventory').select('*'),
-      supabase.from('dim_hom').select('id, ma_hom, ten_hom'),
+      supabase.from('dim_hom').select('id, ma_hom, ten_hom, gia_von'),
       supabase.from('dim_kho').select('id, ma_kho, ten_kho'),
     ]);
 
     const inventory = inventoryRes.data || [];
-    const homMap = new Map((homRes.data || []).map((h: any) => [h.id, h]));
+    const allProducts = homRes.data || [];
+    const homMap = new Map(allProducts.map((h: any) => [h.id, h]));
     const khoMap = new Map((khoRes.data || []).map((k: any) => [k.id, k]));
 
     // Group by (product + warehouse)
@@ -81,24 +82,58 @@ export async function GET(req: Request) {
     }
 
     /* ── No filter → return full admin stats ── */
-    let totalAvailable = 0, totalOutOfStock = 0, totalExported = 0, totalQuantity = 0;
-    const outOfStockProducts: { code: string; name: string; warehouse: string; qty: number }[] = [];
 
-    for (const p of products) {
-      const totalAvail = Object.values(p.byWarehouse).reduce((s, w) => s + w.avail, 0);
-      const totalQty = Object.values(p.byWarehouse).reduce((s, w) => s + w.qty, 0);
+    // Collect product IDs that have inventory rows
+    const productIdsWithInventory = new Set<string>();
+    for (const row of inventory) {
+      const homId = row['Tên hàng hóa'] as string;
+      if (homId) productIdsWithInventory.add(homId);
+    }
+
+    // Build qty map from fact_inventory for ALL dim_hom products
+    const qtyByProductId = new Map<string, number>();
+    for (const row of inventory) {
+      const homId = row['Tên hàng hóa'] as string;
+      const qty = Number(row['Số lượng'] || 0);
+      qtyByProductId.set(homId, (qtyByProductId.get(homId) || 0) + qty);
+    }
+
+    // Total products = all loại hàng in dim_hom
+    const totalProductTypes = allProducts.length;
+
+    // Out of stock = products in dim_hom where total so_luong across all warehouses = 0
+    const outOfStockProducts: { code: string; name: string; warehouse: string; qty: number }[] = [];
+    let totalOutOfStock = 0;
+    let totalAvailable = 0;
+    let totalExported = 0;
+    let totalQuantity = 0;
+
+    for (const hom of allProducts) {
+      const totalQty = qtyByProductId.get(hom.id) || 0;
       totalQuantity += totalQty;
-      if (totalAvail > 0) {
-        totalAvailable++;
-      } else if (totalQty > 0) {
-        totalExported++;
-      } else {
-        totalOutOfStock++;
-        for (const [khoName, { qty }] of Object.entries(p.byWarehouse)) {
-          if (qty > 0) {
-            outOfStockProducts.push({ code: p.code, name: p.name, warehouse: khoName, qty });
+
+      if (totalQty > 0) {
+        // Check if this product has available stock (avail > 0) across any warehouse
+        const p = productMap.get(hom.ma_hom);
+        if (p) {
+          const totalAvail = Object.values(p.byWarehouse).reduce((s, w) => s + w.avail, 0);
+          if (totalAvail > 0) {
+            totalAvailable++;
+          } else {
+            totalExported++;
           }
+        } else {
+          totalAvailable++;
         }
+      } else {
+        // so_luong = 0 → hết hàng
+        totalOutOfStock++;
+        outOfStockProducts.push({
+          code: hom.ma_hom,
+          name: hom.ten_hom,
+          warehouse: 'Tất cả kho',
+          qty: 0,
+        });
       }
     }
 
@@ -113,8 +148,64 @@ export async function GET(req: Request) {
       }
     }
 
+    /* ── Additional admin stats ── */
+    const [poRes, grRes, nccRes, accountRes, damRes] = await Promise.all([
+      supabase.from('fact_don_hang').select('id, trang_thai, tong_tien', { count: 'exact' }),
+      supabase.from('fact_nhap_hang').select('id, trang_thai', { count: 'exact' }),
+      supabase.from('dim_ncc').select('id', { count: 'exact' }),
+      supabase.from('dim_account').select('id', { count: 'exact' }),
+      supabase.from('dim_dam').select('id', { count: 'exact' }).then(r => r).catch(() => ({ data: null, count: 0 })),
+    ]);
+
+    const poData = poRes.data || [];
+    const grData = grRes.data || [];
+    const accountData = accountRes.data || [];
+
+    // PO stats
+    const totalPO = poRes.count || poData.length;
+    const pendingPO = poData.filter((p: any) => ['draft', 'submitted', 'confirmed'].includes(p.trang_thai)).length;
+    const totalPOValue = poData.reduce((s: number, p: any) => s + (Number(p.tong_tien) || 0), 0);
+
+    // GR stats
+    const totalGR = grRes.count || grData.length;
+    const pendingGR = grData.filter((g: any) => ['pending', 'inspecting'].includes(g.trang_thai)).length;
+
+    // NCC stats
+    const totalNCC = nccRes.count || (nccRes.data || []).length;
+
+    // Account stats
+    const totalAccounts = accountRes.count || accountData.length;
+
+    // Inventory value (gia_von * quantity for each product)
+    let totalInventoryValue = 0;
+    for (const hom of allProducts) {
+      const qty = qtyByProductId.get(hom.id) || 0;
+      const giaVon = Number(hom.gia_von) || 0;
+      totalInventoryValue += qty * giaVon;
+    }
+
+    // Funeral (đám) count
+    const totalDam = (damRes as any).count || ((damRes as any).data || []).length || 0;
+
     return NextResponse.json({
-      stats: { totalProducts: products.length, totalAvailable, totalOutOfStock, totalExported, totalQuantity },
+      stats: {
+        totalProducts: totalProductTypes,
+        totalAvailable,
+        totalOutOfStock,
+        totalExported,
+        totalQuantity,
+      },
+      adminStats: {
+        totalPO,
+        pendingPO,
+        totalPOValue,
+        totalGR,
+        pendingGR,
+        totalNCC,
+        totalAccounts,
+        totalInventoryValue,
+        totalDam,
+      },
       byWarehouse: Object.values(khoStats).sort((a, b) => b.total - a.total),
       outOfStockProducts: outOfStockProducts.sort((a, b) => a.name.localeCompare(b.name)),
     });

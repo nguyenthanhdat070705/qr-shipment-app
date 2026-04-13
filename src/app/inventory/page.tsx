@@ -99,7 +99,6 @@ export default async function InventoryPage() {
 
   const inventory = (inventoryRes.data || []) as FactInventoryRow[];
 
-  // Group by product (combine all warehouses together)
   const productGroupMap = new Map<string, {
     homId: string;
     totalQty: number;
@@ -107,6 +106,17 @@ export default async function InventoryPage() {
     loaiSet: Set<string>;
     warehouseBreakdown: { khoId: string; name: string; code: string; qty: number; avail: number }[];
   }>();
+
+  // Initialize with all products so we see products with 0 stock
+  for (const h of (homRes.data || []) as DimHom[]) {
+    productGroupMap.set(h.id, {
+      homId: h.id,
+      totalQty: 0,
+      totalAvail: 0,
+      loaiSet: new Set<string>(),
+      warehouseBreakdown: [],
+    });
+  }
 
   for (const row of inventory) {
     const homId = row['Tên hàng hóa'];
@@ -132,18 +142,6 @@ export default async function InventoryPage() {
           khoId, name: kho?.ten_kho || '—', code: kho?.ma_kho || '', qty, avail,
         });
       }
-    } else {
-      const loaiSet = new Set<string>();
-      if (loai) loaiSet.add(loai);
-      productGroupMap.set(homId, {
-        homId,
-        totalQty: qty,
-        totalAvail: avail,
-        loaiSet,
-        warehouseBreakdown: [{
-          khoId, name: kho?.ten_kho || '—', code: kho?.ma_kho || '', qty, avail,
-        }],
-      });
     }
   }
 

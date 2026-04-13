@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { getUserRole } from '@/config/roles.config';
+import { isVIPAdmin } from '@/config/roles.config';
 
 /**
  * PATCH /api/products/quantity
- * Cộng/trừ số lượng hòm trong dim_hom.
- * Nếu so_luong > 0 → tự upsert vào fact_inventory.
- * Nếu so_luong <= 0 → xóa khỏi fact_inventory.
+ * Cộng/trừ số lượng hòm.
+ *
+ * Source of truth: fact_inventory (per-warehouse rows).
+ * dim_hom.so_luong is updated as a cached aggregate afterwards.
+ *
+ * ⚠️ Chỉ VIP Admin mới được phép điều chỉnh số lượng.
  *
  * Body: { id, delta, email, kho_id?, loai_hang? }
- *   - id: dim_hom.id
- *   - delta: +1 hoặc -1 (hoặc bất kỳ số nguyên)
- *   - email: để check quyền
- *   - kho_id: (optional) ID kho đích trong fact_inventory
- *   - loai_hang: (optional) "Đã mua" hoặc "Ký gửi"
  */
 export async function PATCH(req: NextRequest) {
   const supabase = getSupabaseAdmin();
@@ -26,8 +24,8 @@ export async function PATCH(req: NextRequest) {
   }
 
   const email = (body.email as string) || '';
-  const role = getUserRole(email);
-  if (role !== 'admin' && role !== 'procurement' && role !== 'warehouse') {
+  // Only VIP admin can adjust quantities
+  if (!isVIPAdmin(email)) {
     return NextResponse.json(
       { error: 'Bạn không có quyền thay đổi số lượng hòm.' },
       { status: 403 }
@@ -40,10 +38,10 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'id và delta (≠0) là bắt buộc.' }, { status: 400 });
   }
 
-  // 1. Lấy sản phẩm hiện tại
+  // 1. Verify product exists
   const { data: product, error: fetchErr } = await supabase
     .from('dim_hom')
-    .select('id, ma_hom, ten_hom, so_luong, don_vi_tinh, gia_ban, gia_von, kich_thuoc, tinh_chat, NCC, loai_hom')
+    .select('id, ma_hom, ten_hom')
     .eq('id', id)
     .single();
 
@@ -51,81 +49,90 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'Không tìm thấy sản phẩm.' }, { status: 404 });
   }
 
-  const oldQty = product.so_luong || 0;
-  const newQty = Math.max(0, oldQty + delta); // Không cho phép âm
-
-  // 2. Cập nhật so_luong trong dim_hom
-  const { error: updateErr } = await supabase
-    .from('dim_hom')
-    .update({ so_luong: newQty, updated_at: new Date().toISOString() })
-    .eq('id', id);
-
-  if (updateErr) {
-    return NextResponse.json({ error: updateErr.message }, { status: 500 });
+  // 2. Determine target warehouse
+  let khoId = body.kho_id as string | undefined;
+  if (!khoId) {
+    const { data: firstKho } = await supabase
+      .from('dim_kho')
+      .select('id')
+      .order('ma_kho', { ascending: true })
+      .limit(1)
+      .single();
+    khoId = firstKho?.id;
   }
 
-  // 3. Đồng bộ sang fact_inventory
+  if (!khoId) {
+    return NextResponse.json({ error: 'Không tìm thấy kho nào trong hệ thống.' }, { status: 400 });
+  }
+
   const loaiHang = (body.loai_hang as string) || 'Đã mua';
-  try {
-    if (newQty > 0) {
-      // Tìm kho mặc định (kho đầu tiên) nếu không truyền kho_id
-      let khoId = body.kho_id as string | undefined;
-      if (!khoId) {
-        const { data: firstKho } = await supabase
-          .from('dim_kho')
-          .select('id')
-          .order('ma_kho', { ascending: true })
-          .limit(1)
-          .single();
-        khoId = firstKho?.id;
-      }
 
-      if (khoId) {
-        // Kiểm tra xem đã có record trong fact_inventory chưa
-        const { data: existing } = await supabase
-          .from('fact_inventory')
-          .select('Mã')
-          .eq('Tên hàng hóa', id)
-          .eq('Kho', khoId)
-          .maybeSingle();
+  // 3. Read current qty from fact_inventory for THIS specific (product, warehouse)
+  const { data: existingRow } = await supabase
+    .from('fact_inventory')
+    .select('Mã, "Số lượng", "Ghi chú"')
+    .eq('Tên hàng hóa', id)
+    .eq('Kho', khoId)
+    .maybeSingle();
 
-        if (existing) {
-          // Update số lượng + loại hàng
-          await supabase
-            .from('fact_inventory')
-            .update({ 'Số lượng': newQty, 'Ghi chú': newQty, 'Loại hàng': loaiHang })
-            .eq('Tên hàng hóa', id)
-            .eq('Kho', khoId);
-        } else {
-          // Insert mới
-          await supabase
-            .from('fact_inventory')
-            .insert({
-              'Tên hàng hóa': id,
-              'Kho': khoId,
-              'Số lượng': newQty,
-              'Ghi chú': newQty,
-              'Loại hàng': loaiHang,
-            });
-        }
-      }
+  const currentWarehouseQty = existingRow ? (Number(existingRow['Số lượng']) || 0) : 0;
+  const newWarehouseQty = Math.max(0, currentWarehouseQty + delta);
+
+  // 4. Update fact_inventory for this specific warehouse
+  if (existingRow) {
+    if (newWarehouseQty > 0) {
+      // Update existing row
+      await supabase
+        .from('fact_inventory')
+        .update({
+          'Số lượng': newWarehouseQty,
+          'Ghi chú': newWarehouseQty,
+          'Loại hàng': loaiHang,
+        })
+        .eq('Mã', existingRow['Mã']);
     } else {
-      // newQty === 0 → xóa khỏi fact_inventory
+      // Qty reached 0 → remove this warehouse row
       await supabase
         .from('fact_inventory')
         .delete()
-        .eq('Tên hàng hóa', id);
+        .eq('Mã', existingRow['Mã']);
     }
-  } catch (syncErr) {
-    console.error('[quantity] fact_inventory sync error:', syncErr);
-    // Không fail request vì dim_hom đã cập nhật thành công
+  } else if (newWarehouseQty > 0) {
+    // No existing row → insert new
+    await supabase
+      .from('fact_inventory')
+      .insert({
+        'Tên hàng hóa': id,
+        'Kho': khoId,
+        'Số lượng': newWarehouseQty,
+        'Ghi chú': newWarehouseQty,
+        'Loại hàng': loaiHang,
+      });
   }
+
+  // 5. Recalculate TOTAL quantity across ALL warehouses for this product
+  const { data: allRows } = await supabase
+    .from('fact_inventory')
+    .select('"Số lượng"')
+    .eq('Tên hàng hóa', id);
+
+  const totalQty = (allRows || []).reduce(
+    (sum: number, r: Record<string, unknown>) => sum + (Number(r['Số lượng']) || 0),
+    0
+  );
+
+  // 6. Cache the total back to dim_hom.so_luong
+  await supabase
+    .from('dim_hom')
+    .update({ so_luong: totalQty, updated_at: new Date().toISOString() })
+    .eq('id', id);
 
   return NextResponse.json({
     success: true,
     ma_hom: product.ma_hom,
-    old_qty: oldQty,
-    new_qty: newQty,
+    old_qty: currentWarehouseQty,
+    new_qty: totalQty,   // Return the TOTAL across all warehouses
     delta,
   });
 }
+

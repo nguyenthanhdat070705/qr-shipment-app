@@ -99,7 +99,7 @@ export default function ShipmentConfirmationForm({
         const warehouseFilter = getWarehouseFilter(userEmail);
 
         if (warehouseFilter) {
-          // User has a specific warehouse — find and lock it
+          // Warehouse account (kho1/kho2/kho3) — find and LOCK to their warehouse
           const matched = list.find((w: { ten_kho: string }) =>
             w.ten_kho.toLowerCase().includes(warehouseFilter.toLowerCase()) ||
             warehouseFilter.toLowerCase().includes(w.ten_kho.toLowerCase())
@@ -109,14 +109,9 @@ export default function ShipmentConfirmationForm({
             setWarehouseLocked(true);
           }
         } else {
-          // All other roles: default to Hàm Long and lock
-          const hamLong = list.find((w: { ten_kho: string }) =>
-            w.ten_kho.toLowerCase().includes('hàm long') || w.ten_kho.toLowerCase().includes('ham long')
-          );
-          if (hamLong) {
-            setSelectedWarehouse(hamLong.id);
-            setWarehouseLocked(true);
-          }
+          // Admin / other roles — can choose any warehouse, default to first
+          setSelectedWarehouse(list[0]?.id || '');
+          setWarehouseLocked(false);
         }
       }
     }).catch(() => {});

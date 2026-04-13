@@ -192,11 +192,12 @@ export default function InventorySearch({ items, showStats = false }: { items: I
             return { ...item, tonKho: String(bd.qty), khaDung: String(bd.avail) } as InventoryItem;
           })
           .filter((i): i is InventoryItem => i !== null);
+
     return {
       total: baseItems.length,
-      // Còn hàng: khaDung > 0
-      available: baseItems.filter(i => Number(i.khaDung || '0') > 0).length,
-      // Hết hàng thật sự: tonKho = 0 VÀ khaDung = 0
+      // Còn hàng: Tổng SL hàng tồn của tất cả loại hàng
+      available: baseItems.reduce((sum, i) => sum + Number(i.khaDung || '0'), 0),
+      // Hết hàng: Số loại hàng có lượng tồn = 0
       outOfStock: baseItems.filter(i => Number(i.tonKho || '0') <= 0 && Number(i.khaDung || '0') <= 0).length,
       warehouseName: lockedWarehouse || 'Tất cả kho',
     };

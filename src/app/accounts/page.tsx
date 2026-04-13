@@ -8,13 +8,30 @@ import {
   Crown, Warehouse, ShoppingBag, Wrench
 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
-import { getUserRole } from '@/config/roles.config';
+import { getUserRole, isVIPAdmin } from '@/config/roles.config';
 import { useRouter } from 'next/navigation';
 
 /* ═══════════════════════════════════════════════════════
    Account definitions — 6 system accounts
 ═══════════════════════════════════════════════════════ */
 const SYSTEM_ACCOUNTS = [
+  {
+    id: 'vip-admin',
+    email: 'quantri@blackstone.com.vn',
+    displayName: 'Quản trị viên VIP',
+    department: 'Ban Giám đốc',
+    role: 'admin' as const,
+    roleLabel: 'VIP Admin',
+    description: 'Toàn quyền quản trị hệ thống — tài khoản cấp cao nhất',
+    icon: Crown,
+    color: 'text-amber-500',
+    bgColor: 'bg-amber-50',
+    borderColor: 'border-amber-300',
+    badgeBg: 'bg-amber-100',
+    badgeText: 'text-amber-800',
+    gradientFrom: 'from-amber-500',
+    gradientTo: 'to-yellow-600',
+  },
   {
     id: 'admin',
     email: 'admin@blackstone.com.vn',
@@ -431,6 +448,7 @@ export default function AccountsPage() {
   const router = useRouter();
   const [selectedAccount, setSelectedAccount] = useState<typeof SYSTEM_ACCOUNTS[0] | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isVIP, setIsVIP] = useState(false);
   const [checking, setChecking] = useState(true);
   const [onlineEmails, setOnlineEmails] = useState<string[]>([]);
   const [resetMsg, setResetMsg] = useState<string>('');
@@ -447,6 +465,7 @@ export default function AccountsPage() {
           return;
         }
         setIsAdmin(true);
+        setIsVIP(isVIPAdmin(u.email || ''));
         // Simulate online detection (in reality this would check session store)
         setOnlineEmails([u.email || '']);
       } else {
@@ -486,11 +505,16 @@ export default function AccountsPage() {
 
   if (!isAdmin) return null;
 
+  // VIP account is completely hidden from non-VIP admins
+  const visibleAccounts = isVIP
+    ? SYSTEM_ACCOUNTS
+    : SYSTEM_ACCOUNTS.filter(a => a.id !== 'vip-admin');
+
   const stats = [
-    { label: 'Tổng tài khoản', value: SYSTEM_ACCOUNTS.length, color: 'text-[#1B2A4A]', bg: 'bg-blue-50' },
-    { label: 'Tài khoản Kho', value: SYSTEM_ACCOUNTS.filter(a => a.role === 'warehouse').length, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'Bộ phận khác', value: SYSTEM_ACCOUNTS.filter(a => a.role !== 'warehouse' && a.role !== 'admin').length, color: 'text-violet-600', bg: 'bg-violet-50' },
-    { label: 'Quản trị viên', value: SYSTEM_ACCOUNTS.filter(a => a.role === 'admin').length, color: 'text-red-600', bg: 'bg-red-50' },
+    { label: 'Tổng tài khoản', value: visibleAccounts.length, color: 'text-[#1B2A4A]', bg: 'bg-blue-50' },
+    { label: 'Tài khoản Kho', value: visibleAccounts.filter(a => a.role === 'warehouse').length, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Bộ phận khác', value: visibleAccounts.filter(a => a.role !== 'warehouse' && a.role !== 'admin').length, color: 'text-violet-600', bg: 'bg-violet-50' },
+    { label: 'Quản trị viên', value: visibleAccounts.filter(a => a.role === 'admin').length, color: 'text-red-600', bg: 'bg-red-50' },
   ];
 
   return (
@@ -502,7 +526,7 @@ export default function AccountsPage() {
           <div>
             <h1 className="text-xl font-extrabold text-gray-900">Quản lý tài khoản hệ thống</h1>
             <p className="text-sm text-gray-500 mt-1">
-              Xem thông tin và quản lý mật khẩu của {SYSTEM_ACCOUNTS.length} tài khoản trong hệ thống
+              Xem thông tin và quản lý mật khẩu của {visibleAccounts.length} tài khoản trong hệ thống
             </p>
           </div>
           <button
@@ -540,6 +564,16 @@ export default function AccountsPage() {
             <div>
               <h3 className="text-sm font-bold text-amber-800 mb-2">Thông tin đăng nhập mặc định</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1.5 text-xs font-mono">
+                {/* VIP credentials — only visible to VIP admin */}
+                {isVIP && (
+                  <div className="flex items-center gap-2 text-amber-700">
+                    <span className="text-amber-400">▸</span>
+                    <span>quantri@blackstone.com.vn</span>
+                    <span className="text-amber-400">•</span>
+                    <span className="font-bold">123456@</span>
+                    <span className="text-amber-500 font-bold">⭐ VIP</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 text-amber-700">
                   <span className="text-amber-400">▸</span>
                   <span>admin@blackstone.com.vn</span>
@@ -586,7 +620,7 @@ export default function AccountsPage() {
 
         {/* ── Account grid ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {SYSTEM_ACCOUNTS.map((account) => (
+          {visibleAccounts.map((account) => (
             <AccountCard
               key={account.id}
               account={account}
@@ -598,7 +632,7 @@ export default function AccountsPage() {
 
         {/* Footer note */}
         <p className="text-xs text-center text-gray-400 pb-4">
-          Hệ thống có {SYSTEM_ACCOUNTS.length} tài khoản được cấu hình sẵn. Liên hệ quản trị viên để thêm tài khoản mới.
+          Hệ thống có {visibleAccounts.length} tài khoản được cấu hình sẵn. Liên hệ quản trị viên để thêm tài khoản mới.
         </p>
       </div>
 

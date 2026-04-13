@@ -11,7 +11,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
-import { getUserRole, ROLE_CONFIGS, ROLE_COLORS, type UserRole } from '@/config/roles.config';
+import { getUserRole, ROLE_CONFIGS, ROLE_COLORS, isVIPAdmin, type UserRole } from '@/config/roles.config';
 import AuthGuard from '@/components/AuthGuard';
 
 /* ═══════════════════════════════════════════════════
@@ -62,6 +62,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   const procurementRole = userRole === 'procurement';
   const operationsRole  = userRole === 'operations';
   const warehouseRole   = userRole === 'warehouse';
+  const vipAdmin        = isVIPAdmin(userEmail);
 
   const allMenuItems: MenuItem[] = [
     /* ── Admin Dashboard (chỉ hiện với admin) ── */
@@ -239,7 +240,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
     ...(userRole === 'admin' ? [{
       icon: <Users size={18} />,
       label: 'Quản lý tài khoản',
-      desc: '6 tài khoản hệ thống',
+      desc: vipAdmin ? '7 tài khoản hệ thống' : '6 tài khoản hệ thống',
       href: '/accounts',
       color: 'text-red-400',
       iconBg: 'bg-red-500/15',

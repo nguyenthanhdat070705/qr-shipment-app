@@ -8,17 +8,36 @@ import { getUserRole } from '@/config/roles.config';
  */
 
 // ── GET: Lấy danh sách sản phẩm ──────────────────────────
+// so_luong is calculated from fact_inventory (source of truth),
+// NOT from dim_hom.so_luong which may be stale.
 export async function GET() {
   const supabase = getSupabaseAdmin();
 
-  const { data, error } = await supabase
-    .from('dim_hom')
-    .select('*')
-    .order('ma_hom', { ascending: true });
+  // Fetch products and inventory in parallel
+  const [productsRes, inventoryRes] = await Promise.all([
+    supabase.from('dim_hom').select('*').order('ma_hom', { ascending: true }),
+    supabase.from('fact_inventory').select('"Tên hàng hóa", "Số lượng"'),
+  ]);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (productsRes.error) {
+    return NextResponse.json({ error: productsRes.error.message }, { status: 500 });
   }
+
+  // Build a map: product_id → total quantity across all warehouses
+  const qtyMap = new Map<string, number>();
+  if (inventoryRes.data) {
+    for (const row of inventoryRes.data) {
+      const homId = row['Tên hàng hóa'] as string;
+      const qty = Number(row['Số lượng']) || 0;
+      qtyMap.set(homId, (qtyMap.get(homId) || 0) + qty);
+    }
+  }
+
+  // Merge: override so_luong with the real aggregated quantity
+  const data = (productsRes.data || []).map((product: Record<string, unknown>) => ({
+    ...product,
+    so_luong: qtyMap.get(product.id as string) || 0,
+  }));
 
   return NextResponse.json({ data });
 }

@@ -6,6 +6,8 @@ import {
   PackageCheck, AlertTriangle, CheckCircle, ArrowRight,
   Warehouse, RefreshCw, Activity, Shield, Database,
   ArrowUpRight, Boxes, BookOpen, MapPin, X, Search,
+  FileText, DollarSign, TrendingUp, ClipboardList,
+  UserCheck, Building2,
 } from 'lucide-react';
 import Link from 'next/link';
 import PageLayout from '@/components/PageLayout';
@@ -19,6 +21,18 @@ interface SystemStats {
   totalOutOfStock: number;
   totalExported: number;
   totalQuantity: number;
+}
+
+interface AdminStats {
+  totalPO: number;
+  pendingPO: number;
+  totalPOValue: number;
+  totalGR: number;
+  pendingGR: number;
+  totalNCC: number;
+  totalAccounts: number;
+  totalInventoryValue: number;
+  totalDam: number;
 }
 
 interface OutOfStockProduct {
@@ -87,7 +101,7 @@ function OutOfStockDrawer({
             </div>
             <div>
               <h2 className="text-sm font-extrabold text-gray-900">Sản phẩm hết hàng</h2>
-              <p className="text-xs text-red-600 font-semibold">{products.length} sản phẩm cần nhập thêm</p>
+              <p className="text-xs text-red-600 font-semibold">{products.length} loại sản phẩm có số lượng = 0</p>
             </div>
           </div>
           <button
@@ -138,11 +152,8 @@ function OutOfStockDrawer({
               </div>
               <div className="flex-shrink-0 text-right">
                 <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-red-100 text-red-700 text-xs font-bold">
-                  Hết hàng
+                  SL: 0
                 </span>
-                {p.qty > 0 && (
-                  <p className="text-[10px] text-gray-400 mt-0.5">Tổng đã nhập: {p.qty}</p>
-                )}
               </div>
             </div>
           ))}
@@ -167,7 +178,7 @@ function OutOfStockDrawer({
    KPI Card
 ───────────────────────────────────────────────────── */
 function KpiCard({
-  label, value, sub, icon, gradient, delta, onClick, clickable,
+  label, value, sub, icon, gradient, delta, onClick, clickable, href,
 }: {
   label: string;
   value: string | number;
@@ -177,12 +188,13 @@ function KpiCard({
   delta?: { text: string; positive: boolean };
   onClick?: () => void;
   clickable?: boolean;
+  href?: string;
 }) {
-  return (
+  const content = (
     <div
       onClick={onClick}
       className={`relative overflow-hidden rounded-2xl bg-white border border-gray-100 p-5 shadow-sm transition-all duration-300 group
-        ${clickable ? 'cursor-pointer hover:shadow-lg hover:border-red-200 hover:-translate-y-0.5' : 'hover:shadow-lg'}
+        ${(clickable || href) ? 'cursor-pointer hover:shadow-lg hover:border-red-200 hover:-translate-y-0.5' : 'hover:shadow-lg'}
       `}
     >
       <div className={`absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-[0.07] ${gradient}`} />
@@ -199,7 +211,7 @@ function KpiCard({
               {delta.text}
             </div>
           )}
-          {clickable && (
+          {(clickable || href) && (
             <div className="inline-flex items-center gap-1 mt-2 ml-2 text-[11px] text-red-400 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
               Xem chi tiết →
             </div>
@@ -211,6 +223,43 @@ function KpiCard({
       </div>
     </div>
   );
+
+  if (href) {
+    return <Link href={href}>{content}</Link>;
+  }
+  return content;
+}
+
+/* ─────────────────────────────────────────────────────
+   Mini Stat Card (for secondary metrics)
+───────────────────────────────────────────────────── */
+function MiniStatCard({
+  icon, label, value, sub, color, bgColor, href,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  sub?: string;
+  color: string;
+  bgColor: string;
+  href?: string;
+}) {
+  const content = (
+    <div className={`flex items-center gap-4 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group ${href ? 'cursor-pointer' : ''}`}>
+      <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${bgColor} ${color} flex-shrink-0 group-hover:scale-110 transition-transform`}>
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">{label}</p>
+        <p className="text-xl font-extrabold text-gray-900 leading-tight">{value}</p>
+        {sub && <p className="text-[10px] text-gray-400 mt-0.5">{sub}</p>}
+      </div>
+      {href && <ArrowRight size={14} className="text-gray-300 group-hover:text-gray-500 group-hover:translate-x-1 transition-all flex-shrink-0" />}
+    </div>
+  );
+
+  if (href) return <Link href={href}>{content}</Link>;
+  return content;
 }
 
 function QuickActionCard({
@@ -246,10 +295,21 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 /* ─────────────────────────────────────────────────────
+   Utility: format VND
+───────────────────────────────────────────────────── */
+function formatVND(value: number): string {
+  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}B`;
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(0)}K`;
+  return value.toLocaleString('vi-VN');
+}
+
+/* ─────────────────────────────────────────────────────
    Main Page
 ───────────────────────────────────────────────────── */
 export default function AdminDashboard() {
   const [stats, setStats] = useState<SystemStats | null>(null);
+  const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
   const [warehouseStats, setWarehouseStats] = useState<WarehouseStat[]>([]);
   const [outOfStockProducts, setOutOfStockProducts] = useState<OutOfStockProduct[]>([]);
   const [recentExports, setRecentExports] = useState<RecentExport[]>([]);
@@ -268,6 +328,7 @@ export default function AdminDashboard() {
       if (invRes.ok) {
         const invData = await invRes.json();
         setStats(invData.stats || null);
+        setAdminStats(invData.adminStats || null);
         setWarehouseStats(invData.byWarehouse || []);
         setOutOfStockProducts(invData.outOfStockProducts || []);
       }
@@ -335,31 +396,33 @@ export default function AdminDashboard() {
         </div>
       ) : (
         <>
-          {/* ── KPI Cards ── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {/* ── Primary KPI Cards — Inventory ── */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <KpiCard
-              label="Tổng sản phẩm"
+              label="Tổng loại hàng"
               value={stats?.totalProducts ?? '—'}
-              sub="Tất cả loại hàng"
+              sub={`${stats?.totalProducts ?? 0} loại sản phẩm trong hệ thống`}
               icon={<Boxes size={22} />}
               gradient="bg-[#1B2A4A]"
+              href="/products-manage"
             />
             <KpiCard
-              label="Còn hàng"
+              label="Tồn kho"
               value={stats?.totalQuantity ?? '—'}
               sub={`${stats?.totalAvailable ?? 0} loại SP còn hàng`}
               icon={<CheckCircle size={22} />}
               gradient="bg-emerald-500"
               delta={{ text: 'Tổng hòm tồn kho', positive: true }}
+              href="/inventory"
             />
             {/* ── Clickable out-of-stock card ── */}
             <KpiCard
               label="Hết hàng"
               value={stats?.totalOutOfStock ?? '—'}
-              sub="Cần nhập thêm"
+              sub={`Loại SP có số lượng = 0`}
               icon={<AlertTriangle size={22} />}
               gradient="bg-red-500"
-              delta={{ text: 'Cần nhập', positive: false }}
+              delta={{ text: 'Cần nhập thêm', positive: false }}
               clickable
               onClick={() => setDrawerOpen(true)}
             />
@@ -369,8 +432,70 @@ export default function AdminDashboard() {
               sub="Tổng phiếu xuất"
               icon={<Truck size={22} />}
               gradient="bg-indigo-500"
+              href="/goods-issue"
             />
           </div>
+
+          {/* ── Secondary Admin Stats ── */}
+          {adminStats && (
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50">
+                  <TrendingUp size={16} className="text-violet-600" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-extrabold text-gray-900">Thống kê hệ thống</h2>
+                  <p className="text-[11px] text-gray-400">Số liệu tổng quan dành cho quản trị</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                <MiniStatCard
+                  icon={<ShoppingCart size={18} />}
+                  label="Đơn đặt hàng"
+                  value={adminStats.totalPO}
+                  sub={adminStats.pendingPO > 0 ? `${adminStats.pendingPO} đang xử lý` : 'Đã hoàn tất'}
+                  color="text-violet-600"
+                  bgColor="bg-violet-50"
+                  href="/purchase-orders"
+                />
+                <MiniStatCard
+                  icon={<ClipboardList size={18} />}
+                  label="Phiếu nhập kho"
+                  value={adminStats.totalGR}
+                  sub={adminStats.pendingGR > 0 ? `${adminStats.pendingGR} đang chờ` : 'Đã hoàn tất'}
+                  color="text-orange-600"
+                  bgColor="bg-orange-50"
+                  href="/goods-receipt"
+                />
+                <MiniStatCard
+                  icon={<Building2 size={18} />}
+                  label="Nhà cung cấp"
+                  value={adminStats.totalNCC}
+                  sub="Đối tác cung ứng"
+                  color="text-sky-600"
+                  bgColor="bg-sky-50"
+                  href="/suppliers-manage"
+                />
+                <MiniStatCard
+                  icon={<UserCheck size={18} />}
+                  label="Tài khoản"
+                  value={adminStats.totalAccounts}
+                  sub="Người dùng hệ thống"
+                  color="text-pink-600"
+                  bgColor="bg-pink-50"
+                  href="/accounts"
+                />
+                <MiniStatCard
+                  icon={<DollarSign size={18} />}
+                  label="Giá trị tồn kho"
+                  value={`${formatVND(adminStats.totalInventoryValue)}₫`}
+                  sub="Theo giá vốn"
+                  color="text-emerald-600"
+                  bgColor="bg-emerald-50"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
             {/* ── Warehouse breakdown ── */}

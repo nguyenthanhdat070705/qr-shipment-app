@@ -7,6 +7,7 @@ import { getSupabaseAdmin } from '@/lib/supabase/server';
  */
 
 const DEFAULT_PASSWORDS: { email: string; password: string }[] = [
+  { email: 'quantri@blackstone.com.vn',      password: '123456@' },  // VIP Admin
   { email: 'admin@blackstone.com.vn',        password: 'admin123' },
   { email: 'kho1@blackstone.com.vn',         password: '123456@' },
   { email: 'kho2@blackstone.com.vn',         password: '123456@' },
