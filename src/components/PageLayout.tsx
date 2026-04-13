@@ -96,7 +96,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       section: 'Vận hành',
     } as MenuItem] : []),
     /* ── Warehouse Dashboard ── */
-    ...(warehouseRole ? [{
+    ...(warehouseRole || userRole === 'admin' ? [{
       icon: <BarChart3 size={18} />,
       label: 'Dashboard Kho',
       desc: 'Tổng quan nghiệp vụ kho',
