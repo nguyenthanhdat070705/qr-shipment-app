@@ -7,7 +7,7 @@ import {
   Warehouse, BarChart3, ChevronRight, RefreshCw, ArrowRight,
   Clock, ScanLine, LayoutGrid, TrendingUp, Heart,
   Calendar, MapPin, AlertTriangle, CheckCircle, Eye,
-  Loader2, X, Star, Sparkles, Receipt
+  Loader2, X, Star, Sparkles, Receipt, ShoppingCart
 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import { getUserRole } from '@/config/roles.config';
@@ -710,6 +710,14 @@ export default function SalesDashboard() {
                 href="/"
                 color="text-blue-600"
                 iconBg="bg-blue-100"
+              />
+              <QuickAction
+                icon={<ShoppingCart size={20} />}
+                title="Tạo đơn hàng mới"
+                desc="Lên đơn vật tư, sản phẩm lẻ"
+                href="/sales/orders"
+                color="text-amber-600"
+                iconBg="bg-amber-100"
               />
               <QuickAction
                 icon={<Receipt size={20} />}

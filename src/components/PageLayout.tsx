@@ -6,7 +6,7 @@ import {
   Truck, Warehouse, LayoutGrid, User,
   ShoppingCart, PackageCheck, TruckIcon,
   Bell, Search, BarChart3, Settings, BookOpen, Users,
-  Package, Clock, ExternalLink, CheckCheck,
+  Package, Clock, ExternalLink, CheckCheck, Receipt
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -113,6 +113,24 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/sales',
       color: 'text-blue-400',
       iconBg: 'bg-blue-500/15',
+      section: 'Bán hàng',
+    } as MenuItem] : []),
+    ...(userRole === 'sales' || userRole === 'admin' ? [{
+      icon: <ShoppingCart size={18} />,
+      label: 'Tạo đơn hàng mới',
+      desc: 'Lên đơn bán vật tư lẻ',
+      href: '/sales/orders',
+      color: 'text-amber-400',
+      iconBg: 'bg-amber-500/15',
+      section: 'Bán hàng',
+    } as MenuItem] : []),
+    ...(userRole === 'sales' || userRole === 'admin' ? [{
+      icon: <Receipt size={18} />,
+      label: 'Bán gói sản phẩm',
+      desc: 'Lên đơn & đăng ký thành viên',
+      href: '/sales/packages',
+      color: 'text-rose-400',
+      iconBg: 'bg-rose-500/15',
       section: 'Bán hàng',
     } as MenuItem] : []),
     /* ── Core SCM Flow ── */

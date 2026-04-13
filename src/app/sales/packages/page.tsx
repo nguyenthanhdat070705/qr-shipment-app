@@ -40,6 +40,22 @@ const PACKAGES: PackageOption[] = [
     ]
   },
   {
+    id: 'pkg-membership-pro',
+    name: 'Gói Membership Pro',
+    description: 'Quyền lợi nâng cao với các dịch vụ chăm sóc hoàn hảo.',
+    price: 18000000,
+    color: 'blue',
+    gradientFrom: 'from-blue-500',
+    gradientTo: 'to-indigo-600',
+    features: [
+      'Miễn phí tư vấn dịch vụ 24/7',
+      'Giảm 10% các gói dịch vụ nâng cấp',
+      'Tham gia CLB BlackStones Member',
+      'Được ưu tiên chọn vị trí tốt nhất',
+      'Quà tặng Sinh nhật hàng năm'
+    ]
+  },
+  {
     id: 'pkg-member-premium',
     name: 'Hội Viên Trăm Tuổi (VIP)',
     description: 'Bảo vệ toàn diện, an tâm cho bản thân và gia đình.',
@@ -122,7 +138,7 @@ export default function SellPackagesPage() {
 
   return (
     <PageLayout title="Bán gói sản phẩm" icon={<ShoppingBag size={16} className="text-rose-500" />}>
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         
         {/* Breadcrumb & Navigation */}
         <button 
@@ -146,7 +162,7 @@ export default function SellPackagesPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
               {PACKAGES.map((pkg) => (
                 <div 
                   key={pkg.id}
