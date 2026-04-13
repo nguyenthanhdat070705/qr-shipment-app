@@ -154,7 +154,7 @@ export async function GET(req: Request) {
       supabase.from('fact_nhap_hang').select('id, trang_thai', { count: 'exact' }),
       supabase.from('dim_ncc').select('id', { count: 'exact' }),
       supabase.from('dim_account').select('id', { count: 'exact' }),
-      supabase.from('dim_dam').select('id', { count: 'exact' }).then(r => r).catch(() => ({ data: null, count: 0 })),
+      supabase.from('dim_dam').select('id', { count: 'exact' }).then(r => r, () => ({ data: null, count: 0 })),
     ]);
 
     const poData = poRes.data || [];
