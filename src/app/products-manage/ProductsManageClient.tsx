@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Minus, Search, Package, Edit2, X, Check, ChevronDown, ChevronUp, Upload, Image as ImageIcon, Loader2, Trash2, ArrowLeft, AlertTriangle, Warehouse } from 'lucide-react';
 import Link from 'next/link';
 import ExcelImportModal from '@/components/ExcelImportModal';
+import { isVIPAdmin } from '@/config/roles.config';
 import './products-manage.css';
 
 interface WarehouseItem {
@@ -16,7 +17,8 @@ interface QtyPopup {
   productId: string;
   productName: string;
   currentQty: number;
-  delta: number; // +1 or -1
+  mode: 'add' | 'subtract';
+  amount: number;
   kho_id: string;
   loai_hang: string;
 }
@@ -95,6 +97,9 @@ export default function ProductsManagePage() {
       }
     } catch { /* ignore */ }
   }, []);
+
+  // Only VIP admin can adjust quantities
+  const isVIP = isVIPAdmin(userEmail);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -280,20 +285,22 @@ export default function ProductsManagePage() {
   };
 
   // ── Quantity: open popup to choose Kho + Loại hàng ──
-  const openQtyPopup = (product: Product, delta: number) => {
+  const openQtyPopup = (product: Product, mode: 'add' | 'subtract') => {
     setQtyPopup({
       productId: product.id,
       productName: `${product.ma_hom} — ${product.ten_hom}`,
       currentQty: product.so_luong || 0,
-      delta,
+      mode,
+      amount: 1,
       kho_id: warehouses.length > 0 ? warehouses[0].id : '',
       loai_hang: 'Đã mua',
     });
   };
 
   const handleQuantityConfirm = async () => {
-    if (!qtyPopup) return;
-    const { productId, delta, kho_id, loai_hang } = qtyPopup;
+    if (!qtyPopup || qtyPopup.amount <= 0) return;
+    const delta = qtyPopup.mode === 'add' ? qtyPopup.amount : -qtyPopup.amount;
+    const { productId, kho_id, loai_hang } = qtyPopup;
     setAdjustingQty(productId);
     setQtyPopup(null);
     try {
@@ -656,21 +663,34 @@ export default function ProductsManagePage() {
             <div className="pm-qty-modal-header">
               <Warehouse size={22} />
               <div>
-                <h3>{qtyPopup.delta > 0 ? 'Cộng' : 'Trừ'} số lượng hòm</h3>
+                <h3>{qtyPopup.mode === 'add' ? 'Cộng' : 'Trừ'} số lượng hòm</h3>
                 <p className="pm-qty-modal-product">{qtyPopup.productName}</p>
               </div>
               <button className="pm-form-close" onClick={() => setQtyPopup(null)}><X size={18} /></button>
             </div>
             <div className="pm-qty-modal-body">
+              <div className="pm-qty-modal-field">
+                <label>{qtyPopup.mode === 'add' ? <Plus size={14} /> : <Minus size={14} />} Số lượng {qtyPopup.mode === 'add' ? 'cộng' : 'trừ'}</label>
+                <input
+                  type="number"
+                  className="pm-qty-input"
+                  min={1}
+                  max={qtyPopup.mode === 'subtract' ? qtyPopup.currentQty : 9999}
+                  value={qtyPopup.amount}
+                  onChange={e => setQtyPopup({ ...qtyPopup, amount: Math.max(1, parseInt(e.target.value) || 1) })}
+                  autoFocus
+                />
+              </div>
+
               <div className="pm-qty-modal-info">
-                <span>Số lượng hiện tại:</span>
+                <span>Hiện tại:</span>
                 <strong>{qtyPopup.currentQty}</strong>
-                <span className={qtyPopup.delta > 0 ? 'pm-qty-delta-plus' : 'pm-qty-delta-minus'}>
-                  {qtyPopup.delta > 0 ? '+1' : '−1'}
+                <span className={qtyPopup.mode === 'add' ? 'pm-qty-delta-plus' : 'pm-qty-delta-minus'}>
+                  {qtyPopup.mode === 'add' ? `+${qtyPopup.amount}` : `−${qtyPopup.amount}`}
                 </span>
                 <span>→</span>
-                <strong className={qtyPopup.delta > 0 ? 'pm-qty-delta-plus' : ''}>
-                  {Math.max(0, qtyPopup.currentQty + qtyPopup.delta)}
+                <strong className={qtyPopup.mode === 'add' ? 'pm-qty-delta-plus' : 'pm-qty-delta-minus'}>
+                  {Math.max(0, qtyPopup.mode === 'add' ? qtyPopup.currentQty + qtyPopup.amount : qtyPopup.currentQty - qtyPopup.amount)}
                 </strong>
               </div>
 
@@ -706,11 +726,13 @@ export default function ProductsManagePage() {
             <div className="pm-qty-modal-actions">
               <button className="pm-btn-cancel" onClick={() => setQtyPopup(null)}>Hủy</button>
               <button
-                className={`pm-qty-confirm-btn ${qtyPopup.delta > 0 ? 'pm-qty-confirm-plus' : 'pm-qty-confirm-minus'}`}
+                className={`pm-qty-confirm-btn ${qtyPopup.mode === 'add' ? 'pm-qty-confirm-plus' : 'pm-qty-confirm-minus'}`}
                 onClick={handleQuantityConfirm}
-                disabled={!qtyPopup.kho_id}
+                disabled={!qtyPopup.kho_id || qtyPopup.amount <= 0 || (qtyPopup.mode === 'subtract' && qtyPopup.amount > qtyPopup.currentQty)}
               >
-                {qtyPopup.delta > 0 ? <><Plus size={14} /> Xác nhận cộng</> : <><Minus size={14} /> Xác nhận trừ</>}
+                {qtyPopup.mode === 'add'
+                  ? <><Plus size={14} /> Xác nhận cộng {qtyPopup.amount}</>
+                  : <><Minus size={14} /> Xác nhận trừ {qtyPopup.amount}</>}
               </button>
             </div>
           </div>
@@ -781,27 +803,33 @@ export default function ProductsManagePage() {
                     <td className="pm-td-name">{p.ten_hom}</td>
                     <td>{p.kich_thuoc || '—'}</td>
                     <td className="pm-td-qty">
-                      <div className="pm-qty-controls">
-                        <button
-                          className="pm-qty-btn pm-qty-minus"
-                          onClick={() => openQtyPopup(p, -1)}
-                          disabled={adjustingQty === p.id || (p.so_luong || 0) <= 0}
-                          title="Trừ 1"
-                        >
-                          <Minus size={14} />
-                        </button>
+                      {isVIP ? (
+                        <div className="pm-qty-controls">
+                          <button
+                            className="pm-qty-btn pm-qty-minus"
+                            onClick={() => openQtyPopup(p, 'subtract')}
+                            disabled={adjustingQty === p.id || (p.so_luong || 0) <= 0}
+                            title="Trừ 1"
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span className={`pm-qty-value ${(p.so_luong || 0) > 0 ? 'pm-qty-positive' : ''}`}>
+                            {adjustingQty === p.id ? <Loader2 size={14} className="pm-spin" /> : (p.so_luong || 0)}
+                          </span>
+                          <button
+                            className="pm-qty-btn pm-qty-plus"
+                            onClick={() => openQtyPopup(p, 'add')}
+                            disabled={adjustingQty === p.id}
+                            title="Cộng 1"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                      ) : (
                         <span className={`pm-qty-value ${(p.so_luong || 0) > 0 ? 'pm-qty-positive' : ''}`}>
-                          {adjustingQty === p.id ? <Loader2 size={14} className="pm-spin" /> : (p.so_luong || 0)}
+                          {p.so_luong || 0}
                         </span>
-                        <button
-                          className="pm-qty-btn pm-qty-plus"
-                          onClick={() => openQtyPopup(p, 1)}
-                          disabled={adjustingQty === p.id}
-                          title="Cộng 1"
-                        >
-                          <Plus size={14} />
-                        </button>
-                      </div>
+                      )}
                     </td>
                     <td>{p.tinh_chat || '—'}</td>
                     <td>{p.don_vi_tinh || 'Cái'}</td>
