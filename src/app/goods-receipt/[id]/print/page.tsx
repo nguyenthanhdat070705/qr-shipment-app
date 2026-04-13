@@ -427,8 +427,8 @@ export default async function GRPrintPage({
 
               {/* Bottom specs — dates & warehouse */}
               <div style={{ display: 'grid', gridTemplateColumns: '170px 1fr', rowGap: '20px', columnGap: '16px', paddingTop: '8px' }}>
-                <div style={{ fontWeight: 900, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111' }}>Ngày nhập kho</div>
-                <div style={{ fontWeight: 900, fontSize: '15px', color: '#111', borderBottom: '2px solid #111', width: '240px', paddingBottom: '2px' }}>
+                <div style={{ fontWeight: 900, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111' }}>Ngày nhập kho</div>
+                <div style={{ fontWeight: 900, fontSize: '18px', color: '#111', borderBottom: '2px solid #111', width: '240px', paddingBottom: '2px', textAlign: 'center' }}>
                   {receivedDate}
                 </div>
 
@@ -438,16 +438,14 @@ export default async function GRPrintPage({
                 <div style={{ fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111', paddingTop: '4px' }}>Lưu kho tại</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '4px' }}>
                   {(warehouses || []).map((k: { id: string; ten_kho: string }) => {
-                    // Auto-check warehouse matching the GR receiver name
-                    const receiverLower = (receivedBy || '').toLowerCase();
+                    // Auto-check warehouse matching the GR's receiving warehouse (kho nhận)
+                    const grWarehouseLower = (warehouseName || '').toLowerCase();
                     const khoLower = k.ten_kho.toLowerCase();
                     const isChecked =
-                      khoLower.includes(receiverLower) ||
-                      receiverLower.includes(khoLower.replace('kho ', '')) ||
-                      (receiverLower.includes('hàm long') && khoLower.includes('hàm long')) ||
-                      (receiverLower.includes('ham long') && khoLower.includes('hàm long')) ||
-                      (receiverLower.includes('kha vạn') && khoLower.includes('kha vạn')) ||
-                      (receiverLower.includes('kinh dương') && khoLower.includes('kinh dương'));
+                      khoLower === grWarehouseLower ||
+                      khoLower.includes(grWarehouseLower) ||
+                      grWarehouseLower.includes(khoLower) ||
+                      k.id === gr.kho_id;
                     return (
                       <div key={k.id} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div style={{
