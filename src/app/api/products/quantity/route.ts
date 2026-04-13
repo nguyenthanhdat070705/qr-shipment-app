@@ -8,11 +8,12 @@ import { getUserRole } from '@/config/roles.config';
  * Nếu so_luong > 0 → tự upsert vào fact_inventory.
  * Nếu so_luong <= 0 → xóa khỏi fact_inventory.
  *
- * Body: { id, delta, email, kho_id? }
+ * Body: { id, delta, email, kho_id?, loai_hang? }
  *   - id: dim_hom.id
  *   - delta: +1 hoặc -1 (hoặc bất kỳ số nguyên)
  *   - email: để check quyền
- *   - kho_id: (optional) ID kho đích trong fact_inventory. Nếu không truyền, dùng kho đầu tiên.
+ *   - kho_id: (optional) ID kho đích trong fact_inventory
+ *   - loai_hang: (optional) "Đã mua" hoặc "Ký gửi"
  */
 export async function PATCH(req: NextRequest) {
   const supabase = getSupabaseAdmin();
@@ -64,6 +65,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   // 3. Đồng bộ sang fact_inventory
+  const loaiHang = (body.loai_hang as string) || 'Đã mua';
   try {
     if (newQty > 0) {
       // Tìm kho mặc định (kho đầu tiên) nếu không truyền kho_id
@@ -88,10 +90,10 @@ export async function PATCH(req: NextRequest) {
           .maybeSingle();
 
         if (existing) {
-          // Update số lượng
+          // Update số lượng + loại hàng
           await supabase
             .from('fact_inventory')
-            .update({ 'Số lượng': newQty, 'Ghi chú': newQty })
+            .update({ 'Số lượng': newQty, 'Ghi chú': newQty, 'Loại hàng': loaiHang })
             .eq('Tên hàng hóa', id)
             .eq('Kho', khoId);
         } else {
@@ -103,6 +105,7 @@ export async function PATCH(req: NextRequest) {
               'Kho': khoId,
               'Số lượng': newQty,
               'Ghi chú': newQty,
+              'Loại hàng': loaiHang,
             });
         }
       }

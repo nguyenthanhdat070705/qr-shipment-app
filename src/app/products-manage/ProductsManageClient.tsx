@@ -1,10 +1,25 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Minus, Search, Package, Edit2, X, Check, ChevronDown, ChevronUp, Upload, Image as ImageIcon, Loader2, Trash2, ArrowLeft, AlertTriangle } from 'lucide-react';
+import { Plus, Minus, Search, Package, Edit2, X, Check, ChevronDown, ChevronUp, Upload, Image as ImageIcon, Loader2, Trash2, ArrowLeft, AlertTriangle, Warehouse } from 'lucide-react';
 import Link from 'next/link';
 import ExcelImportModal from '@/components/ExcelImportModal';
 import './products-manage.css';
+
+interface WarehouseItem {
+  id: string;
+  ma_kho: string;
+  ten_kho: string;
+}
+
+interface QtyPopup {
+  productId: string;
+  productName: string;
+  currentQty: number;
+  delta: number; // +1 or -1
+  kho_id: string;
+  loai_hang: string;
+}
 
 interface Product {
   id: string;
@@ -68,6 +83,8 @@ export default function ProductsManagePage() {
 
   // Quantity adjustment state
   const [adjustingQty, setAdjustingQty] = useState<string | null>(null);
+  const [qtyPopup, setQtyPopup] = useState<QtyPopup | null>(null);
+  const [warehouses, setWarehouses] = useState<WarehouseItem[]>([]);
 
   useEffect(() => {
     try {
@@ -92,7 +109,15 @@ export default function ProductsManagePage() {
     }
   }, []);
 
-  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+  const fetchWarehouses = useCallback(async () => {
+    try {
+      const res = await fetch('/api/warehouses');
+      const json = await res.json();
+      setWarehouses(json.data || []);
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => { fetchProducts(); fetchWarehouses(); }, [fetchProducts, fetchWarehouses]);
 
   const handleChange = (field: string, value: string | number) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -254,25 +279,39 @@ export default function ProductsManagePage() {
     setPendingFile(null);
   };
 
-  // ── Quantity adjustment handler ──
-  const handleQuantityChange = async (productId: string, delta: number) => {
+  // ── Quantity: open popup to choose Kho + Loại hàng ──
+  const openQtyPopup = (product: Product, delta: number) => {
+    setQtyPopup({
+      productId: product.id,
+      productName: `${product.ma_hom} — ${product.ten_hom}`,
+      currentQty: product.so_luong || 0,
+      delta,
+      kho_id: warehouses.length > 0 ? warehouses[0].id : '',
+      loai_hang: 'Đã mua',
+    });
+  };
+
+  const handleQuantityConfirm = async () => {
+    if (!qtyPopup) return;
+    const { productId, delta, kho_id, loai_hang } = qtyPopup;
     setAdjustingQty(productId);
+    setQtyPopup(null);
     try {
       const res = await fetch('/api/products/quantity', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: productId, delta, email: userEmail }),
+        body: JSON.stringify({ id: productId, delta, email: userEmail, kho_id, loai_hang }),
       });
       const json = await res.json();
       if (!res.ok) {
         setMessage({ type: 'error', text: json.error || 'Lỗi cập nhật số lượng' });
       } else {
-        // Update local state immediately for snappy UX
         setProducts(prev => prev.map(p =>
           p.id === productId
             ? { ...p, so_luong: json.new_qty }
             : p
         ));
+        setMessage({ type: 'success', text: `${delta > 0 ? 'Cộng' : 'Trừ'} ${Math.abs(delta)} → ${json.ma_hom} (SL: ${json.new_qty})` });
       }
     } catch {
       setMessage({ type: 'error', text: 'Lỗi kết nối khi cập nhật số lượng' });
@@ -610,6 +649,74 @@ export default function ProductsManagePage() {
         </div>
       )}
 
+      {/* Quantity Adjustment Popup */}
+      {qtyPopup && (
+        <div className="pm-form-overlay" onClick={() => setQtyPopup(null)}>
+          <div className="pm-qty-modal" onClick={e => e.stopPropagation()}>
+            <div className="pm-qty-modal-header">
+              <Warehouse size={22} />
+              <div>
+                <h3>{qtyPopup.delta > 0 ? 'Cộng' : 'Trừ'} số lượng hòm</h3>
+                <p className="pm-qty-modal-product">{qtyPopup.productName}</p>
+              </div>
+              <button className="pm-form-close" onClick={() => setQtyPopup(null)}><X size={18} /></button>
+            </div>
+            <div className="pm-qty-modal-body">
+              <div className="pm-qty-modal-info">
+                <span>Số lượng hiện tại:</span>
+                <strong>{qtyPopup.currentQty}</strong>
+                <span className={qtyPopup.delta > 0 ? 'pm-qty-delta-plus' : 'pm-qty-delta-minus'}>
+                  {qtyPopup.delta > 0 ? '+1' : '−1'}
+                </span>
+                <span>→</span>
+                <strong className={qtyPopup.delta > 0 ? 'pm-qty-delta-plus' : ''}>
+                  {Math.max(0, qtyPopup.currentQty + qtyPopup.delta)}
+                </strong>
+              </div>
+
+              <div className="pm-qty-modal-field">
+                <label><Warehouse size={14} /> Chọn kho</label>
+                <select
+                  value={qtyPopup.kho_id}
+                  onChange={e => setQtyPopup({ ...qtyPopup, kho_id: e.target.value })}
+                >
+                  {warehouses.map(w => (
+                    <option key={w.id} value={w.id}>{w.ma_kho} — {w.ten_kho}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pm-qty-modal-field">
+                <label><Package size={14} /> Loại hàng</label>
+                <div className="pm-qty-type-group">
+                  {['Đã mua', 'Ký gửi'].map(type => (
+                    <button
+                      key={type}
+                      type="button"
+                      className={`pm-qty-type-btn ${qtyPopup.loai_hang === type ? 'active' : ''}`}
+                      onClick={() => setQtyPopup({ ...qtyPopup, loai_hang: type })}
+                    >
+                      {type === 'Đã mua' ? <Check size={14} /> : <Package size={14} />}
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="pm-qty-modal-actions">
+              <button className="pm-btn-cancel" onClick={() => setQtyPopup(null)}>Hủy</button>
+              <button
+                className={`pm-qty-confirm-btn ${qtyPopup.delta > 0 ? 'pm-qty-confirm-plus' : 'pm-qty-confirm-minus'}`}
+                onClick={handleQuantityConfirm}
+                disabled={!qtyPopup.kho_id}
+              >
+                {qtyPopup.delta > 0 ? <><Plus size={14} /> Xác nhận cộng</> : <><Minus size={14} /> Xác nhận trừ</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Search */}
       <div className="pm-search-bar">
         <Search size={18} />
@@ -677,7 +784,7 @@ export default function ProductsManagePage() {
                       <div className="pm-qty-controls">
                         <button
                           className="pm-qty-btn pm-qty-minus"
-                          onClick={() => handleQuantityChange(p.id, -1)}
+                          onClick={() => openQtyPopup(p, -1)}
                           disabled={adjustingQty === p.id || (p.so_luong || 0) <= 0}
                           title="Trừ 1"
                         >
@@ -688,7 +795,7 @@ export default function ProductsManagePage() {
                         </span>
                         <button
                           className="pm-qty-btn pm-qty-plus"
-                          onClick={() => handleQuantityChange(p.id, 1)}
+                          onClick={() => openQtyPopup(p, 1)}
                           disabled={adjustingQty === p.id}
                           title="Cộng 1"
                         >

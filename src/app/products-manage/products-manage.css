@@ -1159,6 +1159,175 @@
   font-weight: 800;
 }
 
+/* ── Quantity Modal ───────────────────────── */
+.pm-qty-modal {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 460px;
+  overflow: hidden;
+  animation: slideUp 0.25s ease;
+}
+.pm-qty-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 22px;
+  background: linear-gradient(135deg, #ede9fe, #f3f0ff);
+  border-bottom: 1px solid #d8b4fe;
+  color: #6d28d9;
+}
+.pm-qty-modal-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+.pm-qty-modal-product {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: #6d28d9;
+  font-weight: 600;
+}
+.pm-qty-modal-header .pm-form-close {
+  margin-left: auto;
+}
+.pm-qty-modal-body {
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.pm-qty-modal-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.9rem;
+  justify-content: center;
+}
+.pm-qty-modal-info strong {
+  font-size: 1.15rem;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+.pm-qty-delta-plus {
+  color: #059669;
+  font-weight: 700;
+}
+.pm-qty-delta-minus {
+  color: #dc2626;
+  font-weight: 700;
+}
+.pm-qty-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pm-qty-modal-field label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #475569;
+}
+.pm-qty-modal-field select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  color: #1e293b;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+.pm-qty-modal-field select:focus {
+  outline: none;
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+.pm-qty-type-group {
+  display: flex;
+  gap: 8px;
+}
+.pm-qty-type-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #64748b;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.pm-qty-type-btn:hover {
+  border-color: #c4b5fd;
+  background: #faf5ff;
+  color: #7c3aed;
+}
+.pm-qty-type-btn.active {
+  border-color: #8b5cf6;
+  background: linear-gradient(135deg, #ede9fe, #f3f0ff);
+  color: #6d28d9;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.15);
+}
+.pm-qty-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 22px;
+  border-top: 1px solid #f1f5f9;
+}
+.pm-qty-confirm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #fff;
+}
+.pm-qty-confirm-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.pm-qty-confirm-plus {
+  background: linear-gradient(135deg, #059669, #10b981);
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+}
+.pm-qty-confirm-plus:hover:not(:disabled) {
+  box-shadow: 0 4px 16px rgba(5, 150, 105, 0.4);
+  transform: translateY(-1px);
+}
+.pm-qty-confirm-minus {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+.pm-qty-confirm-minus:hover:not(:disabled) {
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.4);
+  transform: translateY(-1px);
+}
+
 /* ── Responsive ────────────────────────── */
 @media (max-width: 768px) {
   .pm-form-grid { grid-template-columns: 1fr; }
