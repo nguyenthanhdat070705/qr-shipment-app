@@ -68,12 +68,14 @@ export async function PATCH(req: NextRequest) {
   const loaiHang = (body.loai_hang as string) || 'Đã mua';
 
   // 3. Read current qty from fact_inventory for THIS specific (product, warehouse)
-  const { data: existingRow } = await supabase
+  const { data: rawRow } = await supabase
     .from('fact_inventory')
     .select('Mã, "Số lượng", "Ghi chú"')
     .eq('Tên hàng hóa', id)
     .eq('Kho', khoId)
     .maybeSingle();
+
+  const existingRow = rawRow as Record<string, any> | null;
 
   const currentWarehouseQty = existingRow ? (Number(existingRow['Số lượng']) || 0) : 0;
   const newWarehouseQty = Math.max(0, currentWarehouseQty + delta);
