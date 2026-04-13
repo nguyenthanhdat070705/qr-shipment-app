@@ -5,7 +5,7 @@ import {
   Users, Shield, Mail, Key, Eye, EyeOff,
   CheckCircle, AlertCircle, Loader2, Lock,
   Edit3, X, Save, UserCheck, Building2, RefreshCw,
-  Crown, Warehouse, ShoppingBag, Wrench
+  Crown, Warehouse, ShoppingBag, Wrench, Tag
 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import { getUserRole, isVIPAdmin } from '@/config/roles.config';
@@ -133,6 +133,23 @@ const SYSTEM_ACCOUNTS = [
     badgeText: 'text-orange-700',
     gradientFrom: 'from-orange-500',
     gradientTo: 'to-amber-600',
+  },
+  {
+    id: 'sales',
+    email: 'bophanbanhang@blackstone.com.vn',
+    displayName: 'Bộ phận Bán hàng',
+    department: 'Phòng Bán hàng',
+    role: 'sales' as const,
+    roleLabel: 'Bán hàng',
+    description: 'Tìm kiếm, xem trạng thái hàng hóa, và thực hiện giữ hàng (Hold)',
+    icon: Tag,
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-50',
+    borderColor: 'border-blue-200',
+    badgeBg: 'bg-blue-100',
+    badgeText: 'text-blue-700',
+    gradientFrom: 'from-blue-500',
+    gradientTo: 'to-indigo-600',
   },
 ];
 
@@ -607,6 +624,12 @@ export default function AccountsPage() {
                 <div className="flex items-center gap-2 text-amber-700">
                   <span className="text-amber-400">▸</span>
                   <span>bophanvanhanh@blackstone.com.vn</span>
+                  <span className="text-amber-400">•</span>
+                  <span className="font-bold">123456@</span>
+                </div>
+                <div className="flex items-center gap-2 text-amber-700">
+                  <span className="text-amber-400">▸</span>
+                  <span>bophanbanhang@blackstone.com.vn</span>
                   <span className="text-amber-400">•</span>
                   <span className="font-bold">123456@</span>
                 </div>

@@ -276,6 +276,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (!confirmation.stt) confirmation.stt = 0;
 
   // ── Bước 5.5: Trừ tồn kho trong fact_inventory ─────
+  let deductedKhoId: string | null = null;
   try {
     // Dùng SDK trực tiếp — đáng tin cậy hơn exec_sql
     const { data: allRows } = await supabaseAdmin
@@ -289,6 +290,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       // Ưu tiên trừ từ kho có nhiều nhất
       validRows.sort((a: Record<string, unknown>, b: Record<string, unknown>) => Number(b['Số lượng']) - Number(a['Số lượng']));
       const best = validRows[0];
+      deductedKhoId = best['Kho'] as string || null;
       const newQty = Math.max(0, Number(best['Số lượng']) - soLuong);
       const { error: updateErr } = await supabaseAdmin
         .from('fact_inventory')
@@ -297,13 +299,60 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       if (updateErr) {
         console.error('[confirm-shipment] Lỗi trừ kho:', updateErr.message);
       } else {
-        console.log(`[confirm-shipment] ✅ Trừ kho: ${best['Mã']} | SL ${best['Số lượng']} → ${newQty}`);
+        console.log(`[confirm-shipment] ✅ Trừ kho: ${best['Mã']} | SL ${best['Số lượng']} → ${newQty} | Kho: ${deductedKhoId}`);
       }
     } else {
       console.warn('[confirm-shipment] Không tìm thấy dòng inventory có tồn > 0 để trừ');
     }
   } catch (invDeductErr) {
     console.error('[confirm-shipment] Exception trừ kho:', invDeductErr);
+  }
+
+  // ── Bước 5.6: Ghi vào fact_xuat_hang + fact_xuat_hang_items (để hiển thị trên Dashboard) ─────
+  try {
+    const maPhieuXuat = `IT-${trimmedMaDonHang || now.toISOString().slice(0, 10).replace(/-/g, '')}`;
+
+    // Resolve nguoi_xuat_id from dim_account
+    let nguoiXuatId: string | null = null;
+    if (trimmedEmail) {
+      const { data: acct } = await supabaseAdmin
+        .from('dim_account')
+        .select('id')
+        .eq('email', trimmedEmail)
+        .maybeSingle();
+      nguoiXuatId = acct?.id || null;
+    }
+
+    const { data: xuatHangData, error: xuatHangErr } = await supabaseAdmin
+      .from('fact_xuat_hang')
+      .insert({
+        ma_phieu_xuat: maPhieuXuat,
+        kho_id: deductedKhoId,
+        nguoi_xuat_id: nguoiXuatId,
+        trang_thai: 'pending',
+        ten_khach: trimmedHoTen || 'Khách vãng lai',
+        ghi_chu: trimmedMaDonHang ? `Mã Đám: ${trimmedMaDonHang}${trimmedNote ? ' | ' + trimmedNote : ''}` : (trimmedNote || null),
+      })
+      .select('id')
+      .single();
+
+    if (!xuatHangErr && xuatHangData) {
+      // Insert chi tiết sản phẩm xuất
+      await supabaseAdmin.from('fact_xuat_hang_items').insert({
+        xuat_hang_id: xuatHangData.id,
+        hom_id: productId,
+        ma_hom: maSanPham,
+        ten_hom: productName,
+        so_luong: soLuong,
+        inventory_id: null,
+        ghi_chu: trimmedNote || `Xuất cho đám ${trimmedMaDonHang}`,
+      });
+      console.log(`[confirm-shipment] ✅ Ghi fact_xuat_hang: ${maPhieuXuat} | ${maSanPham} x${soLuong}`);
+    } else if (xuatHangErr) {
+      console.warn('[confirm-shipment] ⚠️ Không ghi được fact_xuat_hang:', xuatHangErr.message);
+    }
+  } catch (xuatErr) {
+    console.warn('[confirm-shipment] ⚠️ Exception ghi fact_xuat_hang:', xuatErr);
   }
 
   // ── Bước 6: Ghi log (không bắt buộc) ────────────────────
