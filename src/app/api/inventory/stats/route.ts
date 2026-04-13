@@ -53,9 +53,27 @@ export async function GET(req: Request) {
     if (warehouseFilter) {
       let total = 0, available = 0, outOfStock = 0, totalQuantity = 0;
 
+      // Find matching warehouse name — strip "Kho " prefix since dim_kho stores "Hàm Long" not "Kho Hàm Long"
+      const cleanFilter = warehouseFilter.replace(/^Kho\s+/i, '').trim();
+      const matchingWarehouseKey = (() => {
+        // Check all warehouse names in the product data
+        const allWarehouseNames = new Set<string>();
+        for (const p of products) {
+          Object.keys(p.byWarehouse).forEach(k => allWarehouseNames.add(k));
+        }
+        // Try exact match first
+        if (allWarehouseNames.has(warehouseFilter)) return warehouseFilter;
+        if (allWarehouseNames.has(cleanFilter)) return cleanFilter;
+        // Try contains match
+        for (const name of allWarehouseNames) {
+          if (name.includes(cleanFilter) || cleanFilter.includes(name)) return name;
+        }
+        return warehouseFilter; // fallback
+      })();
+
       const outOfStockList: { code: string; name: string; warehouse: string; qty: number }[] = [];
       for (const p of products) {
-        const w = p.byWarehouse[warehouseFilter];
+        const w = p.byWarehouse[matchingWarehouseKey];
         if (!w) continue;
         total++;
         totalQuantity += w.qty;

@@ -117,8 +117,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           email: profile?.email || email,
           chuc_vu: profile?.chuc_vu || '',
           ghi_chu: `Phiếu: ${doRow.ma_phieu_xuat}` + (doRow.ghi_chu ? ` - ${doRow.ghi_chu}` : '') + (itemsDesc ? ` (${itemsDesc})` : ''),
-          ngay_xuat: dateObj.toISOString().split('T')[0],
-          thoi_gian_xuat: dateObj.toTimeString().slice(0, 8),
+          ngay_xuat: dateObj.toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false }),
+          thoi_gian_xuat: dateObj.toLocaleTimeString('en-GB', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false }),
           created_at: doRow.created_at,
           source: 'fact_xuat_hang'
         });

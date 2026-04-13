@@ -354,6 +354,7 @@ export default function WarehouseDashboard() {
   const [nowStr, setNowStr] = useState('');
   const [history, setHistory] = useState<any[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [historySummary, setHistorySummary] = useState<{ importCount: number; exportCount: number; totalCount: number }>({ importCount: 0, exportCount: 0, totalCount: 0 });
   const [stats, setStats] = useState<InventoryStat>({ total: 0, available: 0, outOfStock: 0, totalQuantity: 0, warehouseName: '' });
   const [outOfStockProducts, setOutOfStockProducts] = useState<OutOfStockProduct[]>([]);
   const [pendingPOs, setPendingPOs] = useState<PurchaseOrder[]>([]);
@@ -414,6 +415,9 @@ export default function WarehouseDashboard() {
       if (res.ok) {
         let data = json.data || [];
         setHistory(data.slice(0, 50)); // Show up to 50 combined
+        if (json.summary) {
+          setHistorySummary(json.summary);
+        }
       }
     } catch {}
     finally { setHistoryLoading(false); }
@@ -480,10 +484,15 @@ export default function WarehouseDashboard() {
   }, [fetchHistory, fetchStats, fetchPendingPOs]);
 
   const pendingCount = pendingPOs.length;
-  const todayCount = history.filter(h => {
+  const todayExportCount = history.filter(h => {
     const d = new Date(h.created_at);
     const now = new Date();
     return d.toDateString() === now.toDateString() && h.type === 'export';
+  }).length;
+  const todayImportCount = history.filter(h => {
+    const d = new Date(h.created_at);
+    const now = new Date();
+    return d.toDateString() === now.toDateString() && h.type === 'import';
   }).length;
 
   const handleRefresh = () => {
@@ -530,9 +539,13 @@ export default function WarehouseDashboard() {
 
             {/* Quick stats chips */}
             <div className="flex flex-wrap gap-2 mt-4">
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 border border-red-400/30 text-red-200 text-xs font-semibold">
+                <Truck size={12} className="text-red-300" />
+                {todayExportCount} xuất hôm nay
+              </div>
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-white text-xs font-semibold">
                 <Package size={12} className="text-emerald-300" />
-                {todayCount} xuất hôm nay
+                {todayImportCount} nhập hôm nay
               </div>
               {pendingCount > 0 && (
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/20 border border-teal-400/30 text-teal-200 text-xs font-semibold">
@@ -563,19 +576,19 @@ export default function WarehouseDashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <StatCard
           label="Xuất hôm nay"
-          value={todayCount}
-          sub="phiếu xuất kho"
+          value={todayExportCount}
+          sub={`Tổng: ${historySummary.exportCount} phiếu xuất`}
           icon={<Truck size={20} />}
-          gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
+          gradient="bg-gradient-to-br from-red-500 to-rose-600"
           onClick={() => router.push('/goods-issue')}
         />
         <StatCard
-          label="Chờ xử lý"
-          value={pendingCount}
-          sub="phiếu cần xử lý"
-          icon={<Clock size={20} />}
-          gradient="bg-gradient-to-br from-amber-400 to-orange-500"
-          onClick={() => setPendingDrawerOpen(true)}
+          label="Nhập hôm nay"
+          value={todayImportCount}
+          sub={`Tổng: ${historySummary.importCount} phiếu nhập`}
+          icon={<PackageCheck size={20} />}
+          gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
+          onClick={() => router.push('/goods-receipt')}
         />
         <StatCard
           label="Tổng loại hòm"

@@ -427,20 +427,52 @@ export default async function GRPrintPage({
 
               {/* Bottom specs — dates & warehouse */}
               <div style={{ display: 'grid', gridTemplateColumns: '170px 1fr', rowGap: '20px', columnGap: '16px', paddingTop: '8px' }}>
-                <div style={{ fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111' }}>Ngày nhập kho</div>
-                <div style={{ borderBottom: '1px dotted #9ca3af', width: '240px' }} />
+                <div style={{ fontWeight: 900, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111' }}>Ngày nhập kho</div>
+                <div style={{ fontWeight: 900, fontSize: '15px', color: '#111', borderBottom: '2px solid #111', width: '240px', paddingBottom: '2px' }}>
+                  {receivedDate}
+                </div>
 
                 <div style={{ fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111' }}>Ngày xuất kho</div>
                 <div style={{ borderBottom: '1px dotted #9ca3af', width: '240px' }} />
 
                 <div style={{ fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111', paddingTop: '4px' }}>Lưu kho tại</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '4px' }}>
-                  {(warehouses || []).map((k: { id: string; ten_kho: string }) => (
-                    <div key={k.id} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ width: '18px', height: '18px', border: '1.5px solid #9ca3af', borderRadius: '3px', flexShrink: 0 }} />
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>{k.ten_kho}</span>
-                    </div>
-                  ))}
+                  {(warehouses || []).map((k: { id: string; ten_kho: string }) => {
+                    // Auto-check warehouse matching the GR receiver name
+                    const receiverLower = (receivedBy || '').toLowerCase();
+                    const khoLower = k.ten_kho.toLowerCase();
+                    const isChecked =
+                      khoLower.includes(receiverLower) ||
+                      receiverLower.includes(khoLower.replace('kho ', '')) ||
+                      (receiverLower.includes('hàm long') && khoLower.includes('hàm long')) ||
+                      (receiverLower.includes('ham long') && khoLower.includes('hàm long')) ||
+                      (receiverLower.includes('kha vạn') && khoLower.includes('kha vạn')) ||
+                      (receiverLower.includes('kinh dương') && khoLower.includes('kinh dương'));
+                    return (
+                      <div key={k.id} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{
+                          width: '18px', height: '18px',
+                          border: '1.5px solid #111',
+                          borderRadius: '3px', flexShrink: 0,
+                          background: isChecked ? '#111' : 'transparent',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          {isChecked && (
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                              <path d="M2 6L5 9L10 3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                        </div>
+                        <span style={{
+                          fontSize: '13px',
+                          fontWeight: isChecked ? 900 : 600,
+                          color: isChecked ? '#111' : '#374151',
+                        }}>
+                          {k.ten_kho}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
