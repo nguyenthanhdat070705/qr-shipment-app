@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/sync-dam",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/birthday-zns",
+      "schedule": "0 1 * * *"
     }
   ]
 }

@@ -222,3 +222,33 @@ Set the same environment variables in Vercel dashboard:
 | **Role-based access control**      | Supabase Auth + RLS policies per `user_role`              |
 | **i18n / localization**            | Add `next-intl` for multi-language support                |
 | **Offline / PWA support**          | Service worker + cache for scanning in low-connectivity   |
+
+---
+
+## 9. Getfly CRM Integration (READ-ONLY)
+
+> ⚠️ **QUAN TRỌNG**: API Getfly chỉ được sử dụng để **RÚT TRÍCH DỮ LIỆU**.  
+> **TUYỆT ĐỐI KHÔNG** sync/push/update dữ liệu ngược lên Getfly trừ khi được yêu cầu rõ ràng.
+
+### Thông Tin Đăng Nhập
+
+| Thông tin | Giá trị |
+|-----------|---------|
+| **CRM URL** | https://blackstonesdvtl.getflycrm.com/#/ |
+| **User** | `haphuong@blackstones.vn` |
+| **Password** | `Phuong@123456` |
+| **API Key** | `UyNhqLj3Opw0ZSup9dA2uq1A8qFvT1` |
+| **API Base URL** | `https://blackstonesdvtl.getflycrm.com/api/v3` |
+| **Auth Header** | `X-API-KEY: UyNhqLj3Opw0ZSup9dA2uq1A8qFvT1` |
+
+### Endpoints Khả Dụng
+
+| Endpoint | Records | Mô tả |
+|----------|---------|--------|
+| `GET /accounts?page=N` | 6,712 KH | Khách hàng (50/page, 135 pages) |
+| `GET /products?page=N` | 27 SP | Sản phẩm (20/page, 2 pages) |
+| `GET /tasks?page=N` | Nhiều | Công việc (30/page) |
+| `GET /users` | 29 NV | Nhân viên (trả hết) |
+| `GET /campaigns` | 1+ | Chiến dịch |
+
+📖 Xem chi tiết đầy đủ tại: [`GETFLY_API_GUIDE.md`](./GETFLY_API_GUIDE.md)

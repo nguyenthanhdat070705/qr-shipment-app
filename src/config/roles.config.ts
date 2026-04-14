@@ -23,6 +23,7 @@ export interface RolePermissions {
   canHold: boolean;
   canViewInventory: boolean;
   canViewProducts: boolean;
+  canMembership: boolean;    // Sales — đăng ký & quản lý hội viên
 }
 
 export interface RoleConfig {
@@ -77,6 +78,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       canHold: true,
       canViewInventory: true,
       canViewProducts: true,
+      canMembership: true,
     },
   },
   procurement: {
@@ -93,6 +95,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       canHold: false,
       canViewInventory: true,
       canViewProducts: true,
+      canMembership: false,
     },
   },
   warehouse: {
@@ -109,6 +112,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       canHold: false,
       canViewInventory: true,
       canViewProducts: true,
+      canMembership: false,
     },
   },
   operations: {
@@ -125,6 +129,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       canHold: false,
       canViewInventory: true,
       canViewProducts: true,
+      canMembership: false,
     },
   },
   sales: {
@@ -141,6 +146,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       canHold: true,
       canViewInventory: true,
       canViewProducts: true,
+      canMembership: true,
     },
   },
 };
