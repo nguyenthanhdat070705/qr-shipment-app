@@ -197,18 +197,38 @@ export default function MemberDetailPage() {
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
             <h2 className="font-bold text-gray-800">📋 Thông tin hợp đồng</h2>
             <div className="flex gap-2">
-              <a
-                href={
-                  member.contract_number && member.contract_number.length > 20
-                    ? `https://drive.google.com/drive/folders/${member.contract_number}`
-                    : `https://drive.google.com/drive/folders/1bwgDD-4dl7eGlAXlOoHp2vCY-IaLeRpL`
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition-colors"
-              >
-                <Eye size={13} /> Mở Folder Hợp Đồng
-              </a>
+              {/* Nếu đã có Drive folder ID → mở folder riêng của HV */}
+              {member.contract_number && member.contract_number.length > 20 ? (
+                <a
+                  href={`https://drive.google.com/drive/folders/${member.contract_number}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition-colors"
+                >
+                  <Eye size={13} /> Mở Folder Hợp Đồng
+                </a>
+              ) : (
+                /* Nếu chưa có → nút tạo folder mới */
+                <button
+                  onClick={async () => {
+                    const res = await fetch('/api/membership/create-folder', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ member_id: memberId, member_code: member.member_code }),
+                    });
+                    const data = await res.json();
+                    if (data.folder_id) {
+                      window.open(`https://drive.google.com/drive/folders/${data.folder_id}`, '_blank');
+                      fetchMember(); // reload để cập nhật contract_number
+                    } else {
+                      alert('Không thể tạo folder: ' + (data.error || 'Lỗi hệ thống'));
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 text-green-600 text-xs font-semibold hover:bg-green-100 transition-colors"
+                >
+                  <Eye size={13} /> Tạo Folder Drive
+                </button>
+              )}
               <button
                 onClick={() => window.print()}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-50 text-violet-600 text-xs font-semibold hover:bg-violet-100 transition-colors"
