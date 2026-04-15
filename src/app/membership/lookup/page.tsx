@@ -172,7 +172,7 @@ export default function MemberLookupPage() {
         {/* Header */}
         <div>
           <h1 className="text-xl font-extrabold text-gray-900">Tra Cứu Hội Viên</h1>
-          <p className="text-sm text-gray-500 mt-1">Tìm kiếm bằng số điện thoại hoặc mã hội viên</p>
+          <p className="text-sm text-gray-500 mt-1">Tìm kiếm bằng số điện thoại, mã hội viên hoặc số CCCD</p>
         </div>
 
         {/* Search box */}
@@ -187,7 +187,7 @@ export default function MemberLookupPage() {
                   value={query}
                   onChange={e => setQuery(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                  placeholder="Nhập SĐT (09xx...) hoặc Mã HV (BS-...)..."
+                  placeholder="Nhập SĐT (09xx...), Mã HV (BS-...) hoặc CCCD (12 số)..."
                   className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500 transition-all"
                   autoFocus
                 />
@@ -204,7 +204,7 @@ export default function MemberLookupPage() {
 
             {/* Quick hints */}
             <div className="flex flex-wrap gap-2 mt-3">
-              {['0901', '0912', 'BS-', 'HV-'].map(hint => (
+              {['0901', '0912', 'BS-', 'HV-', '001'].map(hint => (
                 <button
                   key={hint}
                   type="button"
@@ -294,10 +294,10 @@ export default function MemberLookupPage() {
             </div>
             <h3 className="text-base font-bold text-gray-800">Tra Cứu Thông Tin Hội Viên</h3>
             <p className="text-sm text-gray-500 mt-2 max-w-sm mx-auto">
-              Nhập <strong>số điện thoại</strong> (09xx...) hoặc <strong>mã hội viên</strong> để xem thông tin và trạng thái thẻ.
+              Nhập <strong>số điện thoại</strong>, <strong>mã hội viên</strong> hoặc <strong>số CCCD</strong> để xem thông tin và trạng thái thẻ.
             </p>
 
-            <div className="grid grid-cols-2 gap-3 mt-6 text-left max-w-xs mx-auto">
+            <div className="grid grid-cols-3 gap-3 mt-6 text-left max-w-md mx-auto">
               <div className="bg-white rounded-xl p-3 border border-yellow-100">
                 <p className="text-[11px] font-bold text-gray-500 mb-1">📱 Theo SĐT</p>
                 <p className="font-mono text-sm text-gray-700">0901 234 567</p>
@@ -305,6 +305,10 @@ export default function MemberLookupPage() {
               <div className="bg-white rounded-xl p-3 border border-yellow-100">
                 <p className="text-[11px] font-bold text-gray-500 mb-1">🏷 Theo mã HV</p>
                 <p className="font-mono text-sm text-gray-700">BS-2026-001</p>
+              </div>
+              <div className="bg-white rounded-xl p-3 border border-yellow-100">
+                <p className="text-[11px] font-bold text-gray-500 mb-1">🪪 Theo CCCD</p>
+                <p className="font-mono text-sm text-gray-700">001234567890</p>
               </div>
             </div>
           </div>

@@ -59,13 +59,16 @@ export async function GET(req: NextRequest) {
       .select('id, member_code, full_name, phone, email, status, registered_date, expiry_date, branch, service_package, consultant_name');
 
     // Determine search type
-    const isPhone = type === 'phone' || (type === 'auto' && /^[0-9+\s-]{8,15}$/.test(query.replace(/\s/g, '')));
-    const isMemberCode = type === 'code' || (type === 'auto' && !isPhone);
+    const cleanQuery = query.replace(/[\s-]/g, '');
+    // CCCD: 9 or 12 digits (không bắt đầu bằng 0)
+    const isCCCD = type === 'cccd' || (type === 'auto' && /^[1-9][0-9]{8,11}$/.test(cleanQuery));
+    // Phone: bắt đầu bằng 0 hoặc +84, 9-11 chữ số
+    const isPhone = !isCCCD && (type === 'phone' || (type === 'auto' && /^(0|\+84)[0-9]{8,10}$/.test(cleanQuery)));
 
-    if (isPhone) {
-      // Normalize phone: strip spaces, dashes
-      const normalized = query.replace(/[\s-]/g, '');
-      dbQuery = dbQuery.ilike('phone', `%${normalized}%`);
+    if (isCCCD) {
+      dbQuery = dbQuery.ilike('cccd', `%${cleanQuery}%`);
+    } else if (isPhone) {
+      dbQuery = dbQuery.ilike('phone', `%${cleanQuery}%`);
     } else {
       // Search by member code (exact or partial)
       dbQuery = dbQuery.ilike('member_code', `%${query}%`);
