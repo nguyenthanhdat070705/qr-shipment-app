@@ -760,7 +760,7 @@ function CustomerDetailModal({ customer: c, onClose }: { customer: LocalCustomer
     { icon: <Briefcase size={14} />, label: 'Loại khách hàng', value: c.account_type },
     { icon: <TrendingUp size={14} />, label: 'Nguồn tiếp cận', value: c.account_source },
     { icon: <User size={14} />, label: 'NV phụ trách', value: c.manager_user_name },
-    { icon: <Calendar size={14} />, label: 'Ngày tạo GetFly', value: c.getfly_created_at },
+    { icon: <Calendar size={14} />, label: 'Ngày sync gần nhất', value: c.synced_at ? new Date(c.synced_at).toLocaleString('vi-VN') : undefined },
   ];
 
   return (

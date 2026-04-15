@@ -6,10 +6,11 @@ import { getSupabaseAdmin } from '@/lib/supabase/server';
  * Example: Mem260414001, Mem260414002
  */
 async function generateMemberCode(supabase: ReturnType<typeof getSupabaseAdmin>): Promise<string> {
-  const d = new Date();
-  const yy = String(d.getFullYear()).slice(2);
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
+  // Dùng giờ Việt Nam (UTC+7) thay vì UTC của server Vercel
+  const vnNow = new Date(Date.now() + 7 * 60 * 60 * 1000);
+  const yy = String(vnNow.getUTCFullYear()).slice(2);
+  const mm = String(vnNow.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(vnNow.getUTCDate()).padStart(2, '0');
   const prefix = `Mem${yy}${mm}${dd}`;
 
   // Find the highest existing code for today
