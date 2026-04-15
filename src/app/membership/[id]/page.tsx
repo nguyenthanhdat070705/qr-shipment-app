@@ -211,17 +211,28 @@ export default function MemberDetailPage() {
                 /* Nếu chưa có → nút tạo folder mới */
                 <button
                   onClick={async () => {
-                    const res = await fetch('/api/membership/create-folder', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ member_id: memberId, member_code: member.member_code }),
-                    });
-                    const data = await res.json();
-                    if (data.folder_id) {
-                      window.open(`https://drive.google.com/drive/folders/${data.folder_id}`, '_blank');
-                      fetchMember(); // reload để cập nhật contract_number
-                    } else {
-                      alert('Không thể tạo folder: ' + (data.error || 'Lỗi hệ thống'));
+                    const btn = document.activeElement as HTMLButtonElement;
+                    if (btn) btn.disabled = true;
+                    try {
+                      const res = await fetch('/api/membership/create-folder', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          member_id: memberId,
+                          member_code: member.member_code,
+                          full_name: member.full_name,   // ← gửi tên để đặt tên folder
+                        }),
+                      });
+                      const data = await res.json();
+                      if (data.folder_id) {
+                        alert(`✅ Đã tạo folder: "${data.folder_name}"\nĐang mở Google Drive...`);
+                        window.open(`https://drive.google.com/drive/folders/${data.folder_id}`, '_blank');
+                        fetchMember(); // reload để cập nhật contract_number
+                      } else {
+                        alert('❌ Không thể tạo folder:\n' + (data.error || 'Lỗi hệ thống') + (data.debug ? `\n\nDebug: ${JSON.stringify(data.debug)}` : ''));
+                      }
+                    } finally {
+                      if (btn) btn.disabled = false;
                     }
                   }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 text-green-600 text-xs font-semibold hover:bg-green-100 transition-colors"

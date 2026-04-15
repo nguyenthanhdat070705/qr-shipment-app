@@ -6,28 +6,26 @@ const PARENT_FOLDER_ID = '1bwgDD-4dl7eGlAXlOoHp2vCY-IaLeRpL';
 
 export async function POST(req: NextRequest) {
   try {
-    const { member_id, member_code } = await req.json();
+    const { member_id, member_code, full_name } = await req.json();
 
     if (!member_id || !member_code) {
       return NextResponse.json({ error: 'Thiếu member_id hoặc member_code' }, { status: 400 });
     }
 
-    // Debug: kiểm tra env var
-    const hasEnvVar = !!process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-    console.log('[create-folder] GOOGLE_SERVICE_ACCOUNT_JSON present:', hasEnvVar);
-    console.log('[create-folder] Creating folder:', member_code);
+    // Tên folder: "Mem260415001 — Nguyễn Văn A"
+    const folderName = full_name
+      ? `${member_code} — ${full_name.trim()}`
+      : member_code;
 
-    // Tạo folder Drive tên theo member_code
-    const folderInfo = await createMemberFolder(member_code, PARENT_FOLDER_ID);
+    const hasEnvVar = !!process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+    console.log('[create-folder] Creating folder:', folderName, '| env:', hasEnvVar);
+
+    const folderInfo = await createMemberFolder(folderName, PARENT_FOLDER_ID);
     if (!folderInfo) {
-      console.error('[create-folder] createMemberFolder returned null for:', member_code);
+      console.error('[create-folder] createMemberFolder returned null for:', folderName);
       return NextResponse.json({
-        error: 'Không thể tạo folder trên Google Drive',
-        debug: {
-          hasEnvVar,
-          member_code,
-          parent_folder_id: PARENT_FOLDER_ID,
-        }
+        error: 'Không thể tạo folder trên Google Drive. Kiểm tra GOOGLE_SERVICE_ACCOUNT_JSON trong Vercel env.',
+        debug: { hasEnvVar, folderName, parent_folder_id: PARENT_FOLDER_ID }
       }, { status: 500 });
     }
 
@@ -46,10 +44,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Build link thủ công vì webViewLink có thể null với Service Account
+    const folderId = folderInfo.id!;
+    const folderLink = folderInfo.link || `https://drive.google.com/drive/folders/${folderId}`;
+
     return NextResponse.json({
       success: true,
-      folder_id: folderInfo.id,
-      folder_link: folderInfo.link,
+      folder_id: folderId,
+      folder_link: folderLink,
+      folder_name: folderName,
     });
   } catch (err) {
     console.error('[create-folder] Error:', err);
