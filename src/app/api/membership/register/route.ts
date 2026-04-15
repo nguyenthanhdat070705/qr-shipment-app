@@ -50,12 +50,13 @@ export async function POST(req: NextRequest) {
       new Date(registeredDate).setFullYear(new Date(registeredDate).getFullYear() + 10)
     ).toISOString().slice(0, 10);
 
-    // Generate Drive Folder
+    // Generate Drive Folder — tên: "Mem260414001 — Nguyễn Văn A"
     let drive_folder_id = null;
     let drive_folder_link = null;
     const parentFolderId = '1bwgDD-4dl7eGlAXlOoHp2vCY-IaLeRpL'; // Google Drive folder user gave
 
-    const folderInfo = await createMemberFolder(memberCode, parentFolderId);
+    const folderName = `${memberCode} — ${member.full_name.trim()}`;
+    const folderInfo = await createMemberFolder(folderName, parentFolderId);
     if (folderInfo) {
       drive_folder_id = folderInfo.id;
       drive_folder_link = folderInfo.link;
