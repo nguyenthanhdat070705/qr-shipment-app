@@ -1,16 +1,27 @@
 import { google } from 'googleapis';
-import path from 'path';
 
-// Parse credentials from the JSON file
 const SCOPES = ['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive'];
 
-// Initialize the Google Drive auth client
+/**
+ * Initialize Google Drive client.
+ * Reads credentials from GOOGLE_SERVICE_ACCOUNT_JSON env var (JSON string).
+ * Falls back to local google-drive-credentials.json for local dev.
+ */
 export const getDriveClient = async () => {
   try {
+    let credentials: Record<string, string> | undefined;
+
+    // Priority 1: env var (Vercel production)
+    const envJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+    if (envJson) {
+      credentials = JSON.parse(envJson);
+    }
+
     const auth = new google.auth.GoogleAuth({
-      keyFile: path.join(process.cwd(), 'google-drive-credentials.json'),
+      ...(credentials ? { credentials } : { keyFile: 'google-drive-credentials.json' }),
       scopes: SCOPES,
     });
+
     const drive = google.drive({ version: 'v3', auth });
     return drive;
   } catch (err) {
