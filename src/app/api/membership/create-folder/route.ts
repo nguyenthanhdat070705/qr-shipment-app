@@ -12,10 +12,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Thiếu member_id hoặc member_code' }, { status: 400 });
     }
 
+    // Debug: kiểm tra env var
+    const hasEnvVar = !!process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+    console.log('[create-folder] GOOGLE_SERVICE_ACCOUNT_JSON present:', hasEnvVar);
+    console.log('[create-folder] Creating folder:', member_code);
+
     // Tạo folder Drive tên theo member_code
     const folderInfo = await createMemberFolder(member_code, PARENT_FOLDER_ID);
     if (!folderInfo) {
-      return NextResponse.json({ error: 'Không thể tạo folder trên Google Drive' }, { status: 500 });
+      console.error('[create-folder] createMemberFolder returned null for:', member_code);
+      return NextResponse.json({
+        error: 'Không thể tạo folder trên Google Drive',
+        debug: {
+          hasEnvVar,
+          member_code,
+          parent_folder_id: PARENT_FOLDER_ID,
+        }
+      }, { status: 500 });
     }
 
     // Lưu folder ID vào contract_number
@@ -29,7 +42,7 @@ export async function POST(req: NextRequest) {
       .eq('id', member_id);
 
     if (error) {
-      console.error('Update contract_number error:', error);
+      console.error('[create-folder] Update contract_number error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -39,7 +52,7 @@ export async function POST(req: NextRequest) {
       folder_link: folderInfo.link,
     });
   } catch (err) {
-    console.error('Create folder error:', err);
+    console.error('[create-folder] Error:', err);
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }
