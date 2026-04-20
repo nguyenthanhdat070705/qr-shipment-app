@@ -125,7 +125,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/sales/orders',
       color: 'text-amber-400',
       iconBg: 'bg-amber-500/15',
-      section: 'Sales & CSKH',
+      section: 'Bán Hàng',
     } as MenuItem] : []),
     ...(userRole === 'sales' || userRole === 'admin' ? [{
       icon: <Receipt size={18} />,
@@ -134,7 +134,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/sales/packages',
       color: 'text-rose-400',
       iconBg: 'bg-rose-500/15',
-      section: 'Sales & CSKH',
+      section: 'Bán Hàng',
     } as MenuItem] : []),
     ...(userRole === 'sales' || userRole === 'admin' ? [{
       icon: <Scale size={18} />,
@@ -143,18 +143,10 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/sales/legal-documents',
       color: 'text-amber-400',
       iconBg: 'bg-amber-500/15',
-      section: 'Sales & CSKH',
+      section: 'Bán Hàng',
     } as MenuItem] : []),
-    ...(userRole === 'sales' || userRole === 'admin' ? [{
-      icon: <Building size={18} />,
-      label: 'CRM GetFly',
-      desc: 'KH, deals & công việc',
-      href: '/sales/crm',
-      color: 'text-violet-400',
-      iconBg: 'bg-violet-500/15',
-      section: 'Data Outsource',
-    } as MenuItem] : []),
-    /* ── Membership (chỉ sales + admin) ── */
+
+    /* ── Membership & CSKH (chỉ sales + admin) ── */
     {
       icon: <Crown size={18} />,
       label: 'Hội viên',
@@ -163,7 +155,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-yellow-400',
       iconBg: 'bg-yellow-500/15',
       requiresPermission: 'canMembership',
-      section: 'Sales & CSKH',
+      section: 'Chăm sóc khách hàng',
     },
     {
       icon: <UserPlus size={18} />,
@@ -173,7 +165,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-lime-400',
       iconBg: 'bg-lime-500/15',
       requiresPermission: 'canMembership',
-      section: 'Sales & CSKH',
+      section: 'Chăm sóc khách hàng',
     },
     {
       icon: <List size={18} />,
@@ -183,7 +175,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-cyan-400',
       iconBg: 'bg-cyan-500/15',
       requiresPermission: 'canMembership',
-      section: 'Sales & CSKH',
+      section: 'Chăm sóc khách hàng',
     },
     {
       icon: <Search size={18} />,
@@ -193,7 +185,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-teal-400',
       iconBg: 'bg-teal-500/15',
       requiresPermission: 'canMembership',
-      section: 'Sales & CSKH',
+      section: 'Chăm sóc khách hàng',
     },
     {
       icon: <HardDrive size={18} />,
@@ -203,7 +195,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-indigo-400',
       iconBg: 'bg-indigo-500/15',
       requiresPermission: 'canMembership',
-      section: 'Sales & CSKH',
+      section: 'Chăm sóc khách hàng',
     },
     {
       icon: <DollarSign size={18} />,
@@ -213,17 +205,27 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-emerald-400',
       iconBg: 'bg-emerald-500/15',
       requiresPermission: 'canMembership',
-      section: 'Sales & CSKH',
+      section: 'Chăm sóc khách hàng',
     },
     {
       icon: <MessageSquare size={18} />,
-      label: 'Zalo Automation',
-      desc: 'ZNS & chăm sóc tự động',
-      href: '/zalo-automation',
-      color: 'text-blue-400',
-      iconBg: 'bg-blue-500/15',
+      label: 'Ticket Hỗ trợ',
+      desc: 'Khiếu nại & Yêu cầu',
+      href: '/customer-support',
+      color: 'text-orange-400',
+      iconBg: 'bg-orange-500/15',
       requiresPermission: 'canMembership',
-      section: 'Sales & CSKH',
+      section: 'Chăm sóc khách hàng',
+    },
+    {
+      icon: <Clock size={18} />,
+      label: 'Lịch sử chăm sóc',
+      desc: 'Nhật ký tương tác KH',
+      href: '/care-history',
+      color: 'text-pink-400',
+      iconBg: 'bg-pink-500/15',
+      requiresPermission: 'canMembership',
+      section: 'Chăm sóc khách hàng',
     },
     /* ── Core SCM Flow ── */
     {
@@ -285,16 +287,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       requiresPermission: 'canManageDelivery',
       section: 'Vận hành & Dịch vụ',
     },
-    {
-      icon: <BookOpen size={18} />,
-      label: 'Đám',
-      desc: 'Thông tin tổ chức',
-      href: '/funerals',
-      color: 'text-pink-400',
-      iconBg: 'bg-pink-500/15',
-      requiresPermission: 'canViewProducts',
-      section: 'Data Outsource',
-    },
+
     /* ── Tồn kho ── */
     {
       icon: <Warehouse size={18} />,
@@ -346,16 +339,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       iconBg: 'bg-emerald-500/15',
       section: 'Chuỗi cung ứng',
     } as MenuItem] : []),
-    /* ── 1Office CRM (admin + sales) ── */
-    ...((userRole === 'admin' || userRole === 'sales') ? [{
-      icon: <Building2 size={18} />,
-      label: '1Office CRM',
-      desc: 'KH, cơ hội, công việc',
-      href: '/crm',
-      color: 'text-violet-400',
-      iconBg: 'bg-violet-500/15',
-      section: 'Bán Hàng',
-    } as MenuItem] : []),
+
     /* ── Zalo Automation (admin + sales) ── */
     ...((userRole === 'admin' || userRole === 'sales') ? [{
       icon: <MessageCircle size={18} />,
@@ -364,8 +348,52 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/zalo-automation',
       color: 'text-sky-400',
       iconBg: 'bg-sky-500/15',
-      section: 'Bán Hàng',
+      section: 'Automation',
     } as MenuItem] : []),
+
+    /* ── Data Outsource Block (Ordered) ── */
+    ...((userRole === 'admin' || userRole === 'sales') ? [{
+      icon: (
+        <svg fill="none" viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+          <rect width="24" height="24" rx="5" fill="#F05123"/>
+          <path d="M4 8h2.5v2.5H4zm3 2h2v2H7z" fill="white"/>
+          <path d="M5 11l10-2.5 3.5 11-10 2.5z" fill="white"/>
+          <path d="M12 11.5v6.5h2.5V10h-3.5v2h1z" fill="#F05123"/>
+        </svg>
+      ),
+      label: '1Office CRM',
+      desc: 'KH, cơ hội, công việc',
+      href: '/crm',
+      color: 'text-orange-500',
+      iconBg: 'bg-orange-500/15',
+      section: 'Data Outsource',
+    } as MenuItem] : []),
+    ...(userRole === 'sales' || userRole === 'admin' ? [{
+      icon: (
+        <svg fill="none" viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+          <rect width="24" height="24" rx="5" fill="#2E5AA5"/>
+          <path d="M17 11.5 h-4.5 v2.5 h3 c-0.8 2-2.5 3-4.5 3 c-3 0-5.5-2.5-5.5-5.5 c0-3 2.5-5.5 5.5-5.5 c1.5 0 3 0.8 4 1.8 l1.8-1.8 c-1.5-1.5-3.5-2.5-5.8-2.5 c-4.5 0-8 3.5-8 8 c0 4.5 3.5 8 8 8 c3 0 5.5-1.5 7-4 v-4 z" fill="white"/>
+          <path d="M4 20 C8 20 14 15 22 2 L20 1 C14 8 8 14 4 20 Z" fill="#F47920"/>
+          <circle cx="21" cy="2" r="1.5" fill="#F47920"/>
+        </svg>
+      ),
+      label: 'CRM GetFly',
+      desc: 'KH, deals & công việc',
+      href: '/sales/crm',
+      color: 'text-blue-500',
+      iconBg: 'bg-blue-500/15',
+      section: 'Data Outsource',
+    } as MenuItem] : []),
+    {
+      icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar-days"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>,
+      label: 'Lịch Đám',
+      desc: 'Thông tin tổ chức',
+      href: '/funerals',
+      color: 'text-pink-400',
+      iconBg: 'bg-pink-500/15',
+      requiresPermission: 'canViewProducts',
+      section: 'Data Outsource',
+    },
     /* ── Hệ thống ── */
     {
       icon: <User size={18} />,
@@ -384,6 +412,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/accounts',
       color: 'text-red-400',
       iconBg: 'bg-red-500/15',
+      section: 'Hệ thống',
     } as MenuItem] : []),
   ];
 
