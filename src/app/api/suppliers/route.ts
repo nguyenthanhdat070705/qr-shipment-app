@@ -8,6 +8,8 @@ import { getUserRole } from '@/config/roles.config';
  * PUT  /api/suppliers       → Cập nhật NCC
  */
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
