@@ -10,7 +10,8 @@ import { PRODUCT_CONFIG } from '@/config/product.config';
  * Query params:
  *   ?table=products         → returns products
  *   ?table=exports          → returns export_confirmations
- *   ?table=all              → returns both (default)
+ *   ?table=members          → returns members
+ *   ?table=all              → returns all (default)
  *   &key=<SYNC_API_KEY>     → required for authentication
  */
 export async function GET(req: NextRequest) {
@@ -82,6 +83,34 @@ export async function GET(req: NextRequest) {
         created_at: e.created_at || '',
       }));
       result.exports_count = (exports || []).length;
+    }
+
+    // Members
+    if (table === 'members' || table === 'all') {
+      const { data: members, error } = await supabase
+        .from('members')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw new Error(`Members: ${error.message}`);
+
+      result.members = (members || []).map((m: Record<string, unknown>) => ({
+        id: m.id,
+        uuid: m.uuid,
+        member_code: m.member_code || '',
+        full_name: m.full_name || '',
+        id_number: m.id_number || '',
+        phone: m.phone || '',
+        email: m.email || '',
+        address: m.address || '',
+        registered_date: m.registered_date || '',
+        expiry_date: m.expiry_date || '',
+        status: m.status || '',
+        tier: m.tier || '',
+        created_at: m.created_at || '',
+        updated_at: m.updated_at || '',
+      }));
+      result.members_count = (members || []).length;
     }
 
     return NextResponse.json(result, {
