@@ -117,7 +117,7 @@ export default function SuppliersManageClient() {
   const fetchSuppliers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/suppliers');
+      const res = await fetch('/api/suppliers?t=' + Date.now(), { cache: 'no-store' });
       const json = await res.json();
       setSuppliers(json.data || []);
     } catch { console.error('Fetch error'); }
