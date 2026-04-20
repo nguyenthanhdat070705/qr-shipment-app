@@ -132,3 +132,47 @@ export async function fetchInventory() {
   const token = process.env.ONEOFFICE_INVENTORY_TOKEN || ACCESS_TOKEN;
   return fetchAll('/api/warehouse/inventory/gets', {}, token);
 }
+
+// ── CRM Endpoints ──────────────────────────────────────────────────────────────
+
+/** Khách hàng (Customer / Account) */
+export async function fetchCustomers(params: Record<string, string> = {}) {
+  return fetchAll('/api/crm/customer/gets', params);
+}
+
+/** Cơ hội kinh doanh (Lead / Deal / Opportunity) */
+export async function fetchLeads(params: Record<string, string> = {}) {
+  return fetchAll('/api/crm/lead/gets', params);
+}
+
+/** Công việc (Task) */
+export async function fetchCRMTasks(params: Record<string, string> = {}) {
+  return fetchAll('/api/task/gets', params);
+}
+
+/** Hoạt động chăm sóc (Activity Log) */
+export async function fetchActivities(params: Record<string, string> = {}) {
+  return fetchAll('/api/crm/activity/gets', params);
+}
+
+/** Nhân viên / Users (dùng để map tên assigned_to) */
+export async function fetchUsers() {
+  return fetchAll('/api/admin/user/gets');
+}
+
+/**
+ * Fetch single page - dùng cho real-time delta sync
+ * chỉ lấy records từ ngày nhất định
+ */
+export async function fetchCustomersSince(fromDate: string) {
+  // 1Office hỗ trợ param date_created_from (dd/MM/YYYY)
+  const [y, m, d] = fromDate.split('-');
+  const formatted = `${d}/${m}/${y}`;
+  return fetchAll('/api/crm/customer/gets', { date_created_from: formatted });
+}
+
+export async function fetchLeadsSince(fromDate: string) {
+  const [y, m, d] = fromDate.split('-');
+  const formatted = `${d}/${m}/${y}`;
+  return fetchAll('/api/crm/lead/gets', { date_created_from: formatted });
+}

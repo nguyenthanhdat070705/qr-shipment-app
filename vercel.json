@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/birthday-zns",
       "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/sync-1office-crm",
+      "schedule": "0 * * * *"
     }
   ]
 }

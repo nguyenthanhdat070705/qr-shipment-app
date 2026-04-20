@@ -8,7 +8,7 @@ import {
   Bell, Search, BarChart3, Settings, BookOpen, Users,
   Package, Clock, ExternalLink, CheckCheck, Receipt,
   Crown, UserPlus, List, Scale, DollarSign, Building, HardDrive,
-  MessageSquare
+  MessageSquare, Building2, MessageCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -38,6 +38,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   const pathname = usePathname();
   const [userEmail, setUserEmail] = useState('');
   const [userRole,  setUserRole]  = useState<UserRole>('sales');
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     try {
@@ -85,7 +86,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/procurement',
       color: 'text-violet-400',
       iconBg: 'bg-violet-500/15',
-      section: 'Thu mua',
+      section: 'Quản trị',
     } as MenuItem] : []),
     /* ── Operations Dashboard (chỉ hiện với operations) ── */
     ...(operationsRole ? [{
@@ -95,7 +96,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/operations',
       color: 'text-orange-400',
       iconBg: 'bg-orange-500/15',
-      section: 'Vận hành',
+      section: 'Quản trị',
     } as MenuItem] : []),
     /* ── Warehouse Dashboard ── */
     ...(warehouseRole || userRole === 'admin' ? [{
@@ -105,7 +106,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/warehouse',
       color: 'text-emerald-400',
       iconBg: 'bg-emerald-500/15',
-      section: 'Kho vận',
+      section: 'Quản trị',
     } as MenuItem] : []),
     /* ── Sales Dashboard ── */
     ...(userRole === 'sales' || userRole === 'admin' ? [{
@@ -115,7 +116,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/sales',
       color: 'text-blue-400',
       iconBg: 'bg-blue-500/15',
-      section: 'Bán hàng',
+      section: 'Quản trị',
     } as MenuItem] : []),
     ...(userRole === 'sales' || userRole === 'admin' ? [{
       icon: <ShoppingCart size={18} />,
@@ -124,7 +125,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/sales/orders',
       color: 'text-amber-400',
       iconBg: 'bg-amber-500/15',
-      section: 'Bán hàng',
+      section: 'Sales & CSKH',
     } as MenuItem] : []),
     ...(userRole === 'sales' || userRole === 'admin' ? [{
       icon: <Receipt size={18} />,
@@ -133,7 +134,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/sales/packages',
       color: 'text-rose-400',
       iconBg: 'bg-rose-500/15',
-      section: 'Bán hàng',
+      section: 'Sales & CSKH',
     } as MenuItem] : []),
     ...(userRole === 'sales' || userRole === 'admin' ? [{
       icon: <Scale size={18} />,
@@ -142,7 +143,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/sales/legal-documents',
       color: 'text-amber-400',
       iconBg: 'bg-amber-500/15',
-      section: 'Bán hàng',
+      section: 'Sales & CSKH',
     } as MenuItem] : []),
     ...(userRole === 'sales' || userRole === 'admin' ? [{
       icon: <Building size={18} />,
@@ -151,7 +152,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/sales/crm',
       color: 'text-violet-400',
       iconBg: 'bg-violet-500/15',
-      section: 'Bán hàng',
+      section: 'Data Outsource',
     } as MenuItem] : []),
     /* ── Membership (chỉ sales + admin) ── */
     {
@@ -162,7 +163,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-yellow-400',
       iconBg: 'bg-yellow-500/15',
       requiresPermission: 'canMembership',
-      section: 'Hội viên',
+      section: 'Sales & CSKH',
     },
     {
       icon: <UserPlus size={18} />,
@@ -172,6 +173,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-lime-400',
       iconBg: 'bg-lime-500/15',
       requiresPermission: 'canMembership',
+      section: 'Sales & CSKH',
     },
     {
       icon: <List size={18} />,
@@ -181,6 +183,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-cyan-400',
       iconBg: 'bg-cyan-500/15',
       requiresPermission: 'canMembership',
+      section: 'Sales & CSKH',
     },
     {
       icon: <Search size={18} />,
@@ -190,6 +193,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-teal-400',
       iconBg: 'bg-teal-500/15',
       requiresPermission: 'canMembership',
+      section: 'Sales & CSKH',
     },
     {
       icon: <HardDrive size={18} />,
@@ -199,6 +203,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-indigo-400',
       iconBg: 'bg-indigo-500/15',
       requiresPermission: 'canMembership',
+      section: 'Sales & CSKH',
     },
     {
       icon: <DollarSign size={18} />,
@@ -208,6 +213,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-emerald-400',
       iconBg: 'bg-emerald-500/15',
       requiresPermission: 'canMembership',
+      section: 'Sales & CSKH',
     },
     {
       icon: <MessageSquare size={18} />,
@@ -217,6 +223,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-blue-400',
       iconBg: 'bg-blue-500/15',
       requiresPermission: 'canMembership',
+      section: 'Sales & CSKH',
     },
     /* ── Core SCM Flow ── */
     {
@@ -226,7 +233,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/',
       color: 'text-blue-400',
       iconBg: 'bg-blue-500/15',
-      section: (procurementRole || warehouseRole) ? undefined : 'Nghiệp vụ',
+      section: 'Chuỗi cung ứng',
     },
     {
       icon: <ShoppingCart size={18} />,
@@ -236,6 +243,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-violet-400',
       iconBg: 'bg-violet-500/15',
       requiresPermission: 'canCreatePO',
+      section: 'Chuỗi cung ứng',
     },
     {
       icon: <PackageCheck size={18} />,
@@ -245,6 +253,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-orange-400',
       iconBg: 'bg-orange-500/15',
       requiresPermission: 'canReceiveGoods',
+      section: 'Chuỗi cung ứng',
     },
     {
       icon: <PackageCheck size={18} />,
@@ -254,6 +263,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-indigo-400',
       iconBg: 'bg-indigo-500/15',
       requiresPermission: 'canManageReceipt',
+      section: 'Chuỗi cung ứng',
     },
     {
       icon: <Truck size={18} />,
@@ -263,6 +273,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-emerald-400',
       iconBg: 'bg-emerald-500/15',
       requiresPermission: 'canExport',
+      section: 'Chuỗi cung ứng',
     },
     {
       icon: <TruckIcon size={18} />,
@@ -272,6 +283,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-amber-400',
       iconBg: 'bg-amber-500/15',
       requiresPermission: 'canManageDelivery',
+      section: 'Vận hành & Dịch vụ',
     },
     {
       icon: <BookOpen size={18} />,
@@ -281,6 +293,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-pink-400',
       iconBg: 'bg-pink-500/15',
       requiresPermission: 'canViewProducts',
+      section: 'Data Outsource',
     },
     /* ── Tồn kho ── */
     {
@@ -291,7 +304,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-sky-400',
       iconBg: 'bg-sky-500/15',
       requiresPermission: 'canViewInventory',
-      section: 'Kho',
+      section: 'Chuỗi cung ứng',
     },
     {
       icon: <LayoutGrid size={18} />,
@@ -301,6 +314,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       color: 'text-teal-400',
       iconBg: 'bg-teal-500/15',
       requiresPermission: 'canViewProducts',
+      section: 'Chuỗi cung ứng',
     },
     /* ── Quản lý sản phẩm (admin + procurement) ── */
     ...((userRole === 'admin' || userRole === 'procurement') ? [{
@@ -310,6 +324,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/products-manage',
       color: 'text-purple-400',
       iconBg: 'bg-purple-500/15',
+      section: 'Chuỗi cung ứng',
     } as MenuItem] : []),
     /* ── Quản lý NCC (admin + procurement) ── */
     ...((userRole === 'admin' || userRole === 'procurement') ? [{
@@ -319,6 +334,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/suppliers-manage',
       color: 'text-orange-400',
       iconBg: 'bg-orange-500/15',
+      section: 'Chuỗi cung ứng',
     } as MenuItem] : []),
     /* ── Quản lý kho (admin only) ── */
     ...(userRole === 'admin' ? [{
@@ -328,6 +344,27 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       href: '/warehouses-manage',
       color: 'text-emerald-400',
       iconBg: 'bg-emerald-500/15',
+      section: 'Chuỗi cung ứng',
+    } as MenuItem] : []),
+    /* ── 1Office CRM (admin + sales) ── */
+    ...((userRole === 'admin' || userRole === 'sales') ? [{
+      icon: <Building2 size={18} />,
+      label: '1Office CRM',
+      desc: 'KH, cơ hội, công việc',
+      href: '/crm',
+      color: 'text-violet-400',
+      iconBg: 'bg-violet-500/15',
+      section: 'Bán Hàng',
+    } as MenuItem] : []),
+    /* ── Zalo Automation (admin + sales) ── */
+    ...((userRole === 'admin' || userRole === 'sales') ? [{
+      icon: <MessageCircle size={18} />,
+      label: 'Zalo Automation',
+      desc: 'ZNS & chăm sóc hội viên',
+      href: '/zalo-automation',
+      color: 'text-sky-400',
+      iconBg: 'bg-sky-500/15',
+      section: 'Bán Hàng',
     } as MenuItem] : []),
     /* ── Hệ thống ── */
     {
@@ -361,12 +398,34 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   let currentSection = '';
   menuItems.forEach((item) => {
     if (item.section && item.section !== currentSection) {
+      // Check if section already exists (since items might not be strictly grouped sequentially)
+      let existingSection = sections.find(s => s.label === item.section);
+      if (!existingSection) {
+        existingSection = { label: item.section, items: [] };
+        sections.push(existingSection);
+      }
       currentSection = item.section;
-      sections.push({ label: item.section, items: [] });
     }
-    if (sections.length === 0) sections.push({ label: '', items: [] });
-    sections[sections.length - 1].items.push(item);
+    
+    let targetSection = sections.find(s => s.label === item.section);
+    if (!targetSection) {
+       if (sections.length === 0) sections.push({ label: '', items: [] });
+       targetSection = sections[sections.length - 1];
+    }
+    targetSection.items.push(item);
   });
+
+  // Calculate active sections on mount/navigate
+  useEffect(() => {
+    const activeSection = sections.find(s => s.items.some(item => pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))))?.label;
+    if (activeSection) {
+      setExpandedSections(prev => ({ ...prev, [activeSection]: true }));
+    }
+  }, [pathname]);
+
+  const toggleSection = (label: string) => {
+    setExpandedSections(prev => ({ ...prev, [label]: !prev[label] }));
+  };
 
   const initial = userEmail ? userEmail[0].toUpperCase() : 'U';
 
@@ -423,48 +482,61 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
         </div>
 
         {/* ── Menu ── */}
-        <nav className="flex-1 px-3 py-3 overflow-y-auto space-y-5 scrollbar-thin">
-          {sections.map((section) => (
-            <div key={section.label}>
-              {section.label && (
-                <p className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-widest text-white/25">
-                  {section.label}
-                </p>
-              )}
-              <div className="space-y-0.5">
-                {section.items.map((item) => {
-                  const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={onClose}
-                      className={`
-                        group flex items-center gap-3 px-3 py-2.5 rounded-xl
-                        transition-all duration-150
-                        ${isActive
-                          ? 'bg-white/[0.12] text-white'
-                          : 'text-white/60 hover:bg-white/[0.07] hover:text-white/90'
-                        }
-                      `}
-                    >
-                      <div className={`flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0 transition-colors
-                        ${isActive ? item.iconBg + ' ' + item.color : 'bg-white/5 ' + item.color}`}>
-                        {item.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-semibold truncate transition-colors ${isActive ? 'text-white' : 'text-white/75 group-hover:text-white'}`}>
-                          {item.label}
-                        </p>
-                        <p className="text-[11px] text-white/35 truncate">{item.desc}</p>
-                      </div>
-                      {isActive && <div className="w-1 h-5 rounded-full bg-white/40 flex-shrink-0" />}
-                    </Link>
-                  );
-                })}
+        <nav className="flex-1 px-3 py-3 overflow-y-auto space-y-4 scrollbar-thin">
+          {sections.map((section) => {
+            const isExpanded = expandedSections[section.label] !== false; // Default true if not set, but wait, let's make default true
+            
+            return (
+              <div key={section.label}>
+                {section.label && (
+                  <button 
+                    onClick={() => toggleSection(section.label)}
+                    className="w-full flex items-center justify-between px-3 mb-1.5 focus:outline-none group"
+                  >
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 group-hover:text-white/60 transition-colors">
+                      {section.label}
+                    </p>
+                    <div className={`transition-transform duration-200 text-white/30 group-hover:text-white/50 ${isExpanded ? 'rotate-90' : ''}`}>
+                      <ChevronRight size={14} />
+                    </div>
+                  </button>
+                )}
+                
+                <div className={`space-y-0.5 overflow-hidden transition-all duration-300 ${isExpanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                  {section.items.map((item) => {
+                    const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={onClose}
+                        className={`
+                          group flex items-center gap-3 px-3 py-2.5 rounded-xl
+                          transition-all duration-150
+                          ${isActive
+                            ? 'bg-white/[0.12] text-white'
+                            : 'text-white/60 hover:bg-white/[0.07] hover:text-white/90'
+                          }
+                        `}
+                      >
+                        <div className={`flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0 transition-colors
+                          ${isActive ? item.iconBg + ' ' + item.color : 'bg-white/5 ' + item.color}`}>
+                          {item.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-semibold truncate transition-colors ${isActive ? 'text-white' : 'text-white/75 group-hover:text-white'}`}>
+                            {item.label}
+                          </p>
+                          <p className="text-[11px] text-white/35 truncate">{item.desc}</p>
+                        </div>
+                        {isActive && <div className="w-1 h-5 rounded-full bg-white/40 flex-shrink-0" />}
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
 
         {/* ── Footer ── */}
