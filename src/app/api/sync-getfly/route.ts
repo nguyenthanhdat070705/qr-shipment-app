@@ -70,6 +70,7 @@ export async function POST(req: NextRequest) {
       account_source: (a.account_source as string) || null,
       relation_name: (a.relation_name as string) || null,
       manager_user_name: (a.manager_user_name as string) || null,
+      agency_manager_name: (a.agency_manager_name as string) || null,
       revenue: (a.revenue as string) || null,
       ma_hoi_vien: (a.ma_hoi_vien as string) || null,
       goi_dich_vu: (a.goi_dich_vu as string) || null,

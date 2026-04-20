@@ -23,6 +23,7 @@ interface Account {
   account_source: string;
   relation_name: string;
   manager_user_name: string;
+  agency_manager_name: string | null;
   revenue: string;
   created_at: string;
   province_name: string | null;
@@ -567,6 +568,7 @@ interface LocalCustomer {
   account_source: string | null;
   relation_name: string | null;
   manager_user_name: string | null;
+  agency_manager_name: string | null;
   revenue: string | null;
   ma_hoi_vien: string | null;
   goi_dich_vu: string | null;
@@ -759,7 +761,8 @@ function CustomerDetailModal({ customer: c, onClose }: { customer: LocalCustomer
     { icon: <Globe size={14} />, label: 'Tỉnh / Thành phố', value: c.province_name },
     { icon: <Briefcase size={14} />, label: 'Loại khách hàng', value: c.account_type },
     { icon: <TrendingUp size={14} />, label: 'Nguồn tiếp cận', value: c.account_source },
-    { icon: <User size={14} />, label: 'NV phụ trách', value: c.manager_user_name },
+    { icon: <User size={14} />, label: 'NV phụ trách (Sales)', value: c.manager_user_name },
+    { icon: <Briefcase size={14} />, label: 'Quản lý đại lý', value: c.agency_manager_name },
     { icon: <Calendar size={14} />, label: 'Ngày sync gần nhất', value: c.synced_at ? new Date(c.synced_at).toLocaleString('vi-VN') : undefined },
   ];
 
