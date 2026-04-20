@@ -28,19 +28,36 @@ function maskIdNumber(id: string): string {
   return id.slice(0, 3) + '****' + id.slice(-3);
 }
 
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
+}
+
 export async function GET(req: NextRequest) {
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  };
+
   try {
     // Rate limit by IP
     const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
     if (!checkRateLimit(ip)) {
-      return NextResponse.json({ error: 'Quá nhiều yêu cầu. Vui lòng thử lại sau 1 phút.' }, { status: 429 });
+      return NextResponse.json({ error: 'Quá nhiều yêu cầu. Vui lòng thử lại sau 1 phút.' }, { status: 429, headers: corsHeaders });
     }
 
     const q = req.nextUrl.searchParams.get('q')?.trim() ?? '';
     const limit = Math.min(parseInt(req.nextUrl.searchParams.get('limit') || '10'), 20);
 
     if (!q || q.length < 2) {
-      return NextResponse.json({ error: 'Vui lòng nhập ít nhất 2 ký tự.' }, { status: 400 });
+      return NextResponse.json({ error: 'Vui lòng nhập ít nhất 2 ký tự.' }, { status: 400, headers: corsHeaders });
     }
 
     const supabase = getSupabaseAdmin();
@@ -120,11 +137,11 @@ export async function GET(req: NextRequest) {
 
     if (error) {
       console.error('[Lookup] DB error:', error.message);
-      return NextResponse.json({ error: 'Lỗi hệ thống. Vui lòng thử lại.' }, { status: 500 });
+      return NextResponse.json({ error: 'Lỗi hệ thống. Vui lòng thử lại.' }, { status: 500, headers: corsHeaders });
     }
 
     if (!data || data.length === 0) {
-      return NextResponse.json({ found: false, message: 'Không tìm thấy hội viên.' });
+      return NextResponse.json({ found: false, message: 'Không tìm thấy hội viên.' }, { status: 200, headers: corsHeaders });
     }
 
     // ── Response mapping ──────────────────────────────────────
@@ -190,11 +207,11 @@ export async function GET(req: NextRequest) {
       found: true,
       total: results.length,
       query: q,
-      search_type: isPhone ? 'phone' : isCCCD ? 'id_number' : isMemCode ? 'member_code' : 'full_text',
+      search_type: searchType,
       results,
-    });
+    }, { status: 200, headers: corsHeaders });
   } catch (err) {
     console.error('[Lookup] Error:', err);
-    return NextResponse.json({ error: 'Lỗi hệ thống.' }, { status: 500 });
+    return NextResponse.json({ error: 'Lỗi hệ thống.' }, { status: 500, headers: corsHeaders });
   }
 }
