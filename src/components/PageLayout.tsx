@@ -227,6 +227,16 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       requiresPermission: 'canMembership',
       section: 'Chăm sóc khách hàng',
     },
+    /* ── Tìm Kiếm ── */
+    {
+      icon: <Search size={18} />,
+      label: 'Khách hàng tìm kiếm',
+      desc: 'Tra cứu công khai không cần đăng nhập',
+      href: '/tra-cuu',
+      color: 'text-[#d4af37]',
+      iconBg: 'bg-[#d4af37]/15',
+      section: 'Tìm kiếm',
+    },
     /* ── Core SCM Flow ── */
     {
       icon: <Search size={18} />,

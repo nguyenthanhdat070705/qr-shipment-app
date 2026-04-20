@@ -45,12 +45,27 @@ export async function GET(req: NextRequest) {
 
     const supabase = getSupabaseAdmin();
 
+    const searchType = req.nextUrl.searchParams.get('type') || 'auto';
+
     // ── Smart detect search type ─────────────────────────────
     // Chuỗi làm sạch (bỏ khoảng trắng, dấu gạch ngang)
     const clean = q.replace(/[\s\-\.]/g, '');
-    const isPhone   = /^(0|\+84)[0-9]{7,10}$/.test(clean);
-    const isCCCD    = /^[0-9]{9}$/.test(clean) || /^[0-9]{12}$/.test(clean);
-    const isMemCode = /^(Mem|mem|MEM)[0-9]/i.test(q);
+    let isPhone   = false;
+    let isCCCD    = false;
+    let isMemCode = false;
+    let isEmail   = false;
+
+    if (searchType === 'auto') {
+      isPhone   = /^(0|\+84)[0-9]{7,10}$/.test(clean);
+      isCCCD    = /^[0-9]{9}$/.test(clean) || /^[0-9]{12}$/.test(clean);
+      isMemCode = /^(Mem|mem|MEM)[0-9]/i.test(q);
+      isEmail   = q.includes('@');
+    } else {
+      isPhone   = searchType === 'phone';
+      isCCCD    = searchType === 'cccd';
+      isMemCode = searchType === 'member_code';
+      isEmail   = searchType === 'email';
+    }
 
     let data: Record<string, unknown>[] | null = null;
     let error = null;
@@ -59,7 +74,7 @@ export async function GET(req: NextRequest) {
       // Tìm chính xác theo SĐT
       ({ data, error } = await supabase
         .from('members')
-        .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes')
+        .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes, contract_value')
         .or(`phone.ilike.%${clean}%,phone.ilike.%${q}%`)
         .eq('status', 'active')
         .limit(limit));
@@ -67,22 +82,29 @@ export async function GET(req: NextRequest) {
       // Tìm theo CCCD/CMND (cột id_number)
       ({ data, error } = await supabase
         .from('members')
-        .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes')
+        .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes, contract_value')
         .ilike('id_number', `%${clean}%`)
         .limit(limit));
     } else if (isMemCode) {
       // Tìm theo mã hội viên
       ({ data, error } = await supabase
         .from('members')
-        .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes')
-        .ilike('member_code', `%${q}%`)
+        .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes, contract_value')
+        .ilike('member_code', `%${clean}%`)
+        .limit(limit));
+    } else if (isEmail) {
+      // Tìm theo email
+      ({ data, error } = await supabase
+        .from('members')
+        .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes, contract_value')
+        .ilike('email', `%${q}%`)
         .limit(limit));
     } else {
       // ── Full-text search trên tất cả các trường quan trọng ──
       // Tìm theo: tên, mã HV, SĐT, CCCD, email, địa chỉ, NV tư vấn
       ({ data, error } = await supabase
         .from('members')
-        .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes')
+        .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes, contract_value')
         .or([
           `full_name.ilike.%${q}%`,
           `member_code.ilike.%${q}%`,
@@ -151,6 +173,9 @@ export async function GET(req: NextRequest) {
         service_package: m.service_package,
         service_package_label: packageMap[String(m.service_package)] || String(m.service_package || '—'),
         consultant_name: m.consultant_name,
+        address: m.address,
+        notes: m.notes,
+        contract_value: m.contract_value,
         matched_field: matchedField,
         // Trả về phần highlight an toàn (không lộ dữ liệu nhạy cảm)
         matched_preview: matchedField === 'address'
