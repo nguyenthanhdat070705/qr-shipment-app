@@ -531,7 +531,8 @@ export default function LegalDocumentsPage() {
                     className="hidden" 
                     onChange={(e) => {
                       if (e.target.files && e.target.files.length > 0) {
-                        alert(`Hệ thống đã ghi nhận file: ${e.target.files[0].name}.\nChức năng Upload file PDF/Word lên Server và liên kết văn bản đang được cập nhật.`);
+                        // Tạm ẩn alert, chi ghi log chờ tích hợp Backend
+                        console.log(`Đã sẵn sàng tải file: ${e.target.files[0].name}`);
                       }
                     }} 
                   />
