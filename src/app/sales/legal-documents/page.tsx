@@ -7,7 +7,8 @@ import {
   Users, ClipboardList, AlertTriangle, ShieldCheck, BookOpen, Landmark,
   ArrowLeft, Search, Printer, ExternalLink, Hash, Calendar, Gavel,
   Wallet, HandCoins, FileCheck, UserCheck, Banknote, PiggyBank,
-  CheckCircle2, Calculator, Tags, UserCog, FolderOpen, FileQuestion, File
+  CheckCircle2, Calculator, Tags, UserCog, FolderOpen, FileQuestion, File,
+  UploadCloud
 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 
@@ -506,14 +507,35 @@ export default function LegalDocumentsPage() {
           {/* Category Banner */}
           <div className={`p-6 sm:p-8 rounded-2xl bg-gradient-to-br ${activeCategoryData?.color} text-white shadow-xl relative overflow-hidden`}>
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
-            <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur border border-white/30 text-white shadow-inner flex-shrink-0">
-                {activeCategoryData?.icon}
+            <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur border border-white/30 text-white shadow-inner flex-shrink-0">
+                  {activeCategoryData?.icon}
+                </div>
+                <div>
+                  <span className="text-white/70 text-xs font-bold uppercase tracking-wider mb-1 block">Danh mục văn bản</span>
+                  <h2 className="text-2xl sm:text-3xl font-black">{activeCategoryData?.title}</h2>
+                  <p className="text-white/80 text-sm mt-2 max-w-2xl">{activeCategoryData?.desc}</p>
+                </div>
               </div>
-              <div>
-                <span className="text-white/70 text-xs font-bold uppercase tracking-wider mb-1 block">Danh mục văn bản</span>
-                <h2 className="text-2xl sm:text-3xl font-black">{activeCategoryData?.title}</h2>
-                <p className="text-white/80 text-sm mt-2 max-w-2xl">{activeCategoryData?.desc}</p>
+              
+              {/* Nút Upload File */}
+              <div className="mt-4 sm:mt-0 flex-shrink-0 pb-1 sm:pb-0">
+                <label className="cursor-pointer group relative inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 transition-all backdrop-blur-md overflow-hidden shadow-sm hover:shadow-md">
+                  <div className="absolute inset-0 bg-white/20 translate-y-[100%] group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
+                  <UploadCloud size={18} className="text-white relative z-10" />
+                  <span className="text-sm font-bold text-white relative z-10">Tải lên văn bản</span>
+                  <input 
+                    type="file" 
+                    accept=".pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+                    className="hidden" 
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        alert(`Hệ thống đã ghi nhận file: ${e.target.files[0].name}.\nChức năng Upload file PDF/Word lên Server và liên kết văn bản đang được cập nhật.`);
+                      }
+                    }} 
+                  />
+                </label>
               </div>
             </div>
           </div>
