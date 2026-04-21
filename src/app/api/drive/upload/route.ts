@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { uploadDocumentToDrive } from '@/lib/googleDrive';
+import { uploadDocumentToDrive, getOrCreateFolder } from '@/lib/googleDrive';
 
-// Mặc định tạm thời lưu vào folder gốc (giống tạo folder thành viên)
-// Có thể đổi thành Drive/Folder ID mong muốn.
-const PARENT_FOLDER_ID = '1bwgDD-4dl7eGlAXlOoHp2vCY-IaLeRpL';
+// Lưu trữ vào thư mục cấu hình sẵn
+const PARENT_FOLDER_ID = '1vtWLJ0k_y-wk1oXLJDrzKRz0WJnCEbAF';
+
+const CATEGORY_NAMES: Record<string, string> = {
+  finance: 'Văn bản về tài chính',
+  accounting: 'Văn bản kế toán',
+  quality: 'Văn bản về chất lượng',
+  classification: 'Văn bản về phân loại',
+  roles: 'Văn bản về nhiệm vụ và trách nhiệm',
+  policy: 'Văn bản về chính sách',
+};
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,10 +23,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Không tìm thấy file trong request' }, { status: 400 });
     }
 
-    console.log(`[Upload API] Nhận file: ${file.name}, kích thước: ${file.size} bytes`);
+    const folderName = CATEGORY_NAMES[category] || category;
+
+    console.log(`[Upload API] Nhận file: ${file.name}, kích thước: ${file.size} bytes. Hạng mục: ${folderName}`);
+
+    // Truy vấn hoặc tạo Folder con (theo từng danh mục) nằm bên trong Folder tổng
+    const targetFolderId = await getOrCreateFolder(folderName, PARENT_FOLDER_ID);
+    
+    if (!targetFolderId) {
+      return NextResponse.json({ error: 'Lỗi khi khởi tạo/tìm kiếm thư mục trên Google Drive' }, { status: 500 });
+    }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const result = await uploadDocumentToDrive(file.name, file.type, buffer, PARENT_FOLDER_ID);
+    
+    // Tải file thẳng vào Folder hạng mục đã lấy được ID
+    const result = await uploadDocumentToDrive(file.name, file.type, buffer, targetFolderId);
 
     if (!result) {
       return NextResponse.json({ error: 'Tải file lên Google Drive thất bại' }, { status: 500 });
@@ -30,7 +49,7 @@ export async function POST(req: NextRequest) {
         id: result.id,
         name: result.name,
         link: result.link,
-        category
+        category: folderName
       }
     });
   } catch (error) {

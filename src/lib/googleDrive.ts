@@ -148,3 +148,47 @@ export const uploadDocumentToDrive = async (fileName: string, mimeType: string, 
     return null;
   }
 };
+
+/**
+ * Gets the ID of a folder by name within a parent folder. 
+ * Creates the folder if it does not exist.
+ *
+ * @param folderName Display name of the folder
+ * @param parentFolderId ID of the parent folder
+ * @returns The ID of the folder, or null on failure
+ */
+export const getOrCreateFolder = async (folderName: string, parentFolderId: string): Promise<string | null> => {
+  const drive = await getDriveClient();
+  if (!drive) return null;
+
+  try {
+    // Search for existing folder
+    const query = `name = '${folderName.replace(/'/g, "\\'")}' and '${parentFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
+    const res = await drive.files.list({
+      q: query,
+      fields: 'files(id, name)',
+      spaces: 'drive',
+    });
+
+    if (res.data.files && res.data.files.length > 0) {
+      console.log(`[Drive] Folder "${folderName}" already exists with ID: ${res.data.files[0].id}`);
+      return res.data.files[0].id!;
+    }
+
+    // Folder does not exist, create it
+    console.log(`[Drive] Folder "${folderName}" not found in parent ${parentFolderId}. Creating...`);
+    const folder = await drive.files.create({
+      requestBody: {
+        name: folderName,
+        mimeType: 'application/vnd.google-apps.folder',
+        parents: [parentFolderId],
+      },
+      fields: 'id',
+    });
+    
+    return folder.data.id || null;
+  } catch (err) {
+    console.error('[Drive] Error in getOrCreateFolder:', err);
+    return null;
+  }
+};
