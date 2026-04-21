@@ -455,7 +455,8 @@ export default function LegalDocumentsPage() {
   const totalArticles = LEGAL_DOCUMENT.chapters.reduce((acc, ch) => acc + ch.articles.length, 0);
 
   return (
-    <PageLayout title="Văn bản pháp lý" icon={<Scale size={16} className="text-amber-500" />}>
+    <>
+      <PageLayout title="Văn bản pháp lý" icon={<Scale size={16} className="text-amber-500" />}>
 
       {/* ── Back Button ── */}
       <button
