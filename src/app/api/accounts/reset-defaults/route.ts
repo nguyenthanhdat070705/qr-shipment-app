@@ -15,6 +15,7 @@ const DEFAULT_PASSWORDS: { email: string; password: string }[] = [
   { email: 'bophanthumua@blackstone.com.vn', password: '123456@' },
   { email: 'bophanvanhanh@blackstone.com.vn',password: '123456@' },
   { email: 'bophanbanhang@blackstone.com.vn',password: '123456@' },
+  { email: 'bophanpttt@blackstone.com.vn',   password: '123456@' },
 ];
 
 export async function POST() {
@@ -52,7 +53,8 @@ export async function POST() {
             'kho3@blackstone.com.vn': 'Kho 3',
             'bophanthumua@blackstone.com.vn': 'Bộ phận Thu mua',
             'bophanvanhanh@blackstone.com.vn': 'Bộ phận Vận hành',
-            'bophanbanhang@blackstone.com.vn': 'Bộ phận Bán hàng'
+            'bophanbanhang@blackstone.com.vn': 'Bộ phận Bán hàng',
+            'bophanpttt@blackstone.com.vn': 'Bộ phận PTTT'
           };
           
           await supabase.from('dim_account').upsert(

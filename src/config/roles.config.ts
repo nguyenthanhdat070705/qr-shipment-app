@@ -58,6 +58,7 @@ const EMAIL_ROLE_MAP: { pattern: string; role: UserRole }[] = [
   { pattern: 'operations', role: 'operations' },
   // Sales
   { pattern: 'bophanbanhang', role: 'sales' },
+  { pattern: 'bophanpttt', role: 'sales' },
   { pattern: 'sales', role: 'sales' },
   { pattern: 'banhang', role: 'sales' },
 ];

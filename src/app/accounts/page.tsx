@@ -12,7 +12,7 @@ import { getUserRole, isVIPAdmin } from '@/config/roles.config';
 import { useRouter } from 'next/navigation';
 
 /* ═══════════════════════════════════════════════════════
-   Account definitions — 6 system accounts
+   Account definitions — 9 system accounts
 ═══════════════════════════════════════════════════════ */
 const SYSTEM_ACCOUNTS = [
   {
@@ -150,6 +150,23 @@ const SYSTEM_ACCOUNTS = [
     badgeText: 'text-blue-700',
     gradientFrom: 'from-blue-500',
     gradientTo: 'to-indigo-600',
+  },
+  {
+    id: 'pttt',
+    email: 'bophanpttt@blackstone.com.vn',
+    displayName: 'Bộ phận PTTT',
+    department: 'Phòng PTTT',
+    role: 'sales' as const,
+    roleLabel: 'Bán hàng',
+    description: 'Phòng PTTT — xem hàng hóa, giữ hàng và tra cứu sản phẩm',
+    icon: Building2,
+    color: 'text-cyan-500',
+    bgColor: 'bg-cyan-50',
+    borderColor: 'border-cyan-200',
+    badgeBg: 'bg-cyan-100',
+    badgeText: 'text-cyan-700',
+    gradientFrom: 'from-cyan-500',
+    gradientTo: 'to-teal-600',
   },
 ];
 
@@ -630,6 +647,12 @@ export default function AccountsPage() {
                 <div className="flex items-center gap-2 text-amber-700">
                   <span className="text-amber-400">▸</span>
                   <span>bophanbanhang@blackstone.com.vn</span>
+                  <span className="text-amber-400">•</span>
+                  <span className="font-bold">123456@</span>
+                </div>
+                <div className="flex items-center gap-2 text-amber-700">
+                  <span className="text-amber-400">▸</span>
+                  <span>bophanpttt@blackstone.com.vn</span>
                   <span className="text-amber-400">•</span>
                   <span className="font-bold">123456@</span>
                 </div>
