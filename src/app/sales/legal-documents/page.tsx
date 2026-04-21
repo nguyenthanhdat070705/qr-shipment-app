@@ -8,7 +8,8 @@ import {
   ArrowLeft, Search, Printer, ExternalLink, Hash, Calendar, Gavel,
   Wallet, HandCoins, FileCheck, UserCheck, Banknote, PiggyBank,
   CheckCircle2, Calculator, Tags, UserCog, FolderOpen, FileQuestion, File,
-  UploadCloud
+  CheckCircle2, Calculator, Tags, UserCog, FolderOpen, FileQuestion, File,
+  UploadCloud, Plus
 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 
@@ -399,8 +400,9 @@ export default function LegalDocumentsPage() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [dynamicCategories, setDynamicCategories] = useState(CATEGORIES);
 
-  const activeCategoryData = CATEGORIES.find(c => c.id === activeCategory);
+  const activeCategoryData = dynamicCategories.find(c => c.id === activeCategory);
 
   const toggleArticle = (id: string) => {
     setExpandedArticles(prev => {
@@ -468,19 +470,44 @@ export default function LegalDocumentsPage() {
 
       {!activeCategory ? (
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm relative overflow-hidden">
-             <div className="relative z-10">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm relative overflow-hidden flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+             <div className="relative z-10 flex-1">
                <h2 className="text-2xl font-black text-gray-900 mb-2">Kho Văn Bản Pháp Lý</h2>
                <p className="text-sm text-gray-500 max-w-2xl">Chọn một danh mục bên dưới để tra cứu các văn bản nội bộ, quy chế bảo mật và chính sách điều hành của công ty dành cho khối bán hàng.</p>
              </div>
+             
+             <div className="relative z-10 flex-shrink-0">
+               <button
+                 onClick={() => {
+                   const title = prompt('Nhập tên danh mục văn bản mới:');
+                   if (!title) return;
+                   const desc = prompt('Nhập mô tả ngắn gọn:');
+                   const newCat = {
+                     id: 'cat_' + Date.now(),
+                     title,
+                     desc: desc || 'Chưa cập nhật mô tả...',
+                     icon: <FileText size={24} />,
+                     color: 'from-gray-500 to-slate-600',
+                     shadow: 'shadow-gray-500/20',
+                     count: 0
+                   };
+                   setDynamicCategories([...dynamicCategories, newCat]);
+                 }}
+                 className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all w-full sm:w-auto justify-center"
+               >
+                 <Plus size={18} />
+                 Thêm danh mục
+               </button>
+             </div>
+
              {/* Decor */}
-             <div className="absolute -right-6 -top-6 text-gray-50">
+             <div className="absolute -right-6 -top-6 text-gray-50 opacity-60 z-0 pointer-events-none">
                 <Scale size={180} />
              </div>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {CATEGORIES.map(cat => (
+            {dynamicCategories.map(cat => (
               <button 
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
@@ -545,7 +572,7 @@ export default function LegalDocumentsPage() {
                         setIsUploading(true);
                         const formData = new FormData();
                         formData.append('file', file);
-                        formData.append('category', activeCategory || 'General');
+                        formData.append('category', activeCategoryData?.title || activeCategory || 'General');
 
                         const res = await fetch('/api/drive/upload', {
                           method: 'POST',
