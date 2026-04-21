@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import { Readable } from 'stream';
 
 const SCOPES = [
   'https://www.googleapis.com/auth/drive.file',
@@ -91,6 +92,59 @@ export const createMemberFolder = async (folderName: string, parentFolderId: str
     if (msg.includes('ENOENT') || msg.includes('keyFile')) {
       console.error('[Drive] ❌ Không tìm thấy file credentials. Đặt GOOGLE_SERVICE_ACCOUNT_JSON hoặc tạo google-drive-credentials.json.');
     }
+    return null;
+  }
+};
+
+/**
+ * Uploads a file buffer/stream to Google Drive.
+ * 
+ * @param fileName        Display name of the file
+ * @param mimeType        MIME type of the file
+ * @param fileBuffer      Buffer of the file data
+ * @param parentFolderId  Google Drive folder ID of the parent
+ * @returns { id, link } or null on failure
+ */
+export const uploadDocumentToDrive = async (fileName: string, mimeType: string, fileBuffer: Buffer, parentFolderId: string) => {
+  const drive = await getDriveClient();
+  if (!drive) {
+    console.error('[Drive Upload] getDriveClient() returned null');
+    return null;
+  }
+
+  try {
+    console.log(`[Drive Upload] Uploading file "${fileName}" to parent ${parentFolderId}`);
+
+    // Create readable stream from buffer
+    const stream = new Readable();
+    stream.push(fileBuffer);
+    stream.push(null);
+
+    const file = await drive.files.create({
+      requestBody: {
+        name: fileName,
+        parents: [parentFolderId],
+      },
+      media: {
+        mimeType: mimeType,
+        body: stream,
+      },
+      fields: 'id, webViewLink, name',
+    });
+
+    const fileId = file.data.id;
+    if (!fileId) {
+      console.error('[Drive Upload] Uploaded file but got no id back:', file.data);
+      return null;
+    }
+
+    const link = file.data.webViewLink || `https://drive.google.com/file/d/${fileId}/view`;
+
+    console.log(`[Drive Upload] ✅ File uploaded: "${file.data.name}" → ${fileId}`);
+    return { id: fileId, link, name: file.data.name };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[Drive Upload] Error uploading file:', msg);
     return null;
   }
 };

@@ -398,6 +398,7 @@ export default function LegalDocumentsPage() {
   const [activeChapter, setActiveChapter] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const activeCategoryData = CATEGORIES.find(c => c.id === activeCategory);
 
@@ -521,18 +522,50 @@ export default function LegalDocumentsPage() {
               
               {/* Nút Upload File */}
               <div className="mt-4 sm:mt-0 flex-shrink-0 pb-1 sm:pb-0">
-                <label className="cursor-pointer group relative inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 transition-all backdrop-blur-md overflow-hidden shadow-sm hover:shadow-md">
+                <label className={`cursor-pointer group relative inline-flex items-center gap-2 px-5 py-3 rounded-xl ${isUploading ? 'bg-white/30 cursor-wait' : 'bg-white/10 hover:bg-white/20'} border border-white/20 transition-all backdrop-blur-md overflow-hidden shadow-sm hover:shadow-md`}>
                   <div className="absolute inset-0 bg-white/20 translate-y-[100%] group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
-                  <UploadCloud size={18} className="text-white relative z-10" />
-                  <span className="text-sm font-bold text-white relative z-10">Tải lên văn bản</span>
+                  {isUploading ? (
+                    <UploadCloud size={18} className="text-white relative z-10 animate-bounce" />
+                  ) : (
+                    <UploadCloud size={18} className="text-white relative z-10" />
+                  )}
+                  <span className="text-sm font-bold text-white relative z-10">
+                    {isUploading ? 'Đang tải lên...' : 'Tải lên văn bản'}
+                  </span>
                   <input 
                     type="file" 
+                    disabled={isUploading}
                     accept=".pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
                     className="hidden" 
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files.length > 0) {
-                        // Tạm ẩn alert, chi ghi log chờ tích hợp Backend
-                        console.log(`Đã sẵn sàng tải file: ${e.target.files[0].name}`);
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      
+                      try {
+                        setIsUploading(true);
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('category', activeCategory || 'General');
+
+                        const res = await fetch('/api/drive/upload', {
+                          method: 'POST',
+                          body: formData
+                        });
+                        const data = await res.json();
+                        
+                        if (data.success) {
+                          alert(`Tải lên thành công! File đã được lưu trữ an toàn trên Google Drive.\n\nTên file: ${data.file.name}\nNhấn OK để xem trên Drive.`);
+                          window.open(data.file.link, '_blank');
+                        } else {
+                          alert(`Lỗi rùi: ${data.error}`);
+                        }
+                      } catch (error) {
+                        alert('Có lỗi xảy ra trong quá trình tải lên. Vui lòng thử lại.');
+                        console.error(error);
+                      } finally {
+                        setIsUploading(false);
+                        // Reset input
+                        e.target.value = '';
                       }
                     }} 
                   />
