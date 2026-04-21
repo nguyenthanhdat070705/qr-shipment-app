@@ -7,8 +7,9 @@ import {
   Users, ClipboardList, AlertTriangle, ShieldCheck, BookOpen, Landmark,
   ArrowLeft, Search, Printer, ExternalLink, Hash, Calendar, Gavel,
   Wallet, HandCoins, FileCheck, UserCheck, Banknote, PiggyBank,
+  Wallet, HandCoins, FileCheck, UserCheck, Banknote, PiggyBank,
   CheckCircle2, Calculator, Tags, UserCog, FolderOpen, FileQuestion, File,
-  UploadCloud, Plus
+  UploadCloud, Plus, X
 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 
@@ -400,6 +401,11 @@ export default function LegalDocumentsPage() {
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [dynamicCategories, setDynamicCategories] = useState(CATEGORIES);
+  
+  // States for Add Category Modal
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newCatTitle, setNewCatTitle] = useState('');
+  const [newCatDesc, setNewCatDesc] = useState('');
 
   const activeCategoryData = dynamicCategories.find(c => c.id === activeCategory);
 
@@ -477,21 +483,7 @@ export default function LegalDocumentsPage() {
              
              <div className="relative z-10 flex-shrink-0">
                <button
-                 onClick={() => {
-                   const title = prompt('Nhập tên danh mục văn bản mới:');
-                   if (!title) return;
-                   const desc = prompt('Nhập mô tả ngắn gọn:');
-                   const newCat = {
-                     id: 'cat_' + Date.now(),
-                     title,
-                     desc: desc || 'Chưa cập nhật mô tả...',
-                     icon: <FileText size={24} />,
-                     color: 'from-gray-500 to-slate-600',
-                     shadow: 'shadow-gray-500/20',
-                     count: 0
-                   };
-                   setDynamicCategories([...dynamicCategories, newCat]);
-                 }}
+                 onClick={() => setIsAddModalOpen(true)}
                  className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all w-full sm:w-auto justify-center"
                >
                  <Plus size={18} />
@@ -833,5 +825,84 @@ export default function LegalDocumentsPage() {
      )}
 
     </PageLayout>
+
+      {/* ── Modal Thêm Danh Mục Mới ── */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={() => setIsAddModalOpen(false)} />
+          <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-50 bg-gray-50/50">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                  <FolderOpen size={18} />
+                </div>
+                <h3 className="text-lg font-black text-gray-900">Thêm Danh Mục Mới</h3>
+              </div>
+              <button onClick={() => setIsAddModalOpen(false)} className="p-2 rounded-full hover:bg-gray-200/50 text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-5">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Tên danh mục <span className="text-red-500">*</span></label>
+                <input 
+                  type="text" 
+                  value={newCatTitle}
+                  onChange={e => setNewCatTitle(e.target.value)}
+                  placeholder="VD: Văn bản về hợp đồng..."
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Mô tả ngắn gọn</label>
+                <textarea 
+                  value={newCatDesc}
+                  onChange={e => setNewCatDesc(e.target.value)}
+                  placeholder="Nhập ghi chú hoặc mô tả cho danh mục này..."
+                  rows={3}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none resize-none"
+                />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-gray-50 flex items-center justify-end gap-3 bg-gray-50/30">
+              <button 
+                onClick={() => setIsAddModalOpen(false)}
+                className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                Hủy bỏ
+              </button>
+              <button 
+                onClick={() => {
+                  if (!newCatTitle.trim()) return;
+                  const newCat = {
+                    id: 'cat_' + Date.now(),
+                    title: newCatTitle,
+                    desc: newCatDesc.trim() || 'Chưa cập nhật mô tả...',
+                    icon: <FileText size={24} />,
+                    color: 'from-gray-500 to-slate-600',
+                    shadow: 'shadow-gray-500/20',
+                    count: 0
+                  };
+                  setDynamicCategories([...dynamicCategories, newCat]);
+                  setIsAddModalOpen(false);
+                  setNewCatTitle('');
+                  setNewCatDesc('');
+                }}
+                disabled={!newCatTitle.trim()}
+                className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Lưu danh mục
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
