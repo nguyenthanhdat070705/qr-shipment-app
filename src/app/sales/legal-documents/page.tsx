@@ -7,9 +7,18 @@ import {
   Users, ClipboardList, AlertTriangle, ShieldCheck, BookOpen, Landmark,
   ArrowLeft, Search, Printer, ExternalLink, Hash, Calendar, Gavel,
   Wallet, HandCoins, FileCheck, UserCheck, Banknote, PiggyBank,
-  CheckCircle2
+  CheckCircle2, Calculator, Tags, UserCog, FolderOpen, FileQuestion
 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
+
+const CATEGORIES = [
+  { id: 'finance', title: 'Văn bản về tài chính', icon: <Landmark size={24} />, desc: 'Quy chế, quy định về quản lý ngân sách, dòng tiền...', color: 'from-blue-500 to-indigo-600', shadow: 'shadow-blue-500/20', count: 1 },
+  { id: 'accounting', title: 'Văn bản kế toán', icon: <Calculator size={24} />, desc: 'Chuẩn mực, quy trình và biểu mẫu kế toán...', color: 'from-amber-400 to-orange-500', shadow: 'shadow-orange-500/20', count: 0 },
+  { id: 'quality', title: 'Văn bản về chất lượng', icon: <ShieldCheck size={24} />, desc: 'Tiêu chuẩn chất lượng dịch vụ và quy trình ISO...', color: 'from-emerald-400 to-teal-500', shadow: 'shadow-teal-500/20', count: 0 },
+  { id: 'classification', title: 'Văn bản về phân loại', icon: <Tags size={24} />, desc: 'Danh mục, cấu trúc và định mức sản phẩm...', color: 'from-pink-400 to-rose-500', shadow: 'shadow-rose-500/20', count: 0 },
+  { id: 'roles', title: 'Văn bản về nhiệm vụ và trách nhiệm', icon: <UserCog size={24} />, desc: 'Cơ cấu tổ chức, vai trò và phân quyền phòng ban...', color: 'from-violet-400 to-purple-600', shadow: 'shadow-violet-500/20', count: 0 },
+  { id: 'policy', title: 'Văn bản về chính sách', icon: <BookOpen size={24} />, desc: 'Chính sách công ty, quy định kinh doanh chung...', color: 'from-sky-400 to-blue-500', shadow: 'shadow-sky-500/20', count: 0 },
+];
 
 /* ─────────────────────────────────────
    Types
@@ -386,6 +395,7 @@ export default function LegalDocumentsPage() {
   );
   const [searchQuery, setSearchQuery] = useState('');
   const [activeChapter, setActiveChapter] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const toggleArticle = (id: string) => {
     setExpandedArticles(prev => {
@@ -437,14 +447,53 @@ export default function LegalDocumentsPage() {
 
       {/* ── Back Button ── */}
       <button
-        onClick={() => router.push('/sales')}
-        className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-gray-600 mb-4 transition-colors"
+        onClick={() => activeCategory ? setActiveCategory(null) : router.push('/sales')}
+        className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-gray-600 mb-6 transition-colors"
       >
-        <ArrowLeft size={14} /> Quay lại Dashboard
+        <ArrowLeft size={14} /> {activeCategory ? 'Quay lại Danh mục phân loại' : 'Quay lại Dashboard'}
       </button>
 
-      {/* ── Document Header ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] p-6 mb-6 shadow-xl">
+      {!activeCategory ? (
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm relative overflow-hidden">
+             <div className="relative z-10">
+               <h2 className="text-2xl font-black text-gray-900 mb-2">Kho Văn Bản Pháp Lý</h2>
+               <p className="text-sm text-gray-500 max-w-2xl">Chọn một danh mục bên dưới để tra cứu các văn bản nội bộ, quy chế bảo mật và chính sách điều hành của công ty dành cho khối bán hàng.</p>
+             </div>
+             {/* Decor */}
+             <div className="absolute -right-6 -top-6 text-gray-50">
+                <Scale size={180} />
+             </div>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {CATEGORIES.map(cat => (
+              <button 
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.id)}
+                className="group flex flex-col items-start text-left p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-gray-200 transition-all duration-300"
+              >
+                <div className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${cat.color} text-white shadow-lg ${cat.shadow} mb-5 group-hover:scale-110 transition-transform duration-300`}>
+                  {cat.icon}
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{cat.title}</h3>
+                <p className="text-sm text-gray-500 mb-5 flex-1 leading-relaxed">{cat.desc}</p>
+                <div className="w-full flex items-center justify-between border-t border-gray-50 pt-4 mt-auto">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 bg-gray-50 px-2.5 py-1 rounded-lg">
+                    <FolderOpen size={14} className="text-gray-400" /> {cat.count} tài liệu
+                  </span>
+                  <span className="text-xs font-bold text-blue-600 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300 flex items-center gap-1">
+                    Xem chi tiết <ChevronRight size={14} />
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : activeCategory === 'finance' ? (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          {/* ── Document Header ── */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] p-6 mb-6 shadow-xl">
         {/* Decorative */}
         <div className="absolute -top-10 -right-10 w-52 h-52 rounded-full bg-amber-400/10 blur-3xl" />
         <div className="absolute bottom-0 left-20 w-36 h-36 rounded-full bg-amber-300/5 blur-2xl" />
@@ -626,6 +675,16 @@ export default function LegalDocumentsPage() {
           </div>
         </div>
       </div>
+      </div>
+     ) : (
+        <div className="bg-white rounded-2xl border border-gray-100 p-16 shadow-sm text-center animate-in fade-in zoom-in-95 duration-300">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gray-50 mx-auto mb-5 border border-gray-100 shadow-inner">
+                <FileQuestion size={32} className="text-gray-300" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-800 mb-2">Chưa có văn bản</h3>
+            <p className="text-sm text-gray-500 max-w-sm mx-auto">Danh mục này hiện tại chưa có tài liệu nào được tải lên hệ thống. Vui lòng quay lại sau.</p>
+        </div>
+     )}
 
     </PageLayout>
   );
