@@ -239,15 +239,6 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
     },
     /* ── Core SCM Flow ── */
     {
-      icon: <Search size={18} />,
-      label: 'Tìm kiếm hàng',
-      desc: 'Tra cứu',
-      href: '/',
-      color: 'text-blue-400',
-      iconBg: 'bg-blue-500/15',
-      section: 'Chuỗi cung ứng',
-    },
-    {
       icon: <ShoppingCart size={18} />,
       label: 'Đặt hàng',
       desc: 'Tạo & quản lý PO',
