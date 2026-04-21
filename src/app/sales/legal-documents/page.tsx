@@ -7,7 +7,7 @@ import {
   Users, ClipboardList, AlertTriangle, ShieldCheck, BookOpen, Landmark,
   ArrowLeft, Search, Printer, ExternalLink, Hash, Calendar, Gavel,
   Wallet, HandCoins, FileCheck, UserCheck, Banknote, PiggyBank,
-  CheckCircle2, Calculator, Tags, UserCog, FolderOpen, FileQuestion
+  CheckCircle2, Calculator, Tags, UserCog, FolderOpen, FileQuestion, File
 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 
@@ -396,6 +396,9 @@ export default function LegalDocumentsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeChapter, setActiveChapter] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+
+  const activeCategoryData = CATEGORIES.find(c => c.id === activeCategory);
 
   const toggleArticle = (id: string) => {
     setExpandedArticles(prev => {
@@ -447,10 +450,18 @@ export default function LegalDocumentsPage() {
 
       {/* ── Back Button ── */}
       <button
-        onClick={() => activeCategory ? setActiveCategory(null) : router.push('/sales')}
+        onClick={() => {
+          if (activeDocumentId) {
+            setActiveDocumentId(null);
+          } else if (activeCategory) {
+            setActiveCategory(null);
+          } else {
+            router.push('/sales');
+          }
+        }}
         className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-gray-600 mb-6 transition-colors"
       >
-        <ArrowLeft size={14} /> {activeCategory ? 'Quay lại Danh mục phân loại' : 'Quay lại Dashboard'}
+        <ArrowLeft size={14} /> {activeDocumentId ? 'Quay lại Danh sách' : activeCategory ? 'Quay lại Kho phân loại' : 'Quay lại Dashboard'}
       </button>
 
       {!activeCategory ? (
@@ -490,7 +501,60 @@ export default function LegalDocumentsPage() {
             ))}
           </div>
         </div>
-      ) : activeCategory === 'finance' ? (
+      ) : activeCategory && !activeDocumentId ? (
+        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+          {/* Category Banner */}
+          <div className={`p-6 sm:p-8 rounded-2xl bg-gradient-to-br ${activeCategoryData?.color} text-white shadow-xl relative overflow-hidden`}>
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
+            <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur border border-white/30 text-white shadow-inner flex-shrink-0">
+                {activeCategoryData?.icon}
+              </div>
+              <div>
+                <span className="text-white/70 text-xs font-bold uppercase tracking-wider mb-1 block">Danh mục văn bản</span>
+                <h2 className="text-2xl sm:text-3xl font-black">{activeCategoryData?.title}</h2>
+                <p className="text-white/80 text-sm mt-2 max-w-2xl">{activeCategoryData?.desc}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* List of Documents */}
+          {activeCategory === 'finance' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button 
+                onClick={() => setActiveDocumentId('doc-finance-1')}
+                className="group p-5 bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all text-left flex flex-col h-full"
+              >
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <FileText size={22} />
+                  </div>
+                  <div>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-gray-100 text-gray-500 text-[10px] font-bold mb-2">
+                      <Hash size={10} /> 9199300161480-QMS
+                    </span>
+                    <h3 className="text-base font-bold text-gray-900 group-hover:text-blue-700 transition-colors leading-snug">QUY CHẾ QUẢN LÝ TÀI CHÍNH</h3>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 mb-5 flex-1 line-clamp-2">Chương Trình Hội Viên Blackstones Lifecare (Ban hành theo quyết định....)</p>
+                
+                <div className="mt-auto flex items-center justify-between border-t border-gray-100 pt-4">
+                  <span className="text-xs font-semibold text-gray-400 flex items-center gap-1.5"><Calendar size={12} /> Cập nhật: 17/05/2025</span>
+                  <span className="text-xs font-bold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">Xem nội dung &rarr;</span>
+                </div>
+              </button>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-gray-100 p-16 shadow-sm text-center">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gray-50 mx-auto mb-5 border border-gray-100 shadow-inner">
+                    <FileQuestion size={32} className="text-gray-300" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-800 mb-2">Chưa có văn bản</h3>
+                <p className="text-sm text-gray-500 max-w-sm mx-auto">Chưa có tài liệu nào được hệ thống phát hành trong nhánh này.</p>
+            </div>
+          )}
+        </div>
+      ) : activeCategory === 'finance' && activeDocumentId === 'doc-finance-1' ? (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           {/* ── Document Header ── */}
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] p-6 mb-6 shadow-xl">
