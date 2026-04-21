@@ -8,7 +8,6 @@ import {
   ArrowLeft, Search, Printer, ExternalLink, Hash, Calendar, Gavel,
   Wallet, HandCoins, FileCheck, UserCheck, Banknote, PiggyBank,
   CheckCircle2, Calculator, Tags, UserCog, FolderOpen, FileQuestion, File,
-  CheckCircle2, Calculator, Tags, UserCog, FolderOpen, FileQuestion, File,
   UploadCloud, Plus
 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
