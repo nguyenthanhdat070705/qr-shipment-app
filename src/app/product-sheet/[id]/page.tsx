@@ -257,31 +257,31 @@ export default async function ProductSheetPage({
 
             {/* Specs table — large and spaced out */}
             <div className="pt-8 border-t-[3px] border-gray-100 flex-1">
-              <div className="grid grid-cols-[200px_1fr_160px_1fr] gap-y-10 gap-x-6 text-xl font-medium items-center">
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg">Kích thước KT</div>
-                <div className="text-gray-800 text-2xl">{size}</div>
+              <div className="grid grid-cols-[170px_max-content_150px_1fr] gap-y-8 gap-x-6 items-center">
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[17px]">Kích thước KT</div>
+                <div className="text-gray-900 text-[20px] font-semibold whitespace-nowrap">{size}</div>
                 
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg">Chất liệu</div>
-                <div className="text-gray-800 text-2xl">{material}</div>
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[17px]">Chất liệu</div>
+                <div className="text-gray-900 text-[20px] font-semibold">{material}</div>
 
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg">Màu sắc</div>
-                <div className="text-gray-800 text-2xl">{color}</div>
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[17px]">Màu sắc</div>
+                <div className="text-gray-900 text-[20px] font-semibold">{color}</div>
                 
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg">Đặc điểm</div>
-                <div className="text-gray-800 text-2xl">{feature}</div>
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[17px]">Đặc điểm</div>
+                <div className="text-gray-900 text-[20px] font-semibold">{feature}</div>
 
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg">Nguồn gốc</div>
-                <div className="text-gray-800 text-2xl">{origin}</div>
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[17px]">Nguồn gốc</div>
+                <div className="text-gray-900 text-[20px] font-semibold">{origin}</div>
                 
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg">Dày thành</div>
-                <div className="text-gray-800 text-2xl">{thickness}</div>
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[17px]">Dày thành</div>
+                <div className="text-gray-900 text-[20px] font-semibold">{thickness}</div>
               </div>
-              <div className="grid grid-cols-[250px_1fr] gap-x-6 mt-10 text-xl font-medium items-end">
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg">Các thông số khác:</div>
+              <div className="flex gap-x-6 mt-8 items-end">
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[17px] whitespace-nowrap">Các thông số khác:</div>
                 {otherSpecs ? (
-                  <div className="text-gray-800 text-2xl pb-1">{otherSpecs}</div>
+                  <div className="text-gray-900 text-[20px] font-semibold pb-1">{otherSpecs}</div>
                 ) : (
-                  <div className="border-b-[3px] border-dotted border-gray-300 w-full h-6"></div>
+                  <div className="border-b-[3px] border-dotted border-gray-300 w-full mb-1 h-2"></div>
                 )}
               </div>
             </div>

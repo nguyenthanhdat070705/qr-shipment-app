@@ -81,35 +81,35 @@ export default function ProductSheetDynamic({
 
       <div className="pt-8 text-xl font-medium">
         {/* Ngày nhập + xuất kho — cùng hàng */}
-        <div className="grid grid-cols-[200px_1fr_200px_1fr] gap-y-1 gap-x-6 mb-10 items-end">
-          <div className="font-bold text-gray-900 uppercase tracking-widest text-lg">Ngày nhập kho</div>
-          <div className="text-gray-800 font-semibold text-2xl">
+        <div className="grid grid-cols-[170px_1fr_150px_1fr] gap-y-1 gap-x-6 mb-8 items-end">
+          <div className="font-bold text-gray-900 uppercase tracking-widest text-[17px]">Ngày nhập kho</div>
+          <div className="text-gray-900 font-semibold text-[20px]">
             {ngayNhapKho ? (
               <span>{formatDate(ngayNhapKho)}</span>
             ) : (
-              <span className="border-b-[3px] border-dotted border-gray-400 w-full inline-block h-6">&nbsp;</span>
+              <span className="border-b-[3px] border-dotted border-gray-400 w-full inline-block mb-1 h-2">&nbsp;</span>
             )}
           </div>
-          <div className="font-bold text-gray-900 uppercase tracking-widest text-lg">Ngày xuất kho</div>
-          <div className="text-gray-800 font-semibold text-2xl">
+          <div className="font-bold text-gray-900 uppercase tracking-widest text-[17px]">Ngày xuất kho</div>
+          <div className="text-gray-900 font-semibold text-[20px]">
             {ngayXuatKho ? (
               <span>{formatDate(ngayXuatKho)}</span>
             ) : (
-              <span className="border-b-[3px] border-dotted border-gray-400 w-full inline-block h-6">&nbsp;</span>
+              <span className="border-b-[3px] border-dotted border-gray-400 w-full inline-block mb-1 h-2">&nbsp;</span>
             )}
           </div>
         </div>
 
         {/* Lưu kho tại — nằm ngang */}
-        <div className="grid grid-cols-[200px_1fr] gap-x-6 items-start">
-          <div className="font-bold text-gray-900 uppercase tracking-widest text-lg pt-1">Lưu kho tại</div>
-          <div className="flex flex-wrap gap-x-8 gap-y-4">
+        <div className="flex gap-x-6 items-center flex-nowrap">
+          <div className="font-bold text-gray-900 uppercase tracking-widest text-[17px] whitespace-nowrap pt-0.5">Lưu kho tại</div>
+          <div className="flex gap-x-8 items-center flex-nowrap">
             {warehouses?.map((k, i) => {
               const checked = loaded && isWarehouseChecked(k);
               return (
-                <label key={i} className="flex items-center gap-3 cursor-pointer">
+                <label key={i} className="flex items-center gap-2.5 cursor-pointer whitespace-nowrap">
                   <div
-                    className={`w-6 h-6 border-[2px] rounded-md flex items-center justify-center transition-colors ${
+                    className={`w-[22px] h-[22px] border-[2px] rounded flex items-center justify-center transition-colors shrink-0 ${
                       checked
                         ? 'border-emerald-600 bg-emerald-600 text-white print-checkbox-checked'
                         : 'border-gray-400 text-transparent'
@@ -121,12 +121,12 @@ export default function ProductSheetDynamic({
                     } as React.CSSProperties : undefined}
                   >
                     {checked && (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
                     )}
                   </div>
-                  <span className="text-gray-800 text-xl font-bold">{k.ten_kho}</span>
+                  <span className="text-gray-900 text-[18px] font-bold">{k.ten_kho}</span>
                 </label>
               );
             })}
