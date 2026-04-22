@@ -42,6 +42,7 @@ interface DimHom {
   gia_ban: number | null;
   gia_ban_1: number | null;
   hinh_anh: string | null;
+  is_active: boolean;
 }
 
 interface DimKho {
@@ -65,7 +66,7 @@ export default async function InventoryPage() {
   // Fetch all 4 tables in parallel
   const [inventoryRes, homRes, khoRes, nccRes] = await Promise.all([
     supabase.from('fact_inventory').select('*'),
-    supabase.from('dim_hom').select('id, ma_hom, ten_hom, gia_ban, gia_ban_1, hinh_anh'),
+    supabase.from('dim_hom').select('id, ma_hom, ten_hom, gia_ban, gia_ban_1, hinh_anh, is_active'),
     supabase.from('dim_kho').select('id, ma_kho, ten_kho'),
     supabase.from('dim_ncc').select('id, ma_ncc, ten_ncc, nguoi_lien_he, sdt, dia_chi'),
   ]);
@@ -182,6 +183,7 @@ export default async function InventoryPage() {
       isExported,
       isOutOfStock,
       available,
+      isActive: hom?.is_active ?? true,
       lots: [] as string[],
       warehouseBreakdown: group.warehouseBreakdown,
       supplierName: ncc?.ten_ncc || '',

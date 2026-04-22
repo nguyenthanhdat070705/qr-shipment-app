@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Search, Package, ChevronDown, MapPin, Warehouse, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Search, Package, ChevronDown, MapPin, Warehouse, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { getWarehouseFilter } from '@/config/roles.config';
 
@@ -29,6 +29,7 @@ interface InventoryItem {
   isExported: boolean;
   isOutOfStock: boolean;
   available: boolean;
+  isActive: boolean;
   lots?: string[];
   warehouseBreakdown?: WarehouseBreakdown[];
   supplierName?: string;
@@ -195,10 +196,9 @@ export default function InventorySearch({ items, showStats = false }: { items: I
 
     return {
       total: baseItems.length,
-      // Còn hàng: Tổng SL hàng tồn của tất cả loại hàng
-      available: baseItems.reduce((sum, i) => sum + Number(i.khaDung || '0'), 0),
-      // Hết hàng: Số loại hàng có lượng tồn = 0
-      outOfStock: baseItems.filter(i => Number(i.tonKho || '0') <= 0 && Number(i.khaDung || '0') <= 0).length,
+      active: baseItems.filter(i => i.isActive).length,
+      inactive: baseItems.filter(i => !i.isActive).length,
+      totalStock: baseItems.reduce((sum, i) => sum + Number(i.khaDung || '0'), 0),
       warehouseName: lockedWarehouse || 'Tất cả kho',
     };
   }, [items, warehouseFilter, lockedWarehouse]);
@@ -207,7 +207,8 @@ export default function InventorySearch({ items, showStats = false }: { items: I
     <div className="space-y-4">
       {/* Stat cards — hiển thị khi showStats=true hoặc khi có lockedWarehouse */}
       {(showStats || lockedWarehouse) && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-2">
+          {/* Card 1: Tổng SP */}
           <div className="rounded-2xl bg-white border border-[#d5dbe9] p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eef1f7] flex-shrink-0">
               <Warehouse size={22} className="text-[#1B2A4A]" />
@@ -217,22 +218,34 @@ export default function InventorySearch({ items, showStats = false }: { items: I
               <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">Tổng SP</p>
             </div>
           </div>
-          <div className="rounded-2xl bg-white border border-emerald-200 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 flex-shrink-0">
-              <CheckCircle size={22} className="text-emerald-600" />
+          {/* Card 2: SP Đang bán */}
+          <div className="rounded-2xl bg-white border border-blue-200 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 flex-shrink-0">
+              <CheckCircle size={22} className="text-blue-600" />
             </div>
             <div>
-              <p className="text-2xl font-extrabold text-gray-900 leading-none">{warehouseStats.available}</p>
-              <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">Còn hàng</p>
+              <p className="text-2xl font-extrabold text-gray-900 leading-none">{warehouseStats.active}</p>
+              <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">SP Đang bán</p>
             </div>
           </div>
+          {/* Card 3: SP Ngừng bán */}
           <div className="rounded-2xl bg-white border border-red-200 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 flex-shrink-0">
-              <AlertTriangle size={22} className="text-red-600" />
+              <XCircle size={22} className="text-red-600" />
             </div>
             <div>
-              <p className="text-2xl font-extrabold text-gray-900 leading-none">{warehouseStats.outOfStock}</p>
-              <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">Hết hàng</p>
+              <p className="text-2xl font-extrabold text-gray-900 leading-none">{warehouseStats.inactive}</p>
+              <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">SP Ngừng bán</p>
+            </div>
+          </div>
+          {/* Card 4: Tổng tồn kho */}
+          <div className="rounded-2xl bg-white border border-emerald-200 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 flex-shrink-0">
+              <Package size={22} className="text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-extrabold text-gray-900 leading-none">{warehouseStats.totalStock}</p>
+              <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">Tổng tồn kho</p>
             </div>
           </div>
         </div>
