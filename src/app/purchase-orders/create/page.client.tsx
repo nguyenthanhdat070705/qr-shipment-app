@@ -63,10 +63,8 @@ export default function CreatePurchaseOrderPage() {
   const [openDropdowns, setOpenDropdowns] = useState<boolean[]>([false]);
   const dropdownRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // Products filtered by selected NCC
-  const filteredProducts = supplierId
-    ? homList.filter(h => h.NCC === supplierId)
-    : homList;
+  // Products available for order (all active products since NCC mapping is removed)
+  const filteredProducts = homList;
 
   useEffect(() => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -78,7 +76,7 @@ export default function CreatePurchaseOrderPage() {
     Promise.all([
       fetch(`${supabaseUrl}/rest/v1/dim_ncc?select=*&order=ma_ncc`, { headers }).then(r => r.json()),
       fetch(`${supabaseUrl}/rest/v1/dim_kho?select=*&order=ma_kho`, { headers }).then(r => r.json()),
-      fetch(`${supabaseUrl}/rest/v1/dim_hom?select=id,ma_hom,ten_hom,gia_ban_1,gia_ban,NCC&is_active=eq.true&order=ma_hom`, { headers }).then(r => r.json()),
+      fetch(`${supabaseUrl}/rest/v1/dim_hom?select=id,ma_hom,ten_hom,gia_ban_1,gia_ban&is_active=eq.true&order=ma_hom`, { headers }).then(r => r.json()),
     ]).then(([ncc, kho, hom]) => {
       setNccList(Array.isArray(ncc) ? ncc : []);
       setKhoList(Array.isArray(kho) ? kho : []);
@@ -326,7 +324,6 @@ export default function CreatePurchaseOrderPage() {
                         <div className="px-3 py-4 text-sm text-gray-400 text-center">Không tìm thấy sản phẩm</div>
                       ) : (
                         quickFiltered.map((h) => {
-                          const ncc = nccList.find(n => n.id === h.NCC);
                           return (
                             <button
                               key={h.id}
@@ -336,11 +333,6 @@ export default function CreatePurchaseOrderPage() {
                             >
                               <span className="font-mono text-xs font-bold text-purple-500 bg-purple-50 px-1.5 py-0.5 rounded flex-shrink-0">{h.ma_hom}</span>
                               <span className="flex-1 truncate">{h.ten_hom}</span>
-                              {ncc && (
-                                <span className="text-[10px] text-gray-400 flex-shrink-0 bg-gray-100 px-1.5 py-0.5 rounded">
-                                  {ncc.ten_ncc}
-                                </span>
-                              )}
                             </button>
                           );
                         })
@@ -513,11 +505,9 @@ export default function CreatePurchaseOrderPage() {
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400">
                 Sản phẩm
-                {supplierId && (
-                  <span className="ml-2 text-purple-500 normal-case tracking-normal font-medium">
-                    ({filteredProducts.length} SP từ {selectedNcc?.ten_ncc})
-                  </span>
-                )}
+                <span className="ml-2 text-purple-500 normal-case tracking-normal font-medium">
+                  ({filteredProducts.length} sản phẩm có sẵn)
+                </span>
               </h2>
               <button
                 type="button"
