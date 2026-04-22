@@ -406,7 +406,11 @@ export default function ProductsManagePage() {
           <Package size={28} />
           <div>
             <h1 className="pm-title">Quản lý sản phẩm</h1>
-            <p className="pm-subtitle">Tạo mã & quản lý danh mục hòm ({products.length} sản phẩm)</p>
+            <p className="pm-subtitle">
+              <span className="pm-stat-pill pm-stat-total">Tổng sản phẩm: <strong>{products.length}</strong></span>
+              <span className="pm-stat-pill pm-stat-active">Đang bán: <strong>{products.filter(p => p.is_active).length}</strong></span>
+              <span className="pm-stat-pill pm-stat-inactive">Ngừng bán: <strong>{products.filter(p => !p.is_active).length}</strong></span>
+            </p>
           </div>
         </div>
         <Link href="/" className="pm-btn-back">
