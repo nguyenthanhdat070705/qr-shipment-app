@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
 
   // Allowed columns in dim_hom
   const ALLOWED_COLS = [
-    'ma_hom', 'ten_hom', 'gia_ban', 'gia_von', 'NCC', 'loai_hom',
+    'ma_hom', 'ten_hom', 'gia_ban', 'gia_ban_1', 'NCC', 'loai_hom',
     'hinh_anh', 'mo_ta', 'kich_thuoc', 'thong_so_khac', 'do_day_thanh',
     'don_vi_tinh', 'tinh_chat', 'muc_dich_su_dung',
   ];
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     const cleanData: Record<string, unknown> = {};
     for (const col of ALLOWED_COLS) {
       if (row[col] !== undefined && row[col] !== null && row[col] !== '') {
-        cleanData[col] = col === 'gia_ban' || col === 'gia_von'
+        cleanData[col] = col === 'gia_ban' || col === 'gia_ban_1'
           ? Number(row[col]) || 0
           : String(row[col]).trim();
       }

@@ -11,7 +11,7 @@ export async function GET(req: Request) {
 
     const [inventoryRes, homRes, khoRes] = await Promise.all([
       supabase.from('fact_inventory').select('*'),
-      supabase.from('dim_hom').select('id, ma_hom, ten_hom, gia_von'),
+      supabase.from('dim_hom').select('id, ma_hom, ten_hom, gia_ban_1'),
       supabase.from('dim_kho').select('id, ma_kho, ten_kho'),
     ]);
 
@@ -198,7 +198,7 @@ export async function GET(req: Request) {
     let totalInventoryValue = 0;
     for (const hom of allProducts) {
       const qty = qtyByProductId.get(hom.id) || 0;
-      const giaVon = Number(hom.gia_von) || 0;
+      const giaVon = Number(hom.gia_ban_1) || 0;
       totalInventoryValue += qty * giaVon;
     }
 
