@@ -1,3 +1,5 @@
+'use client';
+
 export default function CareHistoryPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 text-gray-800 p-6">
