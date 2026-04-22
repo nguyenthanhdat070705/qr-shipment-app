@@ -301,7 +301,7 @@ export default function ProductsManagePage() {
       ma_hom: product.ma_hom || '',
       ten_hom: product.ten_hom || '',
       gia_ban: product.gia_ban || 0,
-      gia_von: product.gia_von || 0,
+      gia_ban_1: product.gia_ban_1 || 0,
       loai_hom: product.loai_hom || '',
       hinh_anh: product.hinh_anh || '',
       kich_thuoc: product.kich_thuoc || '',
