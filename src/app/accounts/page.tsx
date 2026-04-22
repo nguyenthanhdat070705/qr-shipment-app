@@ -157,7 +157,7 @@ const SYSTEM_ACCOUNTS = [
     displayName: 'Bộ phận PTTT',
     department: 'Phòng PTTT',
     role: 'sales' as const,
-    roleLabel: 'Bán hàng',
+    roleLabel: 'Phát triển thị trường',
     description: 'Phòng PTTT — xem hàng hóa, giữ hàng và tra cứu sản phẩm',
     icon: Building2,
     color: 'text-cyan-500',

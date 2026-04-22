@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { BookOpen, Search, X, Calendar, MapPin, Users, Heart, Package, Loader2 } from 'lucide-react';
+import Link from 'next/link';
 import PageLayout from '@/components/PageLayout';
 import { getSupabase } from '@/lib/supabase/client';
 
@@ -108,10 +109,21 @@ export default function FuneralsPage() {
                  type="date"
                  value={filterDate}
                  onChange={(e) => setFilterDate(e.target.value)}
-                 className="w-full px-3 py-4 bg-white/10 border border-white/20 focus:bg-white focus:border-indigo-300 rounded-2xl text-sm font-medium text-white focus:text-gray-900 transition-all shadow-inner outline-none backdrop-blur-md cursor-pointer"
+                 className="w-full px-3 py-4 bg-white/10 border border-white/20 focus:bg-white focus:border-indigo-300 rounded-2xl text-sm font-medium text-white focus:text-gray-900 transition-all shadow-inner outline-none backdrop-blur-md cursor-pointer h-[54px]"
                  title="Lọc theo ngày"
                />
              </div>
+             
+             {/* Nút Xem Dashboard Gantt */}
+             <Link 
+                href="/funerals/dashboard"
+                className="flex-shrink-0 flex items-center justify-center bg-indigo-500 hover:bg-indigo-400 text-white px-4 py-4 rounded-2xl text-sm font-bold shadow-lg transition-all border border-indigo-400/50 hover:shadow-indigo-500/30 h-[54px]"
+             >
+                <div className="flex items-center gap-2">
+                   <Calendar size={18} />
+                   <span className="hidden sm:inline">Gantt & Dashboard</span>
+                </div>
+             </Link>
           </div>
         </div>
       </div>

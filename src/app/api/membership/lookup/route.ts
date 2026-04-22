@@ -53,86 +53,106 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Quá nhiều yêu cầu. Vui lòng thử lại sau 1 phút.' }, { status: 429, headers: corsHeaders });
     }
 
-    const q = req.nextUrl.searchParams.get('q')?.trim() ?? '';
+    const cccd = req.nextUrl.searchParams.get('cccd')?.trim();
+    const phone = req.nextUrl.searchParams.get('phone')?.trim();
+    const q = req.nextUrl.searchParams.get('q')?.trim();
     const limit = Math.min(parseInt(req.nextUrl.searchParams.get('limit') || '10'), 20);
 
-    if (!q || q.length < 2) {
-      return NextResponse.json({ error: 'Vui lòng nhập ít nhất 2 ký tự.' }, { status: 400, headers: corsHeaders });
+    // Nếu public search: có cccd hoặc có phone
+    const isPublicSearch = cccd !== undefined || phone !== undefined;
+
+    if (isPublicSearch) {
+      if (!cccd && !phone) {
+        return NextResponse.json({ error: 'Vui lòng nhập CCCD hoặc Số điện thoại.' }, { status: 400, headers: corsHeaders });
+      }
+    } else {
+      // Nếu admin search: phải có q
+      if (!q || q.length < 2) {
+        return NextResponse.json({ error: 'Vui lòng nhập ít nhất 2 ký tự.' }, { status: 400, headers: corsHeaders });
+      }
     }
 
     const supabase = getSupabaseAdmin();
-
-    const searchType = req.nextUrl.searchParams.get('type') || 'auto';
-
-    // ── Smart detect search type ─────────────────────────────
-    // Chuỗi làm sạch (bỏ khoảng trắng, dấu gạch ngang)
-    const clean = q.replace(/[\s\-\.]/g, '');
-    let isPhone   = false;
-    let isCCCD    = false;
-    let isMemCode = false;
-    let isEmail   = false;
-
-    if (searchType === 'auto') {
-      isPhone   = /^(0|\+84)[0-9]{7,10}$/.test(clean);
-      isCCCD    = /^[0-9]{9}$/.test(clean) || /^[0-9]{12}$/.test(clean);
-      isMemCode = /^(Mem|mem|MEM)[0-9]/i.test(q);
-      isEmail   = q.includes('@');
-    } else {
-      isPhone   = searchType === 'phone';
-      isCCCD    = searchType === 'cccd';
-      isMemCode = searchType === 'member_code';
-      isEmail   = searchType === 'email';
-    }
-
     let data: Record<string, unknown>[] | null = null;
     let error = null;
 
-    if (isPhone) {
-      // Tìm chính xác theo SĐT
-      ({ data, error } = await supabase
+    if (isPublicSearch) {
+      // Tìm chính xác theo CCCD hoặc SĐT (Public)
+      let query = supabase
         .from('members')
-        .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes, contract_value')
-        .or(`phone.ilike.%${clean}%,phone.ilike.%${q}%`)
-        .eq('status', 'active')
-        .limit(limit));
-    } else if (isCCCD) {
-      // Tìm theo CCCD/CMND (cột id_number)
-      ({ data, error } = await supabase
-        .from('members')
-        .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes, contract_value')
-        .ilike('id_number', `%${clean}%`)
-        .limit(limit));
-    } else if (isMemCode) {
-      // Tìm theo mã hội viên
-      ({ data, error } = await supabase
-        .from('members')
-        .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes, contract_value')
-        .ilike('member_code', `%${clean}%`)
-        .limit(limit));
-    } else if (isEmail) {
-      // Tìm theo email
-      ({ data, error } = await supabase
-        .from('members')
-        .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes, contract_value')
-        .ilike('email', `%${q}%`)
-        .limit(limit));
-    } else {
-      // ── Full-text search trên tất cả các trường quan trọng ──
-      // Tìm theo: tên, mã HV, SĐT, CCCD, email, địa chỉ, NV tư vấn
-      ({ data, error } = await supabase
-        .from('members')
-        .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes, contract_value')
-        .or([
-          `full_name.ilike.%${q}%`,
-          `member_code.ilike.%${q}%`,
-          `phone.ilike.%${q}%`,
-          `id_number.ilike.%${q}%`,
-          `email.ilike.%${q}%`,
-          `address.ilike.%${q}%`,
-          `consultant_name.ilike.%${q}%`,
-        ].join(','))
+        .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes, contract_value');
+        
+      if (cccd) {
+        query = query.eq('id_number', cccd);
+      } else if (phone) {
+        query = query.eq('phone', phone);
+      }
+
+      ({ data, error } = await query
         .order('registered_date', { ascending: false })
-        .limit(limit));
+        .limit(1));
+    } else {
+      // Admin backoffice search
+      const searchType = req.nextUrl.searchParams.get('type') || 'auto';
+      const clean = q.replace(/[\s\-\.]/g, '');
+      let isPhone   = false;
+      let isCCCD    = false;
+      let isMemCode = false;
+      let isEmail   = false;
+
+      if (searchType === 'auto') {
+        isPhone   = /^(0|\+84)[0-9]{7,10}$/.test(clean);
+        isCCCD    = /^[0-9]{9}$/.test(clean) || /^[0-9]{12}$/.test(clean);
+        isMemCode = /^(Mem|mem|MEM)[0-9]/i.test(q);
+        isEmail   = q.includes('@');
+      } else {
+        isPhone   = searchType === 'phone';
+        isCCCD    = searchType === 'cccd';
+        isMemCode = searchType === 'member_code';
+        isEmail   = searchType === 'email';
+      }
+
+      if (isPhone) {
+        ({ data, error } = await supabase
+          .from('members')
+          .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes, contract_value')
+          .or(`phone.ilike.%${clean}%,phone.ilike.%${q}%`)
+          .eq('status', 'active')
+          .limit(limit));
+      } else if (isCCCD) {
+        ({ data, error } = await supabase
+          .from('members')
+          .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes, contract_value')
+          .ilike('id_number', `%${clean}%`)
+          .limit(limit));
+      } else if (isMemCode) {
+        ({ data, error } = await supabase
+          .from('members')
+          .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes, contract_value')
+          .ilike('member_code', `%${clean}%`)
+          .limit(limit));
+      } else if (isEmail) {
+        ({ data, error } = await supabase
+          .from('members')
+          .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes, contract_value')
+          .ilike('email', `%${q}%`)
+          .limit(limit));
+      } else {
+        ({ data, error } = await supabase
+          .from('members')
+          .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes, contract_value')
+          .or([
+            `full_name.ilike.%${q}%`,
+            `member_code.ilike.%${q}%`,
+            `phone.ilike.%${q}%`,
+            `id_number.ilike.%${q}%`,
+            `email.ilike.%${q}%`,
+            `address.ilike.%${q}%`,
+            `consultant_name.ilike.%${q}%`,
+          ].join(','))
+          .order('registered_date', { ascending: false })
+          .limit(limit));
+      }
     }
 
     if (error) {
@@ -160,9 +180,12 @@ export async function GET(req: NextRequest) {
 
     // Detect matched field để UI highlight
     function detectMatchedField(m: Record<string, unknown>): string {
-      const lq = q.toLowerCase();
-      if (String(m.phone || '').toLowerCase().includes(clean))       return 'phone';
-      if (String(m.id_number || '').toLowerCase().includes(clean))   return 'id_number';
+      if (isPublicSearch) return 'phone_and_cccd';
+      
+      const cleanQ = q ? q.replace(/[\s\-\.]/g, '') : '';
+      const lq = q ? q.toLowerCase() : '';
+      if (String(m.phone || '').toLowerCase().includes(cleanQ))       return 'phone';
+      if (String(m.id_number || '').toLowerCase().includes(cleanQ))   return 'id_number';
       if (String(m.member_code || '').toLowerCase().includes(lq))    return 'member_code';
       if (String(m.full_name || '').toLowerCase().includes(lq))      return 'full_name';
       if (String(m.email || '').toLowerCase().includes(lq))          return 'email';
@@ -206,8 +229,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       found: true,
       total: results.length,
-      query: q,
-      search_type: searchType,
+      query: isPublicSearch ? (cccd ? cccd : phone) : q,
+      search_type: isPublicSearch ? (cccd ? 'exact_cccd' : 'exact_phone') : (req.nextUrl.searchParams.get('type') || 'auto'),
       results,
     }, { status: 200, headers: corsHeaders });
   } catch (err) {

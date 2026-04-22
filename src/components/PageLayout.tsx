@@ -68,56 +68,16 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   const vipAdmin        = isVIPAdmin(userEmail);
 
   const allMenuItems: MenuItem[] = [
-    /* ── Admin Dashboard (chỉ hiện với admin) ── */
-    ...(userRole === 'admin' ? [{
+    /* ── Dashboards Hub (Tất cả dashboards gom vào 1 trang) ── */
+    {
       icon: <BarChart3 size={18} />,
-      label: 'Admin Dashboard',
-      desc: 'Tổng quan toàn hệ thống',
-      href: '/admin',
-      color: 'text-red-400',
-      iconBg: 'bg-red-500/15',
+      label: 'Dashboards Quản Trị',
+      desc: 'Hệ thống báo cáo tổng hợp',
+      href: '/dashboards',
+      color: 'text-rose-400',
+      iconBg: 'bg-rose-500/15',
       section: 'Quản trị',
-    } as MenuItem] : []),
-    /* ── Procurement Dashboard (ận hành) ── */
-    ...(procurementRole ? [{
-      icon: <BarChart3 size={18} />,
-      label: 'Dashboard Thu mua',
-      desc: 'Tổng quan bộ phận',
-      href: '/procurement',
-      color: 'text-violet-400',
-      iconBg: 'bg-violet-500/15',
-      section: 'Quản trị',
-    } as MenuItem] : []),
-    /* ── Operations Dashboard (chỉ hiện với operations) ── */
-    ...(operationsRole ? [{
-      icon: <BarChart3 size={18} />,
-      label: 'Dashboard Vận hành',
-      desc: 'Tổng quan bộ phận vận hành',
-      href: '/operations',
-      color: 'text-orange-400',
-      iconBg: 'bg-orange-500/15',
-      section: 'Quản trị',
-    } as MenuItem] : []),
-    /* ── Warehouse Dashboard ── */
-    ...(warehouseRole || userRole === 'admin' ? [{
-      icon: <BarChart3 size={18} />,
-      label: 'Dashboard Kho',
-      desc: 'Tổng quan nghiệp vụ kho',
-      href: '/warehouse',
-      color: 'text-emerald-400',
-      iconBg: 'bg-emerald-500/15',
-      section: 'Quản trị',
-    } as MenuItem] : []),
-    /* ── Sales Dashboard ── */
-    ...(userRole === 'sales' || userRole === 'admin' ? [{
-      icon: <BarChart3 size={18} />,
-      label: 'Dashboard Bán hàng',
-      desc: 'Tổng quan bộ phận bán hàng',
-      href: '/sales',
-      color: 'text-blue-400',
-      iconBg: 'bg-blue-500/15',
-      section: 'Quản trị',
-    } as MenuItem] : []),
+    },
     ...(userRole === 'sales' || userRole === 'admin' ? [{
       icon: <ShoppingCart size={18} />,
       label: 'Tạo đơn hàng mới',

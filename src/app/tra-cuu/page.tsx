@@ -93,8 +93,8 @@ function MembershipCard({ member }: { member: MemberResult }) {
 
 /* ─────────────────── Main Page ─────────────────── */
 export default function PublicLookupPage() {
-  const [searchType, setSearchType] = useState('auto');
-  const [query, setQuery] = useState('');
+  const [searchBy, setSearchBy] = useState<'cccd' | 'phone'>('cccd');
+  const [searchValue, setSearchValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<MemberResult[] | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -105,9 +105,10 @@ export default function PublicLookupPage() {
 
   async function handleSearch(e?: React.FormEvent) {
     e?.preventDefault();
-    const q = query.trim();
-    if (!q || q.length < 3) {
-      setError('Vui lòng nhập ít nhất 3 ký tự');
+    const val = searchValue.trim();
+    
+    if (!val) {
+      setError(searchBy === 'cccd' ? 'Vui lòng nhập mã CCCD' : 'Vui lòng nhập Số điện thoại');
       return;
     }
 
@@ -117,7 +118,8 @@ export default function PublicLookupPage() {
     setNotFound(false);
 
     try {
-      const res = await fetch(`/api/membership/lookup?q=${encodeURIComponent(q)}&type=${searchType}`);
+      const queryParam = searchBy === 'cccd' ? `cccd=${encodeURIComponent(val)}` : `phone=${encodeURIComponent(val)}`;
+      const res = await fetch(`/api/membership/lookup?${queryParam}`);
       const data = await res.json();
 
       if (!res.ok) {
@@ -134,7 +136,7 @@ export default function PublicLookupPage() {
   }
 
   function handleClear() {
-    setQuery('');
+    setSearchValue('');
     setResults(null);
     setNotFound(false);
     setError('');
@@ -167,73 +169,76 @@ export default function PublicLookupPage() {
             Tra Cứu Hội Viên Trăm Tuổi – <span className="text-[#d4af37]">Blackstones Lifecare</span>
           </h1>
           <p className="text-gray-500 text-sm sm:text-base font-medium">
-            (Theo mã, tên, số điện thoại, CCCD, email.....)
+            (Vui lòng cung cấp CCCD hoặc Số điện thoại để tra cứu)
           </p>
         </div>
 
         {/* Search Box */}
         <div className="max-w-3xl mx-auto">
-          {/* Search Conditions */}
-          <div className="flex flex-wrap justify-center gap-3 sm:gap-6 mb-5">
-            {[
-              { id: 'auto', label: 'Tự động nhận diện' },
-              { id: 'member_code', label: 'Mã hội viên' },
-              { id: 'phone', label: 'Số điện thoại' },
-              { id: 'cccd', label: 'CCCD' },
-              { id: 'email', label: 'Email' }
-            ].map(type => (
-              <label key={type.id} className="flex items-center gap-1.5 cursor-pointer group select-none">
-                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${searchType === type.id ? 'border-[#d4af37]' : 'border-gray-400 group-hover:border-[#1a2a50]'}`}>
-                  {searchType === type.id && <div className="w-2 h-2 bg-[#d4af37] rounded-full" />}
-                </div>
-                <span className={`text-sm ${searchType === type.id ? 'text-[#1a2a50] font-bold' : 'text-gray-500 font-medium group-hover:text-gray-700'}`}>
-                  {type.label}
-                </span>
-                <input
-                  type="radio"
-                  name="searchType"
-                  value={type.id}
-                  checked={searchType === type.id}
-                  onChange={() => setSearchType(type.id)}
-                  className="hidden"
+          <form onSubmit={handleSearch} className="flex flex-col gap-4 justify-center">
+            
+            {/* Search Type Selector */}
+            <div className="flex justify-center items-center gap-6 mb-2">
+              <label className="flex items-center gap-2 cursor-pointer text-[#1a2a50] font-medium transition-colors hover:text-[#d4af37]">
+                <input 
+                  type="radio" 
+                  name="searchBy" 
+                  checked={searchBy === 'cccd'} 
+                  onChange={() => { setSearchBy('cccd'); setSearchValue(''); setError(''); inputRef.current?.focus(); }}
+                  className="w-5 h-5 accent-[#d4af37] focus:ring-[#d4af37]"
                 />
+                Tra cứu bằng CCCD
               </label>
-            ))}
-          </div>
+              <label className="flex items-center gap-2 cursor-pointer text-[#1a2a50] font-medium transition-colors hover:text-[#d4af37]">
+                <input 
+                  type="radio" 
+                  name="searchBy" 
+                  checked={searchBy === 'phone'} 
+                  onChange={() => { setSearchBy('phone'); setSearchValue(''); setError(''); inputRef.current?.focus(); }}
+                  className="w-5 h-5 accent-[#d4af37] focus:ring-[#d4af37]"
+                />
+                Tra cứu bằng Số điện thoại
+              </label>
+            </div>
 
-          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center gap-4 justify-center">
-            <div className="relative w-full sm:w-[500px] shadow-sm">
-              <input
-                ref={inputRef}
-                type="text"
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                placeholder="Vui lòng nhập nội dung tìm kiếm"
-                className="w-full px-6 py-4 border-[2px] border-gray-200 rounded-xl text-lg text-[#1a2a50] font-medium placeholder-gray-400 focus:outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/10 transition-all bg-white"
-                autoComplete="off"
-              />
-              {query && (
+            <div className="flex flex-col sm:flex-row gap-4 w-full">
+              <div className="relative w-full shadow-sm">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={searchValue}
+                  onChange={e => setSearchValue(e.target.value)}
+                  placeholder={searchBy === 'cccd' ? "Nhập mã CCCD..." : "Nhập số điện thoại..."}
+                  className="w-full px-6 py-4 border-[2px] border-gray-200 rounded-xl text-lg text-[#1a2a50] font-medium placeholder-gray-400 focus:outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/10 transition-all bg-white"
+                  autoComplete="off"
+                />
+              </div>
+            </div>
+            
+            <div className="flex justify-center mt-2">
+              <button
+                type="submit"
+                disabled={loading || !searchValue.trim()}
+                className="w-full sm:w-auto px-12 py-4 bg-gradient-to-r from-[#1a2a50] to-[#25396b] hover:from-[#0d162a] hover:to-[#1a2a50] text-[#d4af37] border border-[#1a2a50] rounded-xl text-lg font-bold transition-all shadow-[0_4px_14px_0_rgba(26,42,80,0.39)] disabled:opacity-60 disabled:shadow-none flex items-center justify-center gap-2 uppercase tracking-wide"
+              >
+                {loading ? (
+                  <><RefreshCw size={22} className="animate-spin" /> Đang tìm...</>
+                ) : (
+                  <>Tìm kiếm</>
+                )}
+              </button>
+              
+              {searchValue && (
                 <button
                   type="button"
                   onClick={handleClear}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 bg-gray-50 rounded-full"
+                  className="ml-4 px-6 py-4 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-lg font-bold transition-all shadow-sm flex items-center justify-center"
+                  title="Xoá nội dung"
                 >
-                  <AlertCircle size={20} />
+                  Làm mới
                 </button>
               )}
             </div>
-            
-            <button
-              type="submit"
-              disabled={loading || query.trim().length < 3}
-              className="w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-[#1a2a50] to-[#25396b] hover:from-[#0d162a] hover:to-[#1a2a50] text-[#d4af37] border border-[#1a2a50] rounded-xl text-lg font-bold transition-all shadow-[0_4px_14px_0_rgba(26,42,80,0.39)] disabled:opacity-60 disabled:shadow-none flex items-center justify-center gap-2 uppercase tracking-wide"
-            >
-              {loading ? (
-                <><RefreshCw size={22} className="animate-spin" /> Đang tìm...</>
-              ) : (
-                <>Tìm kiếm</>
-              )}
-            </button>
           </form>
 
           {/* Validation Error Message */}
@@ -276,7 +281,7 @@ export default function PublicLookupPage() {
             </div>
             <h3 className="text-xl font-bold text-[#1a2a50] mb-2">Không tìm thấy dữ liệu</h3>
             <p className="text-gray-500 max-w-md mx-auto text-base">
-              Hệ thống không tìm thấy hội viên nào khớp với &quot;<span className="font-bold text-gray-800">{query}</span>&quot;.<br /> Vui lòng kiểm tra lại thông tin và thử lại.
+              Hệ thống không tìm thấy hội viên nào khớp với thông tin cung cấp.<br /> Vui lòng kiểm tra lại sự chính xác của CCCD và Số điện thoại.
             </p>
             <button
                onClick={handleClear}

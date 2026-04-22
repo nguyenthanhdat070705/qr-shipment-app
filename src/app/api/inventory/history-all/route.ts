@@ -50,7 +50,7 @@ export async function GET(request: Request) {
         so_luong:so_luong_thuc_nhan,
         ghi_chu,
         created_at,
-        fact_nhap_hang!inner(ma_phieu_nhap, kho_id)
+        fact_nhap_hang!inner(ma_phieu_nhap, kho_id, dim_kho (ten_kho))
       `)
       .order('created_at', { ascending: false })
       .limit(limit);
@@ -68,7 +68,7 @@ export async function GET(request: Request) {
         so_luong,
         ghi_chu,
         created_at,
-        fact_xuat_hang!inner(ma_phieu_xuat, kho_id, ghi_chu, ten_khach)
+        fact_xuat_hang!inner(ma_phieu_xuat, kho_id, ghi_chu, ten_khach, dim_kho (ten_kho))
       `)
       .order('created_at', { ascending: false })
       .limit(limit);
@@ -111,7 +111,8 @@ export async function GET(request: Request) {
           ten_sp: item.ten_hom,
           so_luong: item.so_luong || 0,
           ma_dam: '', // Nhập không có mã đám
-          ghi_chu: item.ghi_chu || ''
+          ghi_chu: item.ghi_chu || '',
+          kho_name: item.fact_nhap_hang?.dim_kho?.ten_kho || ''
         });
       });
     }
@@ -129,6 +130,7 @@ export async function GET(request: Request) {
         }
         
         let ma_dam = '';
+        let extractedKho = '';
         const combinedNote = (item.ghi_chu || '') + ' ' + (item.fact_xuat_hang?.ghi_chu || '');
         if (combinedNote) {
           const m1 = combinedNote.match(/Mã Đám:\s*(\w+)/i);
@@ -137,6 +139,9 @@ export async function GET(request: Request) {
             const m2 = combinedNote.match(/đám\s+(\d+)/i);
             if (m2 && m2[1]) ma_dam = m2[1];
           }
+          
+          const kMatch = combinedNote.match(/Kho:\s*([^—]+)/i);
+          if (kMatch && kMatch[1]) extractedKho = kMatch[1].trim();
         }
 
         allItems.push({
@@ -150,6 +155,7 @@ export async function GET(request: Request) {
           ma_dam: ma_dam,
           ghi_chu: item.ghi_chu || '',
           ten_khach: item.fact_xuat_hang?.ten_khach || '',
+          kho_name: item.fact_xuat_hang?.dim_kho?.ten_kho || extractedKho || '',
         });
       });
     }
@@ -168,6 +174,7 @@ export async function GET(request: Request) {
         if (items.length > 0) {
           items.forEach((item: any) => {
             let ma_dam = '';
+            let extractedKho = '';
             if (header.ghi_chu) {
               const m1 = header.ghi_chu.match(/Mã Đám:\s*(\w+)/i);
               if (m1 && m1[1]) ma_dam = m1[1];
@@ -175,6 +182,9 @@ export async function GET(request: Request) {
                 const m2 = header.ghi_chu.match(/đám\s+(\d+)/i);
                 if (m2 && m2[1]) ma_dam = m2[1];
               }
+
+              const kMatch = header.ghi_chu.match(/Kho:\s*([^—]+)/i);
+              if (kMatch && kMatch[1]) extractedKho = kMatch[1].trim();
             }
 
             allItems.push({
@@ -188,12 +198,13 @@ export async function GET(request: Request) {
               ma_dam,
               ghi_chu: header.ghi_chu || '',
               ten_khach: header.ten_khach || '',
-              kho_name: header.dim_kho?.ten_kho || '',
+              kho_name: header.dim_kho?.ten_kho || extractedKho || '',
             });
           });
         } else {
           // No items at all — still show the export header as a record
           let ma_dam = '';
+          let extractedKho = '';
           if (header.ghi_chu) {
             const m1 = header.ghi_chu.match(/Mã Đám:\s*(\w+)/i);
             if (m1 && m1[1]) ma_dam = m1[1];
@@ -201,6 +212,9 @@ export async function GET(request: Request) {
               const m2 = header.ghi_chu.match(/đám\s+(\d+)/i);
               if (m2 && m2[1]) ma_dam = m2[1];
             }
+
+            const kMatch = header.ghi_chu.match(/Kho:\s*([^—]+)/i);
+            if (kMatch && kMatch[1]) extractedKho = kMatch[1].trim();
           }
 
           allItems.push({
@@ -214,7 +228,7 @@ export async function GET(request: Request) {
             ma_dam,
             ghi_chu: header.ghi_chu || '',
             ten_khach: header.ten_khach || '',
-            kho_name: header.dim_kho?.ten_kho || '',
+            kho_name: header.dim_kho?.ten_kho || extractedKho || '',
             trang_thai: header.trang_thai,
           });
         }

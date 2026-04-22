@@ -405,6 +405,7 @@ export default function LegalDocumentsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newCatTitle, setNewCatTitle] = useState('');
   const [newCatDesc, setNewCatDesc] = useState('');
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
 
   const activeCategoryData = dynamicCategories.find(c => c.id === activeCategory);
 
@@ -829,7 +830,7 @@ export default function LegalDocumentsPage() {
       {/* ── Modal Thêm Danh Mục Mới ── */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={() => setIsAddModalOpen(false)} />
+          <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={() => !isCreatingCategory && setIsAddModalOpen(false)} />
           <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden animate-in zoom-in-95 duration-200">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-50 bg-gray-50/50">
@@ -839,7 +840,7 @@ export default function LegalDocumentsPage() {
                 </div>
                 <h3 className="text-lg font-black text-gray-900">Thêm Danh Mục Mới</h3>
               </div>
-              <button onClick={() => setIsAddModalOpen(false)} className="p-2 rounded-full hover:bg-gray-200/50 text-gray-400 hover:text-gray-600 transition-colors">
+              <button disabled={isCreatingCategory} onClick={() => setIsAddModalOpen(false)} className="p-2 rounded-full hover:bg-gray-200/50 text-gray-400 hover:text-gray-600 transition-colors">
                 <X size={18} />
               </button>
             </div>
@@ -853,6 +854,7 @@ export default function LegalDocumentsPage() {
                   value={newCatTitle}
                   onChange={e => setNewCatTitle(e.target.value)}
                   placeholder="VD: Văn bản về hợp đồng..."
+                  disabled={isCreatingCategory}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
                   autoFocus
                 />
@@ -864,6 +866,7 @@ export default function LegalDocumentsPage() {
                   onChange={e => setNewCatDesc(e.target.value)}
                   placeholder="Nhập ghi chú hoặc mô tả cho danh mục này..."
                   rows={3}
+                  disabled={isCreatingCategory}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none resize-none"
                 />
               </div>
@@ -873,31 +876,54 @@ export default function LegalDocumentsPage() {
             <div className="p-6 border-t border-gray-50 flex items-center justify-end gap-3 bg-gray-50/30">
               <button 
                 onClick={() => setIsAddModalOpen(false)}
+                disabled={isCreatingCategory}
                 className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100 transition-colors"
               >
                 Hủy bỏ
               </button>
               <button 
-                onClick={() => {
-                  if (!newCatTitle.trim()) return;
-                  const newCat = {
-                    id: 'cat_' + Date.now(),
-                    title: newCatTitle,
-                    desc: newCatDesc.trim() || 'Chưa cập nhật mô tả...',
-                    icon: <FileText size={24} />,
-                    color: 'from-gray-500 to-slate-600',
-                    shadow: 'shadow-gray-500/20',
-                    count: 0
-                  };
-                  setDynamicCategories([...dynamicCategories, newCat]);
-                  setIsAddModalOpen(false);
-                  setNewCatTitle('');
-                  setNewCatDesc('');
+                onClick={async () => {
+                  if (!newCatTitle.trim() || isCreatingCategory) return;
+                  
+                  try {
+                    setIsCreatingCategory(true);
+                    // Call API to create folder in Google Drive
+                    const res = await fetch('/api/drive/create-folder', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ folderName: newCatTitle.trim() })
+                    });
+                    const data = await res.json();
+                    
+                    if (!data.success) {
+                      alert('Lỗi khi tạo thư mục trên Drive: ' + data.error);
+                      return;
+                    }
+
+                    const newCat = {
+                      id: 'cat_' + Date.now(),
+                      title: newCatTitle,
+                      desc: newCatDesc.trim() || 'Chưa cập nhật mô tả...',
+                      icon: <FileText size={24} />,
+                      color: 'from-gray-500 to-slate-600',
+                      shadow: 'shadow-gray-500/20',
+                      count: 0
+                    };
+                    setDynamicCategories([...dynamicCategories, newCat]);
+                    setIsAddModalOpen(false);
+                    setNewCatTitle('');
+                    setNewCatDesc('');
+                    alert(`Đã tạo thành công thư mục "${newCatTitle}" trên hệ thống & Google Drive!`);
+                  } catch (err) {
+                    alert('Lỗi kết nối. Vui lòng thử lại.');
+                  } finally {
+                    setIsCreatingCategory(false);
+                  }
                 }}
-                disabled={!newCatTitle.trim()}
-                className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!newCatTitle.trim() || isCreatingCategory}
+                className={`px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold shadow-md hover:shadow-lg transition-all ${(!newCatTitle.trim() || isCreatingCategory) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
               >
-                Lưu danh mục
+                {isCreatingCategory ? 'Đang tạo...' : 'Lưu danh mục'}
               </button>
             </div>
           </div>

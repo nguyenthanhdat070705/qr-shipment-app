@@ -661,6 +661,7 @@ export default function WarehouseDashboard() {
                       <th className="p-3 text-center">ĐVT</th>
                       <th className="p-3 text-right">Số lượng</th>
                       <th className="p-3">Mã đám</th>
+                      <th className="p-3">Kho</th>
                       <th className="p-3 text-right">Đơn giá</th>
                       <th className="p-3">Ghi chú</th>
                     </tr>
@@ -712,6 +713,11 @@ export default function WarehouseDashboard() {
                           <td className="p-3">
                             <span className="text-xs font-semibold text-gray-600">
                               {item.ma_dam || '-'}
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            <span className="text-[11px] font-bold text-sky-600 bg-sky-50 px-2 py-1 rounded-md">
+                              {item.kho_name || 'Khác'}
                             </span>
                           </td>
                           <td className="p-3 text-right text-xs text-gray-400 italic">

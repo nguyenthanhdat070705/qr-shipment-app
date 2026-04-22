@@ -53,6 +53,11 @@ export default function CreatePurchaseOrderPage() {
   ]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  
+  // Custom dropdown cho Nhà cung cấp
+  const [nccSearch, setNccSearch] = useState('');
+  const [isNccDropdownOpen, setIsNccDropdownOpen] = useState(false);
+
   // Search state per item — để filter dropdown sản phẩm
   const [itemSearches, setItemSearches] = useState<string[]>(['']);
   const [openDropdowns, setOpenDropdowns] = useState<boolean[]>([false]);
@@ -152,6 +157,18 @@ export default function CreatePurchaseOrderPage() {
     e.preventDefault();
     setSubmitting(true);
     setError('');
+
+    if (!supplierId) {
+      setError('Vui lòng chọn nhà cung cấp.');
+      setSubmitting(false);
+      return;
+    }
+
+    if (!warehouseId) {
+      setError('Vui lòng chọn kho nhận hàng.');
+      setSubmitting(false);
+      return;
+    }
 
     let createdBy = 'unknown';
     try {
@@ -346,21 +363,89 @@ export default function CreatePurchaseOrderPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* NCC Dropdown */}
-              <div>
+              <div className="relative">
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Nhà cung cấp *</label>
-                <select
-                  value={supplierId}
-                  onChange={(e) => setSupplierId(e.target.value)}
-                  required
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400 transition-all"
+                <div
+                  className={`flex items-center w-full px-3 py-2 rounded-xl border bg-white text-sm gap-2 cursor-text transition-all ${
+                    isNccDropdownOpen ? 'border-purple-400 ring-2 ring-purple-100 shadow-sm' : 'border-gray-200 hover:border-purple-300'
+                  }`}
+                  onClick={() => setIsNccDropdownOpen(true)}
                 >
-                  <option value="">— Chọn nhà cung cấp —</option>
-                  {nccList.map((n) => (
-                    <option key={n.id} value={n.id}>
-                      {n.ten_ncc} ({n.ma_ncc})
-                    </option>
-                  ))}
-                </select>
+                  <Search size={14} className="text-gray-400 flex-shrink-0" />
+                  <input
+                    type="text"
+                    value={isNccDropdownOpen ? nccSearch : (selectedNcc ? `${selectedNcc.ten_ncc} (${selectedNcc.ma_ncc})` : '')}
+                    onChange={(e) => {
+                      setNccSearch(e.target.value);
+                      setIsNccDropdownOpen(true);
+                      if (supplierId && !isNccDropdownOpen) {
+                        setSupplierId('');
+                      }
+                    }}
+                    onFocus={() => {
+                      setIsNccDropdownOpen(true);
+                      setNccSearch('');
+                    }}
+                    placeholder="— Gõ tên hoặc mã để tìm —"
+                    className="flex-1 bg-transparent outline-none text-sm placeholder:text-gray-500 min-w-0 py-0.5"
+                  />
+                  {supplierId && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setSupplierId(''); setNccSearch(''); setIsNccDropdownOpen(true); }}
+                      className="flex-shrink-0 p-1 text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-50"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+
+                {isNccDropdownOpen && (
+                  <>
+                    <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden">
+                      <div className="max-h-60 overflow-y-auto">
+                        {(() => {
+                           const q = nccSearch.toLowerCase().trim();
+                           const filteredNcc = nccList.filter(n =>
+                             !q ||
+                             n.ten_ncc.toLowerCase().includes(q) ||
+                             n.ma_ncc.toLowerCase().includes(q)
+                           );
+
+                           if (filteredNcc.length === 0) {
+                             return <div className="px-3 py-4 text-sm text-gray-400 text-center">Không tìm thấy nhà cung cấp</div>;
+                           }
+
+                           return filteredNcc.map(n => (
+                             <button
+                               key={n.id}
+                               type="button"
+                               onMouseDown={(e) => {
+                                 e.preventDefault();
+                                 setSupplierId(n.id);
+                                 setNccSearch('');
+                                 setIsNccDropdownOpen(false);
+                               }}
+                               className={`w-full text-left px-3 py-2.5 text-sm hover:bg-purple-50 transition-colors flex items-center gap-2 border-b border-gray-50 last:border-0 ${
+                                 supplierId === n.id ? 'bg-purple-50 text-purple-700' : 'text-gray-700'
+                               }`}
+                             >
+                                <span className="font-mono text-xs font-bold text-purple-500 bg-purple-50 px-1.5 py-0.5 rounded flex-shrink-0">{n.ma_ncc}</span>
+                                <span className="flex-1 truncate">{n.ten_ncc}</span>
+                             </button>
+                           ));
+                        })()}
+                      </div>
+                      <div className="border-t border-gray-100 px-3 py-1.5 flex justify-end">
+                        <button type="button" onMouseDown={(e) => { e.preventDefault(); setIsNccDropdownOpen(false); }} className="text-xs text-gray-400 hover:text-gray-600 font-medium px-2 py-1">Đóng</button>
+                      </div>
+                    </div>
+                  </>
+                )}
+                {isNccDropdownOpen && (
+                   <div className="fixed inset-0 z-40" onMouseDown={() => setIsNccDropdownOpen(false)} />
+                )}
+
                 {/* NCC detail card */}
                 {selectedNcc && (
                   <div className="mt-2 p-3 rounded-xl bg-purple-50 border border-purple-100 text-xs space-y-1">

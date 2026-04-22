@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { uploadDocumentToDrive, getOrCreateFolder } from '@/lib/googleDrive';
 
 // Lưu trữ vào thư mục cấu hình sẵn
-const PARENT_FOLDER_ID = '1vtWLJ0k_y-wk1oXLJDrzKRz0WJnCEbAF';
+const PARENT_FOLDER_ID = '10549CY-fI5L-f4eBtpl7nIo9mgUpqPqG';
 
 const CATEGORY_NAMES: Record<string, string> = {
   finance: 'Văn bản về tài chính',
@@ -31,7 +31,9 @@ export async function POST(req: NextRequest) {
     const targetFolderId = await getOrCreateFolder(folderName, PARENT_FOLDER_ID);
     
     if (!targetFolderId) {
-      return NextResponse.json({ error: 'Lỗi khi khởi tạo/tìm kiếm thư mục trên Google Drive' }, { status: 500 });
+      return NextResponse.json({ 
+        error: 'Lỗi khởi tạo thư mục. Vui lòng kiểm tra lại Google Drive: Bạn CẦN share quyền Editor của Thư mục gốc (Văn bản pháp lý) cho tài khoản Email: blacstone-drive@blackstonemembership.iam.gserviceaccount.com' 
+      }, { status: 500 });
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
