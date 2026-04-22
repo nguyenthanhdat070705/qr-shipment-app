@@ -32,10 +32,10 @@ interface InventoryItem {
   isActive: boolean;
   lots?: string[];
   warehouseBreakdown?: WarehouseBreakdown[];
-  supplierName?: string;
   supplierContact?: string;
   supplierPhone?: string;
   supplierAddress?: string;
+  typeBreakdown?: Record<string, number>;
 }
 
 type FilterType = 'all' | 'available' | 'exported' | 'out_of_stock';
@@ -337,13 +337,14 @@ export default function InventorySearch({ items, showStats = false }: { items: I
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide w-[35%]">Sản phẩm</th>
+                  <th className="text-left py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Sản phẩm</th>
                   <th className="text-left py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Mã SP</th>
                   <th className="text-center py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Tổng SL</th>
                   <th className="text-center py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Kho</th>
                   <th className="text-center py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Loại hàng</th>
                   <th className="text-center py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Tình trạng</th>
-                  <th className="py-3 px-3"></th>
+                  <th className="text-center py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Hoạt động</th>
+                  <th className="py-3 px-3 w-[15%]"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -397,7 +398,21 @@ export default function InventorySearch({ items, showStats = false }: { items: I
                         )}
                       </td>
                       <td className="py-3 px-3 text-center">
-                        {item.status ? (
+                        {item.typeBreakdown && Object.keys(item.typeBreakdown).length > 0 ? (
+                          <div className="flex flex-col gap-1 items-center">
+                            {Object.entries(item.typeBreakdown).map(([type, qty]) => (
+                              <span key={type} className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap
+                                ${type === 'Ký gửi'
+                                  ? 'bg-amber-100 text-amber-700'
+                                  : 'bg-indigo-100 text-indigo-700'
+                                }`}
+                              >
+                                <span className={`w-1.5 h-1.5 rounded-full ${type === 'Ký gửi' ? 'bg-amber-500' : 'bg-indigo-500'}`} />
+                                {type}: {qty}
+                              </span>
+                            ))}
+                          </div>
+                        ) : item.status ? (
                           <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full
                             ${item.status === 'Ký gửi'
                               ? 'bg-amber-100 text-amber-700'
@@ -418,7 +433,7 @@ export default function InventorySearch({ items, showStats = false }: { items: I
                           const _ok  = _avail > 0;
                           const _exp = !_ok && _qty > 0;
                           return (
-                            <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full
+                            <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap
                               ${_ok  ? 'bg-emerald-100 text-emerald-700'
                               : _exp ? 'bg-orange-100 text-orange-700'
                               :        'bg-red-100 text-red-700'}`}
@@ -428,6 +443,14 @@ export default function InventorySearch({ items, showStats = false }: { items: I
                             </span>
                           );
                         })()}
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap
+                          ${item.isActive ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${item.isActive ? 'bg-blue-500' : 'bg-gray-400'}`} />
+                          {item.isActive ? 'Đang bán' : 'Ngừng bán'}
+                        </span>
                       </td>
                       <td className="py-3 px-3">
                         <Link
@@ -480,6 +503,9 @@ export default function InventorySearch({ items, showStats = false }: { items: I
                             </span>
                           );
                         })()}
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${item.isActive ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                          {item.isActive ? 'Đang bán' : 'Ngừng bán'}
+                        </span>
                       </div>
                     </div>
                   </Link>
