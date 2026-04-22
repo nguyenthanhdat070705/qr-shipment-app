@@ -89,31 +89,14 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
     },
     ...(userRole === 'sales' || userRole === 'admin' ? [{
       icon: <ShoppingCart size={18} />,
-      label: 'Tạo đơn hàng mới',
-      desc: 'Lên đơn bán vật tư lẻ',
-      href: '/sales/orders',
+      label: 'Trung tâm Bán Hàng',
+      desc: 'Kho quản lý đơn & gói sản phẩm',
+      href: '/sales-hub',
       color: 'text-amber-400',
       iconBg: 'bg-amber-500/15',
       section: 'Bán Hàng',
     } as MenuItem] : []),
-    ...(userRole === 'sales' || userRole === 'admin' ? [{
-      icon: <Receipt size={18} />,
-      label: 'Bán gói sản phẩm',
-      desc: 'Lên đơn & đăng ký thành viên',
-      href: '/sales/packages',
-      color: 'text-rose-400',
-      iconBg: 'bg-rose-500/15',
-      section: 'Bán Hàng',
-    } as MenuItem] : []),
-    ...(userRole === 'sales' || userRole === 'admin' ? [{
-      icon: <Scale size={18} />,
-      label: 'Văn bản pháp lý',
-      desc: 'Quy chế tài chính & nội bộ',
-      href: '/sales/legal-documents',
-      color: 'text-amber-400',
-      iconBg: 'bg-amber-500/15',
-      section: 'Bán Hàng',
-    } as MenuItem] : []),
+
 
     /* ── Membership & CSKH (chỉ sales + admin) ── */
     {

@@ -40,9 +40,8 @@ interface DimHom {
   ma_hom: string;
   ten_hom: string;
   gia_ban: number | null;
-  gia_von: number | null;
+  gia_ban_1: number | null;
   hinh_anh: string | null;
-  NCC: string | null;
 }
 
 interface DimKho {
@@ -66,7 +65,7 @@ export default async function InventoryPage() {
   // Fetch all 4 tables in parallel
   const [inventoryRes, homRes, khoRes, nccRes] = await Promise.all([
     supabase.from('fact_inventory').select('*'),
-    supabase.from('dim_hom').select('id, ma_hom, ten_hom, gia_ban, gia_von, hinh_anh, NCC'),
+    supabase.from('dim_hom').select('id, ma_hom, ten_hom, gia_ban, gia_ban_1, hinh_anh'),
     supabase.from('dim_kho').select('id, ma_kho, ten_kho'),
     supabase.from('dim_ncc').select('id, ma_ncc, ten_ncc, nguoi_lien_he, sdt, dia_chi'),
   ]);
@@ -148,7 +147,7 @@ export default async function InventoryPage() {
   // Transform grouped data to InventoryItem format expected by InventorySearch
   const items = Array.from(productGroupMap.values()).map((group) => {
     const hom = homMap.get(group.homId);
-    const ncc = hom?.NCC ? nccMap.get(hom.NCC) : null;
+    const ncc = null;
 
     const code = hom?.ma_hom || '—';
     const name = hom?.ten_hom || 'Chưa có tên';
@@ -172,7 +171,7 @@ export default async function InventoryPage() {
       code,
       name,
       price,
-      giaVon: Number(hom?.gia_von || 0),
+      giaVon: Number(hom?.gia_ban_1 || 0),
       status: loaiHang,
       tonKho: String(soLuong),
       khaDung: String(khaDung),
