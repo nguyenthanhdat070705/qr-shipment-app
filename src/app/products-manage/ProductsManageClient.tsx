@@ -822,7 +822,7 @@ export default function ProductsManagePage() {
                       )}
                     </td>
                     <td><span className="pm-code">{p.ma_hom}</span></td>
-                    <td className="pm-td-name">{p.ten_hom}</td>
+                    <td className="pm-td-name">{p.ten_hom_the_hien || p.ten_hom}</td>
                     <td>{p.kich_thuoc || '—'}</td>
                     <td className="pm-td-qty">
                       {isVIP ? (
