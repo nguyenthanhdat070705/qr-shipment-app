@@ -887,9 +887,9 @@ export default function ProductsManagePage() {
                         </span>
                       )}
                     </td>
-                    <td>{p.tinh_chat || '—'}</td>
+                    <td>{p.dac_diem || '—'}</td>
                     <td>{p.don_vi_tinh || 'Cái'}</td>
-                    <td>{p.NCC || '—'}</td>
+                    <td>{p.Nguon_goc || '—'}</td>
                     <td className="pm-td-price">{(p.gia_ban || 0).toLocaleString('vi-VN')}₫</td>
                     <td className="pm-td-actions">
                       <button className="pm-btn-icon" title="Chỉnh sửa" onClick={() => handleEdit(p)}>
@@ -911,11 +911,11 @@ export default function ProductsManagePage() {
                     <tr key={`${p.id}-detail`} className="pm-detail-row">
                       <td colSpan={10}>
                         <div className="pm-detail-grid">
-                          <div><strong>Độ dày thành:</strong> {p.do_day_thanh || '—'}</div>
+                          <div><strong>Độ dày thành:</strong> {p.Thanh || '—'}</div>
                           <div><strong>Loại hòm:</strong> {p.loai_hom || '—'}</div>
                           <div><strong>Giá vốn:</strong> {(p.gia_von || 0).toLocaleString('vi-VN')}₫</div>
                           <div><strong>Thông số khác:</strong> {p.thong_so_khac || '—'}</div>
-                          <div className="pm-detail-full"><strong>Mục đích sử dụng:</strong> {p.muc_dich_su_dung || '—'}</div>
+                          <div className="pm-detail-full"><strong>Mục đích sử dụng:</strong> {p.Muc_dich || '—'}</div>
                           <div className="pm-detail-full"><strong>Mô tả:</strong> {p.mo_ta || '—'}</div>
                         </div>
                       </td>
