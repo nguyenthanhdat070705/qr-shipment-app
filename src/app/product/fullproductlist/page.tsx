@@ -65,15 +65,25 @@ export default async function ProductListPage() {
 
   const inventory = (inventoryRes.data || []) as FactInventoryRow[];
 
-  // Build product list from inventory with warehouse info, avoiding duplicates
+  // Build product list from all known products in dim_hom to ensure complete QR coverage
   const productMap = new Map<string, any>();
 
+  for (const h of (homRes.data || []) as DimHom[]) {
+    productMap.set(h.ma_hom, {
+      productCode: h.ma_hom,
+      productName: h.ten_hom_the_hien || h.ten_hom || 'Chưa có tên',
+      warehouse: '—',
+      quantity: 0,
+      category: '—',
+    });
+  }
+
+  // Update product list with actual inventory quantities and locations
   for (const row of inventory) {
     const hom = homMap.get(row['Tên hàng hóa']);
     const kho = khoMap.get(row['Kho']);
 
     const productCode = hom?.ma_hom || row['Mã'] || '—';
-    const productName = hom?.ten_hom_the_hien || hom?.ten_hom || 'Chưa có tên';
     const warehouse = kho?.ten_kho || '—';
     const quantity = row['Số lượng'] || 0;
     const category = row['Loại hàng'] || '';
@@ -81,6 +91,11 @@ export default async function ProductListPage() {
     if (productMap.has(productCode)) {
       const existing = productMap.get(productCode);
       existing.quantity += quantity;
+      
+      if (existing.category === '—' && category) {
+        existing.category = category;
+      }
+
       // Gộp tên kho nếu chưa có
       if (warehouse !== '—' && !existing.warehouse.includes(warehouse)) {
         if (existing.warehouse === '—') {
@@ -90,9 +105,10 @@ export default async function ProductListPage() {
         }
       }
     } else {
+      // Fallback for items in inventory that are somehow entirely missing from dim_hom
       productMap.set(productCode, {
         productCode,
-        productName,
+        productName: hom?.ten_hom_the_hien || hom?.ten_hom || 'Chưa có tên',
         warehouse,
         quantity,
         category,
