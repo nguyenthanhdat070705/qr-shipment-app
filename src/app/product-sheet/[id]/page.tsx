@@ -208,8 +208,8 @@ export default async function ProductSheetPage({
         <div className="flex-1 p-[8mm] border-[6px] border-gray-100/50 print:border-6 print:border-gray-50 flex flex-col">
           
           {/* Header row: logo left, title center */}
-          <div className="flex items-center gap-6 mb-4">
-            <div className="w-44 relative h-9 shrink-0">
+          <div className="flex items-center gap-10 mb-10 mt-4">
+            <div className="w-56 relative h-12 shrink-0">
               <Image 
                 src="/blackstones-logo.webp"
                 alt="Blackstones"
@@ -218,58 +218,61 @@ export default async function ProductSheetPage({
                 style={{ filter: 'invert(1) brightness(0.1)' }}
               />
             </div>
-            <h1 className="flex-1 text-center font-extrabold text-[#111] text-xl tracking-wide">
+            <h1 className="flex-1 text-center font-extrabold text-[#111] text-3xl tracking-wide">
               PHIẾU THÔNG TIN SẢN PHẨM
             </h1>
           </div>
 
           {/* ── Single-column body with absolute QR ────── */}
-          <div className="flex flex-col gap-3 relative">
+          <div className="flex-1 flex flex-col gap-10 relative">
 
             {/* QR Code — absolute top-right */}
-            <div className="absolute right-0 top-[55px] bg-white p-1 z-20">
+            <div className="absolute right-0 top-0 bg-white p-2 z-20">
               <div className="flex flex-col items-center">
-                <p className="text-[10px] text-gray-600 italic mb-1.5">Quét QR code xuất hàng</p>
-                <QRCodeDisplay code={hom.ma_hom} size={120} />
+                <p className="text-sm text-gray-600 italic mb-2">Quét QR code xuất hàng</p>
+                <QRCodeDisplay code={hom.ma_hom} size={200} />
               </div>
             </div>
 
             {/* Product identity */}
-            <div className="grid grid-cols-[140px_1fr] gap-y-2 gap-x-4 text-[14px] font-medium leading-[1.15] pr-[150px]">
-              <div className="font-bold text-gray-900 uppercase tracking-widest text-[13px]">Phân loại:</div>
-              <div className="text-gray-900 font-bold uppercase text-[15px] leading-[1.15]">{hom.nhom_san_pham || 'AN TÁNG'}</div>
+            <div className="grid grid-cols-[200px_1fr] gap-y-6 gap-x-6 text-xl font-medium leading-relaxed pr-[230px]">
+              <div className="font-bold text-gray-900 uppercase tracking-widest text-lg pt-1">Phân loại:</div>
+              <div className="text-gray-900 font-bold uppercase text-2xl leading-snug">{hom.nhom_san_pham || 'AN TÁNG'}</div>
 
-              <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px] self-start">Mã sản phẩm:</div>
-              <div className="text-gray-900 font-black uppercase text-[22px] leading-[1.15] font-times">{hom.ma_hom}</div>
+              <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-2">Mã sản phẩm:</div>
+              <div className="text-gray-900 font-black uppercase text-4xl leading-tight font-times">{hom.ma_hom}</div>
 
-              <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px] self-start">Tên sản phẩm:</div>
-              <div className="text-gray-900 font-black uppercase text-[20px] leading-[1.15] font-times">{hom.ten_hom?.split('-')[0]?.trim() || hom.ten_hom}</div>
+              <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-2">Tên sản phẩm:</div>
+              <div className="text-gray-900 font-black uppercase text-3xl leading-tight font-times">{hom.ten_hom?.split('-')[0]?.trim() || hom.ten_hom}</div>
 
-              <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px] self-start">Tên kỹ thuật:</div>
-              <div className="text-gray-900 font-black uppercase text-[16px] leading-[1.2] font-times">{hom.ten_hom}</div>
+              <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-1">Tên kỹ thuật:</div>
+              <div className="text-gray-900 font-black uppercase text-2xl leading-relaxed font-times">{hom.ten_hom}</div>
             </div>
 
-            {/* Specs table — compact, 4 columns */}
-            <div className="pt-2 border-t border-gray-100">
-              <div className="grid grid-cols-[130px_1fr_130px_1fr] gap-y-1 gap-x-3 text-[11px] font-medium">
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Kích thước KT</div>
-                <div className="text-gray-800">{size}</div>
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Chất liệu</div>
-                <div className="text-gray-800">{material}</div>
+            {/* Specs table — large and spaced out */}
+            <div className="pt-8 border-t-[3px] border-gray-100 flex-1">
+              <div className="grid grid-cols-[200px_1fr_160px_1fr] gap-y-10 gap-x-6 text-xl font-medium items-center">
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg">Kích thước KT</div>
+                <div className="text-gray-800 text-2xl">{size}</div>
+                
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg">Chất liệu</div>
+                <div className="text-gray-800 text-2xl">{material}</div>
 
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Màu sắc</div>
-                <div className="text-gray-800">{color}</div>
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Đặc điểm</div>
-                <div className="text-gray-800">{feature}</div>
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg">Màu sắc</div>
+                <div className="text-gray-800 text-2xl">{color}</div>
+                
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg">Đặc điểm</div>
+                <div className="text-gray-800 text-2xl">{feature}</div>
 
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Nguồn gốc</div>
-                <div className="text-gray-800 border-b border-dotted border-gray-300 min-w-[100px] inline-block"></div>
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Dày thành</div>
-                <div className="text-gray-800">{thickness || '......'}</div>
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg">Nguồn gốc</div>
+                <div className="text-gray-800 text-2xl border-b-[3px] border-dotted border-gray-300 min-w-[120px] inline-block h-8"></div>
+                
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg">Dày thành</div>
+                <div className="text-gray-800 text-2xl">{thickness || '........'}</div>
               </div>
-              <div className="grid grid-cols-[130px_1fr] gap-x-3 mt-1 text-[11px] font-medium">
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">Các thông số khác:</div>
-                <div className="text-gray-800 border-b border-dotted border-gray-400 w-full"></div>
+              <div className="grid grid-cols-[250px_1fr] gap-x-6 mt-10 text-xl font-medium items-end">
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg">Các thông số khác:</div>
+                <div className="border-b-[3px] border-dotted border-gray-300 w-full h-6"></div>
               </div>
             </div>
 
@@ -283,11 +286,11 @@ export default async function ProductSheetPage({
           </div>
 
           {/* Footer */}
-          <div className="mt-auto pt-2 pb-1 text-center flex flex-col items-center border-t border-gray-100">
-            <h3 className="font-bold text-[#111] uppercase tracking-wide text-[11px]">
+          <div className="mt-12 pt-6 pb-4 text-center flex flex-col items-center border-t-[3px] border-gray-100">
+            <h3 className="font-bold text-[#111] uppercase tracking-widest text-lg mb-1">
               CÔNG TY CỔ PHẦN DỊCH VỤ TANG LỄ BLACKSTONES
             </h3>
-            <p className="font-bold text-[10px] text-gray-800 mt-0">
+            <p className="font-bold text-base text-gray-800">
               0868 57 67 77 - www.blackstones.vn
             </p>
           </div>
