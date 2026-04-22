@@ -15,6 +15,7 @@ interface DimHom {
   ten_hom: string;
   gia_ban: number | null;
   hinh_anh: string | null;
+  ten_hom_the_hien?: string | null;
 }
 
 interface DimKho {
@@ -37,7 +38,7 @@ export default async function ProductListPage() {
   // Fetch inventory, product dimension, and warehouse dimension
   const [inventoryRes, homRes, khoRes] = await Promise.all([
     supabase.from('fact_inventory').select('*'),
-    supabase.from('dim_hom').select('id, ma_hom, ten_hom, gia_ban, hinh_anh'),
+    supabase.from('dim_hom').select('id, ma_hom, ten_hom, gia_ban, hinh_anh, ten_hom_the_hien'),
     supabase.from('dim_kho').select('id, ma_kho, ten_kho'),
   ]);
 
@@ -72,7 +73,7 @@ export default async function ProductListPage() {
     const kho = khoMap.get(row['Kho']);
 
     const productCode = hom?.ma_hom || row['Mã'] || '—';
-    const productName = hom?.ten_hom || 'Chưa có tên';
+    const productName = hom?.ten_hom_the_hien || hom?.ten_hom || 'Chưa có tên';
     const warehouse = kho?.ten_kho || '—';
     const quantity = row['Số lượng'] || 0;
     const category = row['Loại hàng'] || '';
