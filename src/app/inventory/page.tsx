@@ -39,6 +39,7 @@ interface DimHom {
   id: string;
   ma_hom: string;
   ten_hom: string;
+  ten_hom_the_hien: string | null;
   gia_ban: number | null;
   gia_ban_1: number | null;
   hinh_anh: string | null;
@@ -66,7 +67,7 @@ export default async function InventoryPage() {
   // Fetch all 4 tables in parallel
   const [inventoryRes, homRes, khoRes, nccRes] = await Promise.all([
     supabase.from('fact_inventory').select('*'),
-    supabase.from('dim_hom').select('id, ma_hom, ten_hom, gia_ban, gia_ban_1, hinh_anh, is_active'),
+    supabase.from('dim_hom').select('id, ma_hom, ten_hom, ten_hom_the_hien, gia_ban, gia_ban_1, hinh_anh, is_active'),
     supabase.from('dim_kho').select('id, ma_kho, ten_kho'),
     supabase.from('dim_ncc').select('id, ma_ncc, ten_ncc, nguoi_lien_he, sdt, dia_chi'),
   ]);
@@ -151,7 +152,7 @@ export default async function InventoryPage() {
     const ncc = null;
 
     const code = hom?.ma_hom || '—';
-    const name = hom?.ten_hom || 'Chưa có tên';
+    const name = hom?.ten_hom_the_hien || hom?.ten_hom || 'Chưa có tên';
     const price = Number(hom?.gia_ban || 0);
     const warehouse = group.warehouseBreakdown.map(w => w.name).join(', ') || '—';
     const warehouseCode = group.warehouseBreakdown.map(w => w.code).join(', ');
