@@ -78,7 +78,7 @@ export default function CreatePurchaseOrderPage() {
     Promise.all([
       fetch(`${supabaseUrl}/rest/v1/dim_ncc?select=*&order=ma_ncc`, { headers }).then(r => r.json()),
       fetch(`${supabaseUrl}/rest/v1/dim_kho?select=*&order=ma_kho`, { headers }).then(r => r.json()),
-      fetch(`${supabaseUrl}/rest/v1/dim_hom?select=id,ma_hom,ten_hom,gia_ban_1,gia_ban,NCC&order=ma_hom`, { headers }).then(r => r.json()),
+      fetch(`${supabaseUrl}/rest/v1/dim_hom?select=id,ma_hom,ten_hom,gia_ban_1,gia_ban,NCC&is_active=eq.true&order=ma_hom`, { headers }).then(r => r.json()),
     ]).then(([ncc, kho, hom]) => {
       setNccList(Array.isArray(ncc) ? ncc : []);
       setKhoList(Array.isArray(kho) ? kho : []);

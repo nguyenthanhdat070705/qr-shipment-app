@@ -90,7 +90,7 @@ function CreateGoodsReceiptForm() {
 
     Promise.all([
       fetch(`${supabaseUrl}/rest/v1/dim_kho?select=id,ma_kho,ten_kho&order=ten_kho.asc`, { headers }).then(r => r.json()),
-      fetch(`${supabaseUrl}/rest/v1/dim_hom?select=id,ma_hom,ten_hom&order=ma_hom`, { headers }).then(r => r.json()),
+      fetch(`${supabaseUrl}/rest/v1/dim_hom?select=id,ma_hom,ten_hom&is_active=eq.true&order=ma_hom`, { headers }).then(r => r.json()),
       fetch('/api/purchase-orders').then(r => r.json()),
     ]).then(([khoData, homData, poRes]) => {
       setWarehouses(Array.isArray(khoData) ? khoData : []);
