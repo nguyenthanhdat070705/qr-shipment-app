@@ -571,11 +571,11 @@ export default function ProductsManagePage() {
                 <h3 className="pm-form-section-title">Giá tiền</h3>
                 <div className="pm-form-grid">
                   <div className="pm-field">
-                    <label>Giá bán (VNĐ)</label>
+                    <label>Giá vốn (VNĐ)</label>
                     <input type="number" value={form.gia_ban} onChange={e => handleChange('gia_ban', Number(e.target.value))} placeholder="0" />
                   </div>
                   <div className="pm-field">
-                    <label>Giá vốn (VNĐ)</label>
+                    <label>Giá bán (VNĐ)</label>
                     <input type="number" value={form.gia_von} onChange={e => handleChange('gia_von', Number(e.target.value))} placeholder="0" />
                   </div>
                 </div>
@@ -890,7 +890,7 @@ export default function ProductsManagePage() {
                     <td>{p.dac_diem || '—'}</td>
                     <td>{p.don_vi_tinh || 'Cái'}</td>
                     <td>{p.Nguon_goc || '—'}</td>
-                    <td className="pm-td-price">{(p.gia_ban || 0).toLocaleString('vi-VN')}₫</td>
+                    <td className="pm-td-price">{(p.gia_von || 0).toLocaleString('vi-VN')}₫</td>
                     <td className="pm-td-actions">
                       <button className="pm-btn-icon" title="Chỉnh sửa" onClick={() => handleEdit(p)}>
                         <Edit2 size={15} />
@@ -913,7 +913,7 @@ export default function ProductsManagePage() {
                         <div className="pm-detail-grid">
                           <div><strong>Độ dày thành:</strong> {p.Thanh || '—'}</div>
                           <div><strong>Loại hòm:</strong> {p.loai_hom || '—'}</div>
-                          <div><strong>Giá vốn:</strong> {(p.gia_von || 0).toLocaleString('vi-VN')}₫</div>
+                          <div><strong>Giá vốn:</strong> {(p.gia_ban || 0).toLocaleString('vi-VN')}₫</div>
                           <div><strong>Thông số khác:</strong> {p.thong_so_khac || '—'}</div>
                           <div className="pm-detail-full"><strong>Mục đích sử dụng:</strong> {p.Muc_dich || '—'}</div>
                           <div className="pm-detail-full"><strong>Mô tả:</strong> {p.mo_ta || '—'}</div>
