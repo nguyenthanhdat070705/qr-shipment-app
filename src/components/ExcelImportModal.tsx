@@ -9,7 +9,7 @@ const DB_COLUMNS = [
   { key: 'ma_hom', label: 'Mã hòm', required: true },
   { key: 'ten_hom', label: 'Tên hòm', required: true },
   { key: 'gia_ban', label: 'Giá bán' },
-  { key: 'gia_von', label: 'Giá vốn' },
+  { key: 'gia_ban_1', label: 'Giá vốn' },
   { key: 'NCC', label: 'Nhà cung cấp' },
   { key: 'loai_hom', label: 'Loại hòm' },
   { key: 'kich_thuoc', label: 'Kích thước' },
@@ -35,9 +35,9 @@ const ALIASES: Record<string, string> = {
   // gia_ban
   'gia ban': 'gia_ban', 'giá bán': 'gia_ban', 'giaban': 'gia_ban', 'gia_ban': 'gia_ban',
   'selling price': 'gia_ban', 'price': 'gia_ban', 'đơn giá': 'gia_ban', 'don gia': 'gia_ban',
-  // gia_von
-  'gia von': 'gia_von', 'giá vốn': 'gia_von', 'giavon': 'gia_von', 'gia_von': 'gia_von',
-  'cost': 'gia_von', 'cost price': 'gia_von', 'giá nhập': 'gia_von', 'gia nhap': 'gia_von',
+  // gia_ban_1
+  'gia von': 'gia_ban_1', 'giá vốn': 'gia_ban_1', 'giavon': 'gia_ban_1', 'gia_ban_1': 'gia_ban_1',
+  'cost': 'gia_ban_1', 'cost price': 'gia_ban_1', 'giá nhập': 'gia_ban_1', 'gia nhap': 'gia_ban_1',
   // NCC
   'ncc': 'NCC', 'nhà cung cấp': 'NCC', 'nha cung cap': 'NCC', 'supplier': 'NCC',
   'nhà cc': 'NCC', 'vendor': 'NCC',

@@ -23,7 +23,7 @@ interface DimHom {
   ma_hom: string;
   ten_hom: string;
   gia_ban: number | null;
-  gia_von: number | null;
+  gia_ban_1: number | null;
   hinh_anh: string | null;
   NCC: string | null;
 }
@@ -140,7 +140,7 @@ async function getProductByCode(productCode: string): Promise<DynamicProductRow 
     'Tên hàng hóa': hom.ten_hom,
     gia_ban: hom.gia_ban,
     'gói sản phẩm': hom.gia_ban,
-    gia_von: hom.gia_von,
+    gia_ban_1: hom.gia_ban_1,
     hinh_anh: hom.hinh_anh,
     // Use available qty (Ghi chú) for display — not total
     'số lượng': totalAvail,

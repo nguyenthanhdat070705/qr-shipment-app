@@ -38,7 +38,7 @@ interface DimHom {
   ma_hom: string;
   ten_hom: string;
   gia_ban: number | null;
-  gia_von: number | null;
+  gia_ban_1: number | null;
   hinh_anh: string | null;
   NCC: string | null;
 }
@@ -83,7 +83,7 @@ export default async function InventoryDetailPage({ params }: PageProps) {
   // 1. Find the product in dim_hom
   const { data: hom, error: homErr } = await supabase
     .from('dim_hom')
-    .select('id, ma_hom, ten_hom, gia_ban, gia_von, hinh_anh, NCC')
+    .select('id, ma_hom, ten_hom, gia_ban, gia_ban_1, hinh_anh, NCC')
     .eq('ma_hom', productCode)
     .single();
 
@@ -219,7 +219,7 @@ export default async function InventoryDetailPage({ params }: PageProps) {
 
   // 7. Profit
   const giaBan = Number(hom.gia_ban || 0);
-  const giaVon = Number(hom.gia_von || 0);
+  const giaVon = Number(hom.gia_ban_1 || 0);
   const profit = giaBan > 0 && giaVon > 0 ? giaBan - giaVon : 0;
 
   return (

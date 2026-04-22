@@ -25,7 +25,7 @@ interface DimHom {
   id: string;
   ma_hom: string;
   ten_hom: string;
-  gia_von: number | null;
+  gia_ban_1: number | null;
   gia_ban: number | null;
   NCC: string | null; // FK → dim_ncc.id
 }
@@ -78,7 +78,7 @@ export default function CreatePurchaseOrderPage() {
     Promise.all([
       fetch(`${supabaseUrl}/rest/v1/dim_ncc?select=*&order=ma_ncc`, { headers }).then(r => r.json()),
       fetch(`${supabaseUrl}/rest/v1/dim_kho?select=*&order=ma_kho`, { headers }).then(r => r.json()),
-      fetch(`${supabaseUrl}/rest/v1/dim_hom?select=id,ma_hom,ten_hom,gia_von,gia_ban,NCC&order=ma_hom`, { headers }).then(r => r.json()),
+      fetch(`${supabaseUrl}/rest/v1/dim_hom?select=id,ma_hom,ten_hom,gia_ban_1,gia_ban,NCC&order=ma_hom`, { headers }).then(r => r.json()),
     ]).then(([ncc, kho, hom]) => {
       setNccList(Array.isArray(ncc) ? ncc : []);
       setKhoList(Array.isArray(kho) ? kho : []);
@@ -114,7 +114,7 @@ export default function CreatePurchaseOrderPage() {
         ...updated[index],
         product_code: hom.ma_hom,
         product_name: hom.ten_hom,
-        unit_price: hom.gia_von || hom.gia_ban || 0,
+        unit_price: hom.gia_ban_1 || hom.gia_ban || 0,
       };
       setItems(updated);
       // Cập nhật search text thành tên sản phẩm đã chọn + đóng dropdown
@@ -239,7 +239,7 @@ export default function CreatePurchaseOrderPage() {
         ...updated[emptyIdx],
         product_code: hom.ma_hom,
         product_name: hom.ten_hom,
-        unit_price: hom.gia_von || hom.gia_ban || 0,
+        unit_price: hom.gia_ban_1 || hom.gia_ban || 0,
       };
       setItems(updated);
       const searches = [...itemSearches];
@@ -250,7 +250,7 @@ export default function CreatePurchaseOrderPage() {
         product_code: hom.ma_hom,
         product_name: hom.ten_hom,
         quantity: 1,
-        unit_price: hom.gia_von || hom.gia_ban || 0,
+        unit_price: hom.gia_ban_1 || hom.gia_ban || 0,
         hang_ky_gui: false,
         note: '',
       }]);
@@ -595,7 +595,7 @@ export default function CreatePurchaseOrderPage() {
                               >
                                 <span className="font-mono text-xs font-bold text-purple-500 bg-purple-50 px-1.5 py-0.5 rounded flex-shrink-0">{h.ma_hom}</span>
                                 <span className="flex-1 truncate">{h.ten_hom}</span>
-                                {h.gia_von && <span className="text-xs text-gray-400 flex-shrink-0">{h.gia_von.toLocaleString('vi-VN')}₫</span>}
+                                {h.gia_ban_1 && <span className="text-xs text-gray-400 flex-shrink-0">{h.gia_ban_1.toLocaleString('vi-VN')}₫</span>}
                               </button>
                             ));
                           })()}
