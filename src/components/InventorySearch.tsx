@@ -46,6 +46,8 @@ export default function InventorySearch({ items, showStats = false }: { items: I
   const initialFilter = (searchParams.get('filter') as FilterType) || 'all';
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<FilterType>(initialFilter);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'Đã mua' | 'Ký gửi'>('all');
   const [sort, setSort] = useState<SortType>('name');
   const [warehouseFilter, setWarehouseFilter] = useState<string>('all');
   const [lockedWarehouse, setLockedWarehouse] = useState<string | null>(null);
@@ -156,6 +158,23 @@ export default function InventorySearch({ items, showStats = false }: { items: I
         result = result.filter((i) => Number(i.tonKho || '0') <= 0 && Number(i.khaDung || '0') <= 0);
         break;
     }
+    
+    // Active filter
+    if (activeFilter === 'active') {
+      result = result.filter((i) => i.isActive);
+    } else if (activeFilter === 'inactive') {
+      result = result.filter((i) => !i.isActive);
+    }
+    
+    // Type filter (Đã mua / Ký gửi)
+    if (typeFilter !== 'all') {
+      result = result.filter((i) => {
+        if (i.typeBreakdown) {
+          return Object.keys(i.typeBreakdown).includes(typeFilter);
+        }
+        return i.status && i.status.includes(typeFilter);
+      });
+    }
 
     // Sort
     switch (sort) {
@@ -174,7 +193,7 @@ export default function InventorySearch({ items, showStats = false }: { items: I
     }
 
     return result;
-  }, [items, query, filter, sort, warehouseFilter]);
+  }, [items, query, filter, sort, warehouseFilter, activeFilter, typeFilter]);
 
 
   // Stats tính từ dữ liệu kho — dùng bd.qty/avail trực tiếp để nhất quán
@@ -215,7 +234,7 @@ export default function InventorySearch({ items, showStats = false }: { items: I
             </div>
             <div>
               <p className="text-2xl font-extrabold text-gray-900 leading-none">{warehouseStats.total}</p>
-              <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">Tổng SP</p>
+              <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">LOẠI HÒM</p>
             </div>
           </div>
           {/* Card 2: SP Đang bán */}
@@ -251,8 +270,8 @@ export default function InventorySearch({ items, showStats = false }: { items: I
         </div>
       )}
       {/* Search bar */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
+      <div className="flex flex-col xl:flex-row gap-3">
+        <div className="relative w-full xl:w-[500px] lg:w-[400px]">
           <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
@@ -266,7 +285,7 @@ export default function InventorySearch({ items, showStats = false }: { items: I
         </div>
 
         {/* Filter buttons */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 flex-1">
           {[
             { key: 'all' as FilterType, label: 'Tất cả' },
             { key: 'available' as FilterType, label: 'Còn hàng' },
@@ -302,6 +321,28 @@ export default function InventorySearch({ items, showStats = false }: { items: I
               ))}
             </select>
           )}
+
+          {/* Active Status Dropdown */}
+          <select
+            value={activeFilter}
+            onChange={(e) => setActiveFilter(e.target.value as 'all' | 'active' | 'inactive')}
+            className={`px-3 py-2 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-[#2d4a7a]`}
+          >
+            <option value="all">Tất cả hoạt động</option>
+            <option value="active">Đang bán</option>
+            <option value="inactive">Ngừng bán</option>
+          </select>
+
+          {/* Type Dropdown (Đã mua / Ký gửi) */}
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value as 'all' | 'Đã mua' | 'Ký gửi')}
+            className={`px-3 py-2 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-[#2d4a7a]`}
+          >
+            <option value="all">Tất cả hàng hoá</option>
+            <option value="Đã mua">Hàng đã mua</option>
+            <option value="Ký gửi">Hàng ký gửi</option>
+          </select>
         </div>
       </div>
 

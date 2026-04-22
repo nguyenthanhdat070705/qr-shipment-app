@@ -105,6 +105,7 @@ export default async function InventoryPage() {
     totalQty: number;
     totalAvail: number;
     loaiSet: Set<string>;
+    loaiBreakdown: Map<string, number>; // type -> qty
     warehouseBreakdown: { khoId: string; name: string; code: string; qty: number; avail: number }[];
   }>();
 
@@ -115,6 +116,7 @@ export default async function InventoryPage() {
       totalQty: 0,
       totalAvail: 0,
       loaiSet: new Set<string>(),
+      loaiBreakdown: new Map<string, number>(),
       warehouseBreakdown: [],
     });
   }
@@ -132,7 +134,12 @@ export default async function InventoryPage() {
     if (existing) {
       existing.totalQty += qty;
       existing.totalAvail += avail;
-      if (loai) existing.loaiSet.add(loai);
+      
+      if (loai) {
+        existing.loaiSet.add(loai);
+        existing.loaiBreakdown.set(loai, (existing.loaiBreakdown.get(loai) || 0) + avail);
+      }
+
       // Add to warehouse breakdown
       const existingWh = existing.warehouseBreakdown.find(w => w.khoId === khoId);
       if (existingWh) {
@@ -153,7 +160,7 @@ export default async function InventoryPage() {
 
     const code = hom?.ma_hom || '—';
     const name = hom?.ten_hom_the_hien || hom?.ten_hom || 'Chưa có tên';
-    const price = Number(hom?.gia_ban || 0);
+    const price = Number(hom?.gia_ban_1 || 0);
     const warehouse = group.warehouseBreakdown.map(w => w.name).join(', ') || '—';
     const warehouseCode = group.warehouseBreakdown.map(w => w.code).join(', ');
     const soLuong = group.totalQty;
@@ -173,7 +180,7 @@ export default async function InventoryPage() {
       code,
       name,
       price,
-      giaVon: Number(hom?.gia_ban_1 || 0),
+      giaVon: Number(hom?.gia_ban || 0),
       status: loaiHang,
       tonKho: String(soLuong),
       khaDung: String(khaDung),
@@ -187,6 +194,7 @@ export default async function InventoryPage() {
       isActive: hom?.is_active ?? true,
       lots: [] as string[],
       warehouseBreakdown: group.warehouseBreakdown,
+      typeBreakdown: Object.fromEntries(group.loaiBreakdown),
       supplierName: ncc?.ten_ncc || '',
       supplierContact: ncc?.nguoi_lien_he || '',
       supplierPhone: ncc?.sdt || '',

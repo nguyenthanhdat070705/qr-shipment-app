@@ -152,6 +152,19 @@ export default function ProductsManagePage() {
     setForm(prev => ({ ...prev, [field]: value }));
   };
 
+  useEffect(() => {
+    if (!showForm) return;
+    setForm(prev => {
+      const loaiGo = prev.loai_go ? ` ${prev.loai_go}` : '';
+      const thanh = prev.Thanh ? ` ${prev.Thanh}` : '';
+      const computed = `Quan Tài${loaiGo}${thanh}`.trim();
+      if (prev.ten_hom_the_hien !== computed) {
+        return { ...prev, ten_hom_the_hien: computed };
+      }
+      return prev;
+    });
+  }, [form.loai_go, form.Thanh, showForm]);
+
   // ── Image upload handler ──
   const handleFileSelect = (file: File) => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -225,8 +238,8 @@ export default function ProductsManagePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.ma_hom || !form.ten_hom) {
-      setMessage({ type: 'error', text: 'Mã hòm và Tên hòm là bắt buộc!' });
+    if (!form.ma_hom || !form.ten_hom || !form.loai_go || !form.Thanh) {
+      setMessage({ type: 'error', text: 'Vui lòng nhập đủ: Mã hòm, Tên hòm, Loại gỗ và Độ dày thành!' });
       return;
     }
 
@@ -496,7 +509,7 @@ export default function ProductsManagePage() {
                   </div>
                   <div className="pm-field">
                     <label>Tên hòm thể hiện</label>
-                    <input type="text" value={form.ten_hom_the_hien} onChange={e => handleChange('ten_hom_the_hien', e.target.value)} placeholder="..." />
+                    <input type="text" value={form.ten_hom_the_hien} disabled placeholder="Được tạo tự động..." title="Tự động từ Loại gỗ và Độ dày thành" />
                   </div>
                   <div className="pm-field">
                     <label>Tên kỹ thuật</label>
@@ -525,8 +538,8 @@ export default function ProductsManagePage() {
                     <input type="text" value={form.kich_thuoc} onChange={e => handleChange('kich_thuoc', e.target.value)} placeholder="VD: 200x60x50 cm" />
                   </div>
                   <div className="pm-field">
-                    <label>Độ dày thành (Thành)</label>
-                    <input type="text" value={form.Thanh} onChange={e => handleChange('Thanh', e.target.value)} placeholder="VD: 2.5 cm" />
+                    <label>Độ dày thành (Thành) <span className="pm-required">*</span></label>
+                    <input type="text" value={form.Thanh} onChange={e => handleChange('Thanh', e.target.value)} placeholder="VD: 2.5 cm" required />
                   </div>
                   <div className="pm-field">
                     <label>Đơn vị tính</label>
@@ -537,8 +550,8 @@ export default function ProductsManagePage() {
                     <input type="text" value={form.dac_diem} onChange={e => handleChange('dac_diem', e.target.value)} placeholder="VD: VIP, Mép Vàng..." />
                   </div>
                   <div className="pm-field">
-                    <label>Loại gỗ</label>
-                    <input type="text" value={form.loai_go} onChange={e => handleChange('loai_go', e.target.value)} placeholder="VD: Gỗ Sồi, Căm Xe..." />
+                    <label>Loại gỗ <span className="pm-required">*</span></label>
+                    <input type="text" value={form.loai_go} onChange={e => handleChange('loai_go', e.target.value)} placeholder="VD: Gỗ Sồi, Căm Xe..." required />
                   </div>
                   <div className="pm-field">
                     <label>Bề mặt</label>
@@ -818,7 +831,7 @@ export default function ProductsManagePage() {
                 <th style={{ width: 60, padding: '0 10px', textAlign: 'center' }}></th>
                 <th>Ảnh</th>
                 <th>Mã hòm</th>
-                <th>Tên hòm</th>
+                <th>Tên hòm thể hiện</th>
                 <th>Kích thước</th>
                 <th className="pm-th-qty">Số lượng</th>
                 <th>Đặc điểm</th>
