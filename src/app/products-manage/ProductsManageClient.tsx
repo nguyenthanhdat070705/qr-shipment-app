@@ -815,6 +815,7 @@ export default function ProductsManagePage() {
           <table className="pm-table">
             <thead>
               <tr>
+                <th style={{ width: 60, padding: '0 10px', textAlign: 'center' }}></th>
                 <th>Ảnh</th>
                 <th>Mã hòm</th>
                 <th>Tên hòm</th>
