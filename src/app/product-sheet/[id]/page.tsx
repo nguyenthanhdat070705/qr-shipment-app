@@ -162,7 +162,13 @@ export default async function ProductSheetPage({
     console.warn('[product-sheet] Could not fetch active warehouses:', e);
   }
 
-  const { material, color, feature, size, thickness } = parseProductName(hom.ten_hom || '');
+  const size = hom.kich_thuoc || '—';
+  const material = hom.loai_go || '—';
+  const color = hom.Mau_sac || hom.mau_sac || '—';
+  const feature = hom.dac_diem || '—';
+  const origin = hom.Nguon_goc || hom.nguon_goc || '—';
+  const thickness = hom.Thanh || hom.thanh || '—';
+  const otherSpecs = hom.thong_so_khac || '';
 
   return (
     <main className="min-h-screen bg-gray-100 flex flex-col items-center py-6 print:bg-white print:py-0">
@@ -265,14 +271,18 @@ export default async function ProductSheetPage({
                 <div className="text-gray-800 text-2xl">{feature}</div>
 
                 <div className="font-bold text-gray-900 uppercase tracking-widest text-lg">Nguồn gốc</div>
-                <div className="text-gray-800 text-2xl border-b-[3px] border-dotted border-gray-300 min-w-[120px] inline-block h-8"></div>
+                <div className="text-gray-800 text-2xl">{origin}</div>
                 
                 <div className="font-bold text-gray-900 uppercase tracking-widest text-lg">Dày thành</div>
-                <div className="text-gray-800 text-2xl">{thickness || '........'}</div>
+                <div className="text-gray-800 text-2xl">{thickness}</div>
               </div>
               <div className="grid grid-cols-[250px_1fr] gap-x-6 mt-10 text-xl font-medium items-end">
                 <div className="font-bold text-gray-900 uppercase tracking-widest text-lg">Các thông số khác:</div>
-                <div className="border-b-[3px] border-dotted border-gray-300 w-full h-6"></div>
+                {otherSpecs ? (
+                  <div className="text-gray-800 text-2xl pb-1">{otherSpecs}</div>
+                ) : (
+                  <div className="border-b-[3px] border-dotted border-gray-300 w-full h-6"></div>
+                )}
               </div>
             </div>
 
