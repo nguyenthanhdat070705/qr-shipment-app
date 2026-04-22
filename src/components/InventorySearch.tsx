@@ -337,7 +337,8 @@ export default function InventorySearch({ items, showStats = false }: { items: I
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Sản phẩm</th>
+                  <th className="text-left py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide w-[25%] lg:w-[30%]">Sản phẩm</th>
+                  <th className="text-right py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Giá bán</th>
                   <th className="text-left py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Mã SP</th>
                   <th className="text-center py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Tổng SL</th>
                   <th className="text-center py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Kho</th>
@@ -365,6 +366,9 @@ export default function InventorySearch({ items, showStats = false }: { items: I
                           />
                           <span className="text-sm font-medium text-gray-800 leading-snug break-words">{item.name}</span>
                         </div>
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        <span className="text-gray-700 font-semibold">{item.price ? new Intl.NumberFormat('vi-VN').format(item.price) + 'đ' : '—'}</span>
                       </td>
                       <td className="py-3 px-3">
                         <span className="font-mono text-xs font-bold text-[#1B2A4A] bg-[#eef1f7] px-2 py-1 rounded-lg">
@@ -485,6 +489,7 @@ export default function InventorySearch({ items, showStats = false }: { items: I
                     />
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-800 text-sm leading-snug break-words">{item.name}</p>
+                      <p className="text-[#1B2A4A] font-semibold text-xs mt-0.5">{item.price ? new Intl.NumberFormat('vi-VN').format(item.price) + 'đ' : '—'}</p>
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                         <span className="font-mono text-[10px] font-bold text-[#1B2A4A] bg-[#eef1f7] px-1.5 py-0.5 rounded">
                           {item.code}
