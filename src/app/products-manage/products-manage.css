@@ -1368,3 +1368,58 @@
   .pm-qty-btn { width: 28px; height: 28px; }
   .pm-qty-value { min-width: 32px; height: 28px; font-size: 0.82rem; }
 }
+
+/* --- Toggle Switch --- */
+.pm-toggle-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pm-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+}
+
+.pm-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.pm-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ef4444; /* red when inactive */
+  transition: .3s;
+  border-radius: 34px;
+}
+
+.pm-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.pm-toggle-switch input:checked + .pm-toggle-slider {
+  background-color: #10b981; /* green when active */
+}
+
+.pm-toggle-switch input:checked + .pm-toggle-slider:before {
+  transform: translateX(18px);
+}
+
+.pm-toggle-switch input:disabled + .pm-toggle-slider {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -278,6 +278,23 @@ export default function ProductsManagePage() {
     }
   };
 
+  const toggleActive = async (p: Product) => {
+    // Optimistic UI update
+    setProducts(prev => prev.map(item => item.id === p.id ? { ...item, is_active: !p.is_active } : item));
+    try {
+      const res = await fetch('/api/products', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: p.id, updated_by: userEmail, is_active: !p.is_active }),
+      });
+      if (!res.ok) {
+        setProducts(prev => prev.map(item => item.id === p.id ? { ...item, is_active: !p.is_active } : item));
+      }
+    } catch {
+      setProducts(prev => prev.map(item => item.id === p.id ? { ...item, is_active: !p.is_active } : item));
+    }
+  };
+
   const handleEdit = (product: Product) => {
     setEditingId(product.id);
     setForm({
@@ -809,11 +826,23 @@ export default function ProductsManagePage() {
             <tbody>
               {filtered.map((p, i) => (
                 <>
-                  <tr key={p.id} className={expandedRow === p.id ? 'pm-row-expanded' : ''}>
+                  <tr key={p.id} className={expandedRow === p.id ? 'pm-row-expanded' : ''} style={{ opacity: p.is_active ? 1 : 0.6 }}>
+                    <td>
+                      <div className="pm-toggle-wrap" onClick={(e) => e.stopPropagation()}>
+                        <label className="pm-toggle-switch" title={p.is_active ? 'Đang bán' : 'Ngừng bán'}>
+                          <input
+                            type="checkbox"
+                            checked={!!p.is_active}
+                            onChange={() => toggleActive(p)}
+                          />
+                          <span className="pm-toggle-slider"></span>
+                        </label>
+                      </div>
+                    </td>
                     <td className="pm-td-center">
                       {p.hinh_anh ? (
                         <div className="pm-td-thumb" onClick={() => handleUploadForProduct(p)}>
-                          <img src={p.hinh_anh} alt={p.ma_hom} />
+                          <img src={p.hinh_anh} alt={p.ma_hom} style={{ filter: p.is_active ? 'none' : 'grayscale(100%)' }} />
                         </div>
                       ) : (
                         <button className="pm-td-add-thumb" onClick={() => handleUploadForProduct(p)} title="Thêm ảnh">
