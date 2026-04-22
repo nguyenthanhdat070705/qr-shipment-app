@@ -28,7 +28,7 @@ interface Product {
   ma_hom: string;
   ten_hom: string;
   gia_ban: number;
-  gia_von: number;
+  gia_ban_1: number;
   loai_hom: string;
   hinh_anh: string;
   kich_thuoc: string;
@@ -60,7 +60,7 @@ const EMPTY_FORM = {
   ma_hom: '',
   ten_hom: '',
   gia_ban: 0,
-  gia_von: 0,
+  gia_ban_1: 0,
   loai_hom: '',
   hinh_anh: '',
   kich_thuoc: '',
@@ -576,7 +576,7 @@ export default function ProductsManagePage() {
                   </div>
                   <div className="pm-field">
                     <label>Giá bán (VNĐ)</label>
-                    <input type="number" value={form.gia_von} onChange={e => handleChange('gia_von', Number(e.target.value))} placeholder="0" />
+                    <input type="number" value={form.gia_ban_1} onChange={e => handleChange('gia_ban_1', Number(e.target.value))} placeholder="0" />
                   </div>
                 </div>
               </div>
@@ -890,7 +890,7 @@ export default function ProductsManagePage() {
                     <td>{p.dac_diem || '—'}</td>
                     <td>{p.don_vi_tinh || 'Cái'}</td>
                     <td>{p.Nguon_goc || '—'}</td>
-                    <td className="pm-td-price">{(p.gia_von || 0).toLocaleString('vi-VN')}₫</td>
+                    <td className="pm-td-price">{(p.gia_ban_1 || 0).toLocaleString('vi-VN')}₫</td>
                     <td className="pm-td-actions">
                       <button className="pm-btn-icon" title="Chỉnh sửa" onClick={() => handleEdit(p)}>
                         <Edit2 size={15} />
