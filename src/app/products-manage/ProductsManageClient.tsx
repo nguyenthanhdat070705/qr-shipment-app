@@ -1,6 +1,4 @@
-<td className="pm-td-text">{p.dac_diem || '—'}</td>
-                    <td>{p.don_vi_tinh}</td>
-                    <td>{p.Nguon_goc || '—'}</td>'use client';
+'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Minus, Search, Package, Edit2, X, Check, ChevronDown, ChevronUp, Upload, Image as ImageIcon, Loader2, Trash2, ArrowLeft, AlertTriangle, Warehouse } from 'lucide-react';
@@ -369,8 +367,7 @@ export default function ProductsManagePage() {
     const q = search.toLowerCase();
     return (
       p.ma_hom.toLowerCase().includes(q) ||
-      p.ten_hom.toLowerCase().includes(q) ||
-      (p.NCC || '').toLowerCase().includes(q) ||
+      p.ten_hom.toLowerCase().includes(q) || (p.Nguon_goc || '').toLowerCase().includes(q) ||
       (p.loai_hom || '').toLowerCase().includes(q)
     );
   });
@@ -550,7 +547,7 @@ export default function ProductsManagePage() {
               </div>
 
               <div className="pm-form-section">
-                <h3 className="pm-form-section-title">Giá & mô tả</h3>
+                <h3 className="pm-form-section-title">Giá tiền</h3>
                 <div className="pm-form-grid">
                   <div className="pm-field">
                     <label>Giá bán (VNĐ)</label>
