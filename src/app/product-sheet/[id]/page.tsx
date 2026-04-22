@@ -230,12 +230,12 @@ export default async function ProductSheetPage({
             <div className="absolute right-0 top-0 bg-white p-2 z-20">
               <div className="flex flex-col items-center">
                 <p className="text-sm text-gray-600 italic mb-2">Quét QR code xuất hàng</p>
-                <QRCodeDisplay code={hom.ma_hom} size={200} />
+                <QRCodeDisplay code={hom.ma_hom} size={150} />
               </div>
             </div>
 
             {/* Product identity */}
-            <div className="grid grid-cols-[200px_1fr] gap-y-6 gap-x-6 text-xl font-medium leading-relaxed pr-[230px]">
+            <div className="grid grid-cols-[180px_1fr] gap-y-6 gap-x-4 text-xl font-medium leading-relaxed pr-[170px]">
               <div className="font-bold text-gray-900 uppercase tracking-widest text-lg pt-1">Phân loại:</div>
               <div className="text-gray-900 font-bold uppercase text-2xl leading-snug">{hom.nhom_san_pham || 'AN TÁNG'}</div>
 
@@ -243,7 +243,7 @@ export default async function ProductSheetPage({
               <div className="text-gray-900 font-black uppercase text-4xl leading-tight font-times">{hom.ma_hom}</div>
 
               <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-2">Tên sản phẩm:</div>
-              <div className="text-gray-900 font-black uppercase text-3xl leading-tight font-times">{hom.ten_hom?.split('-')[0]?.trim() || hom.ten_hom}</div>
+              <div className="text-gray-900 font-black uppercase text-[28px] leading-[1.25] font-times max-w-full">{hom.ten_hom?.split('-')[0]?.trim() || hom.ten_hom}</div>
 
               <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-1">Tên kỹ thuật:</div>
               <div className="text-gray-900 font-black uppercase text-2xl leading-relaxed font-times">{hom.ten_hom}</div>
