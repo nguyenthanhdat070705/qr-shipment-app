@@ -1,4 +1,6 @@
-'use client';
+<td className="pm-td-text">{p.dac_diem || '—'}</td>
+                    <td>{p.don_vi_tinh}</td>
+                    <td>{p.Nguon_goc || '—'}</td>'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Minus, Search, Package, Edit2, X, Check, ChevronDown, ChevronUp, Upload, Image as ImageIcon, Loader2, Trash2, ArrowLeft, AlertTriangle, Warehouse } from 'lucide-react';
@@ -29,19 +31,31 @@ interface Product {
   ten_hom: string;
   gia_ban: number;
   gia_von: number;
-  NCC: string;
   loai_hom: string;
   hinh_anh: string;
-  mo_ta: string;
   kich_thuoc: string;
   thong_so_khac: string;
-  do_day_thanh: string;
   don_vi_tinh: string;
-  tinh_chat: string;
-  muc_dich_su_dung: string;
   so_luong: number;
   is_active: boolean;
   created_at: string;
+  Thanh: string;
+  dac_diem: string;
+  Muc_dich: string;
+  ten_mkt: string;
+  ten_hom_the_hien: string;
+  ten_ky_thuat: string;
+  ten_chuan_hoa: string;
+  loai_go: string;
+  Goi_dich_vu: string;
+  Mau_sac: string;
+  nhom_hang_hoa: string;
+  loai_san_pham: string;
+  Ton_giao: string;
+  nap: string;
+  Nguon_goc: string;
+  Liet: string;
+  be_mat: string;
 }
 
 const EMPTY_FORM = {
@@ -49,16 +63,28 @@ const EMPTY_FORM = {
   ten_hom: '',
   gia_ban: 0,
   gia_von: 0,
-  NCC: '',
   loai_hom: '',
   hinh_anh: '',
-  mo_ta: '',
   kich_thuoc: '',
   thong_so_khac: '',
-  do_day_thanh: '',
   don_vi_tinh: 'Cái',
-  tinh_chat: '',
-  muc_dich_su_dung: '',
+  Thanh: '',
+  dac_diem: '',
+  Muc_dich: '',
+  ten_mkt: '',
+  ten_hom_the_hien: '',
+  ten_ky_thuat: '',
+  ten_chuan_hoa: '',
+  loai_go: '',
+  Goi_dich_vu: '',
+  Mau_sac: '',
+  nhom_hang_hoa: '',
+  loai_san_pham: '',
+  Ton_giao: '',
+  nap: '',
+  Nguon_goc: '',
+  Liet: '',
+  be_mat: '',
 };
 
 export default function ProductsManagePage() {
@@ -257,20 +283,32 @@ export default function ProductsManagePage() {
   const handleEdit = (product: Product) => {
     setEditingId(product.id);
     setForm({
-      ma_hom: product.ma_hom,
-      ten_hom: product.ten_hom,
+      ma_hom: product.ma_hom || '',
+      ten_hom: product.ten_hom || '',
       gia_ban: product.gia_ban || 0,
       gia_von: product.gia_von || 0,
-      NCC: product.NCC || '',
       loai_hom: product.loai_hom || '',
       hinh_anh: product.hinh_anh || '',
-      mo_ta: product.mo_ta || '',
       kich_thuoc: product.kich_thuoc || '',
       thong_so_khac: product.thong_so_khac || '',
-      do_day_thanh: product.do_day_thanh || '',
       don_vi_tinh: product.don_vi_tinh || 'Cái',
-      tinh_chat: product.tinh_chat || '',
-      muc_dich_su_dung: product.muc_dich_su_dung || '',
+      Thanh: product.Thanh || '',
+      dac_diem: product.dac_diem || '',
+      Muc_dich: product.Muc_dich || '',
+      ten_mkt: product.ten_mkt || '',
+      ten_hom_the_hien: product.ten_hom_the_hien || '',
+      ten_ky_thuat: product.ten_ky_thuat || '',
+      ten_chuan_hoa: product.ten_chuan_hoa || '',
+      loai_go: product.loai_go || '',
+      Goi_dich_vu: product.Goi_dich_vu || '',
+      Mau_sac: product.Mau_sac || '',
+      nhom_hang_hoa: product.nhom_hang_hoa || '',
+      loai_san_pham: product.loai_san_pham || '',
+      Ton_giao: product.Ton_giao || '',
+      nap: product.nap || '',
+      Nguon_goc: product.Nguon_goc || '',
+      Liet: product.Liet || '',
+      be_mat: product.be_mat || '',
     });
     setShowForm(true);
   };
@@ -400,47 +438,63 @@ export default function ProductsManagePage() {
             </div>
 
             <form onSubmit={handleSubmit} className="pm-form">
+              
               <div className="pm-form-section">
                 <h3 className="pm-form-section-title">Thông tin cơ bản</h3>
                 <div className="pm-form-grid">
                   <div className="pm-field">
                     <label>Mã hòm <span className="pm-required">*</span></label>
-                    <input
-                      type="text"
-                      value={form.ma_hom}
-                      onChange={e => handleChange('ma_hom', e.target.value.toUpperCase())}
-                      placeholder="VD: 2AQ0012"
-                      disabled={!!editingId}
-                      required
-                    />
+                    <input type="text" value={form.ma_hom} onChange={e => handleChange('ma_hom', e.target.value.toUpperCase())} placeholder="VD: 2AQ0012" disabled={!!editingId} required />
                   </div>
                   <div className="pm-field">
                     <label>Tên hòm <span className="pm-required">*</span></label>
-                    <input
-                      type="text"
-                      value={form.ten_hom}
-                      onChange={e => handleChange('ten_hom', e.target.value)}
-                      placeholder="VD: Hòm Anh Quốc 12"
-                      required
-                    />
+                    <input type="text" value={form.ten_hom} onChange={e => handleChange('ten_hom', e.target.value)} placeholder="VD: Hòm Anh Quốc 12" required />
                   </div>
                   <div className="pm-field">
-                    <label>Nhà cung cấp</label>
-                    <input
-                      type="text"
-                      value={form.NCC}
-                      onChange={e => handleChange('NCC', e.target.value)}
-                      placeholder="VD: NCC ABC"
-                    />
+                    <label>Nguồn gốc</label>
+                    <input type="text" value={form.Nguon_goc} onChange={e => handleChange('Nguon_goc', e.target.value)} placeholder="VD: Nhập khẩu..." />
+                  </div>
+                  <div className="pm-field">
+                    <label>Nhóm hàng hóa</label>
+                    <input type="text" value={form.nhom_hang_hoa} onChange={e => handleChange('nhom_hang_hoa', e.target.value)} placeholder="VD: Quan tài..." />
+                  </div>
+                  <div className="pm-field">
+                    <label>Loại sản phẩm</label>
+                    <input type="text" value={form.loai_san_pham} onChange={e => handleChange('loai_san_pham', e.target.value)} placeholder="VD: SP Tiêu chuẩn..." />
                   </div>
                   <div className="pm-field">
                     <label>Loại hòm</label>
-                    <input
-                      type="text"
-                      value={form.loai_hom}
-                      onChange={e => handleChange('loai_hom', e.target.value)}
-                      placeholder="VD: Hòm gỗ, Hòm thiêu..."
-                    />
+                    <input type="text" value={form.loai_hom} onChange={e => handleChange('loai_hom', e.target.value)} placeholder="VD: Hòm gỗ..." />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pm-form-section">
+                <h3 className="pm-form-section-title">Tên gọi mở rộng & Dịch vụ</h3>
+                <div className="pm-form-grid">
+                  <div className="pm-field">
+                    <label>Tên Marketing</label>
+                    <input type="text" value={form.ten_mkt} onChange={e => handleChange('ten_mkt', e.target.value)} placeholder="..." />
+                  </div>
+                  <div className="pm-field">
+                    <label>Tên hòm thể hiện</label>
+                    <input type="text" value={form.ten_hom_the_hien} onChange={e => handleChange('ten_hom_the_hien', e.target.value)} placeholder="..." />
+                  </div>
+                  <div className="pm-field">
+                    <label>Tên kỹ thuật</label>
+                    <input type="text" value={form.ten_ky_thuat} onChange={e => handleChange('ten_ky_thuat', e.target.value)} placeholder="..." />
+                  </div>
+                  <div className="pm-field">
+                    <label>Tên chuẩn hóa</label>
+                    <input type="text" value={form.ten_chuan_hoa} onChange={e => handleChange('ten_chuan_hoa', e.target.value)} placeholder="..." />
+                  </div>
+                  <div className="pm-field">
+                    <label>Gói dịch vụ</label>
+                    <input type="text" value={form.Goi_dich_vu} onChange={e => handleChange('Goi_dich_vu', e.target.value)} placeholder="VD: Tiêu chuẩn, Cao cấp..." />
+                  </div>
+                  <div className="pm-field">
+                    <label>Tôn giáo</label>
+                    <input type="text" value={form.Ton_giao} onChange={e => handleChange('Ton_giao', e.target.value)} placeholder="VD: Phật giáo, Công giáo..." />
                   </div>
                 </div>
               </div>
@@ -450,57 +504,47 @@ export default function ProductsManagePage() {
                 <div className="pm-form-grid">
                   <div className="pm-field">
                     <label>Kích thước</label>
-                    <input
-                      type="text"
-                      value={form.kich_thuoc}
-                      onChange={e => handleChange('kich_thuoc', e.target.value)}
-                      placeholder="VD: 200x60x50 cm"
-                    />
+                    <input type="text" value={form.kich_thuoc} onChange={e => handleChange('kich_thuoc', e.target.value)} placeholder="VD: 200x60x50 cm" />
                   </div>
                   <div className="pm-field">
-                    <label>Độ dày thành</label>
-                    <input
-                      type="text"
-                      value={form.do_day_thanh}
-                      onChange={e => handleChange('do_day_thanh', e.target.value)}
-                      placeholder="VD: 2.5 cm"
-                    />
+                    <label>Độ dày thành (Thành)</label>
+                    <input type="text" value={form.Thanh} onChange={e => handleChange('Thanh', e.target.value)} placeholder="VD: 2.5 cm" />
                   </div>
                   <div className="pm-field">
                     <label>Đơn vị tính</label>
-                    <input
-                      type="text"
-                      value={form.don_vi_tinh}
-                      onChange={e => handleChange('don_vi_tinh', e.target.value)}
-                      placeholder="VD: Cái, Bộ..."
-                    />
+                    <input type="text" value={form.don_vi_tinh} onChange={e => handleChange('don_vi_tinh', e.target.value)} placeholder="VD: Cái, Bộ..." />
                   </div>
                   <div className="pm-field">
-                    <label>Tính chất</label>
-                    <input
-                      type="text"
-                      value={form.tinh_chat}
-                      onChange={e => handleChange('tinh_chat', e.target.value)}
-                      placeholder="VD: Gỗ tự nhiên, MDF..."
-                    />
+                    <label>Đặc điểm (Tính chất)</label>
+                    <input type="text" value={form.dac_diem} onChange={e => handleChange('dac_diem', e.target.value)} placeholder="VD: VIP, Mép Vàng..." />
                   </div>
-                  <div className="pm-field pm-field-full">
-                    <label>Thông số khác</label>
-                    <textarea
-                      value={form.thong_so_khac}
-                      onChange={e => handleChange('thong_so_khac', e.target.value)}
-                      placeholder="Các thông số kỹ thuật bổ sung..."
-                      rows={2}
-                    />
+                  <div className="pm-field">
+                    <label>Loại gỗ</label>
+                    <input type="text" value={form.loai_go} onChange={e => handleChange('loai_go', e.target.value)} placeholder="VD: Gỗ Sồi, Căm Xe..." />
+                  </div>
+                  <div className="pm-field">
+                    <label>Bề mặt</label>
+                    <input type="text" value={form.be_mat} onChange={e => handleChange('be_mat', e.target.value)} placeholder="VD: Bóng, Mờ..." />
+                  </div>
+                  <div className="pm-field">
+                    <label>Màu sắc</label>
+                    <input type="text" value={form.Mau_sac} onChange={e => handleChange('Mau_sac', e.target.value)} placeholder="VD: Nâu, Vàng..." />
+                  </div>
+                  <div className="pm-field">
+                    <label>Nắp</label>
+                    <input type="text" value={form.nap} onChange={e => handleChange('nap', e.target.value)} placeholder="VD: Nắp tròn, Nắp dẹp..." />
+                  </div>
+                  <div className="pm-field">
+                    <label>Liệt</label>
+                    <input type="text" value={form.Liet} onChange={e => handleChange('Liet', e.target.value)} placeholder="..." />
                   </div>
                   <div className="pm-field pm-field-full">
                     <label>Mục đích sử dụng</label>
-                    <textarea
-                      value={form.muc_dich_su_dung}
-                      onChange={e => handleChange('muc_dich_su_dung', e.target.value)}
-                      placeholder="VD: Dùng cho tang lễ chôn cất..."
-                      rows={2}
-                    />
+                    <textarea value={form.Muc_dich} onChange={e => handleChange('Muc_dich', e.target.value)} placeholder="VD: Dùng cho tang lễ chôn cất..." rows={2} />
+                  </div>
+                  <div className="pm-field pm-field-full">
+                    <label>Thông số khác</label>
+                    <textarea value={form.thong_so_khac} onChange={e => handleChange('thong_so_khac', e.target.value)} placeholder="Các thông số kỹ thuật bổ sung..." rows={2} />
                   </div>
                 </div>
               </div>
@@ -510,30 +554,11 @@ export default function ProductsManagePage() {
                 <div className="pm-form-grid">
                   <div className="pm-field">
                     <label>Giá bán (VNĐ)</label>
-                    <input
-                      type="number"
-                      value={form.gia_ban}
-                      onChange={e => handleChange('gia_ban', Number(e.target.value))}
-                      placeholder="0"
-                    />
+                    <input type="number" value={form.gia_ban} onChange={e => handleChange('gia_ban', Number(e.target.value))} placeholder="0" />
                   </div>
                   <div className="pm-field">
                     <label>Giá vốn (VNĐ)</label>
-                    <input
-                      type="number"
-                      value={form.gia_von}
-                      onChange={e => handleChange('gia_von', Number(e.target.value))}
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="pm-field pm-field-full">
-                    <label>Mô tả</label>
-                    <textarea
-                      value={form.mo_ta}
-                      onChange={e => handleChange('mo_ta', e.target.value)}
-                      placeholder="Mô tả chi tiết sản phẩm..."
-                      rows={3}
-                    />
+                    <input type="number" value={form.gia_von} onChange={e => handleChange('gia_von', Number(e.target.value))} placeholder="0" />
                   </div>
                 </div>
               </div>
@@ -777,9 +802,9 @@ export default function ProductsManagePage() {
                 <th>Tên hòm</th>
                 <th>Kích thước</th>
                 <th className="pm-th-qty">Số lượng</th>
-                <th>Tính chất</th>
+                <th>Đặc điểm</th>
                 <th>ĐVT</th>
-                <th>NCC</th>
+                <th>Nguồn gốc</th>
                 <th>Giá bán</th>
                 <th></th>
               </tr>

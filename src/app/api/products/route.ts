@@ -101,22 +101,44 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Destructure new fields
+  const {
+    ten_mkt, ten_hom_the_hien, ten_ky_thuat, ten_chuan_hoa,
+    loai_go, Goi_dich_vu, Mau_sac, nhom_hang_hoa, loai_san_pham, Ton_giao,
+    nap, Nguon_goc, Liet, be_mat, Muc_dich, Thanh, dac_diem,
+    ...restBody
+  } = body;
+
   const insertData: Record<string, unknown> = {
     ma_hom,
     ten_hom,
     gia_ban: gia_ban || 0,
     gia_von: gia_von || 0,
-    NCC: NCC || '',
     loai_hom: loai_hom || '',
     hinh_anh: hinh_anh || '',
-    mo_ta: mo_ta || '',
     kich_thuoc: kich_thuoc || '',
     thong_so_khac: thong_so_khac || '',
-    do_day_thanh: do_day_thanh || '',
     don_vi_tinh: don_vi_tinh || 'Cái',
-    tinh_chat: tinh_chat || '',
-    muc_dich_su_dung: muc_dich_su_dung || '',
     is_active: true,
+
+    // New/Renamed mapping
+    ten_mkt: ten_mkt || '',
+    ten_hom_the_hien: ten_hom_the_hien || '',
+    ten_ky_thuat: ten_ky_thuat || '',
+    ten_chuan_hoa: ten_chuan_hoa || '',
+    loai_go: loai_go || '',
+    "Goi_dich_vu": Goi_dich_vu || '',
+    "Mau_sac": Mau_sac || '',
+    nhom_hang_hoa: nhom_hang_hoa || '',
+    loai_san_pham: loai_san_pham || '',
+    "Ton_giao": Ton_giao || '',
+    nap: nap || '',
+    "Nguon_goc": Nguon_goc || '',
+    "Liet": Liet || '',
+    be_mat: be_mat || '',
+    "Muc_dich": Muc_dich || '',
+    "Thanh": Thanh || '',
+    dac_diem: dac_diem || '',
   };
 
   const { data: created, error: insertError } = await supabase
