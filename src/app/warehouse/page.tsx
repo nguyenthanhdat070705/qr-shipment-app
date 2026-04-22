@@ -653,17 +653,17 @@ export default function WarehouseDashboard() {
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-extrabold text-gray-500 uppercase tracking-widest">
                       <th className="p-3 text-center w-12">STT</th>
-                      <th className="p-3">Ngày nhập/xuất</th>
-                      <th className="p-3">Loại</th>
-                      <th className="p-3">Số phiếu</th>
-                      <th className="p-3">Mã sản phẩm</th>
-                      <th className="p-3">Tên sản phẩm</th>
-                      <th className="p-3 text-center">ĐVT</th>
-                      <th className="p-3 text-right">Số lượng</th>
-                      <th className="p-3">Mã đám</th>
+                      <th className="p-3 whitespace-nowrap">Ngày nhập/xuất</th>
+                      <th className="p-3 text-center whitespace-nowrap">Loại</th>
+                      <th className="p-3 whitespace-nowrap">Số phiếu</th>
+                      <th className="p-3 whitespace-nowrap">Mã sản phẩm</th>
+                      <th className="p-3 min-w-[200px]">Tên sản phẩm</th>
+                      <th className="p-3 text-center whitespace-nowrap">ĐVT</th>
+                      <th className="p-3 text-right whitespace-nowrap">Số lượng</th>
+                      <th className="p-3 whitespace-nowrap">Mã đám</th>
                       <th className="p-3 text-center whitespace-nowrap">Kho</th>
-                      <th className="p-3 text-right">Đơn giá</th>
-                      <th className="p-3">Ghi chú</th>
+                      <th className="p-3 text-right whitespace-nowrap">Đơn giá</th>
+                      <th className="p-3 min-w-[150px]">Ghi chú</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 text-sm">
@@ -676,24 +676,24 @@ export default function WarehouseDashboard() {
                       return (
                         <tr key={item.id} className="hover:bg-gray-50/60 transition-colors">
                           <td className="p-3 text-center text-xs font-bold text-gray-400">{i + 1}</td>
-                          <td className="p-3 text-xs">
+                          <td className="p-3 text-xs whitespace-nowrap">
                             <span className="font-semibold text-gray-700">{dateStr}</span>
                             <span className="text-gray-400 ml-1 block text-[10px] sm:inline">{timeStr}</span>
                           </td>
-                          <td className="p-3">
+                          <td className="p-3 text-center whitespace-nowrap">
                             <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${isImport ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
                               {isImport ? 'NHẬP' : 'XUẤT'}
                             </span>
                           </td>
-                          <td className="p-3">
+                          <td className="p-3 whitespace-nowrap">
                             <span className="font-mono text-[11px] font-bold text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded">
                               {isImport ? `GRPO • ${item.voucher}` : `IT • ${item.voucher}`}
                             </span>
                           </td>
-                          <td className="p-3">
+                          <td className="p-3 whitespace-nowrap">
                             <span className="font-mono text-xs font-bold text-gray-900">{item.ma_sp}</span>
                           </td>
-                          <td className="p-3">
+                          <td className="p-3 min-w-[200px]">
                             <span className="font-semibold text-gray-700 text-[13px]">{item.ten_sp}</span>
                           </td>
                           <td className="p-3 text-center text-xs text-gray-500 font-medium">cái</td>
@@ -710,7 +710,7 @@ export default function WarehouseDashboard() {
                               </span>
                             )}
                           </td>
-                          <td className="p-3">
+                          <td className="p-3 whitespace-nowrap">
                             <span className="text-xs font-semibold text-gray-600">
                               {item.ma_dam || '-'}
                             </span>
@@ -723,7 +723,7 @@ export default function WarehouseDashboard() {
                           <td className="p-3 text-right text-xs text-gray-400 italic whitespace-nowrap">
                             Chờ cập nhật
                           </td>
-                          <td className="p-3">
+                          <td className="p-3 min-w-[150px]">
                             <span className="text-[11px] text-gray-500 line-clamp-2" title={item.ghi_chu}>
                               {item.ghi_chu || ''}
                             </span>
