@@ -90,11 +90,19 @@ export async function GET(request: Request) {
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    const [importRes, exportItemsRes, exportHeaderRes] = await Promise.all([
+    const [importRes, exportItemsRes, exportHeaderRes, homRes] = await Promise.all([
       importQuery,
       exportItemsQuery,
       exportHeaderQuery,
+      supabase.from('dim_hom').select('ma_hom, ten_hom_the_hien')
     ]);
+
+    const homMap = new Map<string, string>();
+    if (homRes.data) {
+      homRes.data.forEach((h: any) => {
+        if (h.ten_hom_the_hien) homMap.set(h.ma_hom, h.ten_hom_the_hien);
+      });
+    }
 
     let allItems: any[] = [];
 
@@ -108,7 +116,7 @@ export async function GET(request: Request) {
           created_at: item.created_at,
           voucher: item.fact_nhap_hang?.ma_phieu_nhap || 'GRPO',
           ma_sp: item.ma_hom,
-          ten_sp: item.ten_hom,
+          ten_sp: homMap.get(item.ma_hom) || item.ten_hom,
           so_luong: item.so_luong || 0,
           ma_dam: '', // Nhập không có mã đám
           ghi_chu: item.ghi_chu || '',
@@ -150,7 +158,7 @@ export async function GET(request: Request) {
           created_at: item.created_at,
           voucher: item.fact_xuat_hang?.ma_phieu_xuat || 'IT',
           ma_sp: item.ma_hom,
-          ten_sp: item.ten_hom,
+          ten_sp: homMap.get(item.ma_hom) || item.ten_hom,
           so_luong: item.so_luong || 0,
           ma_dam: ma_dam,
           ghi_chu: item.ghi_chu || '',
@@ -193,7 +201,7 @@ export async function GET(request: Request) {
               created_at: header.created_at,
               voucher: header.ma_phieu_xuat || 'IT',
               ma_sp: item.ma_hom,
-              ten_sp: item.ten_hom,
+              ten_sp: homMap.get(item.ma_hom) || item.ten_hom,
               so_luong: item.so_luong || 0,
               ma_dam,
               ghi_chu: header.ghi_chu || '',
