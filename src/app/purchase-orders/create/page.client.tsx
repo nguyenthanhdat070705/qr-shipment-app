@@ -217,7 +217,7 @@ export default function CreatePurchaseOrderPage() {
 
   const quickFiltered = (() => {
     const q = quickSearch.toLowerCase().trim();
-    if (!q) return homList.slice(0, 30);
+    if (!q) return homList;
     return homList.filter(h =>
       h.ma_hom.toLowerCase().includes(q) ||
       h.ten_hom.toLowerCase().includes(q)
