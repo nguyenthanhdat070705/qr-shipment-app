@@ -355,133 +355,128 @@ export default async function GRPrintPage({
             </div>
 
             {/* Logo */}
-            <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '24px' }}>
-              <div style={{ width: '180px', height: '40px', position: 'relative' }}>
+            <div className="flex items-center gap-10 mb-10 mt-4">
+              <div className="w-56 relative h-12 shrink-0">
                 <Image
                   src="/blackstones-logo.webp"
                   alt="Blackstones"
                   fill
-                  style={{ objectFit: 'contain', objectPosition: 'left', filter: 'invert(1) brightness(0.1)' }}
+                  className="object-contain object-left"
+                  style={{ filter: 'invert(1) brightness(0.1)' }}
                 />
               </div>
+              <h1 className="flex-1 text-center font-extrabold text-[#111] text-3xl tracking-wide">
+                PHIẾU THÔNG TIN SẢN PHẨM
+              </h1>
             </div>
 
-            <h1 style={{ textAlign: 'center', fontWeight: 800, fontSize: '22px', letterSpacing: '2px', color: '#111', marginBottom: '32px' }}>
-              PHIẾU THÔNG TIN SẢN PHẨM
-            </h1>
-
             {/* Main content + QR */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0', position: 'relative' }}>
-              {/* QR absolute right */}
-              <div style={{ position: 'absolute', right: 0, top: '50px', textAlign: 'center' }}>
-                <p style={{ fontSize: '10px', color: '#6b7280', fontStyle: 'italic', marginBottom: '6px' }}>Quét QR code xuất hàng</p>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(
-                    `${PROD_URL}/product/${encodeURIComponent(slide.product_code)}`
-                  )}&size=120x120`}
-                  width={120}
-                  height={120}
-                  alt="QR sản phẩm"
-                  style={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
-                />
+            <div className="flex-1 flex flex-col gap-5 relative">
+              <div className="absolute right-0 top-0 bg-white p-2 z-20">
+                <div className="flex flex-col items-center">
+                  <p className="text-sm text-gray-600 italic mb-2">Quét QR code xuất hàng</p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(
+                      `${PROD_URL}/product/${encodeURIComponent(slide.product_code)}`
+                    )}&size=150x150`}
+                    width={150}
+                    height={150}
+                    alt="QR sản phẩm"
+                  />
+                </div>
               </div>
 
-              {/* Top specs */}
-              <div style={{ display: 'grid', gridTemplateColumns: '170px 1fr', rowGap: '10px', columnGap: '16px', paddingRight: '160px', marginBottom: '20px' }}>
-                <div style={{ fontWeight: 800, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111' }}>Phân loại:</div>
-                <div style={{ fontWeight: 700, fontSize: '15px', textTransform: 'uppercase', color: '#111' }}>{slide.nhom_san_pham || 'AN TÁNG'}</div>
+              {/* Product identity */}
+              <div className="grid grid-cols-[180px_1fr] gap-y-4 gap-x-4 text-xl font-medium leading-relaxed pr-[200px] mt-4">
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg pt-1">Phân loại:</div>
+                <div className="text-gray-900 font-bold uppercase text-2xl leading-snug">{slide.nhom_san_pham || 'AN TÁNG'}</div>
 
-                <div style={{ fontWeight: 800, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111', alignSelf: 'start', paddingTop: '4px' }}>Mã sản phẩm:</div>
-                <div className="font-times" style={{ fontWeight: 900, fontSize: '26px', textTransform: 'uppercase', color: '#111' }}>{slide.product_code}</div>
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-2">Mã sản phẩm:</div>
+                <div className="text-gray-900 font-black uppercase text-4xl leading-tight font-times">{slide.product_code}</div>
 
-                <div style={{ fontWeight: 800, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111', alignSelf: 'start', paddingTop: '4px' }}>Tên sản phẩm:</div>
-                <div className="font-times" style={{ fontWeight: 900, fontSize: '22px', textTransform: 'uppercase', color: '#111', lineHeight: 1.1 }}>
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-1.5">Tên sản phẩm:</div>
+                <div className="text-gray-900 font-black uppercase text-[30px] leading-[1.2] font-times max-w-full break-words pr-2">
                   {slide.ten_hom?.split('-')[0]?.trim() || slide.ten_hom}
                 </div>
 
-                <div style={{ fontWeight: 800, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111', alignSelf: 'start', paddingTop: '4px' }}>Tên kỹ thuật:</div>
-                <div className="font-times" style={{ fontWeight: 900, fontSize: '22px', textTransform: 'uppercase', color: '#111', lineHeight: 1.1 }}>{slide.ten_hom}</div>
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-1.5">Tên kỹ thuật:</div>
+                <div className="text-gray-900 font-black uppercase text-[30px] leading-[1.2] font-times max-w-full break-words pr-2">{slide.ten_hom}</div>
               </div>
 
-              {/* Middle specs */}
-              <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '16px', marginBottom: '20px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '170px 1fr', rowGap: '12px', columnGap: '16px', paddingRight: '160px' }}>
-                  {[
-                    ['Kích thước kỹ thuật', parsed.size, false],
-                    ['Chất liệu', parsed.material, false],
-                    ['Màu sắc', parsed.color, false],
-                    ['Đặc điểm', parsed.feature, false],
-                    ['Nguồn gốc', '', true],
-                    ['Dày thành', parsed.thickness || '......', false],
-                  ].map(([label, val, dotted]) => (
-                    <>
-                      <div key={`l-${label}`} style={{ fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111' }}>{label as string}</div>
-                      <div key={`v-${label}`} style={{ fontSize: '14px', color: '#374151', borderBottom: dotted ? '1px dotted #9ca3af' : 'none' }}>{val as string}</div>
-                    </>
-                  ))}
-                  <div style={{ fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111', paddingTop: '8px' }}>Các thông số khác:</div>
-                  <div style={{ borderBottom: '1px dotted #9ca3af', paddingTop: '8px' }} />
+              {/* Specs table */}
+              <div className="pt-6 mt-10 border-t-[3px] border-gray-100 flex-1 flex flex-col">
+                <div className="grid grid-cols-[160px_max-content_130px_1fr] gap-y-6 gap-x-6 items-center">
+                  <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px]">Kích thước KT</div>
+                  <div className="text-gray-900 text-[16px] font-semibold whitespace-nowrap">{parsed.size}</div>
+                  
+                  <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px]">Chất liệu</div>
+                  <div className="text-gray-900 text-[16px] font-semibold">{parsed.material}</div>
+
+                  <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px]">Màu sắc</div>
+                  <div className="text-gray-900 text-[16px] font-semibold">{parsed.color}</div>
+                  
+                  <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px]">Đặc điểm</div>
+                  <div className="text-gray-900 text-[16px] font-semibold">{parsed.feature}</div>
+
+                  <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px]">Nguồn gốc</div>
+                  <div className="text-gray-900 text-[16px] font-semibold"> </div> 
+
+                  <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px]">Dày thành</div>
+                  <div className="text-gray-900 text-[16px] font-semibold">{parsed.thickness}</div>
+                </div>
+                <div className="flex gap-x-6 mt-7 items-end">
+                  <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px] whitespace-nowrap">Các thông số khác:</div>
+                  <div className="border-b-[3px] border-dotted border-gray-300 w-full mb-1 h-2"></div>
                 </div>
               </div>
 
               {/* Bottom specs — dates & warehouse */}
-              <div style={{ display: 'grid', gridTemplateColumns: '170px 1fr', rowGap: '20px', columnGap: '16px', paddingTop: '8px' }}>
-                <div style={{ fontWeight: 900, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111' }}>Ngày nhập kho</div>
-                <div style={{ fontWeight: 900, fontSize: '18px', color: '#111', borderBottom: '2px solid #111', width: '240px', paddingBottom: '2px', textAlign: 'center' }}>
+              <div className="grid grid-cols-[160px_1fr_180px_1fr] gap-y-12 gap-x-6 mt-8 w-full max-w-4xl self-center items-end">
+                <div className="font-bold text-[#111] uppercase tracking-widest text-[14px]">Ngày nhập kho</div>
+                <div className="text-[#111] font-bold text-lg text-center border-b-[3px] border-[#111] pb-1 w-48">
                   {receivedDate}
                 </div>
 
-                <div style={{ fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111' }}>Ngày xuất kho</div>
-                <div style={{ borderBottom: '1px dotted #9ca3af', width: '240px' }} />
+                <div className="font-bold text-gray-900 self-end uppercase tracking-widest text-[14px]">Ngày xuất kho</div>
+                <div className="border-b-[3px] border-dotted border-gray-400 w-48 pb-1 mb-[5px]"></div>
 
-                <div style={{ fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111', paddingTop: '4px' }}>Lưu kho tại</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '4px' }}>
-                  {(warehouses || []).map((k: { id: string; ten_kho: string }) => {
-                    // Auto-check warehouse matching the GR's receiving warehouse (kho nhận)
-                    const grWarehouseLower = (warehouseName || '').toLowerCase();
-                    const khoLower = k.ten_kho.toLowerCase();
-                    const isChecked =
-                      khoLower === grWarehouseLower ||
-                      khoLower.includes(grWarehouseLower) ||
-                      grWarehouseLower.includes(khoLower) ||
-                      k.id === gr.kho_id;
-                    return (
-                      <div key={k.id} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{
-                          width: '18px', height: '18px',
-                          border: '1.5px solid #111',
-                          borderRadius: '3px', flexShrink: 0,
-                          background: isChecked ? '#111' : 'transparent',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}>
-                          {isChecked && (
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                              <path d="M2 6L5 9L10 3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          )}
+                <div className="font-bold text-[#111] uppercase tracking-widest text-[14px] self-start mt-1">Lưu kho tại</div>
+                <div className="col-span-3 flex flex-col gap-4">
+                  <div className="flex items-center gap-8">
+                    {(warehouses || []).map((k: { id: string; ten_kho: string }) => {
+                      const grWarehouseLower = (warehouseName || '').toLowerCase();
+                      const khoLower = k.ten_kho.toLowerCase();
+                      const isChecked = 
+                        khoLower === grWarehouseLower ||
+                        khoLower.includes(grWarehouseLower) ||
+                        grWarehouseLower.includes(khoLower) ||
+                        k.id === gr.kho_id;
+                      
+                      return (
+                        <div key={k.id} className="flex items-center gap-3">
+                          <div className={`w-5 h-5 border-[2px] border-gray-800 rounded-sm flex items-center justify-center shrink-0 ${isChecked ? 'bg-black' : ''}`}>
+                            {isChecked && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7L5.5 10L11.5 4" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                          </div>
+                          <span className={`text-[15px] ${isChecked ? 'font-black text-gray-900' : 'font-bold text-gray-700'}`}>
+                            {k.ten_kho}
+                          </span>
                         </div>
-                        <span style={{
-                          fontSize: '13px',
-                          fontWeight: isChecked ? 900 : 600,
-                          color: isChecked ? '#111' : '#374151',
-                        }}>
-                          {k.ten_kho}
-                        </span>
-                      </div>
-                    );
-                  })}
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
+
             </div>
 
             {/* Footer */}
-            <div style={{ textAlign: 'center', marginTop: 'auto', paddingTop: '32px' }}>
-              <p style={{ fontWeight: 800, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px', color: '#111' }}>
+            <div className="mt-8 pt-4 pb-2 text-center flex flex-col items-center border-t-[3px] border-gray-100">
+              <h3 className="font-bold text-[#111] uppercase tracking-widest text-lg mb-1">
                 CÔNG TY CỔ PHẦN DỊCH VỤ TANG LỄ BLACKSTONES
-              </p>
-              <p style={{ fontSize: '12px', color: '#374151', fontWeight: 600, marginTop: '4px' }}>
-                0868 57 67 77 — www.blackstones.vn
+              </h3>
+              <p className="font-bold text-base text-gray-800">
+                0868 57 67 77 - www.blackstones.vn
               </p>
             </div>
           </div>
