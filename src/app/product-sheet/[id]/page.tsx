@@ -209,7 +209,7 @@ export default async function ProductSheetPage({
       />
 
       {/* ── Landscape Sheet Container ───────────────────────── */}
-      <div className="w-[210mm] min-h-[297mm] bg-white shadow-xl flex flex-col relative print:shadow-none print:w-full print:min-h-screen print:m-0 overflow-hidden box-border">
+      <div className="w-[210mm] min-h-[297mm] bg-white shadow-xl flex flex-col relative print:shadow-none print:w-full print:min-h-screen print:m-0 overflow-hidden box-border times-font-force">
         
         <div className="flex-1 p-[8mm] border-[6px] border-gray-100/50 print:border-6 print:border-gray-50 flex flex-col">
           
@@ -311,7 +311,9 @@ export default async function ProductSheetPage({
       <style
         dangerouslySetInnerHTML={{
           __html: `
-            @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+            .times-font-force, .times-font-force * {
+              font-family: 'Times New Roman', Times, serif !important;
+            }
             @media print {
               body, html {
                 background: white !important;
@@ -330,12 +332,6 @@ export default async function ProductSheetPage({
                 size: A4;
                 margin: 0;
               }
-              body *:not(.font-times) {
-                font-family: 'Montserrat', sans-serif !important;
-              }
-            }
-            .font-times {
-              font-family: 'Times New Roman', Times, serif !important;
             }
           `,
         }}
