@@ -8,9 +8,17 @@ import {
   ChevronRight, Package, CheckCircle2, AlertTriangle,
   Clock, User, MapPin, BarChart3, QrCode, TrendingUp,
   Boxes, ArrowUpRight, X,
+  ShoppingCart, ClipboardList, DollarSign
 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import { getWarehouseFilter } from '@/config/roles.config';
+
+function formatVND(value: number): string {
+  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)} tỷ`;
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)} triệu`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(0)}k`;
+  return value.toLocaleString('vi-VN');
+}
 
 /* ─────────────────────────────────────
    Kiểu dữ liệu
@@ -71,27 +79,24 @@ function StatCard({
   return (
     <div
       onClick={onClick}
-      className={`relative overflow-hidden rounded-2xl bg-white border border-gray-100 p-5 shadow-sm transition-all duration-300 group
+      className={`relative overflow-hidden rounded-2xl bg-white border border-gray-100 p-3 sm:p-4 shadow-sm transition-all duration-300 group flex flex-col justify-between h-full
         ${onClick ? 'cursor-pointer hover:shadow-xl hover:-translate-y-0.5 hover:border-gray-200' : 'hover:shadow-lg'}
       `}
     >
-      <div className={`absolute top-0 right-0 w-32 h-32 rounded-full opacity-[0.06] -translate-y-8 translate-x-8 ${gradient}`} />
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{label}</p>
-          <p className="text-3xl font-extrabold text-gray-900 leading-none">{value}</p>
-          {sub && <p className="text-xs text-gray-400 mt-1.5">{sub}</p>}
+      <div className={`absolute top-0 right-0 w-24 h-24 rounded-full opacity-[0.06] -translate-y-6 translate-x-6 ${gradient}`} />
+      <div className="flex items-start justify-between gap-1 w-full flex-col sm:flex-row">
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] sm:text-[11px] xl:text-[10px] 2xl:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 sm:mb-1.5 truncate" title={label}>{label}</p>
+          <p className="text-xl sm:text-2xl xl:text-xl 2xl:text-3xl font-extrabold text-gray-900 leading-none truncate">{value}</p>
+          {sub && <p className="text-[9px] sm:text-[10px] text-gray-400 mt-1 truncate">{sub}</p>}
           {badge && (
-            <div className={`inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full text-[11px] font-semibold ${badge.color}`}>
+            <div className={`inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${badge.color}`}>
               <TrendingUp size={10} />
               {badge.text}
             </div>
           )}
-          {onClick && (
-            <p className="text-[11px] text-gray-300 group-hover:text-gray-500 mt-1.5 transition-colors">Nhấn để xem chi tiết →</p>
-          )}
         </div>
-        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${gradient} text-white shadow-lg flex-shrink-0 group-hover:scale-110 transition-transform`}>
+        <div className={`flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl sm:rounded-2xl ${gradient} text-white shadow-sm flex-shrink-0 group-hover:scale-110 transition-transform`}>
           {icon}
         </div>
       </div>
@@ -309,21 +314,20 @@ function QuickAction({
   return (
     <button
       onClick={() => router.push(href)}
-      className="group flex items-center gap-4 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-200 text-left w-full relative"
+      className="group flex flex-col items-center justify-center gap-1.5 p-2 sm:p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-200 text-center relative w-full"
     >
-      <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${iconBg} flex-shrink-0 group-hover:scale-105 transition-transform`}>
+      <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconBg} flex-shrink-0 group-hover:-translate-y-0.5 transition-transform`}>
         <span className={color}>{icon}</span>
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold text-gray-900 truncate">{title}</p>
-        <p className="text-xs text-gray-400 truncate">{desc}</p>
+      <div className="w-full min-w-0">
+        <p className="text-[11px] font-bold text-gray-900 leading-tight">{title}</p>
+        <p className="text-[9px] text-gray-400 truncate mt-0.5 hidden xl:block">{desc}</p>
       </div>
       {badge !== undefined && badge > 0 && (
-        <span className="absolute top-3 right-10 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold">
+        <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-bold">
           {badge}
         </span>
       )}
-      <ChevronRight size={16} className="text-gray-300 group-hover:text-gray-500 group-hover:translate-x-1 transition-all flex-shrink-0" />
     </button>
   );
 }
@@ -362,6 +366,7 @@ export default function WarehouseDashboard() {
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [pendingDrawerOpen, setPendingDrawerOpen] = useState(false);
   const [outOfStockDrawerOpen, setOutOfStockDrawerOpen] = useState(false);
+  const [globalData, setGlobalData] = useState<any>(null);
 
   /* Live clock */
   useEffect(() => {
@@ -477,11 +482,22 @@ export default function WarehouseDashboard() {
     }
   }, [warehouseLabel]);
 
+  /* Fetch global stats */
+  const fetchGlobalStats = useCallback(async () => {
+    try {
+      const res = await fetch('/api/inventory/stats');
+      if (res.ok) {
+        setGlobalData(await res.json());
+      }
+    } catch {}
+  }, []);
+
   useEffect(() => {
     fetchHistory();
     fetchStats();
     fetchPendingPOs();
-  }, [fetchHistory, fetchStats, fetchPendingPOs]);
+    fetchGlobalStats();
+  }, [fetchHistory, fetchStats, fetchPendingPOs, fetchGlobalStats]);
 
   const pendingCount = pendingPOs.length;
   const todayExportCount = history.filter(h => {
@@ -499,6 +515,7 @@ export default function WarehouseDashboard() {
     fetchHistory();
     fetchStats();
     fetchPendingPOs();
+    fetchGlobalStats();
   };
 
   return (
@@ -573,20 +590,20 @@ export default function WarehouseDashboard() {
       </div>
 
       {/* ── KPI Cards ────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3 mb-6">
         <StatCard
           label="Xuất hôm nay"
           value={todayExportCount}
-          sub={`Tổng: ${historySummary.exportCount} phiếu xuất`}
-          icon={<Truck size={20} />}
+          sub={`Tổng: ${historySummary.exportCount} phiếu`}
+          icon={<Truck size={18} />}
           gradient="bg-gradient-to-br from-red-500 to-rose-600"
           onClick={() => router.push('/goods-issue')}
         />
         <StatCard
           label="Nhập hôm nay"
           value={todayImportCount}
-          sub={`Tổng: ${historySummary.importCount} phiếu nhập`}
-          icon={<PackageCheck size={20} />}
+          sub={`Tổng: ${historySummary.importCount} phiếu`}
+          icon={<PackageCheck size={18} />}
           gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
           onClick={() => router.push('/goods-receipt')}
         />
@@ -594,23 +611,47 @@ export default function WarehouseDashboard() {
           label="Tổng loại hòm"
           value={statsLoading ? '...' : stats.total}
           sub={`${stats.available} loại còn hàng`}
-          icon={<Boxes size={20} />}
+          icon={<Boxes size={18} />}
           gradient="bg-gradient-to-br from-sky-500 to-blue-600"
         />
         <StatCard
           label="Tổng lượng tồn"
           value={statsLoading ? '...' : stats.totalQuantity}
           sub="sản phẩm thực tế"
-          icon={<PackageCheck size={20} />}
+          icon={<PackageCheck size={18} />}
           gradient="bg-gradient-to-br from-indigo-500 to-violet-600"
         />
         <StatCard
           label="Hết hàng"
           value={statsLoading ? '...' : stats.outOfStock}
           sub="cần bổ sung"
-          icon={<AlertTriangle size={20} />}
+          icon={<AlertTriangle size={18} />}
           gradient="bg-gradient-to-br from-red-500 to-rose-600"
           onClick={() => setOutOfStockDrawerOpen(true)}
+        />
+        {/* ── Admin Dashboard Additions ────────────────────── */}
+        <StatCard
+          label="Đơn đặt hàng"
+          value={globalData?.adminStats?.totalPO ?? '...'}
+          sub={`${globalData?.adminStats?.pendingPO ?? 0} đang xử lý`}
+          icon={<ShoppingCart size={18} />}
+          gradient="bg-gradient-to-br from-violet-500 to-fuchsia-600"
+          onClick={() => router.push('/purchase-orders')}
+        />
+        <StatCard
+          label="Phiếu nhập kho"
+          value={globalData?.adminStats?.totalGR ?? '...'}
+          sub={`${globalData?.adminStats?.pendingGR ?? 0} đang chờ`}
+          icon={<ClipboardList size={18} />}
+          gradient="bg-gradient-to-br from-indigo-500 to-blue-600"
+          onClick={() => router.push('/goods-receipt')}
+        />
+        <StatCard
+          label="Giá trị tồn kho"
+          value={globalData ? `${formatVND(globalData.adminStats.totalInventoryValue)}` : '...'}
+          sub="Theo giá vốn"
+          icon={<DollarSign size={18} />}
+          gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
         />
       </div>
 
@@ -651,22 +692,22 @@ export default function WarehouseDashboard() {
               <div className="min-w-[900px]">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-extrabold text-gray-500 uppercase tracking-widest">
-                      <th className="p-3 text-center w-12">STT</th>
-                      <th className="p-3 whitespace-nowrap">Ngày nhập/xuất</th>
-                      <th className="p-3 text-center whitespace-nowrap">Loại</th>
-                      <th className="p-3 whitespace-nowrap">Số phiếu</th>
-                      <th className="p-3 whitespace-nowrap">Mã sản phẩm</th>
-                      <th className="p-3 min-w-[200px]">Tên sản phẩm</th>
-                      <th className="p-3 text-center whitespace-nowrap">ĐVT</th>
-                      <th className="p-3 text-right whitespace-nowrap">Số lượng</th>
-                      <th className="p-3 whitespace-nowrap">Mã đám</th>
-                      <th className="p-3 text-center whitespace-nowrap">Kho</th>
-                      <th className="p-3 text-right whitespace-nowrap">Đơn giá</th>
-                      <th className="p-3 min-w-[150px]">Ghi chú</th>
+                    <tr className="bg-gray-50 border-b border-gray-100 text-[10px] font-extrabold text-gray-500 uppercase tracking-widest">
+                      <th className="py-2 px-1 text-center w-10">STT</th>
+                      <th className="py-2 px-2 whitespace-nowrap">Ngày tháng</th>
+                      <th className="py-2 px-2 text-center whitespace-nowrap">Loại</th>
+                      <th className="py-2 px-2 whitespace-nowrap">Số phiếu</th>
+                      <th className="py-2 px-2 whitespace-nowrap">Mã hệ thống</th>
+                      <th className="py-2 px-2 min-w-[180px]">Sản phẩm</th>
+                      <th className="py-2 px-1 text-center whitespace-nowrap">ĐVT</th>
+                      <th className="py-2 px-2 text-right whitespace-nowrap">SL</th>
+                      <th className="py-2 px-2 whitespace-nowrap">Mã đám</th>
+                      <th className="py-2 px-2 text-center whitespace-nowrap">Kho</th>
+                      <th className="py-2 px-2 text-right whitespace-nowrap">Đơn giá</th>
+                      <th className="py-2 px-2 min-w-[150px]">Ghi chú</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50 text-sm">
+                  <tbody className="divide-y divide-gray-50 text-[13px]">
                     {history.map((item: any, i) => {
                       const createdAt = new Date(item.created_at);
                       const dateStr = createdAt.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -675,56 +716,56 @@ export default function WarehouseDashboard() {
 
                       return (
                         <tr key={item.id} className="hover:bg-gray-50/60 transition-colors">
-                          <td className="p-3 text-center text-xs font-bold text-gray-400">{i + 1}</td>
-                          <td className="p-3 text-xs whitespace-nowrap">
+                          <td className="py-1.5 px-1 text-center text-[10px] font-bold text-gray-400">{i + 1}</td>
+                          <td className="py-1.5 px-2 text-[11px] whitespace-nowrap">
                             <span className="font-semibold text-gray-700">{dateStr}</span>
-                            <span className="text-gray-400 ml-1 block text-[10px] sm:inline">{timeStr}</span>
+                            <span className="text-gray-400 ml-1 block text-[9px] sm:inline">{timeStr}</span>
                           </td>
-                          <td className="p-3 text-center whitespace-nowrap">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${isImport ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                          <td className="py-1.5 px-2 text-center whitespace-nowrap">
+                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold ${isImport ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
                               {isImport ? 'NHẬP' : 'XUẤT'}
                             </span>
                           </td>
-                          <td className="p-3 whitespace-nowrap">
-                            <span className="font-mono text-[11px] font-bold text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded">
+                          <td className="py-1.5 px-2 whitespace-nowrap">
+                            <span className="font-mono text-[10px] font-bold text-gray-700 bg-gray-100 px-1 py-0.5 rounded">
                               {isImport ? `GRPO • ${item.voucher}` : `IT • ${item.voucher}`}
                             </span>
                           </td>
-                          <td className="p-3 whitespace-nowrap">
-                            <span className="font-mono text-xs font-bold text-gray-900">{item.ma_sp}</span>
+                          <td className="py-1.5 px-2 whitespace-nowrap">
+                            <span className="font-mono text-[11px] font-bold text-gray-900">{item.ma_sp}</span>
                           </td>
-                          <td className="p-3 min-w-[200px]">
-                            <span className="font-semibold text-gray-700 text-[13px]">{item.ten_sp}</span>
+                          <td className="py-1.5 px-2 min-w-[180px]">
+                            <span className="font-semibold text-gray-700 text-xs">{item.ten_sp}</span>
                           </td>
-                          <td className="p-3 text-center text-xs text-gray-500 font-medium">cái</td>
-                          <td className="p-3 text-right font-extrabold text-[13px]">
+                          <td className="py-1.5 px-1 text-center text-[11px] text-gray-500 font-medium">cái</td>
+                          <td className="py-1.5 px-2 text-right font-extrabold text-xs">
                             {isImport ? (
                               <span className="text-emerald-600 inline-flex items-center gap-0.5">
-                                <ArrowRight size={12} className="-rotate-90 stroke-[3]" />
+                                <ArrowRight size={10} className="-rotate-90 stroke-[3]" />
                                 {item.so_luong}
                               </span>
                             ) : (
                               <span className="text-red-500 inline-flex items-center gap-0.5">
-                                <ArrowRight size={12} className="rotate-90 stroke-[3]" />
+                                <ArrowRight size={10} className="rotate-90 stroke-[3]" />
                                 {item.so_luong}
                               </span>
                             )}
                           </td>
-                          <td className="p-3 whitespace-nowrap">
-                            <span className="text-xs font-semibold text-gray-600">
+                          <td className="py-1.5 px-2 whitespace-nowrap">
+                            <span className="text-[11px] font-semibold text-gray-600">
                               {item.ma_dam || '-'}
                             </span>
                           </td>
-                          <td className="p-3 text-center whitespace-nowrap">
-                            <span className="inline-block text-[11px] font-bold text-sky-600 bg-sky-50 px-2 py-1 rounded-md">
+                          <td className="py-1.5 px-2 text-center whitespace-nowrap">
+                            <span className="inline-block text-[10px] font-bold text-sky-600 bg-sky-50 px-1.5 py-0.5 rounded">
                               {item.kho_name || 'Khác'}
                             </span>
                           </td>
-                          <td className="p-3 text-right text-xs text-gray-400 italic whitespace-nowrap">
-                            Chờ cập nhật
+                          <td className="py-1.5 px-2 text-right text-[11px] text-gray-400 italic whitespace-nowrap">
+                            Chờ
                           </td>
-                          <td className="p-3 min-w-[150px]">
-                            <span className="text-[11px] text-gray-500 line-clamp-2" title={item.ghi_chu}>
+                          <td className="py-1.5 px-2 min-w-[150px]">
+                            <span className="text-[10px] text-gray-500 line-clamp-1" title={item.ghi_chu}>
                               {item.ghi_chu || ''}
                             </span>
                           </td>
@@ -747,7 +788,7 @@ export default function WarehouseDashboard() {
               <div className="w-1 h-5 rounded-full bg-sky-500" />
               <h2 className="font-extrabold text-gray-900 text-base">Thao tác nhanh</h2>
             </div>
-            <div className="space-y-2.5">
+            <div className="grid grid-cols-3 gap-2">
               <QuickAction
                 icon={<Truck size={20} />}
                 title="Xuất hàng"
@@ -801,48 +842,53 @@ export default function WarehouseDashboard() {
           </div>
 
           {/* Inventory summary card */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <BarChart3 size={16} className="text-sky-500" />
-              <h3 className="font-extrabold text-gray-900 text-sm">Tình trạng tồn kho</h3>
-              <span className="ml-auto text-xs text-gray-300 font-medium">{warehouseLabel}</span>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div className="flex items-center gap-2 mb-6">
+              <BarChart3 size={18} className="text-sky-500" />
+              <h3 className="font-extrabold text-gray-900 text-base">Tình trạng tồn kho</h3>
+              <span className="ml-auto text-xs text-gray-400 font-medium">{warehouseLabel}</span>
             </div>
             {statsLoading ? (
               <div className="flex items-center justify-center py-6">
                 <span className="animate-spin h-5 w-5 border-2 border-sky-400 border-t-transparent rounded-full" />
               </div>
             ) : (
-              <div className="space-y-3">
-                {[
-                  { label: 'Còn hàng', count: stats.available, total: stats.total, color: 'bg-emerald-500' },
-                  { label: 'Hết hàng', count: stats.outOfStock, total: stats.total, color: 'bg-red-500' },
-                  { label: 'Tổng sản phẩm', count: stats.total, total: stats.total, color: 'bg-sky-500' },
-                ].map((item) => (
-                  <div key={item.label}>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-xs text-gray-500 font-medium">{item.label}</span>
-                      <span className="text-xs font-bold text-gray-700">{item.count}</span>
+              <div className="space-y-4">
+                {/* Highlight Physical Quantity */}
+                <div className="flex items-center justify-between p-4 rounded-xl bg-indigo-50 border border-indigo-100/50">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-indigo-100 text-indigo-600 rounded-lg">
+                      <PackageCheck size={20} />
                     </div>
-                    <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${item.color} transition-all duration-700`}
-                        style={{ width: item.total > 0 ? `${Math.round((item.count / item.total) * 100)}%` : '0%' }}
-                      />
+                    <div>
+                      <p className="text-sm font-bold text-gray-900">Tổng Lượng Tồn</p>
+                      <p className="text-[11px] text-gray-500">Số lượng sản phẩm thực tế</p>
                     </div>
                   </div>
-                ))}
+                  <span className="text-2xl font-black text-indigo-600">{stats.totalQuantity}</span>
+                </div>
 
-                <div className="pt-3 border-t border-gray-50 grid grid-cols-3 gap-2">
-                  {[
-                    { label: 'Tổng', value: stats.total, color: 'text-sky-600' },
-                    { label: 'Còn hàng', value: stats.available, color: 'text-emerald-600' },
-                    { label: 'Hết hàng', value: stats.outOfStock, color: 'text-red-600' },
-                  ].map((s) => (
-                    <div key={s.label} className="text-center">
-                      <p className={`text-xl font-extrabold ${s.color}`}>{s.value}</p>
-                      <p className="text-[10px] text-gray-400 font-medium leading-tight">{s.label}</p>
+                {/* SKU Breakdown Grid */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100/50">
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-tight mb-1">Loại có sẵn (Tồn)</p>
+                    <div className="flex items-end gap-1.5">
+                      <span className="text-xl font-black text-emerald-600">{stats.available}</span>
+                      <span className="text-xs font-semibold text-gray-400 mb-1">Mặt hàng</span>
                     </div>
-                  ))}
+                  </div>
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-100/50 cursor-pointer hover:bg-red-100 transition-colors" onClick={() => setOutOfStockDrawerOpen(true)}>
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-tight mb-1">Loại đang hết</p>
+                    <div className="flex items-end gap-1.5">
+                      <span className="text-xl font-black text-red-600">{stats.outOfStock}</span>
+                      <span className="text-xs font-semibold text-gray-400 mb-1">Mặt hàng</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-gray-50 flex items-center justify-between">
+                  <p className="text-xs font-semibold text-gray-400">Danh mục phân loại (Đang bán)</p>
+                  <span className="text-sm font-bold text-gray-900">{stats.total} Mặt hàng</span>
                 </div>
               </div>
             )}
@@ -854,6 +900,48 @@ export default function WarehouseDashboard() {
               Xem chi tiết kho <ChevronRight size={13} />
             </button>
           </div>
+
+          {/* Phân bổ tồn kho theo kho */}
+          {globalData?.byWarehouse && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Warehouse size={16} className="text-violet-500" />
+                <h3 className="font-extrabold text-gray-900 text-sm">Tồn kho theo kho</h3>
+              </div>
+              <div className="flex flex-col gap-3">
+                {globalData.byWarehouse.map((w: any, i: number) => {
+                  const pct = w.total > 0 ? Math.round((w.available / w.total) * 100) : 0;
+                  const colors = ['bg-sky-500', 'bg-emerald-500', 'bg-violet-500', 'bg-amber-500', 'bg-pink-500'];
+                  const textColors = ['text-sky-600', 'text-emerald-600', 'text-violet-600', 'text-amber-600', 'text-pink-600'];
+                  const bgColors = ['bg-sky-50', 'bg-emerald-50', 'bg-violet-50', 'bg-amber-50', 'bg-pink-50'];
+                  return (
+                    <div key={w.name} className={`p-3.5 rounded-xl ${bgColors[i % colors.length]}`}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <MapPin size={12} className={textColors[i % textColors.length]} />
+                          <span className="text-xs font-bold text-gray-800 truncate">{w.name}</span>
+                        </div>
+                        <span className={`text-[11px] font-extrabold ${textColors[i % textColors.length]}`}>{w.total} SP</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] text-gray-500 mb-1.5">
+                        <span className="flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                          Còn: <strong className="text-gray-700">{w.available}</strong>
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block" />
+                          Hết: <strong className="text-gray-700">{w.outOfStock}</strong>
+                        </span>
+                      </div>
+                      <div className="w-full bg-white/60 rounded-full h-1">
+                        <div className={`h-1.5 rounded-full ${colors[i % colors.length]} transition-all`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Info card */}
           <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100 p-5">

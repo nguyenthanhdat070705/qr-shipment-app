@@ -11,7 +11,7 @@ export async function GET(req: Request) {
 
     const [inventoryRes, homRes, khoRes] = await Promise.all([
       supabase.from('fact_inventory').select('*'),
-      supabase.from('dim_hom').select('id, ma_hom, ten_hom, gia_ban_1'),
+      supabase.from('dim_hom').select('id, ma_hom, ten_hom, gia_ban_1').eq('is_active', true),
       supabase.from('dim_kho').select('id, ma_kho, ten_kho'),
     ]);
 
