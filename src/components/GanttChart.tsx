@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   ChevronLeft, ChevronRight, ZoomIn, ZoomOut,
-  Calendar, Maximize2, Filter, Layers,
+  Calendar, Maximize2, Filter, Layers, Search
 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════
@@ -96,6 +96,7 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
   const [tooltipInfo, setTooltipInfo] = useState<{ x: number; y: number; task: GanttTask } | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterMonthStr, setFilterMonthStr] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const today = useMemo(() => startOfDay(new Date()), []);
 
@@ -142,12 +143,21 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
     if (filterCategory !== 'all') {
       filtered = filtered.filter(t => t.category === filterCategory);
     }
+    // Lọc theo từ khóa tìm kiếm
+    if (searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(t => 
+        t.name.toLowerCase().includes(q) || 
+        (t.subLabel && t.subLabel.toLowerCase().includes(q)) ||
+        (t.id && t.id.toLowerCase().includes(q))
+      );
+    }
     // Chỉ hiển thị các task nằm trong tháng hiện tại
     filtered = filtered.filter(t => {
       return !(t.endDate < viewStart || t.startDate > viewEnd);
     });
     return filtered;
-  }, [tasks, filterCategory, viewStart, viewEnd]);
+  }, [tasks, filterCategory, searchQuery, viewStart, viewEnd]);
 
 
 
@@ -279,6 +289,18 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Thanh tìm kiếm */}
+          <div className="relative group mr-2 hidden sm:block">
+            <input
+              type="text"
+              placeholder="Tìm kiếm nhiệm vụ, mã đám..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-56 pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-200 hover:border-slate-300 transition-all shadow-sm"
+            />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors pointer-events-none" />
+          </div>
+
           {/* Month filter */}
           {availableMonths.length > 0 && (
             <div className="relative">

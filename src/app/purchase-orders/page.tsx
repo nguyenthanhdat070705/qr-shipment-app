@@ -59,6 +59,28 @@ export default function PurchaseOrdersPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const handleCancelOrder = async (id: string, code: string) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn hủy đơn hàng ${code} không?`)) return;
+    
+    try {
+      const res = await fetch(`/api/purchase-orders/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'cancelled' }),
+      });
+      
+      if (!res.ok) {
+        alert("Lỗi khi hủy đơn hàng");
+        return;
+      }
+      
+      setOrders(orders.map(o => o.id === id ? { ...o, status: 'cancelled' } : o));
+    } catch (e) {
+      console.error(e);
+      alert("Đã xảy ra lỗi hệ thống khi hủy");
+    }
+  };
+
   const total          = orders.length;
   const confirmedCount = orders.filter((o) => o.status === 'confirmed').length;
   const receivedCount  = orders.filter((o) => o.status === 'received').length;
@@ -147,13 +169,25 @@ export default function PurchaseOrdersPage() {
       key: 'actions',
       label: 'Hành động',
       render: (row: PurchaseOrder) => (
-        <button
-          onClick={(e) => { e.stopPropagation(); router.push(`/purchase-orders/${row.id}`); }}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-violet-100 text-gray-600 hover:text-violet-700 text-xs font-semibold transition-colors"
-        >
-          <Eye size={13} />
-          Chi tiết
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={(e) => { e.stopPropagation(); router.push(`/purchase-orders/${row.id}`); }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-violet-100 text-gray-600 hover:text-violet-700 text-xs font-semibold transition-colors"
+          >
+            <Eye size={13} />
+            Chi tiết
+          </button>
+          
+          {(row.status === 'confirmed') && (
+            <button
+              onClick={(e) => { e.stopPropagation(); handleCancelOrder(row.id, row.po_code); }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 text-xs font-semibold transition-colors"
+            >
+              <XCircle size={13} />
+              Hủy
+            </button>
+          )}
+        </div>
       ),
     },
   ];

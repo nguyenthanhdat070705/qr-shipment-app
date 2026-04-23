@@ -349,6 +349,30 @@ export default function AdminDashboard() {
 
   const timeStr = lastRefresh.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
+  // --- BẢO TRÌ HỆ THỐNG ---
+  const isMaintenanceMode = true;
+  if (isMaintenanceMode) {
+    return (
+      <PageLayout title="Admin Dashboard" icon={<Shield size={15} className="text-red-500" />}>
+        <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4">
+          <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mb-6 border-4 border-red-50">
+            <Shield size={48} className="text-red-600" />
+          </div>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">Khu vực đang bảo trì</h1>
+          <p className="text-gray-500 max-w-md mx-auto text-lg leading-relaxed">
+            Tính năng Admin Dashboard hiện đang tạm khóa để thực hiện nâng cấp hệ thống. Vui lòng quay lại sau!
+          </p>
+          <button 
+            onClick={() => window.history.back()} 
+            className="mt-8 px-8 py-3 bg-gray-900 text-white rounded-xl font-bold shadow-lg shadow-gray-200 hover:bg-gray-800 transition-all hover:-translate-y-1"
+          >
+            Quay lại trang trước
+          </button>
+        </div>
+      </PageLayout>
+    );
+  }
+
   return (
     <PageLayout title="Admin Dashboard" icon={<Shield size={15} className="text-red-500" />}>
       {/* Out-of-stock drawer */}
