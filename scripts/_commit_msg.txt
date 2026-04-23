@@ -1,0 +1,29 @@
+feat: 1Office CRM sync and dashboard
+
+New Features:
+- /crm page: Full CRM dashboard with 4 tabs (Customers, Leads, Tasks, Sync Log)
+- Real-time auto-polling every 30s with live status indicator
+- Full Sync + Delta Sync buttons with progress feedback
+- Search and filter for all data types
+- Pagination for large datasets
+
+API Routes:
+- GET /api/1office-crm?type=customers|leads|tasks|stats|sync_logs
+- POST /api/1office-crm: Trigger full or delta sync
+- GET /api/cron/sync-1office-crm: Hourly cron job
+
+Database:
+- sql/migration_oneoffice_crm.sql: 3 new tables (customers, leads, tasks) + sync_log
+
+1Office Client:
+- Added fetchCustomers, fetchLeads, fetchCRMTasks, fetchActivities, fetchUsers
+- Added fetchCustomersSince, fetchLeadsSince for delta sync
+
+Sidebar:
+- 1Office CRM link added to Bán Hàng section (admin + sales)
+- Zalo Automation link added to same section
+
+Vercel:
+- Added sync-1office-crm cron (every hour: 0 * * * *)
+
+SETUP: Run sql/migration_oneoffice_crm.sql in Supabase, then click Full Sync

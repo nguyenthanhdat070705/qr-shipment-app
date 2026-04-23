@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 
@@ -12,12 +15,10 @@ export async function GET() {
       .order('created_at', { ascending: false });
 
     if (!dimError && dimData && dimData.length > 0) {
-      // Lấy thêm chi tiết từ fact_dam theo ma_dam
-      const maDamList = dimData.map((r: any) => r.ma_dam).filter(Boolean);
+      // Lấy tất cả chi tiết từ fact_dam
       const { data: factData } = await supabase
         .from('fact_dam')
-        .select('*')
-        .in('ma_dam', maDamList);
+        .select('*');
 
       // Merge: dùng fact_dam để bổ sung các field chi tiết vào dim_dam
       const factMap: Record<string, any> = {};

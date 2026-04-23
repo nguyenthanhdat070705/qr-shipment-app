@@ -1,0 +1,30 @@
+ALTER TABLE IF EXISTS dim_hom
+  DROP COLUMN IF EXISTS mo_ta,
+  DROP COLUMN IF EXISTS "NCC";
+
+-- Đổi tên các cột hiện có:
+ALTER TABLE IF EXISTS dim_hom
+  RENAME COLUMN muc_dich_su_dung TO "Muc_dich";
+
+ALTER TABLE IF EXISTS dim_hom
+  RENAME COLUMN do_day_thanh TO "Thanh";
+
+ALTER TABLE IF EXISTS dim_hom
+  RENAME COLUMN tinh_chat TO dac_diem;
+
+-- Thêm các cột mới:
+ALTER TABLE IF EXISTS dim_hom
+  ADD COLUMN IF NOT EXISTS ten_mkt TEXT,
+  ADD COLUMN IF NOT EXISTS ten_hom_the_hien TEXT,
+  ADD COLUMN IF NOT EXISTS ten_ky_thuat TEXT,
+  ADD COLUMN IF NOT EXISTS ten_chuan_hoa TEXT,
+  ADD COLUMN IF NOT EXISTS loai_go TEXT,
+  ADD COLUMN IF NOT EXISTS "Goi_dich_vu" TEXT,
+  ADD COLUMN IF NOT EXISTS "Mau_sac" TEXT,
+  ADD COLUMN IF NOT EXISTS nhom_hang_hoa TEXT,
+  ADD COLUMN IF NOT EXISTS loai_san_pham TEXT,
+  ADD COLUMN IF NOT EXISTS "Ton_giao" TEXT,
+  ADD COLUMN IF NOT EXISTS nap TEXT,
+  ADD COLUMN IF NOT EXISTS "Nguon_goc" TEXT,
+  ADD COLUMN IF NOT EXISTS "Liet" TEXT,
+  ADD COLUMN IF NOT EXISTS be_mat TEXT;

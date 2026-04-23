@@ -4,14 +4,19 @@ import { useState, useEffect, useMemo } from 'react';
 import { LayoutDashboard, Calendar, AlertCircle, TrendingUp, BookOpen, Clock, Users, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import PageLayout from '@/components/PageLayout';
+import GanttChart from '@/components/GanttChart';
 
-// Hàm helper để gộp ngày
 function parseDateStr(dateStr: string) {
   if (!dateStr || dateStr === '—') return null;
   // Giả sử định dạng là dd/mm/yyyy
-  const parts = dateStr.split('/');
+  const parts = dateStr.toString().trim().split('/');
   if (parts.length === 3) {
-    return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+    const d = Number(parts[0]?.trim());
+    const m = Number(parts[1]?.trim()) - 1;
+    const y = Number(parts[2]?.trim());
+    if (!isNaN(d) && !isNaN(m) && !isNaN(y)) {
+      return new Date(y, m, d);
+    }
   }
   return null;
 }
@@ -82,7 +87,7 @@ export default function FuneralsDashboardPage() {
           statusBadge,
         };
       })
-      .filter(f => f.startDate && f.endDate)
+      .filter(f => f.startDate && f.endDate && !isNaN(f.startDate.getTime()) && !isNaN(f.endDate.getTime()))
       // Sắp xếp: Đang diễn ra trước, sau đó là chờ, rồi mới hoàn thành
       .sort((a, b) => {
          if (a.status !== b.status) {
@@ -176,121 +181,27 @@ export default function FuneralsDashboardPage() {
       </div>
 
       {/* ── Gantt Chart Section ── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-200/50 flex flex-col mb-10 overflow-hidden">
-         <div className="p-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
-           <h2 className="text-base font-black text-gray-900 flex items-center gap-2">
-             <LayoutDashboard size={18} className="text-indigo-600" />
-             Biểu Đồ Tiến Độ (Gantt Chart)
-           </h2>
-           <span className="text-[11px] font-semibold text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200">
-             Scroll ngang để xem chi tiết timeline
-           </span>
+      {loading ? (
+         <div className="py-20 text-center text-gray-400 text-sm font-medium">Đang tải biểu đồ...</div>
+      ) : ganttData.length === 0 ? (
+         <div className="py-20 text-center text-gray-400 text-sm font-medium">Không đủ dữ liệu Khâm Liệm và Di Quan để vẽ biểu đồ.</div>
+      ) : (
+         <div className="mb-10">
+           <GanttChart
+             title="Biểu Đồ Tiến Độ (Gantt Chart)"
+             tasks={ganttData.map(d => ({
+               id: d.id || d.ma_dam,
+               name: d.nguoi_mat || '(Chưa cập nhật)',
+               subLabel: `Mã: ${d.ma_dam} - ${d.status} (${d.progress}%)`,
+               startDate: d.startDate,
+               endDate: d.endDate,
+               progress: d.progress,
+               color: d.status === 'Hoàn thành' ? '#10b981' : d.status === 'Chờ thực hiện' ? '#f59e0b' : '#6366f1',
+               category: d.status
+             }))}
+           />
          </div>
-         
-         <div className="p-0 overflow-x-auto">
-            {loading ? (
-               <div className="py-20 text-center text-gray-400 text-sm font-medium">Đang tải biểu đồ...</div>
-            ) : timelineDays.length === 0 ? (
-               <div className="py-20 text-center text-gray-400 text-sm font-medium">Không đủ dữ liệu Khâm Liệm và Di Quan để vẽ biểu đồ.</div>
-            ) : (
-               <div className="min-w-[1200px]" style={{ width: `max(100%, ${timelineDays.length * 60 + 350}px)` }}>
-                  
-                  {/* Header Row */}
-                  <div className="flex border-b border-gray-200 bg-white sticky top-0 z-10">
-                    <div className="w-[350px] flex-shrink-0 flex text-xs font-black text-gray-500 uppercase bg-white select-none">
-                       <div className="w-[120px] p-3 border-r border-gray-200">Trạng thái</div>
-                       <div className="w-[60px] p-3 border-r border-gray-200 text-center">Tiến độ</div>
-                       <div className="flex-1 p-3 border-r border-gray-200">Tên Đám / Mã</div>
-                    </div>
-                    <div className="flex-1 flex overflow-hidden">
-                      {timelineDays.map((d, i) => {
-                         const isToday = d.toDateString() === new Date().toDateString();
-                         const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-                         return (
-                           <div key={i} className={`flex-1 min-w-[60px] border-r border-gray-100 flex flex-col text-center ${isToday ? 'bg-indigo-50/50' : ''} ${isWeekend ? 'bg-gray-50/50' : ''}`}>
-                             <div className={`p-1.5 text-[10px] font-bold border-b border-gray-100 uppercase ${isToday ? 'text-indigo-600' : 'text-gray-400'}`}>
-                               Th {d.getMonth() + 1}
-                             </div>
-                             <div className={`p-1.5 flex flex-col items-center justify-center ${isToday ? 'text-indigo-700' : 'text-gray-600'}`}>
-                               <span className={`text-[10px] font-semibold mb-0.5 ${isToday ? 'text-indigo-500' : 'text-gray-400'}`}>T{d.getDay() === 0 ? 'CN' : d.getDay() + 1}</span>
-                               <span className={`text-sm font-black w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-indigo-600 text-white shadow-sm' : ''}`}>{d.getDate()}</span>
-                             </div>
-                           </div>
-                         );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Body Rows */}
-                  <div className="flex flex-col relative">
-                     {/* Cột dọc báo Hôm nay */}
-                     <div className="absolute top-0 bottom-0 pointer-events-none z-0 flex" style={{ left: '350px', right: 0 }}>
-                        {timelineDays.map((d, i) => {
-                           const isToday = d.toDateString() === new Date().toDateString();
-                           return (
-                             <div key={i} className={`flex-1 min-w-[60px] border-r ${isToday ? 'border-indigo-200/50 bg-indigo-50/30' : 'border-gray-50'}`} />
-                           );
-                        })}
-                     </div>
-
-                     {ganttData.map((row, rIndex) => {
-                       // Tính toán độ dài & vị trí bar
-                       const startT = row.startDate!.getTime();
-                       const endT = row.endDate!.getTime();
-                       const minT = timelineDays[0].getTime();
-                       const maxT = timelineDays[timelineDays.length - 1].getTime();
-                       const MS_PER_DAY = 1000 * 60 * 60 * 24;
-                       
-                       const dayWidthPercent = 100 / timelineDays.length;
-                       
-                       // Tính vị trí left = bao nhiêu ngày từ minT
-                       const leftDays = (startT - minT) / MS_PER_DAY;
-                       const durationDays = (endT - startT) / MS_PER_DAY || 1; // Tối thiểu 1 ngày
-                       
-                       const leftPct = Math.max(0, leftDays * dayWidthPercent);
-                       const widthPct = Math.min(100 - leftPct, durationDays * dayWidthPercent);
-
-                       return (
-                         <div key={row.id || Math.random()} className="flex border-b border-gray-100 hover:bg-gray-50/50 transition-colors z-10 relative">
-                           
-                           {/* Side Columns */}
-                           <div className="w-[350px] flex-shrink-0 flex items-center bg-white text-xs z-20">
-                             <div className="w-[120px] p-3 border-r border-gray-200 h-full flex items-center">
-                               <span className={`px-2 py-1 rounded inline-block text-[10px] font-bold ${row.statusBadge}`}>
-                                 {row.status}
-                               </span>
-                             </div>
-                             <div className="w-[60px] p-3 border-r border-gray-200 h-full flex items-center justify-center">
-                               <div className="w-full flex items-center gap-1.5">
-                                 <span className="font-bold text-gray-700">{row.progress}%</span>
-                               </div>
-                             </div>
-                             <div className="flex-1 p-3 border-r border-gray-200 h-full flex flex-col justify-center gap-1">
-                               <span className="font-black text-gray-900 truncate max-w-[150px]" title={row.nguoi_mat}>{row.nguoi_mat || '(Chưa cập nhật)'}</span>
-                               <span className="font-mono text-[10px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded w-fit">{row.ma_dam}</span>
-                             </div>
-                           </div>
-
-                           {/* Timeline row */}
-                           <div className="flex-1 flex items-center relative min-h-[56px] py-2">
-                             {/* Thanh Gantt */}
-                             <div 
-                               className={`absolute h-7 rounded-sm shadow-sm overflow-hidden flex items-center ${row.colorClass} opacity-90 hover:opacity-100 transition-opacity cursor-pointer`}
-                               style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
-                               title={`${row.ngay_liem} đến ${row.ngay_di_quan}\nTiến độ: ${row.progress}%`}
-                             >
-                                <div className="absolute top-0 bottom-0 left-0 bg-white/20 select-none pointer-events-none" style={{ width: `${row.progress}%` }}></div>
-                             </div>
-                           </div>
-
-                         </div>
-                       );
-                     })}
-                  </div>
-               </div>
-            )}
-         </div>
-      </div>
+      )}
 
     </PageLayout>
   );
