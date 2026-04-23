@@ -355,58 +355,58 @@ export default async function GRPrintPage({
             </div>
 
             {/* Logo */}
-            <div className="flex items-center gap-10 mb-10 mt-4">
-              <div className="w-56 relative h-12 shrink-0">
+            <div className="flex flex-col items-center justify-center gap-6 mb-8 mt-2">
+              <div className="w-56 relative h-12">
                 <Image
                   src="/blackstones-logo.webp"
                   alt="Blackstones"
                   fill
-                  className="object-contain object-left"
+                  className="object-contain"
                   style={{ filter: 'invert(1) brightness(0.1)' }}
                 />
               </div>
-              <h1 className="flex-1 text-center font-extrabold text-[#111] text-3xl tracking-wide">
+              <h1 className="text-center font-extrabold text-[#111] text-[34px] tracking-widest whitespace-nowrap">
                 PHIẾU THÔNG TIN SẢN PHẨM
               </h1>
             </div>
 
             {/* Main content + QR */}
-            <div className="flex-1 flex flex-col gap-5 relative">
-              <div className="absolute right-0 top-0 bg-white p-2 z-20">
+            <div className="flex-1 flex flex-col gap-6 relative px-[10px]">
+              <div className="absolute right-0 -top-28 bg-white p-2 z-20">
                 <div className="flex flex-col items-center">
-                  <p className="text-sm text-gray-600 italic mb-2">Quét QR code xuất hàng</p>
+                  <p className="text-[12px] text-gray-500 italic mb-2">Quét QR code xuất hàng</p>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(
                       `${PROD_URL}/product/${encodeURIComponent(slide.product_code)}`
-                    )}&size=150x150`}
-                    width={150}
-                    height={150}
+                    )}&size=130x130`}
+                    width={130}
+                    height={130}
                     alt="QR sản phẩm"
                   />
                 </div>
               </div>
 
               {/* Product identity */}
-              <div className="grid grid-cols-[180px_1fr] gap-y-4 gap-x-4 text-xl font-medium leading-relaxed pr-[200px] mt-4">
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg pt-1">Phân loại:</div>
-                <div className="text-gray-900 font-bold uppercase text-2xl leading-snug">{slide.nhom_san_pham || 'AN TÁNG'}</div>
+              <div className="grid grid-cols-[160px_1fr] gap-y-4 gap-x-4 text-xl font-medium leading-relaxed pr-[160px] pl-2 mt-2">
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[16px] pt-1">Phân loại:</div>
+                <div className="text-gray-900 font-bold uppercase text-[22px] leading-snug">{slide.nhom_san_pham || 'AN TÁNG'}</div>
 
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-2">Mã sản phẩm:</div>
-                <div className="text-gray-900 font-black uppercase text-4xl leading-tight font-times">{slide.product_code}</div>
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[16px] self-start pt-2">Mã sản phẩm:</div>
+                <div className="text-gray-900 font-black uppercase text-[34px] leading-tight font-times">{slide.product_code}</div>
 
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-1.5">Tên sản phẩm:</div>
-                <div className="text-gray-900 font-black uppercase text-[30px] leading-[1.2] font-times max-w-full break-words pr-2">
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[16px] self-start pt-2">Tên sản phẩm:</div>
+                <div className="text-gray-900 font-black uppercase text-[28px] leading-[1.2] font-times max-w-full break-words pr-2">
                   {slide.ten_hom?.split('-')[0]?.trim() || slide.ten_hom}
                 </div>
 
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-1.5">Tên kỹ thuật:</div>
-                <div className="text-gray-900 font-black uppercase text-[30px] leading-[1.2] font-times max-w-full break-words pr-2">{slide.ten_hom}</div>
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-[16px] self-start pt-2">Tên kỹ thuật:</div>
+                <div className="text-gray-900 font-black uppercase text-[28px] leading-[1.2] font-times max-w-full break-words pr-2">{slide.ten_hom}</div>
               </div>
 
               {/* Specs table */}
-              <div className="pt-6 mt-10 border-t-[3px] border-gray-100 flex-1 flex flex-col">
-                <div className="grid grid-cols-[160px_max-content_130px_1fr] gap-y-6 gap-x-6 items-center">
+              <div className="pt-6 mt-6 border-t-[3px] border-gray-100 flex-1 flex flex-col pl-2">
+                <div className="grid grid-cols-[150px_max-content_120px_1fr] gap-y-6 gap-x-6 items-center">
                   <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px]">Kích thước KT</div>
                   <div className="text-gray-900 text-[16px] font-semibold whitespace-nowrap">{parsed.size}</div>
                   
@@ -425,25 +425,36 @@ export default async function GRPrintPage({
                   <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px]">Dày thành</div>
                   <div className="text-gray-900 text-[16px] font-semibold">{parsed.thickness}</div>
                 </div>
-                <div className="flex gap-x-6 mt-7 items-end">
+                <div className="grid grid-cols-[160px_1fr] gap-x-4 mt-8 items-end w-full">
                   <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px] whitespace-nowrap">Các thông số khác:</div>
-                  <div className="border-b-[3px] border-dotted border-gray-300 w-full mb-1 h-2"></div>
+                  <div className="border-b-[2px] border-dotted border-gray-300 w-full mb-[2px] h-2"></div>
                 </div>
               </div>
 
+              {/* Solid line below other specs */}
+              <div className="border-t-[2px] border-solid border-[#bbb] my-4 ml-2 mr-2"></div>
+
               {/* Bottom specs — dates & warehouse */}
-              <div className="grid grid-cols-[160px_1fr_180px_1fr] gap-y-12 gap-x-6 mt-8 w-full max-w-4xl self-center items-end">
-                <div className="font-bold text-[#111] uppercase tracking-widest text-[14px]">Ngày nhập kho</div>
-                <div className="text-[#111] font-bold text-lg text-center border-b-[3px] border-[#111] pb-1 w-48">
-                  {receivedDate}
+              <div className="flex flex-col gap-8 w-full pl-2 pr-2 mt-2">
+                {/* Dates row */}
+                <div className="flex items-end justify-between w-full">
+                  <div className="flex items-end gap-4 w-[45%]">
+                    <div className="font-bold text-[#111] uppercase tracking-widest text-[14px] shrink-0">Ngày nhập kho</div>
+                    <div className="text-[#111] font-bold text-[18px] text-center flex-1 pb-1">
+                      {receivedDate}
+                    </div>
+                  </div>
+
+                  <div className="flex items-end gap-4 w-[45%]">
+                    <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px] shrink-0">Ngày xuất kho</div>
+                    <div className="border-b-[2px] border-solid border-gray-500 flex-1 pb-1 mb-[5px]"></div>
+                  </div>
                 </div>
 
-                <div className="font-bold text-gray-900 self-end uppercase tracking-widest text-[14px]">Ngày xuất kho</div>
-                <div className="border-b-[3px] border-dotted border-gray-400 w-48 pb-1 mb-[5px]"></div>
-
-                <div className="font-bold text-[#111] uppercase tracking-widest text-[14px] self-start mt-1">Lưu kho tại</div>
-                <div className="col-span-3 flex flex-col gap-4">
-                  <div className="flex items-center gap-8">
+                {/* Warehouse row */}
+                <div className="flex items-center gap-6 w-full">
+                  <div className="font-bold text-[#111] uppercase tracking-widest text-[14px] shrink-0">Lưu kho tại</div>
+                  <div className="flex items-center gap-8 justify-around flex-1">
                     {(warehouses || []).map((k: { id: string; ten_kho: string }) => {
                       const grWarehouseLower = (warehouseName || '').toLowerCase();
                       const khoLower = k.ten_kho.toLowerCase();
@@ -455,10 +466,10 @@ export default async function GRPrintPage({
                       
                       return (
                         <div key={k.id} className="flex items-center gap-3">
-                          <div className={`w-5 h-5 border-[2px] border-gray-800 rounded-sm flex items-center justify-center shrink-0 ${isChecked ? 'bg-black' : ''}`}>
-                            {isChecked && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7L5.5 10L11.5 4" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                          <div className={`w-[22px] h-[22px] border-[2px] border-gray-800 rounded-sm flex items-center justify-center shrink-0 ${isChecked ? 'bg-black' : ''}`}>
+                            {isChecked && <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M2.5 7L5.5 10L11.5 4" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                           </div>
-                          <span className={`text-[15px] ${isChecked ? 'font-black text-gray-900' : 'font-bold text-gray-700'}`}>
+                          <span className={`text-[16px] ${isChecked ? 'font-black text-gray-900' : 'font-bold text-gray-700'}`}>
                             {k.ten_kho}
                           </span>
                         </div>
