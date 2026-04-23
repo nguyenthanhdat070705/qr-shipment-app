@@ -65,7 +65,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     .from('dim_hom')
     .select('ten_hom')
     .eq('ma_hom', decodeURIComponent(code))
-    .single();
+    .limit(1)
+    .maybeSingle();
 
   return {
     title: data ? `${data.ten_hom} — Kho hàng` : 'Chi tiết sản phẩm',
@@ -85,7 +86,8 @@ export default async function InventoryDetailPage({ params }: PageProps) {
     .from('dim_hom')
     .select('id, ma_hom, ten_hom, gia_ban, gia_ban_1, hinh_anh, NCC')
     .eq('ma_hom', productCode)
-    .single();
+    .limit(1)
+    .maybeSingle();
 
   if (homErr || !hom) notFound();
 

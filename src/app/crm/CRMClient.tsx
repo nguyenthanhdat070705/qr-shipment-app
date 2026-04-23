@@ -5,7 +5,7 @@ import {
   Users, Target, CheckSquare, RefreshCw, Building2,
   Search, Phone, Mail, MapPin, Calendar, TrendingUp,
   Clock, ChevronRight, AlertCircle, Wifi, WifiOff,
-  Activity, ArrowUpRight, Filter, Download
+  Activity, ArrowUpRight, Filter, Download, Package
 } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -56,10 +56,24 @@ interface Task {
   synced_at: string;
 }
 
+interface Product {
+  id: string;
+  oneoffice_id: number;
+  code: string;
+  name: string;
+  barcode: string;
+  category: string;
+  cost_price: number;
+  selling_price: number;
+  is_active: boolean;
+  updated_at: string;
+}
+
 interface Stats {
   customers: { total: number };
   leads: { total: number; total_value: number };
   tasks: { total: number; pending: number };
+  products?: { total: number };
   last_sync: { finished_at: string; status: string; duration_ms: number } | null;
 }
 
@@ -98,11 +112,12 @@ function priorityDot(priority: string) {
 
 // ── CRM Dashboard Client ──────────────────────────────────────────
 export default function CRMClient() {
-  const [activeTab, setActiveTab] = useState<'customers' | 'leads' | 'tasks' | 'sync'>('customers');
+  const [activeTab, setActiveTab] = useState<'customers' | 'leads' | 'tasks' | 'products' | 'sync'>('customers');
   const [stats, setStats] = useState<Stats | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
 
   const [search, setSearch] = useState('');
@@ -145,6 +160,7 @@ export default function CRMClient() {
         if (tab === 'customers') setCustomers(json.data || []);
         if (tab === 'leads') setLeads(json.data || []);
         if (tab === 'tasks') setTasks(json.data || []);
+        if (tab === 'products') setProducts(json.data || []);
         setLastRefresh(new Date());
       }
     } catch { /* ignore */ }
@@ -195,15 +211,15 @@ export default function CRMClient() {
       const res = await fetch('/api/1office-crm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode, tables: ['customers', 'leads', 'tasks'] }),
+        body: JSON.stringify({ mode, tables: ['customers', 'leads', 'tasks', 'products'] }),
       });
       const data = await res.json();
       if (data.error) {
         setSyncMsg(`❌ Lỗi: ${data.error}`);
       } else {
-        const { customers: c, leads: l, tasks: t } = data.results || {};
+        const { customers: c, leads: l, tasks: t, products: p } = data.results || {};
         setSyncMsg(
-          `✅ Sync xong! KH: ${c?.upserted || 0}, Leads: ${l?.upserted || 0}, Tasks: ${t?.upserted || 0} | ${data.duration_ms}ms`
+          `✅ Sync xong! KH: ${c?.upserted || 0}, Leads: ${l?.upserted || 0}, Tasks: ${t?.upserted || 0}, HH: ${p?.upserted || 0} | ${data.duration_ms}ms`
         );
         await fetchStats();
         await fetchData(activeTab, page, search, statusFilter);
@@ -220,6 +236,7 @@ export default function CRMClient() {
     { id: 'customers' as const, label: 'Khách Hàng', icon: Users, count: stats?.customers.total },
     { id: 'leads' as const, label: 'Cơ Hội', icon: Target, count: stats?.leads.total },
     { id: 'tasks' as const, label: 'Công Việc', icon: CheckSquare, count: stats?.tasks.total },
+    { id: 'products' as const, label: 'Hàng hóa', icon: Package, count: stats?.products?.total },
     { id: 'sync' as const, label: 'Sync Log', icon: Activity, count: undefined },
   ];
 
@@ -340,6 +357,7 @@ export default function CRMClient() {
               placeholder={
                 activeTab === 'customers' ? 'Tìm tên, SĐT, email, mã...' :
                 activeTab === 'leads' ? 'Tìm tên cơ hội, khách hàng...' :
+                activeTab === 'products' ? 'Tìm mã sản phẩm, tên, barcode...' :
                 'Tìm tên công việc...'
               }
               className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/30 focus:border-violet-400"
@@ -510,6 +528,51 @@ export default function CRMClient() {
                 Chưa có dữ liệu. Nhấn <strong>Full Sync</strong> để tải.
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── PRODUCTS TAB ──────────────────────────────────────── */}
+        {activeTab === 'products' && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-100">
+                <tr>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Sản phẩm</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Mã kho / Barcode</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Danh mục</th>
+                  <th className="text-right px-4 py-3 font-semibold text-gray-600">Giá bán</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map((p, i) => (
+                  <tr key={p.id} className={`border-b border-gray-50 hover:bg-gray-50/50 transition-colors ${i % 2 === 0 ? '' : 'bg-gray-50/30'}`}>
+                    <td className="px-4 py-3">
+                      <p className="font-semibold text-gray-800">{p.name}</p>
+                      <p className="text-xs text-gray-400 font-mono">{p.code}</p>
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 text-xs">
+                      {p.barcode || '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      {p.category ? (
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                          {p.category}
+                        </span>
+                      ) : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="font-bold text-emerald-600">{fmtCurrency(p.selling_price || 0)}đ</span>
+                    </td>
+                  </tr>
+                ))}
+                {products.length === 0 && !loading && (
+                  <tr><td colSpan={4} className="text-center py-16 text-gray-400">
+                    <Package size={32} className="mx-auto mb-2 opacity-30" />
+                    Chưa có dữ liệu. Nhấn <strong>Full Sync</strong> để tải.
+                  </td></tr>
+                )}
+              </tbody>
+            </table>
           </div>
         )}
 

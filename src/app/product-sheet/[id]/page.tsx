@@ -249,10 +249,10 @@ export default async function ProductSheetPage({
               <div className="text-gray-900 font-black uppercase text-4xl leading-tight font-times">{hom.ma_hom}</div>
 
               <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-1.5">Tên sản phẩm:</div>
-              <div className="text-gray-900 font-black uppercase text-[30px] leading-[1.2] font-times max-w-full break-words pr-2">{hom.ten_hom_the_hien || hom.ten_hom}</div>
+              <div className="text-gray-900 font-black uppercase text-[36px] leading-[1.1] font-times max-w-full break-words pr-2 pb-1">{hom.ten_hom_the_hien || hom.ten_hom}</div>
 
               <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-1.5">Tên kỹ thuật:</div>
-              <div className="text-gray-900 font-black uppercase text-[30px] leading-[1.2] font-times max-w-full break-words pr-2">{hom.ten_hom}</div>
+              <div className="text-gray-900 font-black uppercase text-[36px] leading-[1.1] font-times max-w-full break-words pr-2">{hom.ten_hom}</div>
             </div>
 
             {/* Specs table — large and spaced out */}

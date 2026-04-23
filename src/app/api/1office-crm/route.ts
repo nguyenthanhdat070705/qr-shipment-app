@@ -6,6 +6,7 @@ import {
   fetchCRMTasks,
   fetchCustomersSince,
   fetchLeadsSince,
+  fetchProducts,
 } from '@/lib/1office/client';
 
 export const maxDuration = 300;
@@ -107,6 +108,26 @@ function mapTask(item: any) {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapProduct(item: any) {
+  return {
+    oneoffice_id:   Number(item.ID) || null,
+    code:           item.code || String(item.ID),
+    name:           item.title || `SP #${item.ID}`,
+    barcode:        item.barcode || null,
+    unit:           item.unit_id || null,
+    cost_price:     parseNum(item.price_buy),
+    selling_price:  parseNum(item.price),
+    category:       item.product_category || null,
+    product_type:   item.product_type || null,
+    manage_type:    item.manage_type || null,
+    supplier_list:  item.supplier_list || null,
+    description:    item.desc || null,
+    is_active:      item.status === 'Hoạt động' || item.status === 'active' || item.status === 1,
+    updated_at:     new Date().toISOString(),
+  };
+}
+
 // ── Upsert helper ─────────────────────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function upsertBatch(supabase: any, table: string, rows: any[], conflictKey: string) {
@@ -187,11 +208,29 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ total: count, page, limit, data });
     }
 
+    if (type === 'products') {
+      let query = supabase
+        .from('products')
+        .select('*', { count: 'exact' });
+      
+      if (search) {
+        query = query.or(`name.ilike.%${search}%,code.ilike.%${search}%,barcode.ilike.%${search}%`);
+      }
+      
+      const { data, count, error } = await query
+        .order('updated_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+      
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ total: count, page, limit, data });
+    }
+
     if (type === 'stats') {
-      const [custRes, leadsRes, tasksRes, syncRes] = await Promise.all([
+      const [custRes, leadsRes, tasksRes, prodRes, syncRes] = await Promise.all([
         supabase.from('oneoffice_crm_customers').select('id, status', { count: 'exact' }),
         supabase.from('oneoffice_crm_leads').select('id, stage, value', { count: 'exact' }),
         supabase.from('oneoffice_crm_tasks').select('id, status', { count: 'exact' }),
+        supabase.from('products').select('id', { count: 'exact' }),
         supabase.from('oneoffice_sync_log')
           .select('*')
           .eq('sync_type', 'crm_full')
@@ -211,6 +250,9 @@ export async function GET(req: NextRequest) {
         tasks: {
           total: tasksRes.count || 0,
           pending: (tasksRes.data || []).filter((t: { status: string }) => t.status !== 'Hoàn thành').length,
+        },
+        products: {
+          total: prodRes.count || 0,
         },
         last_sync: lastSync,
       });
@@ -238,7 +280,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
     const mode  = body.mode  || 'full'; // 'full' | 'delta'
-    const tables = body.tables || ['customers', 'leads', 'tasks'];
+    const tables = body.tables || ['customers', 'leads', 'tasks', 'products'];
 
     const supabase = getSupabaseAdmin();
 
@@ -281,6 +323,14 @@ export async function POST(req: NextRequest) {
       const mapped = rawTasks.map(mapTask).filter(t => t.oneoffice_id !== null);
       const { upserted, errors } = await upsertBatch(supabase, 'oneoffice_crm_tasks', mapped, 'oneoffice_id');
       results.tasks = { fetched: rawTasks.length, upserted, errors };
+    }
+
+    // Sync Products
+    if (tables.includes('products')) {
+      const rawProducts = await fetchProducts();
+      const mapped = rawProducts.map(mapProduct).filter(t => t.oneoffice_id !== null);
+      const { upserted, errors } = await upsertBatch(supabase, 'products', mapped, 'oneoffice_id');
+      results.products = { fetched: rawProducts.length, upserted, errors };
     }
 
     const duration_ms = Date.now() - startTime;

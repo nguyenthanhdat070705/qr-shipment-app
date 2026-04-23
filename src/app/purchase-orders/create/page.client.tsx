@@ -25,6 +25,7 @@ interface DimHom {
   id: string;
   ma_hom: string;
   ten_hom: string;
+  ten_hom_the_hien: string | null;
   gia_ban_1: number | null;
   gia_ban: number | null;
   NCC: string | null; // FK → dim_ncc.id
@@ -76,7 +77,7 @@ export default function CreatePurchaseOrderPage() {
     Promise.all([
       fetch(`${supabaseUrl}/rest/v1/dim_ncc?select=*&order=ma_ncc`, { headers }).then(r => r.json()),
       fetch(`${supabaseUrl}/rest/v1/dim_kho?select=*&order=ma_kho`, { headers }).then(r => r.json()),
-      fetch(`${supabaseUrl}/rest/v1/dim_hom?select=id,ma_hom,ten_hom,gia_ban_1,gia_ban&is_active=eq.true&order=ma_hom`, { headers }).then(r => r.json()),
+      fetch(`${supabaseUrl}/rest/v1/dim_hom?select=id,ma_hom,ten_hom,ten_hom_the_hien,gia_ban_1,gia_ban&is_active=eq.true&order=ma_hom`, { headers }).then(r => r.json()),
     ]).then(([ncc, kho, hom]) => {
       setNccList(Array.isArray(ncc) ? ncc : []);
       setKhoList(Array.isArray(kho) ? kho : []);
@@ -111,13 +112,13 @@ export default function CreatePurchaseOrderPage() {
       updated[index] = {
         ...updated[index],
         product_code: hom.ma_hom,
-        product_name: hom.ten_hom,
-        unit_price: hom.gia_ban_1 || hom.gia_ban || 0,
+        product_name: hom.ten_hom_the_hien || hom.ten_hom,
+        unit_price: 0,
       };
       setItems(updated);
       // Cập nhật search text thành tên sản phẩm đã chọn + đóng dropdown
       const searches = [...itemSearches];
-      searches[index] = `${hom.ma_hom} — ${hom.ten_hom}`;
+      searches[index] = `${hom.ma_hom} — ${hom.ten_hom_the_hien || hom.ten_hom}`;
       setItemSearches(searches);
       const opens = [...openDropdowns];
       opens[index] = false;
@@ -220,7 +221,8 @@ export default function CreatePurchaseOrderPage() {
     if (!q) return homList;
     return homList.filter(h =>
       h.ma_hom.toLowerCase().includes(q) ||
-      h.ten_hom.toLowerCase().includes(q)
+      h.ten_hom.toLowerCase().includes(q) ||
+      (h.ten_hom_the_hien && h.ten_hom_the_hien.toLowerCase().includes(q))
     );
   })();
 
@@ -236,26 +238,26 @@ export default function CreatePurchaseOrderPage() {
       updated[emptyIdx] = {
         ...updated[emptyIdx],
         product_code: hom.ma_hom,
-        product_name: hom.ten_hom,
-        unit_price: hom.gia_ban_1 || hom.gia_ban || 0,
+        product_name: hom.ten_hom_the_hien || hom.ten_hom,
+        unit_price: 0,
       };
       setItems(updated);
       const searches = [...itemSearches];
-      searches[emptyIdx] = `${hom.ma_hom} — ${hom.ten_hom}`;
+      searches[emptyIdx] = `${hom.ma_hom} — ${hom.ten_hom_the_hien || hom.ten_hom}`;
       setItemSearches(searches);
     } else {
       setItems([...items, {
         product_code: hom.ma_hom,
-        product_name: hom.ten_hom,
+        product_name: hom.ten_hom_the_hien || hom.ten_hom,
         quantity: 1,
-        unit_price: hom.gia_ban_1 || hom.gia_ban || 0,
+        unit_price: 0,
         hang_ky_gui: false,
         note: '',
       }]);
-      setItemSearches([...itemSearches, `${hom.ma_hom} — ${hom.ten_hom}`]);
+      setItemSearches([...itemSearches, `${hom.ma_hom} — ${hom.ten_hom_the_hien || hom.ten_hom}`]);
       setOpenDropdowns([...openDropdowns, false]);
     }
-    setQuickSearch(`${hom.ma_hom} — ${hom.ten_hom}`);
+    setQuickSearch(`${hom.ma_hom} — ${hom.ten_hom_the_hien || hom.ten_hom}`);
     setQuickOpen(false);
   };
 
@@ -332,7 +334,7 @@ export default function CreatePurchaseOrderPage() {
                               className="w-full text-left px-3 py-2.5 text-sm hover:bg-purple-50 transition-colors flex items-center gap-3 group border-b border-gray-50 last:border-0"
                             >
                               <span className="font-mono text-xs font-bold text-purple-500 bg-purple-50 px-1.5 py-0.5 rounded flex-shrink-0">{h.ma_hom}</span>
-                              <span className="flex-1 truncate">{h.ten_hom}</span>
+                              <span className="flex-1 truncate">{h.ten_hom_the_hien || h.ten_hom}</span>
                             </button>
                           );
                         })
@@ -569,7 +571,8 @@ export default function CreatePurchaseOrderPage() {
                             const filtered = filteredProducts.filter(h =>
                               !q ||
                               h.ma_hom.toLowerCase().includes(q) ||
-                              h.ten_hom.toLowerCase().includes(q)
+                              h.ten_hom.toLowerCase().includes(q) ||
+                              (h.ten_hom_the_hien && h.ten_hom_the_hien.toLowerCase().includes(q))
                             );
                             if (filtered.length === 0) return (
                               <div className="px-3 py-4 text-sm text-gray-400 text-center">Không tìm thấy sản phẩm</div>
@@ -584,7 +587,7 @@ export default function CreatePurchaseOrderPage() {
                                 }`}
                               >
                                 <span className="font-mono text-xs font-bold text-purple-500 bg-purple-50 px-1.5 py-0.5 rounded flex-shrink-0">{h.ma_hom}</span>
-                                <span className="flex-1 truncate">{h.ten_hom}</span>
+                                <span className="flex-1 truncate">{h.ten_hom_the_hien || h.ten_hom}</span>
                                 {h.gia_ban_1 && <span className="text-xs text-gray-400 flex-shrink-0">{h.gia_ban_1.toLocaleString('vi-VN')}₫</span>}
                               </button>
                             ));
