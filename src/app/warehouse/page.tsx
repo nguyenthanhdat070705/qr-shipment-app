@@ -855,40 +855,24 @@ export default function WarehouseDashboard() {
             ) : (
               <div className="space-y-4">
                 {/* Highlight Physical Quantity */}
-                <div className="flex items-center justify-between p-4 rounded-xl bg-indigo-50 border border-indigo-100/50">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-indigo-100 text-indigo-600 rounded-lg">
-                      <PackageCheck size={20} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900">Tổng Lượng Tồn</p>
-                      <p className="text-[11px] text-gray-500">Số lượng sản phẩm thực tế</p>
-                    </div>
-                  </div>
-                  <span className="text-2xl font-black text-indigo-600">{stats.totalQuantity}</span>
+                <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-indigo-50 border border-indigo-100 shadow-inner">
+                  <p className="text-sm font-bold text-gray-500 mb-1">TỔNG LƯỢNG TỒN (Sản phẩm)</p>
+                  <span className="text-5xl font-black text-indigo-600 tracking-tight">{stats.totalQuantity}</span>
                 </div>
 
-                {/* SKU Breakdown Grid */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100/50">
-                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-tight mb-1">Loại có sẵn (Tồn)</p>
-                    <div className="flex items-end gap-1.5">
-                      <span className="text-xl font-black text-emerald-600">{stats.available}</span>
-                      <span className="text-xs font-semibold text-gray-400 mb-1">Mặt hàng</span>
-                    </div>
+                {/* Optional Financial Value if they care */}
+                {globalData?.adminStats && (
+                  <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-100">
+                    <p className="text-xs font-bold text-gray-500 uppercase">Ước tính giá trị kho</p>
+                    <span className="text-sm font-black text-gray-800">
+                      {globalData.adminStats.totalInventoryValue > 0 ? `${globalData.adminStats.totalInventoryValue.toLocaleString('vi-VN')} đ` : 'Chưa cập nhật'}
+                    </span>
                   </div>
-                  <div className="p-3 rounded-xl bg-red-50 border border-red-100/50 cursor-pointer hover:bg-red-100 transition-colors" onClick={() => setOutOfStockDrawerOpen(true)}>
-                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-tight mb-1">Loại đang hết</p>
-                    <div className="flex items-end gap-1.5">
-                      <span className="text-xl font-black text-red-600">{stats.outOfStock}</span>
-                      <span className="text-xs font-semibold text-gray-400 mb-1">Mặt hàng</span>
-                    </div>
-                  </div>
-                </div>
+                )}
 
-                <div className="pt-4 border-t border-gray-50 flex items-center justify-between">
-                  <p className="text-xs font-semibold text-gray-400">Danh mục phân loại (Đang bán)</p>
-                  <span className="text-sm font-bold text-gray-900">{stats.total} Mặt hàng</span>
+                <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
+                  <p className="text-xs font-semibold text-gray-400">Danh mục sản phẩm (Hệ thống)</p>
+                  <span className="text-sm font-bold text-gray-900 border border-gray-200 px-2 py-0.5 rounded-full bg-gray-50">{stats.total} SKU</span>
                 </div>
               </div>
             )}
@@ -910,27 +894,26 @@ export default function WarehouseDashboard() {
               </div>
               <div className="flex flex-col gap-3">
                 {globalData.byWarehouse.map((w: any, i: number) => {
-                  const pct = w.total > 0 ? Math.round((w.available / w.total) * 100) : 0;
+                  const pct = stats.totalQuantity > 0 ? Math.round((w.qty / stats.totalQuantity) * 100) : 0;
                   const colors = ['bg-sky-500', 'bg-emerald-500', 'bg-violet-500', 'bg-amber-500', 'bg-pink-500'];
                   const textColors = ['text-sky-600', 'text-emerald-600', 'text-violet-600', 'text-amber-600', 'text-pink-600'];
                   const bgColors = ['bg-sky-50', 'bg-emerald-50', 'bg-violet-50', 'bg-amber-50', 'bg-pink-50'];
                   return (
                     <div key={w.name} className={`p-3.5 rounded-xl ${bgColors[i % colors.length]}`}>
-                      <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-1.5">
                           <MapPin size={12} className={textColors[i % textColors.length]} />
                           <span className="text-xs font-bold text-gray-800 truncate">{w.name}</span>
                         </div>
-                        <span className={`text-[11px] font-extrabold ${textColors[i % textColors.length]}`}>{w.total} SP</span>
+                        <span className={`text-[12px] font-extrabold ${textColors[i % textColors.length]}`}>{w.qty} Sản phẩm</span>
                       </div>
                       <div className="flex items-center gap-2 text-[10px] text-gray-500 mb-1.5">
                         <span className="flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-                          Còn: <strong className="text-gray-700">{w.available}</strong>
+                          <span className={`w-1.5 h-1.5 rounded-full ${colors[i % colors.length]} inline-block`} />
+                          Đang lưu trữ: <strong className="text-gray-700">{pct}% tổng kho</strong>
                         </span>
-                        <span className="flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block" />
-                          Hết: <strong className="text-gray-700">{w.outOfStock}</strong>
+                        <span className="flex items-center gap-1 ml-3 text-gray-400">
+                          Sở hữu: <strong className="text-gray-500">{w.total} SKU</strong>
                         </span>
                       </div>
                       <div className="w-full bg-white/60 rounded-full h-1">

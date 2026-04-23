@@ -155,14 +155,15 @@ export async function GET(req: Request) {
       }
     }
 
-    // Per-warehouse breakdown
-    const khoStats: Record<string, { name: string; total: number; available: number; outOfStock: number }> = {};
+    // Per-warehouse breakdown (Physical quantities only)
+    const khoStats: Record<string, { name: string; total: number; qty: number; available: number; outOfStock: number }> = {};
     for (const p of products) {
       for (const [khoName, { qty, avail }] of Object.entries(p.byWarehouse)) {
-        if (!khoStats[khoName]) khoStats[khoName] = { name: khoName, total: 0, available: 0, outOfStock: 0 };
-        khoStats[khoName].total++;
-        if (avail > 0) khoStats[khoName].available++;
-        else if (qty <= 0) khoStats[khoName].outOfStock++;
+        if (!khoStats[khoName]) khoStats[khoName] = { name: khoName, total: 0, qty: 0, available: 0, outOfStock: 0 };
+        khoStats[khoName].total++; // sku total
+        khoStats[khoName].qty += qty; // physical total
+        // Kho available is physical avail
+        khoStats[khoName].available += avail;
       }
     }
 
