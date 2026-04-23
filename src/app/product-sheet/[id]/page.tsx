@@ -241,7 +241,7 @@ export default async function ProductSheetPage({
             </div>
 
             {/* Product identity */}
-            <div className="grid grid-cols-[180px_1fr] gap-y-6 gap-x-4 text-xl font-medium leading-relaxed pr-[170px]">
+            <div className="grid grid-cols-[180px_1fr] gap-y-6 gap-x-4 text-xl font-medium leading-relaxed pr-[200px] mt-6">
               <div className="font-bold text-gray-900 uppercase tracking-widest text-lg pt-1">Phân loại:</div>
               <div className="text-gray-900 font-bold uppercase text-2xl leading-snug">{hom.nhom_san_pham || 'AN TÁNG'}</div>
 
@@ -256,7 +256,7 @@ export default async function ProductSheetPage({
             </div>
 
             {/* Specs table — large and spaced out */}
-            <div className="pt-8 mt-20 border-t-[3px] border-gray-100 flex-1 flex flex-col">
+            <div className="pt-8 mt-14 border-t-[3px] border-gray-100 flex-1 flex flex-col">
               <div className="grid grid-cols-[160px_max-content_130px_1fr] gap-y-7 gap-x-6 items-center">
                 <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px]">Kích thước KT</div>
                 <div className="text-gray-900 text-[16px] font-semibold whitespace-nowrap">{size}</div>
