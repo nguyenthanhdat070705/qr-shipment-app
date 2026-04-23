@@ -79,7 +79,7 @@ export default function ProductSheetDynamic({
         }
       `}} />
 
-      <div className="pt-8 text-xl font-medium">
+      <div className="pt-10 border-t-[3px] border-gray-100 text-xl font-medium mt-2">
         {/* Ngày nhập + xuất kho — cùng hàng */}
         <div className="grid grid-cols-[max-content_1fr_max-content_1fr] gap-y-1 gap-x-6 mb-8 items-end">
           <div className="font-bold text-gray-900 uppercase tracking-widest text-[17px] whitespace-nowrap">Ngày nhập kho</div>
