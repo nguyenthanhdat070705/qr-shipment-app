@@ -68,10 +68,11 @@ export async function POST(req: NextRequest) {
     }
 
     const totalQty = Number(invRow['Số lượng'] || 0);
+    const availQty = Number(invRow['Ghi chú'] || 0);
 
-    if (totalQty < quantity) {
+    if (availQty < quantity) {
       return NextResponse.json(
-        { error: `Số lượng trong kho không đủ (Kho chỉ còn: ${totalQty})` },
+        { error: `Số lượng trong kho không đủ (Khả dụng: ${availQty}, Tổng: ${totalQty})` },
         { status: 400 }
       );
     }
@@ -87,30 +88,57 @@ export async function POST(req: NextRequest) {
     const tenHom = homData?.ten_hom || 'Không xác định';
     const khoId = invRow['Kho'];
 
-    // 3. Deduct from fact_inventory — always update both columns to same value
-    const newQty = Math.max(0, totalQty - quantity);
+    // 4. Resolve creator UUID from dim_account and check warehouse permission
+    let nguoiXuatId: string | null = null;
+    let nguoiXuatName = '';
+    if (created_by && created_by.includes('@')) {
+      const { data: account } = await supabase
+        .from('dim_account')
+        .select('id, hoten')
+        .eq('email', created_by)
+        .maybeSingle();
+      nguoiXuatId = account?.id || null;
+      nguoiXuatName = account?.hoten || '';
+    }
+
+    // Server-side lock check: enforce that limited users can only export from their warehouse
+    const { getWarehouseFilter } = await import('@/config/roles.config');
+    const allowedWarehouse = getWarehouseFilter(created_by || '', nguoiXuatName);
+    
+    if (allowedWarehouse) {
+      const { data: khoData } = await supabase
+        .from('dim_kho')
+        .select('ten_kho')
+        .eq('id', khoId)
+        .maybeSingle();
+        
+      if (khoData) {
+        const khoName = (khoData.ten_kho || '').toLowerCase();
+        const allowedLower = allowedWarehouse.toLowerCase();
+        
+        if (!khoName.includes(allowedLower) && !allowedLower.includes(khoName)) {
+           return NextResponse.json(
+            { error: `Tài khoản của bạn chỉ được thao tác tại ${allowedWarehouse}. Kho được chọn là ${khoData.ten_kho}.` },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
+    // 3. Deduct from fact_inventory — deduplicate separately
+    const newTotalQty = Math.max(0, totalQty - quantity);
+    const newAvailQty = Math.max(0, availQty - quantity);
 
     const { error: updateInvErr } = await supabase
       .from('fact_inventory')
-      .update({ 'Số lượng': newQty, 'Ghi chú': newQty })
+      .update({ 'Số lượng': newTotalQty, 'Ghi chú': newAvailQty })
       .eq('Mã', inventory_id);
 
     if (updateInvErr) {
       throw new Error('Lỗi trừ tồn kho: ' + updateInvErr.message);
     }
 
-    console.log(`[goods-issue] ✅ Trừ kho: ${inventory_id} | SL: ${totalQty} → ${newQty}`);
-
-    // 4. Resolve creator UUID from dim_account
-    let nguoiXuatId: string | null = null;
-    if (created_by && created_by.includes('@')) {
-      const { data: account } = await supabase
-        .from('dim_account')
-        .select('id')
-        .eq('email', created_by)
-        .maybeSingle();
-      nguoiXuatId = account?.id || null;
-    }
+    console.log(`[goods-issue] ✅ Trừ kho: ${inventory_id} | SL: ${totalQty} → ${newTotalQty} | Khả dụng: ${availQty} → ${newAvailQty}`);
 
     // 5. Generate export code
     const now = new Date();
@@ -178,7 +206,7 @@ export async function POST(req: NextRequest) {
         do_code,
         ma_hom: maHom,
         ten_hom: tenHom,
-        so_luong_con_lai: newQty,
+        so_luong_con_lai: newTotalQty,
       },
       { status: 201 }
     );

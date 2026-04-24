@@ -33,7 +33,8 @@ export default function GoodsIssuePage() {
       const raw = localStorage.getItem('auth_user');
       if (raw) {
         const u = JSON.parse(raw);
-        const wf = getWarehouseFilter(u.email || '');
+        const name = u.name || u.user_metadata?.name || u.hoten || '';
+        const wf = getWarehouseFilter(u.email || '', name);
         if (wf) setLockedWarehouse(wf);
       }
     } catch {}
