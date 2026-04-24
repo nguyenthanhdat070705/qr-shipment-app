@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tra Cứu Hội Viên Trăm Tuổi – Blackstones Lifecare</title>
+  <meta name="description" content="Hệ thống tra cứu thông tin hội viên Trăm Tuổi – Blackstones Lifecare. Tra cứu bằng CCCD hoặc Số điện thoại." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ═══════════════════════════════════════════════════
+       BLACKSTONES MEMBERSHIP LOOKUP – EMBEDDABLE WIDGET
+       Zero-dependency, self-contained CSS
+       ═══════════════════════════════════════════════════ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bs-navy: #1a2a50;
+      --bs-navy-light: #25396b;
+      --bs-navy-dark: #0d162a;
+      --bs-gold: #d4af37;
+      --bs-gold-light: #f3e5ab;
+      --bs-bg: #f8f9fa;
+      --bs-white: #ffffff;
+      --bs-gray-100: #f1f3f5;
+      --bs-gray-200: #e5e7eb;
+      --bs-gray-300: #d1d5db;
+      --bs-gray-400: #9ca3af;
+      --bs-gray-500: #6b7280;
+      --bs-red-500: #ef4444;
+      --bs-red-600: #dc2626;
+      --bs-amber-500: #f59e0b;
+      --bs-amber-600: #d97706;
+      --bs-radius: 12px;
+      --bs-shadow: 0 8px 30px rgba(0,0,0,0.04);
+      --bs-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    body {
+      font-family: var(--bs-font);
+      background: var(--bs-bg);
+      color: var(--bs-navy);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Container ──────────────────────────── */
+    .bs-widget {
+      min-height: 100vh;
+      padding-bottom: 80px;
+      position: relative;
+    }
+
+    .bs-topbar {
+      width: 100%;
+      height: 4px;
+      background: var(--bs-navy);
+    }
+
+    .bs-logo-area {
+      position: absolute;
+      top: 20px;
+      left: 16px;
+      z-index: 10;
+    }
+
+    .bs-logo-box {
+      background: var(--bs-navy);
+      padding: 10px 16px;
+      border-radius: var(--bs-radius);
+      box-shadow: 0 4px 12px rgba(26,42,80,0.25);
+      transition: box-shadow 0.3s ease;
+      cursor: pointer;
+    }
+
+    .bs-logo-box:hover {
+      box-shadow: 0 6px 20px rgba(26,42,80,0.4);
+    }
+
+    .bs-logo-box img {
+      height: 32px;
+      width: auto;
+      display: block;
+    }
+
+    @media (min-width: 640px) {
+      .bs-logo-area { left: 32px; top: 24px; }
+      .bs-logo-box img { height: 40px; }
+    }
+
+    .bs-content {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 100px 16px 0;
+    }
+
+    @media (min-width: 640px) {
+      .bs-content { padding-top: 72px; }
+    }
+
+    /* ── Title ──────────────────────────────── */
+    .bs-title-section {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .bs-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--bs-navy);
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+    }
+
+    .bs-title .bs-gold-text {
+      color: var(--bs-gold);
+    }
+
+    @media (min-width: 640px) {
+      .bs-title { font-size: 28px; }
+    }
+
+    .bs-subtitle {
+      color: var(--bs-gray-500);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    @media (min-width: 640px) {
+      .bs-subtitle { font-size: 16px; }
+    }
+
+    /* ── Search Form ───────────────────────── */
+    .bs-search-box {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .bs-radio-group {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 16px;
+    }
+
+    .bs-radio-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      color: var(--bs-navy);
+      font-weight: 500;
+      font-size: 15px;
+      transition: color 0.2s;
+    }
+
+    .bs-radio-label:hover { color: var(--bs-gold); }
+
+    .bs-radio-label input[type="radio"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--bs-gold);
+      cursor: pointer;
+    }
+
+    .bs-input-row {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+    }
+
+    @media (min-width: 640px) {
+      .bs-input-row { flex-direction: row; }
+    }
+
+    .bs-input-wrap {
+      position: relative;
+      width: 100%;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      border-radius: var(--bs-radius);
+    }
+
+    .bs-input {
+      width: 100%;
+      padding: 16px 24px;
+      border: 2px solid var(--bs-gray-200);
+      border-radius: var(--bs-radius);
+      font-size: 17px;
+      font-family: var(--bs-font);
+      font-weight: 500;
+      color: var(--bs-navy);
+      background: var(--bs-white);
+      outline: none;
+      transition: all 0.25s ease;
+    }
+
+    .bs-input::placeholder { color: var(--bs-gray-400); }
+
+    .bs-input:focus {
+      border-color: var(--bs-gold);
+      box-shadow: 0 0 0 4px rgba(212,175,55,0.1);
+    }
+
+    .bs-btn-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 16px;
+      gap: 12px;
+    }
+
+    .bs-btn-search {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 16px 48px;
+      background: linear-gradient(135deg, var(--bs-navy), var(--bs-navy-light));
+      color: var(--bs-gold);
+      border: 1px solid var(--bs-navy);
+      border-radius: var(--bs-radius);
+      font-size: 17px;
+      font-weight: 700;
+      font-family: var(--bs-font);
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 14px rgba(26,42,80,0.39);
+      transition: all 0.25s ease;
+      width: 100%;
+    }
+
+    @media (min-width: 640px) {
+      .bs-btn-search { width: auto; }
+    }
+
+    .bs-btn-search:hover:not(:disabled) {
+      background: linear-gradient(135deg, var(--bs-navy-dark), var(--bs-navy));
+      box-shadow: 0 6px 20px rgba(26,42,80,0.5);
+      transform: translateY(-1px);
+    }
+
+    .bs-btn-search:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .bs-btn-clear {
+      padding: 16px 24px;
+      background: var(--bs-gray-100);
+      color: var(--bs-gray-500);
+      border: none;
+      border-radius: var(--bs-radius);
+      font-size: 17px;
+      font-weight: 700;
+      font-family: var(--bs-font);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .bs-btn-clear:hover {
+      background: var(--bs-gray-200);
+      color: var(--bs-navy);
+    }
+
+    /* ── Error Message ─────────────────────── */
+    .bs-error {
+      text-align: center;
+      margin-top: 12px;
+      color: var(--bs-red-500);
+      font-weight: 500;
+      font-size: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ── Loading Skeleton ──────────────────── */
+    .bs-skeleton {
+      margin-top: 60px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+      border: 1px solid var(--bs-gray-100);
+      background: var(--bs-white);
+      padding: 40px;
+      border-radius: var(--bs-radius);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+
+    .bs-skeleton-bar {
+      height: 16px;
+      background: var(--bs-gray-100);
+      border-radius: 999px;
+      animation: bsPulse 1.5s ease-in-out infinite;
+    }
+
+    .bs-skeleton-bar.w-third { width: 33%; margin: 0 auto 40px; height: 28px; }
+    .bs-skeleton-row { display: flex; align-items: flex-end; margin-bottom: 24px; }
+    .bs-skeleton-row .left { width: 25%; margin-right: 16px; margin-bottom: 8px; }
+    .bs-skeleton-row .right { flex: 1; height: 2px; margin-bottom: 8px; }
+
+    @keyframes bsPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── Result Card ───────────────────────── */
+    .bs-card {
+      margin-top: 32px;
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+      border: 1px solid var(--bs-gray-200);
+      background: var(--bs-white);
+      padding: 24px;
+      box-shadow: var(--bs-shadow);
+      border-radius: var(--bs-radius);
+      animation: bsFadeInUp 0.7s ease-out forwards;
+      opacity: 0;
+    }
+
+    @media (min-width: 640px) {
+      .bs-card { padding: 40px 48px; }
+    }
+
+    @keyframes bsFadeInUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .bs-card-gold-line {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, var(--bs-gold), var(--bs-gold-light), var(--bs-gold));
+      border-radius: var(--bs-radius) var(--bs-radius) 0 0;
+    }
+
+    /* ── Status Badge ──────────────────────── */
+    .bs-status-badge {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 2px 4px 2px;
+      border-bottom: 2px dotted;
+      letter-spacing: 0.5px;
+    }
+
+    @media (min-width: 640px) {
+      .bs-status-badge { top: 32px; right: 40px; font-size: 15px; }
+    }
+
+    .bs-status-badge .bs-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: bsDotPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes bsDotPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .bs-status-active  { color: var(--bs-red-600); border-color: var(--bs-red-600); }
+    .bs-status-active .bs-dot  { background: var(--bs-red-500); }
+    .bs-status-pending { color: var(--bs-amber-600); border-color: var(--bs-amber-600); }
+    .bs-status-pending .bs-dot { background: var(--bs-amber-500); }
+    .bs-status-expired { color: var(--bs-gray-500); border-color: var(--bs-gray-500); }
+    .bs-status-expired .bs-dot { background: var(--bs-gray-400); }
+    .bs-status-terminated { color: var(--bs-gray-400); border-color: var(--bs-gray-400); }
+    .bs-status-terminated .bs-dot { background: var(--bs-gray-300); }
+
+    /* ── Card Header ───────────────────────── */
+    .bs-card-header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-top: 32px;
+    }
+
+    @media (min-width: 640px) {
+      .bs-card-header { padding-top: 0; }
+    }
+
+    .bs-card-title {
+      font-size: 18px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--bs-navy);
+    }
+
+    @media (min-width: 640px) {
+      .bs-card-title { font-size: 22px; }
+    }
+
+    .bs-card-title-icon {
+      color: var(--bs-gold);
+      flex-shrink: 0;
+    }
+
+    .bs-card-divider {
+      width: 64px;
+      height: 2px;
+      background: var(--bs-gold);
+      margin: 12px auto 0;
+      opacity: 0.5;
+    }
+
+    /* ── Dotted Row ─────────────────────────── */
+    .bs-field-row {
+      display: flex;
+      align-items: flex-end;
+      margin-bottom: 16px;
+      width: 100%;
+    }
+
+    @media (min-width: 640px) {
+      .bs-field-row { margin-bottom: 24px; }
+    }
+
+    .bs-field-label {
+      color: var(--bs-navy);
+      font-weight: 500;
+      font-size: 15px;
+      white-space: nowrap;
+    }
+
+    @media (min-width: 640px) {
+      .bs-field-label { font-size: 17px; }
+    }
+
+    .bs-field-value-wrap {
+      margin-left: 8px;
+      flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bs-field-value {
+      color: var(--bs-navy);
+      font-weight: 700;
+      font-size: 15px;
+      z-index: 1;
+      padding: 0 12px;
+      background: var(--bs-white);
+      position: relative;
+    }
+
+    @media (min-width: 640px) {
+      .bs-field-value { font-size: 17px; }
+    }
+
+    .bs-field-dots {
+      position: absolute;
+      bottom: 6px;
+      left: 0;
+      width: 100%;
+      border-bottom: 2.5px dotted var(--bs-gray-300);
+      z-index: 0;
+      transition: border-color 0.3s;
+    }
+
+    .bs-field-row:hover .bs-field-dots {
+      border-color: rgba(212,175,55,0.5);
+    }
+
+    @media (min-width: 640px) {
+      .bs-field-dots { bottom: 8px; }
+    }
+
+    /* ── Not Found ─────────────────────────── */
+    .bs-not-found {
+      margin-top: 60px;
+      text-align: center;
+      padding: 48px 24px;
+      border: 1px solid var(--bs-gray-100);
+      background: var(--bs-white);
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+      border-radius: var(--bs-radius);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      animation: bsFadeInUp 0.5s ease-out forwards;
+      opacity: 0;
+    }
+
+    .bs-not-found-icon {
+      width: 80px;
+      height: 80px;
+      background: var(--bs-gray-100);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .bs-not-found h3 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--bs-navy);
+      margin-bottom: 8px;
+    }
+
+    .bs-not-found p {
+      color: var(--bs-gray-500);
+      max-width: 480px;
+      margin: 0 auto;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .bs-btn-retry {
+      margin-top: 24px;
+      padding: 12px 32px;
+      border: 2px solid var(--bs-navy);
+      color: var(--bs-navy);
+      font-weight: 600;
+      background: transparent;
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: var(--bs-font);
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+
+    .bs-btn-retry:hover {
+      background: var(--bs-navy);
+      color: var(--bs-gold);
+    }
+
+    /* ── SVG Icons (inline) ────────────────── */
+    .bs-icon { display: inline-block; vertical-align: middle; }
+
+    /* ── Spinner ────────────────────────────── */
+    @keyframes bsSpin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    .bs-spinner {
+      animation: bsSpin 1s linear infinite;
+      display: inline-block;
+    }
+
+    /* ── Footer (optional, light branding) ── */
+    .bs-footer {
+      text-align: center;
+      padding: 40px 16px 20px;
+      color: var(--bs-gray-400);
+      font-size: 12px;
+    }
+
+    .bs-footer a {
+      color: var(--bs-gold);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .bs-footer a:hover { text-decoration: underline; }
+
+    /* ── Responsive cards on very small screens ── */
+    @media (max-width: 400px) {
+      .bs-card { padding: 20px 16px; }
+      .bs-field-label { font-size: 13px; }
+      .bs-field-value { font-size: 13px; padding: 0 6px; }
+    }
+  </style>
+</head>
+
+<body>
+<div class="bs-widget" id="bs-membership-widget">
+
+  <!-- Top Bar -->
+  <div class="bs-topbar"></div>
+
+  <!-- Logo -->
+  <div class="bs-logo-area">
+    <div class="bs-logo-box">
+      <img id="bs-logo" src="" alt="BlackStones Logo" />
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="bs-content">
+
+    <!-- Title -->
+    <div class="bs-title-section">
+      <h1 class="bs-title">
+        Tra Cứu Hội Viên Trăm Tuổi – <span class="bs-gold-text">Blackstones Lifecare</span>
+      </h1>
+      <p class="bs-subtitle">(Vui lòng cung cấp CCCD hoặc Số điện thoại để tra cứu)</p>
+    </div>
+
+    <!-- Search Box -->
+    <div class="bs-search-box">
+      <form id="bs-search-form" onsubmit="return bsHandleSearch(event)">
+
+        <!-- Radio Selector -->
+        <div class="bs-radio-group">
+          <label class="bs-radio-label">
+            <input type="radio" name="bs-search-by" value="cccd" checked onchange="bsSwitchMode(this.value)" />
+            Tra cứu bằng CCCD
+          </label>
+          <label class="bs-radio-label">
+            <input type="radio" name="bs-search-by" value="phone" onchange="bsSwitchMode(this.value)" />
+            Tra cứu bằng Số điện thoại
+          </label>
+        </div>
+
+        <!-- Input -->
+        <div class="bs-input-row">
+          <div class="bs-input-wrap">
+            <input
+              type="text"
+              id="bs-input"
+              class="bs-input"
+              placeholder="Nhập mã CCCD..."
+              autocomplete="off"
+            />
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="bs-btn-row">
+          <button type="submit" id="bs-btn-submit" class="bs-btn-search" disabled>
+            <span id="bs-btn-text">Tìm kiếm</span>
+          </button>
+          <button type="button" id="bs-btn-reset" class="bs-btn-clear" style="display:none" onclick="bsClear()">
+            Làm mới
+          </button>
+        </div>
+      </form>
+
+      <!-- Error -->
+      <div id="bs-error" class="bs-error" style="display:none"></div>
+    </div>
+
+    <!-- Results Container -->
+    <div id="bs-results"></div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="bs-footer">
+    Powered by <a href="https://blackstone-order-scm.vercel.app" target="_blank" rel="noopener">Blackstones Lifecare</a>
+  </div>
+
+</div>
+
+<script>
+/**
+ * ═══════════════════════════════════════════════════════════════
+ * BLACKSTONES MEMBERSHIP LOOKUP – EMBEDDABLE WIDGET
+ * 
+ * Cách sử dụng:
+ *   1. Nhúng trực tiếp: copy file HTML này vào hosting bất kỳ
+ *   2. Nhúng bằng iframe:  <iframe src="URL_CUA_FILE_NAY" ...>
+ *   3. Cấu hình API_BASE_URL bên dưới phù hợp với domain production
+ * ═══════════════════════════════════════════════════════════════
+ */
+
+// ─── CẤU HÌNH ──────────────────────────────────────────────────
+// ⚡ THAY ĐỔI URL NÀY cho phù hợp với domain production của bạn
+const BS_CONFIG = {
+  API_BASE_URL: 'https://blackstone-order-scm.vercel.app',
+  LOGO_URL: 'https://blackstone-order-scm.vercel.app/blackstones-logo.webp',
+};
+// ────────────────────────────────────────────────────────────────
+
+// Set logo
+document.getElementById('bs-logo').src = BS_CONFIG.LOGO_URL;
+
+// ─── State ──────────────────────────────────────────────────────
+let bsSearchBy = 'cccd';
+let bsLoading = false;
+
+const bsInput = document.getElementById('bs-input');
+const bsBtnSubmit = document.getElementById('bs-btn-submit');
+const bsBtnReset = document.getElementById('bs-btn-reset');
+const bsErrorEl = document.getElementById('bs-error');
+const bsResultsEl = document.getElementById('bs-results');
+
+// ─── Input validation & button state ────────────────────────────
+bsInput.addEventListener('input', function () {
+  const val = this.value.trim();
+  bsBtnSubmit.disabled = !val;
+  bsBtnReset.style.display = val ? '' : 'none';
+  bsErrorEl.style.display = 'none';
+});
+
+bsInput.focus();
+
+// ─── Switch search mode ─────────────────────────────────────────
+function bsSwitchMode(mode) {
+  bsSearchBy = mode;
+  bsInput.value = '';
+  bsInput.placeholder = mode === 'cccd' ? 'Nhập mã CCCD...' : 'Nhập số điện thoại...';
+  bsBtnSubmit.disabled = true;
+  bsBtnReset.style.display = 'none';
+  bsErrorEl.style.display = 'none';
+  bsResultsEl.innerHTML = '';
+  bsInput.focus();
+}
+
+// ─── Clear ──────────────────────────────────────────────────────
+function bsClear() {
+  bsInput.value = '';
+  bsResultsEl.innerHTML = '';
+  bsErrorEl.style.display = 'none';
+  bsBtnSubmit.disabled = true;
+  bsBtnReset.style.display = 'none';
+  bsInput.focus();
+}
+
+// ─── SVG Icons ──────────────────────────────────────────────────
+const BS_ICONS = {
+  shield: `<svg class="bs-icon bs-card-title-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>`,
+  alertCircle: `<svg class="bs-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+  alertCircleLg: `<svg class="bs-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:#9ca3af"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+  spinner: `<svg class="bs-icon bs-spinner" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>`,
+};
+
+// ─── Status config ──────────────────────────────────────────────
+const BS_STATUS = {
+  active:     { label: 'Đang hoạt động', cls: 'bs-status-active' },
+  pending:    { label: 'Chờ xác nhận',   cls: 'bs-status-pending' },
+  expired:    { label: 'Hết hạn',         cls: 'bs-status-expired' },
+  terminated: { label: 'Đã kết thúc',     cls: 'bs-status-terminated' },
+};
+
+// ─── Format date ────────────────────────────────────────────────
+function bsFormatDate(dateStr) {
+  if (!dateStr) return '—';
+  try {
+    return new Date(dateStr).toLocaleDateString('vi-VN');
+  } catch { return '—'; }
+}
+
+// ─── Format currency ────────────────────────────────────────────
+function bsFormatCurrency(value) {
+  if (!value) return '—';
+  return Number(value).toLocaleString('vi-VN') + ' VNĐ';
+}
+
+// ─── Escape HTML ────────────────────────────────────────────────
+function bsEsc(str) {
+  if (!str) return '—';
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+// ─── Build field row HTML ───────────────────────────────────────
+function bsFieldRow(label, value) {
+  return `
+    <div class="bs-field-row">
+      <span class="bs-field-label">${bsEsc(label)}:</span>
+      <div class="bs-field-value-wrap">
+        <span class="bs-field-value">${bsEsc(value)}</span>
+        <div class="bs-field-dots"></div>
+      </div>
+    </div>`;
+}
+
+// ─── Build card HTML ────────────────────────────────────────────
+function bsBuildCard(member) {
+  const st = BS_STATUS[member.status] || BS_STATUS.terminated;
+  return `
+    <div class="bs-card">
+      <div class="bs-card-gold-line"></div>
+      <div class="bs-status-badge ${st.cls}">
+        <span class="bs-dot"></span>
+        ${bsEsc(st.label)}
+      </div>
+      <div class="bs-card-header">
+        <h2 class="bs-card-title">
+          ${BS_ICONS.shield}
+          Thông tin Hội Viên Trăm Tuổi
+        </h2>
+        <div class="bs-card-divider"></div>
+      </div>
+      <div>
+        ${bsFieldRow('Mã hội viên', member.member_code)}
+        ${bsFieldRow('Tên hội viên', member.full_name)}
+        ${bsFieldRow('Ngày ký kết', bsFormatDate(member.registered_date))}
+        ${bsFieldRow('Ngày hết hạn', bsFormatDate(member.expiry_date))}
+        ${bsFieldRow('Địa chỉ', member.address)}
+        ${bsFieldRow('Người thụ hưởng 1', member.notes)}
+        ${bsFieldRow('Người thụ hưởng 2', '—')}
+        ${bsFieldRow('Số tiền đã đóng', bsFormatCurrency(member.contract_value))}
+        ${bsFieldRow('Sale phụ trách', member.consultant_name)}
+      </div>
+    </div>`;
+}
+
+// ─── Build skeleton HTML ────────────────────────────────────────
+function bsBuildSkeleton() {
+  let rows = '';
+  for (let i = 0; i < 6; i++) {
+    rows += `
+      <div class="bs-skeleton-row">
+        <div class="bs-skeleton-bar left"></div>
+        <div class="bs-skeleton-bar right"></div>
+      </div>`;
+  }
+  return `
+    <div class="bs-skeleton">
+      <div class="bs-skeleton-bar w-third"></div>
+      ${rows}
+    </div>`;
+}
+
+// ─── Build not-found HTML ───────────────────────────────────────
+function bsBuildNotFound() {
+  return `
+    <div class="bs-not-found">
+      <div class="bs-not-found-icon">${BS_ICONS.alertCircleLg}</div>
+      <h3>Không tìm thấy dữ liệu</h3>
+      <p>Hệ thống không tìm thấy hội viên nào khớp với thông tin cung cấp.<br/>Vui lòng kiểm tra lại sự chính xác của CCCD hoặc Số điện thoại.</p>
+      <button class="bs-btn-retry" onclick="bsClear()">Thử lại</button>
+    </div>`;
+}
+
+// ─── Main Search Handler ────────────────────────────────────────
+async function bsHandleSearch(e) {
+  if (e) e.preventDefault();
+  const val = bsInput.value.trim();
+
+  if (!val) {
+    bsErrorEl.innerHTML = BS_ICONS.alertCircle + ' ' +
+      (bsSearchBy === 'cccd' ? 'Vui lòng nhập mã CCCD' : 'Vui lòng nhập Số điện thoại');
+    bsErrorEl.style.display = 'flex';
+    return false;
+  }
+
+  // Loading state
+  bsLoading = true;
+  bsErrorEl.style.display = 'none';
+  bsBtnSubmit.disabled = true;
+  bsBtnSubmit.innerHTML = BS_ICONS.spinner + ' <span>Đang tìm...</span>';
+  bsResultsEl.innerHTML = bsBuildSkeleton();
+
+  try {
+    const param = bsSearchBy === 'cccd'
+      ? `cccd=${encodeURIComponent(val)}`
+      : `phone=${encodeURIComponent(val)}`;
+
+    const res = await fetch(`${BS_CONFIG.API_BASE_URL}/api/membership/lookup?${param}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      bsErrorEl.innerHTML = BS_ICONS.alertCircle + ' ' + bsEsc(data.error || 'Lỗi hệ thống');
+      bsErrorEl.style.display = 'flex';
+      bsResultsEl.innerHTML = '';
+      return false;
+    }
+
+    if (data.found && data.results && data.results.length > 0) {
+      bsResultsEl.innerHTML = data.results.map(bsBuildCard).join('');
+    } else {
+      bsResultsEl.innerHTML = bsBuildNotFound();
+    }
+  } catch (err) {
+    console.error('[BS Lookup]', err);
+    bsErrorEl.innerHTML = BS_ICONS.alertCircle + ' Không thể kết nối. Vui lòng thử lại.';
+    bsErrorEl.style.display = 'flex';
+    bsResultsEl.innerHTML = '';
+  } finally {
+    bsLoading = false;
+    bsBtnSubmit.disabled = !bsInput.value.trim();
+    bsBtnSubmit.innerHTML = '<span>Tìm kiếm</span>';
+  }
+
+  return false;
+}
+</script>
+</body>
+</html>
