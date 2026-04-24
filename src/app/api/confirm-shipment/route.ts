@@ -111,7 +111,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       const allowedLower = allowedWarehouse.toLowerCase();
       if (!khoName.includes(allowedLower) && !allowedLower.includes(khoName)) {
         return errorResponse(
-          \`Tài khoản của bạn chỉ được phép chọn \${allowedWarehouse}. Không phản ứng với kho \${khoData.ten_kho}.\`,
+          `Tài khoản của bạn chỉ được phép chọn ${allowedWarehouse}. Kho được chọn là ${khoData.ten_kho}.`,
           'VALIDATION_ERROR',
           403
         );
