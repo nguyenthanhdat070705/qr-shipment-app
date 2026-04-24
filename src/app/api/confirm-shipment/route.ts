@@ -54,9 +54,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return errorResponse('Dữ liệu gửi lên không hợp lệ (JSON lỗi).', 'VALIDATION_ERROR', 400);
   }
 
-  const { qrCode, hoTen, email, note, chucVu, maSanPhamXacNhan, maDonHang } = body;
+  const { qrCode, hoTen, email, note, chucVu, maSanPhamXacNhan, maDonHang, khoId } = body as any;
   const soLuong = Math.max(1, Number(body.soLuong) || 1);
 
+  if (!khoId) {
+    return errorResponse('Lỗi hệ thống: Không có thông tin kho xuất hàng.', 'VALIDATION_ERROR', 400);
+  }
   if (!qrCode || typeof qrCode !== 'string' || qrCode.trim() === '') {
     return errorResponse('Không xác định được mã QR hiện tại.', 'VALIDATION_ERROR', 400);
   }
@@ -91,6 +94,29 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
   if (!/^\d{6}$/.test(trimmedMaDonHang)) {
     return errorResponse('Mã đám phải đúng 6 chữ số (vd: 260108).', 'VALIDATION_ERROR', 400);
+  }
+
+  // ── Server-side Lock check ──
+  const { getWarehouseFilter } = await import('@/config/roles.config');
+  const allowedWarehouse = getWarehouseFilter(trimmedEmail, trimmedHoTen);
+  if (allowedWarehouse) {
+    const { data: khoData } = await supabaseAdmin
+      .from('dim_kho')
+      .select('ten_kho')
+      .eq('id', khoId)
+      .maybeSingle();
+
+    if (khoData) {
+      const khoName = (khoData.ten_kho || '').toLowerCase();
+      const allowedLower = allowedWarehouse.toLowerCase();
+      if (!khoName.includes(allowedLower) && !allowedLower.includes(khoName)) {
+        return errorResponse(
+          \`Tài khoản của bạn chỉ được phép chọn \${allowedWarehouse}. Không phản ứng với kho \${khoData.ten_kho}.\`,
+          'VALIDATION_ERROR',
+          403
+        );
+      }
+    }
   }
 
   // ── Bước 2: Tìm sản phẩm trong dim_hom ──────────────────────────────
@@ -149,41 +175,36 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
   }
 
-  // ── Bước 2.6: Kiểm tra tồn kho >= số lượng xuất ───
+  // ── Bước 2.6: Kiểm tra tồn kho KHẢ DỤNG >= số lượng xuất ───
+  let targetInvRow: Record<string, unknown> | null = null;
   {
-    let totalStock = 0;
     try {
-      // Dùng SDK query trực tiếp — đáng tin cậy hơn exec_sql
       const { data: invRows, error: invErr } = await supabaseAdmin
         .from('fact_inventory')
         .select('*')
-        .eq('Tên hàng hóa', productId);
+        .eq('Tên hàng hóa', productId)
+        .eq('Kho', khoId);
 
-      if (!invErr && invRows) {
-        totalStock = invRows.reduce((sum: number, r: Record<string, unknown>) => sum + (Number(r['Số lượng']) || 0), 0);
-        console.log(`[confirm-shipment] SDK query OK: ${invRows.length} rows, totalStock=${totalStock}, productId=${productId}`);
-      } else {
-        console.error(`[confirm-shipment] SDK query ERROR:`, invErr?.message, `rows:`, invRows);
-      }
-
-      // Nếu SDK thất bại, thử fallback bằng RPC
-      if (totalStock === 0 && invErr) {
-        console.warn('[confirm-shipment] SDK query failed, trying RPC:', invErr.message);
-        const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('exec_sql', {
-          sql: `SELECT COALESCE(SUM(CAST("Số lượng" AS INTEGER)), 0) AS total_stock FROM fact_inventory WHERE "Tên hàng hóa" = '${productId}'`
-        });
-        if (!rpcErr && rpcData) {
-          const rows = Array.isArray(rpcData) ? rpcData : [];
-          totalStock = rows.length > 0 ? Number(rows[0].total_stock || 0) : 0;
-        }
+      if (!invErr && invRows && invRows.length > 0) {
+        targetInvRow = invRows[0];
       }
     } catch (invCheckErr) {
       console.warn('[confirm-shipment] Lỗi kiểm tra tồn kho:', invCheckErr);
     }
 
-    if (totalStock < soLuong) {
+    if (!targetInvRow) {
+       return errorResponse(
+        `Không có hàng trong kho được chọn!`,
+        'VALIDATION_ERROR',
+        400
+      );
+    }
+
+    const availQty = Number(targetInvRow['Ghi chú'] || 0);
+
+    if (availQty < soLuong) {
       return errorResponse(
-        `Không đủ tồn kho để xuất. Tồn kho hiện tại: ${totalStock}, số lượng yêu cầu xuất: ${soLuong}. Vui lòng kiểm tra lại.`,
+        `Không đủ tồn kho khả dụng để xuất. Khả dụng tại kho: ${availQty}, số lượng yêu cầu xuất: ${soLuong}. Vui lòng kiểm tra lại trạng thái giữ hàng.`,
         'VALIDATION_ERROR',
         400
       );
@@ -276,33 +297,21 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (!confirmation.stt) confirmation.stt = 0;
 
   // ── Bước 5.5: Trừ tồn kho trong fact_inventory ─────
-  let deductedKhoId: string | null = null;
   try {
-    // Dùng SDK trực tiếp — đáng tin cậy hơn exec_sql
-    const { data: allRows } = await supabaseAdmin
-      .from('fact_inventory')
-      .select('*')
-      .eq('Tên hàng hóa', productId);
-
-    const validRows = (allRows || []).filter((r: Record<string, unknown>) => Number(r['Số lượng']) > 0);
-    
-    if (validRows.length > 0) {
-      // Ưu tiên trừ từ kho có nhiều nhất
-      validRows.sort((a: Record<string, unknown>, b: Record<string, unknown>) => Number(b['Số lượng']) - Number(a['Số lượng']));
-      const best = validRows[0];
-      deductedKhoId = best['Kho'] as string || null;
-      const newQty = Math.max(0, Number(best['Số lượng']) - soLuong);
+    if (targetInvRow) {
+      const newTotalQty = Math.max(0, Number(targetInvRow['Số lượng'] || 0) - soLuong);
+      const newAvailQty = Math.max(0, Number(targetInvRow['Ghi chú'] || 0) - soLuong);
+      
       const { error: updateErr } = await supabaseAdmin
         .from('fact_inventory')
-        .update({ 'Số lượng': newQty, 'Ghi chú': newQty })
-        .eq('Mã', best['Mã'] as string);
+        .update({ 'Số lượng': newTotalQty, 'Ghi chú': newAvailQty })
+        .eq('Mã', targetInvRow['Mã'] as string);
+        
       if (updateErr) {
         console.error('[confirm-shipment] Lỗi trừ kho:', updateErr.message);
       } else {
-        console.log(`[confirm-shipment] ✅ Trừ kho: ${best['Mã']} | SL ${best['Số lượng']} → ${newQty} | Kho: ${deductedKhoId}`);
+        console.log(`[confirm-shipment] ✅ Trừ kho: ${targetInvRow['Mã']} | Kho: ${khoId}`);
       }
-    } else {
-      console.warn('[confirm-shipment] Không tìm thấy dòng inventory có tồn > 0 để trừ');
     }
   } catch (invDeductErr) {
     console.error('[confirm-shipment] Exception trừ kho:', invDeductErr);
@@ -327,7 +336,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       .from('fact_xuat_hang')
       .insert({
         ma_phieu_xuat: maPhieuXuat,
-        kho_id: deductedKhoId,
+        kho_id: khoId,
         nguoi_xuat_id: nguoiXuatId,
         trang_thai: 'pending',
         ten_khach: trimmedHoTen || 'Khách vãng lai',

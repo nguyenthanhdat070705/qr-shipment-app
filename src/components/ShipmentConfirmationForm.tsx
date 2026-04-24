@@ -160,6 +160,7 @@ export default function ShipmentConfirmationForm({
           email: userEmail,
           chucVu: userDepartment || 'Nhân viên xuất kho',
           maSanPhamXacNhan: qrCode,
+          khoId: selectedWarehouse,
           maDonHang: maDam.trim() || undefined,
           soLuong: soLuong,
           note: `Xuất kho SP: ${productName}${maDam.trim() ? ` — Đám: ${maDam.trim()}` : ''} — Kho: ${warehouses.find(w => w.id === selectedWarehouse)?.ten_kho || ''} — SL: ${soLuong}`,
