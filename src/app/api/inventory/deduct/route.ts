@@ -16,86 +16,77 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'JSON không hợp lệ' }, { status: 400 });
   }
 
-  const { ma_hom, quantity = 1 } = body;
-  if (!ma_hom) {
-    return NextResponse.json({ success: false, error: 'Thiếu ma_hom' }, { status: 400 });
+  const { inventory_id, quantity = 1 } = body;
+  if (!inventory_id) {
+    return NextResponse.json({ success: false, error: 'Thiếu inventory_id (Mã lô kho)' }, { status: 400 });
+  }
+
+  // Auth
+  const authHeader = req.headers.get('Authorization');
+  let email = '';
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+    if (!authErr && user?.email) {
+      email = user.email;
+    }
+  }
+
+  if (!email) {
+    return NextResponse.json({ success: false, error: 'Vui lòng đăng nhập.' }, { status: 401 });
   }
 
   try {
-    // 1. Tìm dim_hom.id từ ma_hom
-    const { data: hom, error: homErr } = await supabase
-      .from('dim_hom')
-      .select('id, ma_hom, ten_hom')
-      .eq('ma_hom', ma_hom.trim())
+    // 1. Kiểm tra quyền của người dùng với Kho tương ứng (Server-side check)
+    const { data: invRow } = await supabase
+      .from('fact_inventory')
+      .select('Kho')
+      .eq('Mã', inventory_id)
       .single();
 
-    if (homErr || !hom) {
-      return NextResponse.json({ success: false, error: `Không tìm thấy sản phẩm mã ${ma_hom}` }, { status: 404 });
+    if (!invRow) {
+       return NextResponse.json({ success: false, error: 'Lô kho không tồn tại.' }, { status: 404 });
     }
 
-    // 2. Lấy TẤT CẢ rows tồn kho của sản phẩm này
-    const { data: rows, error: rowsErr } = await supabase
-      .from('fact_inventory')
-      .select('*')
-      .eq('Tên hàng hóa', hom.id);
-
-    if (rowsErr) {
-      return NextResponse.json({ success: false, error: 'Lỗi lấy tồn kho: ' + rowsErr.message }, { status: 500 });
-    }
-
-    if (!rows || rows.length === 0) {
-      return NextResponse.json({ success: false, error: 'Không tìm thấy tồn kho cho sản phẩm này' }, { status: 404 });
-    }
-
-    // 3. Tìm row có số lượng cao nhất và > 0
-    const validRows = rows
-      .map((r: any) => ({ ...r, _qty: Number(r['Số lượng']) || 0 }))
-      .filter((r: any) => r._qty > 0)
-      .sort((a: any, b: any) => b._qty - a._qty);
-
-    if (validRows.length === 0) {
-      return NextResponse.json({ success: false, error: 'Hết hàng trong kho' }, { status: 400 });
-    }
-
-    const target = validRows[0] as any;
-    const rowId = target['Mã'];
-    const currentQty = target._qty;
-    const newQty = Math.max(0, currentQty - quantity);
-
-    // 4. Cập nhật trực tiếp bằng primary key "Mã"
-    const { error: updateErr } = await supabase
-      .from('fact_inventory')
-      .update({
-        'Số lượng': newQty,
-        'Ghi chú': newQty,
-      })
-      .eq('Mã', rowId);
-
-    if (updateErr) {
-      return NextResponse.json({
-        success: false,
-        error: 'Lỗi cập nhật tồn kho: ' + updateErr.message
-      }, { status: 500 });
-    }
-
-    // 5. Lấy tên kho để trả về
-    let khoName = '—';
-    if (target['Kho']) {
-      const { data: kho } = await supabase
+    const { getWarehouseFilter } = await import('@/config/roles.config');
+    const allowedWarehouse = getWarehouseFilter(email, ''); // Name is optional for now
+    if (allowedWarehouse) {
+       const { data: khoData } = await supabase
         .from('dim_kho')
         .select('ten_kho')
-        .eq('id', target['Kho'])
-        .single();
-      if (kho) khoName = kho.ten_kho;
+        .eq('id', invRow['Kho'])
+        .maybeSingle();
+        
+      if (khoData) {
+        const khoName = (khoData.ten_kho || '').toLowerCase();
+        const allowedLower = allowedWarehouse.toLowerCase();
+        if (!khoName.includes(allowedLower) && !allowedLower.includes(khoName)) {
+           return NextResponse.json(
+            { error: `Tài khoản của bạn chỉ được thao tác tại ${allowedWarehouse}. Kho được chọn là ${khoData.ten_kho}.` },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
+    // 2. Gọi RPC trừ kho
+    const { data: rpcResult, error: rpcErr } = await supabase.rpc('adjust_inventory', {
+      p_inventory_id: inventory_id,
+      p_delta: -Math.abs(quantity), // Luôn trừ
+      p_loai_hang: 'Đã mua'
+    });
+
+    if (rpcErr || !rpcResult?.success) {
+      return NextResponse.json({
+        success: false,
+        error: 'Lỗi cập nhật tồn kho (Database): ' + (rpcErr?.message || 'Lỗi không xác định')
+      }, { status: 500 });
     }
 
     return NextResponse.json({
       success: true,
-      ma_hom: hom.ma_hom,
-      ten_hom: hom.ten_hom,
-      kho: khoName,
-      so_luong_cu: currentQty,
-      so_luong_moi: newQty,
+      so_luong_cu: rpcResult.old_qty,
+      so_luong_moi: rpcResult.new_qty,
     });
 
   } catch (err: any) {
