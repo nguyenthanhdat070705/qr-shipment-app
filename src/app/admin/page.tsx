@@ -350,7 +350,7 @@ export default function AdminDashboard() {
   const timeStr = lastRefresh.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
   // --- BẢO TRÌ HỆ THỐNG ---
-  const isMaintenanceMode = true;
+  const isMaintenanceMode = false;
   if (isMaintenanceMode) {
     return (
       <PageLayout title="Admin Dashboard" icon={<Shield size={15} className="text-red-500" />}>
