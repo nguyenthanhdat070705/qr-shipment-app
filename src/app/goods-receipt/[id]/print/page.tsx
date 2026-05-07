@@ -128,32 +128,36 @@ export default async function GRPrintPage({
   const { data: homList } = productCodes.length
     ? await supabase
         .from('dim_hom')
-        .select('ma_hom, ten_hom, nhom_san_pham')
+        .select('*')
         .in('ma_hom', productCodes)
     : { data: [] };
 
-  const homMap: Record<string, { ten_hom: string; nhom_san_pham: string }> = {};
-  (homList || []).forEach((h: { ma_hom: string; ten_hom: string; nhom_san_pham: string }) => {
-    homMap[h.ma_hom] = { ten_hom: h.ten_hom, nhom_san_pham: h.nhom_san_pham };
+  const homMap: Record<string, any> = {};
+  (homList || []).forEach((h: any) => {
+    homMap[h.ma_hom] = h;
   });
 
   /* ── Build product sheet slides ── */
   const productSlides: Array<{
     product_code: string;
     ten_hom: string;
+    ten_hom_the_hien?: string;
     nhom_san_pham: string;
+    hom_data: any;
     slideIndex: number;
     totalSlides: number;
   }> = [];
 
   for (const item of items) {
-    const hom = homMap[item.product_code];
+    const hom = homMap[item.product_code] || {};
     const count = Math.max(item.received_qty, 1);
     for (let i = 1; i <= count; i++) {
       productSlides.push({
         product_code: item.product_code,
-        ten_hom: hom?.ten_hom || item.product_name,
-        nhom_san_pham: hom?.nhom_san_pham || 'AN TÁNG',
+        ten_hom: hom.ten_hom || item.product_name,
+        ten_hom_the_hien: hom.ten_hom_the_hien,
+        nhom_san_pham: hom.nhom_san_pham || 'AN TÁNG',
+        hom_data: hom,
         slideIndex: i,
         totalSlides: count,
       });
@@ -342,8 +346,17 @@ export default async function GRPrintPage({
       {/* PAGE 2…N: Product Sheets (1 per qty unit)      */}
       {/* ══════════════════════════════════════════════ */}
       {productSlides.map((slide, idx) => {
+        const hom = slide.hom_data;
         const parsed = parseProductName(slide.ten_hom);
         const isLast = idx === productSlides.length - 1;
+
+        const size = hom.kich_thuoc && hom.kich_thuoc !== '—' ? hom.kich_thuoc : parsed.size;
+        const material = hom.loai_go && hom.loai_go !== '—' ? hom.loai_go : parsed.material;
+        const color = (hom.Mau_sac || hom.mau_sac) && (hom.Mau_sac || hom.mau_sac) !== '—' ? (hom.Mau_sac || hom.mau_sac) : parsed.color;
+        const feature = hom.dac_diem && hom.dac_diem !== '—' ? hom.dac_diem : parsed.feature;
+        const origin = (hom.Nguon_goc || hom.nguon_goc) || '—';
+        const thickness = (hom.Thanh || hom.thanh) && (hom.Thanh || hom.thanh) !== '—' ? (hom.Thanh || hom.thanh) : parsed.thickness;
+        const otherSpecs = hom.thong_so_khac || '';
         return (
           <div
             key={`${slide.product_code}-${slide.slideIndex}`}
@@ -397,7 +410,7 @@ export default async function GRPrintPage({
 
                 <div className="font-bold text-gray-900 uppercase tracking-widest text-[16px] self-start pt-2">Tên sản phẩm:</div>
                 <div className="text-gray-900 font-black uppercase text-[28px] leading-[1.2] font-times max-w-full break-words pr-2">
-                  {slide.ten_hom?.split('-')[0]?.trim() || slide.ten_hom}
+                  {slide.ten_hom_the_hien || slide.ten_hom}
                 </div>
 
                 <div className="font-bold text-gray-900 uppercase tracking-widest text-[16px] self-start pt-2">Tên kỹ thuật:</div>
@@ -408,26 +421,30 @@ export default async function GRPrintPage({
               <div className="pt-6 mt-6 border-t-[3px] border-gray-100 flex-1 flex flex-col pl-2">
                 <div className="grid grid-cols-[150px_max-content_120px_1fr] gap-y-6 gap-x-6 items-center">
                   <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px]">Kích thước KT</div>
-                  <div className="text-gray-900 text-[16px] font-semibold whitespace-nowrap">{parsed.size}</div>
+                  <div className="text-gray-900 text-[16px] font-semibold whitespace-nowrap">{size}</div>
                   
                   <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px]">Chất liệu</div>
-                  <div className="text-gray-900 text-[16px] font-semibold">{parsed.material}</div>
+                  <div className="text-gray-900 text-[16px] font-semibold">{material}</div>
 
                   <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px]">Màu sắc</div>
-                  <div className="text-gray-900 text-[16px] font-semibold">{parsed.color}</div>
+                  <div className="text-gray-900 text-[16px] font-semibold">{color}</div>
                   
                   <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px]">Đặc điểm</div>
-                  <div className="text-gray-900 text-[16px] font-semibold">{parsed.feature}</div>
+                  <div className="text-gray-900 text-[16px] font-semibold">{feature}</div>
 
                   <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px]">Nguồn gốc</div>
-                  <div className="text-gray-900 text-[16px] font-semibold"> </div> 
+                  <div className="text-gray-900 text-[16px] font-semibold">{origin}</div> 
 
                   <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px]">Dày thành</div>
-                  <div className="text-gray-900 text-[16px] font-semibold">{parsed.thickness}</div>
+                  <div className="text-gray-900 text-[16px] font-semibold">{thickness}</div>
                 </div>
                 <div className="grid grid-cols-[160px_1fr] gap-x-4 mt-8 items-end w-full">
                   <div className="font-bold text-gray-900 uppercase tracking-widest text-[14px] whitespace-nowrap">Các thông số khác:</div>
-                  <div className="border-b-[2px] border-dotted border-gray-300 w-full mb-[2px] h-2"></div>
+                  {otherSpecs ? (
+                    <div className="text-gray-900 text-[16px] font-semibold pb-1">{otherSpecs}</div>
+                  ) : (
+                    <div className="border-b-[2px] border-dotted border-gray-300 w-full mb-[2px] h-2"></div>
+                  )}
                 </div>
               </div>
 

@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import {
   PackageCheck, ArrowLeft, Warehouse as WarehouseIcon,
   Calendar, User, FileText, Printer, CheckCircle2,
-  AlertTriangle, XCircle, Loader2, ShieldAlert
+  AlertTriangle, XCircle, Loader2, ShieldAlert, Link, CheckCircle
 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import StatusTimeline, { GR_STEPS } from '@/components/StatusTimeline';
 import QRCodeGenerator from '@/components/QRCodeGenerator';
-import type { GoodsReceipt } from '@/types';
+import type { GoodsReceipt, PurchaseOrder } from '@/types';
 
 export default function GoodsReceiptDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -21,6 +21,12 @@ export default function GoodsReceiptDetailPage({ params }: { params: Promise<{ i
   const [isAdmin, setIsAdmin] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+
+  // States for linking PO
+  const [pos, setPos] = useState<PurchaseOrder[]>([]);
+  const [selectedPoId, setSelectedPoId] = useState('');
+  const [isLinking, setIsLinking] = useState(false);
+  const [loadingPos, setLoadingPos] = useState(false);
 
   const showToast = (msg: string, type: 'ok' | 'err') => {
     setToast({ msg, type });
@@ -45,6 +51,55 @@ export default function GoodsReceiptDetailPage({ params }: { params: Promise<{ i
       }
     } catch { /* ignore */ }
   }, []);
+
+  // Fetch active POs if status is pending_po
+  useEffect(() => {
+    if (gr?.status === 'pending_po') {
+      setLoadingPos(true);
+      fetch('/api/purchase-orders')
+        .then(r => r.json())
+        .then(res => {
+          const activePos = (res.data || []).filter((po: any) => po.status === 'confirmed');
+          setPos(activePos);
+        })
+        .finally(() => setLoadingPos(false));
+    }
+  }, [gr?.status]);
+
+  const handleApproveGR = async () => {
+    if (!selectedPoId) {
+      showToast('Vui lòng chọn một PO để liên kết!', 'err');
+      return;
+    }
+    if (!gr) return;
+    setIsLinking(true);
+    try {
+      // Step 1: Link PO
+      const res1 = await fetch(`/api/goods-receipt/${gr.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ link_po_id: selectedPoId }),
+      });
+      const result1 = await res1.json();
+      if (!res1.ok) throw new Error(result1.error || 'Lỗi liên kết PO');
+      
+      // Step 2: Confirm receipt & update inventory
+      const res2 = await fetch(`/api/goods-receipt/${gr.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm_receipt: true }),
+      });
+      const result2 = await res2.json();
+      if (!res2.ok) throw new Error(result2.error || 'Lỗi duyệt nhập kho');
+
+      setGr(result2.data);
+      showToast('Đã duyệt phiếu và cộng tồn kho thành công!', 'ok');
+    } catch (e: any) {
+      showToast(e.message || 'Có lỗi xảy ra', 'err');
+    } finally {
+      setIsLinking(false);
+    }
+  };
 
   // Cancel GRPO handler
   const handleCancelGR = async () => {
@@ -238,6 +293,51 @@ export default function GoodsReceiptDetailPage({ params }: { params: Promise<{ i
             </table>
           </div>
         </div>
+
+        {/* Purchase/Admin: Approve Temporary GRPO */}
+        {gr.status === 'pending_po' && (
+          <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-blue-100 rounded-xl">
+                <Link size={20} className="text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-extrabold text-blue-900">Duyệt phiếu nhập tạm (Dành cho Thu mua)</h3>
+                <p className="text-xs text-blue-700 mt-0.5">Liên kết với PO thực tế để hệ thống tự động đối chiếu và cộng tồn kho.</p>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1">
+                <select
+                  value={selectedPoId}
+                  onChange={(e) => setSelectedPoId(e.target.value)}
+                  disabled={loadingPos || isLinking}
+                  className="w-full h-11 px-4 rounded-xl border border-blue-200 bg-white text-sm font-medium text-gray-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all disabled:opacity-60"
+                >
+                  <option value="">-- Chọn Đơn mua hàng (PO) --</option>
+                  {pos.map(po => (
+                    <option key={po.id} value={po.id}>
+                      {po.po_code} - {po.supplier?.name || 'Không rõ NCC'}
+                    </option>
+                  ))}
+                </select>
+                {loadingPos && <p className="text-[10px] text-blue-500 mt-1.5 animate-pulse">Đang tải danh sách PO...</p>}
+              </div>
+              <button
+                onClick={handleApproveGR}
+                disabled={isLinking || !selectedPoId}
+                className="h-11 px-6 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-all disabled:opacity-50 disabled:hover:bg-blue-600 shadow-md shadow-blue-200 inline-flex items-center justify-center gap-2 whitespace-nowrap"
+              >
+                {isLinking ? (
+                  <><Loader2 size={16} className="animate-spin" /> Đang xử lý…</>
+                ) : (
+                  <><CheckCircle size={16} /> Liên kết & Duyệt nhập kho</>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Admin-only: Cancel GRPO */}
         {isAdmin && gr.status !== 'cancelled' && (

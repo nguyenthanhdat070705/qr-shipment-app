@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, BarChart3, Warehouse, ShoppingCart, BookOpen } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Warehouse, ShoppingCart, BookOpen, Truck } from 'lucide-react';
 import Link from 'next/link';
 import PageLayout from '@/components/PageLayout';
 import { getUserRole, UserRole } from '@/config/roles.config';
@@ -59,6 +59,16 @@ export default function DashboardsHubPage() {
       color: 'bg-pink-500',
       shadow: 'shadow-pink-500/20',
       gradient: 'from-pink-400 to-fuchsia-600',
+    }] : []),
+    ...(userRole === "admin" || userRole === "operations" ? [{
+      id: "operations",
+      title: "Dashboard điều phối",
+      icon: <Truck size={28} className="text-white" />,
+      desc: "Quản lý và điều phối phương tiện giao nhận",
+      href: "/operations",
+      color: "bg-yellow-500",
+      shadow: "shadow-yellow-500/20",
+      gradient: "from-yellow-400 to-amber-600",
     }] : [])
   ];
 

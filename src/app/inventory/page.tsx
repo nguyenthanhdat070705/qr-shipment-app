@@ -147,7 +147,7 @@ export default async function InventoryPage() {
         existingWh.avail += avail;
       } else {
         existing.warehouseBreakdown.push({
-          khoId, name: kho?.ten_kho || '—', code: kho?.ma_kho || '', qty, avail,
+          khoId, name: kho?.ten_kho || 'Kho Không Xác Định', code: kho?.ma_kho || '', qty, avail,
         });
       }
     }
@@ -205,10 +205,10 @@ export default async function InventoryPage() {
 
   return (
     <PageLayout title="Kho hàng" icon={<Warehouse size={15} className="text-sky-500" />}>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between px-2 sm:px-0">
         <div>
-          <h1 className="text-2xl font-extrabold text-gray-900">Kho hàng</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Xem tồn kho, loại hàng, tình trạng sản phẩm.</p>
+          <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Kho hàng</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Xem tồn kho, loại hàng, tình trạng sản phẩm.</p>
         </div>
       </div>
 

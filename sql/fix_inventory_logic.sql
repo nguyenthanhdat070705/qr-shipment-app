@@ -40,7 +40,7 @@ BEGIN
     IF v_new_qty > 0 THEN
         UPDATE fact_inventory
         SET "Số lượng" = v_new_qty,
-            "Ghi chú" = v_new_qty::text,
+            "Ghi chú" = v_new_qty,
             "Loại hàng" = p_loai_hang
         WHERE "Mã" = p_inventory_id;
     ELSE
@@ -53,11 +53,8 @@ BEGIN
     FROM fact_inventory
     WHERE "Tên hàng hóa" = v_hom_id;
 
-    -- 5. Cập nhật vào dim_hom
-    UPDATE dim_hom
-    SET so_luong = v_total_qty,
-        updated_at = NOW()
-    WHERE id = v_hom_id;
+    -- Bảng dim_hom đã bỏ cột so_luong (tính động bằng API) nên không cần update cache nữa.
+    -- (Giữ lại v_total_qty để trả về trong JSON)
 
     -- 6. Trả về kết quả JSON
     v_result := jsonb_build_object(
@@ -126,7 +123,7 @@ BEGIN
 
     UPDATE fact_inventory
     SET "Số lượng" = v_new_qty,
-        "Ghi chú" = v_new_avail::text
+        "Ghi chú" = v_new_avail
     WHERE "Mã" = p_inventory_id;
 
     -- 4. Tạo Phiếu Xuất (fact_xuat_hang)
@@ -154,10 +151,7 @@ BEGIN
     FROM fact_inventory
     WHERE "Tên hàng hóa" = v_hom_row.id;
 
-    UPDATE dim_hom
-    SET so_luong = v_total_qty,
-        updated_at = NOW()
-    WHERE id = v_hom_row.id;
+    -- Bảng dim_hom đã bỏ cột so_luong (tính động bằng API) nên không cần update cache nữa.
 
     -- 7. Trả về JSON Result
     v_result := jsonb_build_object(

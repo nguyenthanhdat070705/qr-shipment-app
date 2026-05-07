@@ -103,8 +103,36 @@ export async function POST(req: NextRequest) {
   const seq = String((count || 0) + 1).padStart(3, '0');
   const ma_don_hang = `PO-${dateStr}-${seq}`;
 
-  // Calculate total
-  const totalAmount = (items || []).reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
+  // Securely verify prices from dim_hom
+  let totalAmount = 0;
+  const verifiedItems = [];
+
+  if (items && items.length > 0) {
+    const maHomList = items.map(i => i.product_code);
+    const { data: homData } = await supabase
+      .from('dim_hom')
+      .select('ma_hom, gia_von, gia_ban')
+      .in('ma_hom', maHomList);
+
+    const priceMap = new Map<string, number>();
+    if (homData) {
+      for (const h of homData) {
+        // Ưu tiên giá vốn, nếu giá vốn = 0 thì lấy giá bán, nếu không thì 0
+        const costPrice = Number(h.gia_von) || Number(h.gia_ban) || 0;
+        priceMap.set(h.ma_hom, costPrice);
+      }
+    }
+
+    for (const item of items) {
+      const actualUnitPrice = priceMap.get(item.product_code) || 0;
+      totalAmount += item.quantity * actualUnitPrice;
+      
+      verifiedItems.push({
+        ...item,
+        unit_price: actualUnitPrice // Override giá từ client
+      });
+    }
+  }
 
   // Lookup user UUID from dim_account by email
   let nguoiTaoId: string | null = null;
@@ -139,8 +167,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Insert items into fact_don_hang_items
-  if (items && items.length > 0) {
-    const itemRows = items.map((item) => ({
+  if (verifiedItems && verifiedItems.length > 0) {
+    const itemRows = verifiedItems.map((item) => ({
       don_hang_id: po.id,
       ma_hom: item.product_code,
       ten_hom: item.product_name,

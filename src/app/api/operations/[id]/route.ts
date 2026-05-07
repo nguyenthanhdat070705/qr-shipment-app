@@ -49,9 +49,26 @@ export async function PATCH(
     return NextResponse.json({ error: `Trạng thái không hợp lệ: ${body.status}` }, { status: 400 });
   }
 
+  // 1. Fetch current order to check previous status and get items
+  const { data: currentOrder, error: fetchError } = await supabase
+    .from('delivery_orders')
+    .select('*, items:delivery_order_items(*)')
+    .eq('id', id)
+    .single();
+
+  if (fetchError || !currentOrder) {
+    return NextResponse.json({ error: 'Không tìm thấy lệnh giao hàng' }, { status: 404 });
+  }
+
+  // Nếu lệnh đã bị huỷ trước đó thì không làm gì thêm
+  if (currentOrder.status === 'cancelled' && body.status === 'cancelled') {
+    return NextResponse.json({ error: 'Lệnh đã được huỷ từ trước' }, { status: 400 });
+  }
+
   const updateData: Record<string, unknown> = { status: body.status };
   if (body.assigned_to) updateData.assigned_to = body.assigned_to;
 
+  // 2. Update status
   const { data, error } = await supabase
     .from('delivery_orders')
     .update(updateData)
@@ -61,6 +78,33 @@ export async function PATCH(
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // 3. Logic: CỘNG LẠI TỒN KHO khi trạng thái mới là 'cancelled'
+  if (body.status === 'cancelled' && currentOrder.warehouse_id) {
+    const items = currentOrder.items || [];
+    for (const item of items) {
+      // Tìm dim_hom.id thông qua mã sản phẩm (product_code)
+      const { data: homData } = await supabase
+        .from('dim_hom')
+        .select('id')
+        .eq('ma_hom', item.product_code)
+        .maybeSingle();
+
+      if (homData) {
+        // Gọi RPC adjust_product_quantity để cộng lại số lượng (p_qty_delta dương)
+        const { error: rpcError } = await supabase.rpc('adjust_product_quantity', {
+          p_hom_id: homData.id,
+          p_kho_id: currentOrder.warehouse_id,
+          p_qty_delta: item.quantity,
+          p_loai_hang: 'Hoàn trả (Huỷ lệnh xuất)'
+        });
+
+        if (rpcError) {
+          console.error('[operations] Lỗi hoàn tồn kho:', rpcError);
+        }
+      }
+    }
   }
 
   return NextResponse.json({ data });

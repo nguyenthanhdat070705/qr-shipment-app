@@ -64,7 +64,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { data } = await supabase
     .from('dim_hom')
     .select('ten_hom')
-    .eq('ma_hom', decodeURIComponent(code))
+    .eq('ma_hom', decodeURIComponent(code).trim())
     .limit(1)
     .maybeSingle();
 
@@ -78,7 +78,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function InventoryDetailPage({ params }: PageProps) {
   const { code } = await params;
-  const productCode = decodeURIComponent(code);
+  const productCode = decodeURIComponent(code).trim();
   const supabase = getSupabaseAdmin();
 
   // 1. Find the product in dim_hom

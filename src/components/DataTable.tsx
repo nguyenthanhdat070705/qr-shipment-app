@@ -95,25 +95,25 @@ export default function DataTable<T extends Record<string, any>>({
             <div className="flex items-center gap-2">{toolbarExtra}</div>
           )}
 
-          <button className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors shadow-sm">
-            <SlidersHorizontal size={15} className="text-gray-400" />
+          <button className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors shadow-sm">
+            <SlidersHorizontal size={15} className="text-gray-400 dark:text-gray-500" />
             Bộ lọc
           </button>
         </div>
       )}
 
       {/* ── Table card ─────────────────────────────────── */}
-      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#162240] shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/70">
+              <tr className="border-b border-gray-100 dark:border-white/5 bg-gray-50/70 dark:bg-transparent">
                 {columns.map((col) => (
                   <th
                     key={col.key}
                     onClick={col.sortable ? () => handleSort(col.key) : undefined}
-                    className={`px-5 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-gray-400
-                      ${col.sortable ? 'cursor-pointer select-none hover:text-gray-600' : ''}
+                    className={`px-5 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500
+                      ${col.sortable ? 'cursor-pointer select-none hover:text-gray-600 dark:hover:text-gray-300' : ''}
                       ${col.className || ''}`}
                   >
                     <span className="inline-flex items-center gap-1">
@@ -126,7 +126,7 @@ export default function DataTable<T extends Record<string, any>>({
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 dark:divide-white/5">
               {paged.length === 0 ? (
                 <tr>
                   <td colSpan={columns.length} className="px-5 py-14 text-center">
@@ -134,7 +134,7 @@ export default function DataTable<T extends Record<string, any>>({
                       <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
                         <Search size={20} className="text-gray-300" />
                       </div>
-                      <p className="text-sm font-medium">{emptyMessage}</p>
+                      <div className="text-sm font-medium">{emptyMessage}</div>
                     </div>
                   </td>
                 </tr>
@@ -143,10 +143,10 @@ export default function DataTable<T extends Record<string, any>>({
                   <tr
                     key={i}
                     onClick={onRowClick ? () => onRowClick(row) : undefined}
-                    className={`transition-colors ${onRowClick ? 'cursor-pointer hover:bg-[#f5f6fa]' : ''}`}
+                    className={`transition-colors ${onRowClick ? 'cursor-pointer hover:bg-[#f5f6fa] dark:hover:bg-white/5' : ''}`}
                   >
                     {columns.map((col) => (
-                      <td key={col.key} className={`px-5 py-3.5 ${col.className || ''}`}>
+                      <td key={col.key} className={`px-5 py-3.5 dark:text-gray-200 ${col.className || ''}`}>
                         {col.render ? col.render(row) : String(row[col.key] ?? '—')}
                       </td>
                     ))}
@@ -158,7 +158,7 @@ export default function DataTable<T extends Record<string, any>>({
         </div>
 
         {/* ── Pagination ───────────────────────────────── */}
-        <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 bg-gray-50/40">
+        <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 dark:border-white/5 bg-gray-50/40 dark:bg-transparent">
           <span className="text-xs text-gray-400">
             {filtered.length} kết quả
             {totalPages > 1 && ` · Trang ${safeP}/${totalPages}`}
@@ -168,7 +168,7 @@ export default function DataTable<T extends Record<string, any>>({
               <button
                 onClick={() => setPage(Math.max(1, safeP - 1))}
                 disabled={safeP <= 1}
-                className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 dark:text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft size={16} />
               </button>
@@ -179,7 +179,7 @@ export default function DataTable<T extends Record<string, any>>({
                     key={pg}
                     onClick={() => setPage(pg)}
                     className={`w-7 h-7 rounded-lg text-xs font-semibold transition-colors
-                      ${pg === safeP ? 'bg-[#1B2A4A] text-white' : 'hover:bg-gray-200 text-gray-600'}`}
+                      ${pg === safeP ? 'bg-[#1B2A4A] dark:bg-indigo-500 text-white' : 'hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-400'}`}
                   >
                     {pg}
                   </button>
@@ -188,7 +188,7 @@ export default function DataTable<T extends Record<string, any>>({
               <button
                 onClick={() => setPage(Math.min(totalPages, safeP + 1))}
                 disabled={safeP >= totalPages}
-                className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 dark:text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight size={16} />
               </button>

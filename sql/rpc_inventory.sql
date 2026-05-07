@@ -43,11 +43,8 @@ BEGIN
   FROM fact_inventory
   WHERE "Tên hàng hóa" = v_hom_id;
 
-  -- Đồng bộ lại bảng danh mục sản phẩm (dim_hom)
-  UPDATE dim_hom
-  SET so_luong = v_total_for_hom,
-      updated_at = NOW()
-  WHERE id = v_hom_id;
+  -- Đồng bộ lại bảng danh mục sản phẩm (dim_hom) bị bỏ qua vì đã xóa cột so_luong
+  -- (tính động qua API để luôn chính xác)
 
   RETURN jsonb_build_object(
     'success', true,
@@ -116,11 +113,7 @@ BEGIN
   FROM fact_inventory
   WHERE "Tên hàng hóa" = p_hom_id;
 
-  -- Cập nhật đồng bộ cache
-  UPDATE dim_hom
-  SET so_luong = v_total_for_hom,
-      updated_at = NOW()
-  WHERE id = p_hom_id;
+  -- Cập nhật đồng bộ cache bị bỏ qua vì đã xóa cột so_luong
 
   RETURN jsonb_build_object(
     'success', true,

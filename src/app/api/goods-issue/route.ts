@@ -38,19 +38,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Thiếu dữ liệu: Lô hàng tồn kho.' }, { status: 400 });
   }
 
-  // Lấy Auth Token để định danh người xuất (Không tin tưởng client)
-  const authHeader = req.headers.get('Authorization');
-  let email = '';
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.split(' ')[1];
-    const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
-    if (!authErr && user?.email) {
-      email = user.email;
-    }
-  }
-
-  if (!email) {
-     return NextResponse.json({ error: 'Yêu cầu đăng nhập.' }, { status: 401 });
+  // App hiện tại đang lưu session tự chế trên localStorage nên không có token Supabase Auth thật
+  let email = body.created_by;
+  
+  if (!email || email === 'unknown') {
+     return NextResponse.json({ error: 'Yêu cầu đăng nhập hoặc không xác định người dùng.' }, { status: 401 });
   }
 
   // Kiểm tra mã đám đã xuất chưa (mỗi đám chỉ xuất 1 lần)

@@ -158,11 +158,18 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
  */
 export function getUserRole(email: string): UserRole {
   if (!email) return 'sales';
-  const lower = email.toLowerCase();
+  const lower = email.toLowerCase().trim();
+  const username = lower.split('@')[0];
 
   for (const mapping of EMAIL_ROLE_MAP) {
-    if (lower.includes(mapping.pattern)) {
-      return mapping.role;
+    if (mapping.pattern.includes('@')) {
+      if (lower === mapping.pattern) {
+        return mapping.role;
+      }
+    } else {
+      if (username === mapping.pattern) {
+        return mapping.role;
+      }
     }
   }
 
@@ -182,15 +189,24 @@ export function getRoleConfig(email: string): RoleConfig {
  * If it returns null, the user is allowed to see data from ALL warehouses.
  */
 export function getWarehouseFilter(email: string, name?: string): string | null {
-  const lowerEmail = (email || '').toLowerCase();
-  const lowerName = (name || '').toLowerCase();
+  const role = getUserRole(email);
+  
+  // Admin, procurement, operations, và sales được xem tất cả kho
+  if (['admin', 'procurement', 'operations', 'sales'].includes(role)) {
+    return null;
+  }
 
-  if (lowerEmail.includes('kho1') || lowerName.includes('kho 1')) return 'Kho Hàm Long';
-  if (lowerEmail.includes('kho2') || lowerName.includes('kho 2')) return 'Kho Kha Vạn Cân';
-  if (lowerEmail.includes('kho3') || lowerName.includes('kho 3')) return 'Kho Kinh Dương Vương';
+  // Các tài khoản role warehouse bắt buộc phải được gán cứng vào một kho
+  const lowerEmail = (email || '').toLowerCase().trim();
+  const username = lowerEmail.split('@')[0];
+  const lowerName = (name || '').toLowerCase().trim();
 
-  // Admin, procurement, operations, và các role khác xem tất cả kho
-  return null;
+  if (username === 'kho1' || lowerName === 'kho 1') return 'Kho Hàm Long';
+  if (username === 'kho2' || lowerName === 'kho 2') return 'Kho Kha Vạn Cân';
+  if (username === 'kho3' || lowerName === 'kho 3') return 'Kho Kinh Dương Vương';
+
+  // Nếu thuộc bộ phận kho nhưng chưa được gán mã kho hợp lệ, chặn truy cập kho
+  return 'UNASSIGNED_WAREHOUSE';
 }
 
 /** Hold duration in milliseconds (24 hours) */
