@@ -467,4 +467,4 @@ Dự án có tích hợp hệ thống chăm sóc hội viên tự động qua **
 
 > ⚠️ **Lưu ý Quan trọng:**
 > - Tuyệt đối không để lộ file `.env.local` hoặc commit lên git. Access Token và Refresh Token đã được cấu hình cẩn thận, có giá trị sinh ra tiền phí ZNS.
-> - Tham khảo thêm mã trong `src/lib/zalo/zns.ts` để hiểu luồng refresh token tự động.
+> - Tham khảo thêm mã trong `src/lib/zalo/zns.ts` để hiểu luồng refresh token tự động...
