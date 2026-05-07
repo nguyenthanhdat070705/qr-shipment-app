@@ -94,7 +94,7 @@ export async function GET(req: NextRequest) {
     } else {
       // Admin backoffice search
       const searchType = req.nextUrl.searchParams.get('type') || 'auto';
-      const clean = q.replace(/[\s\-\.]/g, '');
+      const clean = q!.replace(/[\s\-\.]/g, '');
       let isPhone   = false;
       let isCCCD    = false;
       let isMemCode = false;
@@ -103,8 +103,8 @@ export async function GET(req: NextRequest) {
       if (searchType === 'auto') {
         isPhone   = /^(0|\+84)[0-9]{7,10}$/.test(clean);
         isCCCD    = /^[0-9]{9}$/.test(clean) || /^[0-9]{12}$/.test(clean);
-        isMemCode = /^(Mem|mem|MEM)[0-9]/i.test(q);
-        isEmail   = q.includes('@');
+        isMemCode = /^(Mem|mem|MEM)[0-9]/i.test(q!);
+        isEmail   = q!.includes('@');
       } else {
         isPhone   = searchType === 'phone';
         isCCCD    = searchType === 'cccd';

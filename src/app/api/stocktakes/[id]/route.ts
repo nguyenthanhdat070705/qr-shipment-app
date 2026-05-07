@@ -3,12 +3,11 @@ import { getSupabaseAdmin } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request, context: { params: { id: string } }) {
+export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const supabase = getSupabaseAdmin();
-    // Await params correctly per Next.js 15+ constraints if needed, but in standard app router context.params is mostly sync in older versions.
-    // However, to be safe, we extract id.
-    const id = context.params?.id;
+    const params = await context.params;
+    const id = params?.id;
 
     if (!id) return NextResponse.json({ success: false, error: 'Missing ID' }, { status: 400 });
 
@@ -34,10 +33,11 @@ export async function GET(request: Request, context: { params: { id: string } })
   }
 }
 
-export async function PUT(request: Request, context: { params: { id: string } }) {
+export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const supabase = getSupabaseAdmin();
-    const id = context.params?.id;
+    const params = await context.params;
+    const id = params?.id;
     const body = await request.json();
     const { status, note } = body;
 

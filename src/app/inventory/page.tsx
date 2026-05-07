@@ -156,7 +156,7 @@ export default async function InventoryPage() {
   // Transform grouped data to InventoryItem format expected by InventorySearch
   const items = Array.from(productGroupMap.values()).map((group) => {
     const hom = homMap.get(group.homId);
-    const ncc = null;
+    const ncc = null as any;
 
     const code = hom?.ma_hom || '—';
     const name = hom?.ten_hom_the_hien || hom?.ten_hom || 'Chưa có tên';

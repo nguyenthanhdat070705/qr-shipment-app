@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Minus, Search, Package, Edit2, X, Check, ChevronDown, ChevronUp, Upload, Image as ImageIcon, Loader2, Trash2, ArrowLeft, AlertTriangle, Warehouse } from 'lucide-react';
 import Link from 'next/link';
 import ExcelImportModal from '@/components/ExcelImportModal';
@@ -54,6 +54,7 @@ interface Product {
   Nguon_goc: string;
   Liet: string;
   be_mat: string;
+  mo_ta?: string;
 }
 
 const EMPTY_FORM = {

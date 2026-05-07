@@ -211,9 +211,9 @@ export default async function ProductSheetPage({
       />
 
       {/* ── Landscape Sheet Container ───────────────────────── */}
-      <div className="w-[210mm] h-[297mm] bg-white shadow-xl flex flex-col relative print:shadow-none print:w-[210mm] print:h-[297mm] print:m-0 overflow-hidden box-border times-font-force max-h-[297mm]">
+      <div className="w-[210mm] h-[296mm] bg-white shadow-xl flex flex-col relative print:shadow-none print:w-[210mm] print:h-[296mm] print:m-0 overflow-hidden box-border times-font-force max-h-[296mm]">
         
-        <div className="flex-1 p-[8mm] border-[6px] border-gray-100/50 print:border-6 print:border-gray-50 flex flex-col">
+        <div className="flex-1 p-[8mm] border-[6px] border-gray-100/50 print:border-6 print:border-gray-50 flex flex-col box-border">
           
           {/* Header row: logo left, title center */}
           <div className="flex items-center gap-10 mb-10 mt-4">
@@ -251,7 +251,7 @@ export default async function ProductSheetPage({
               <div className="text-gray-900 font-black uppercase text-4xl leading-tight font-times">{hom.ma_hom}</div>
 
               <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-1.5">Tên sản phẩm:</div>
-              <div className="text-gray-900 font-black uppercase text-[36px] leading-[1.1] font-times max-w-full break-words pr-2 pb-1">{hom.ten_the_hien || hom.ten_hom_the_hien || hom.ten_hom}</div>
+              <div className="text-gray-900 font-black uppercase text-[36px] leading-[1.1] font-times max-w-full break-words pr-2 pb-1">{hom.ten_the_hien || hom.Ten_the_hien || hom.ten_hom_the_hien || hom.Ten_hom_the_hien || hom.ten_hom}</div>
 
               <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-1.5">Tên kỹ thuật:</div>
               <div className="text-gray-900 font-black uppercase text-[36px] leading-[1.1] font-times max-w-full break-words pr-2">{hom.ten_hom}</div>
@@ -321,6 +321,8 @@ export default async function ProductSheetPage({
                 background: white !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                height: 100vh !important;
+                overflow: hidden !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;

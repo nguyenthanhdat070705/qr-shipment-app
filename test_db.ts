@@ -1,18 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import * as dotenv from 'dotenv';
+import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-async function check() {
-  const { data, error } = await supabase.rpc('get_schema_info'); // No we can just select 1 row
-  const res = await supabase.from('dim_hom').select('*').limit(1);
-  if (res.data && res.data.length > 0) {
-    console.log(Object.keys(res.data[0]));
-  } else {
-    console.log(res);
-  }
-}
-check();
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+supabase.from('dim_hom').select('*').eq('ma_hom', '2AQ0002').single().then(res => console.log(res.data));
