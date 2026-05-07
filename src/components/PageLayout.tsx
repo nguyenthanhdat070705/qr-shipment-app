@@ -8,7 +8,7 @@ import {
   Bell, Search, BarChart3, Settings, BookOpen, Users,
   Package, Clock, ExternalLink, CheckCheck, Receipt,
   Crown, UserPlus, List, Scale, DollarSign, Building, HardDrive,
-  MessageSquare, Building2, MessageCircle
+  MessageSquare, Building2, MessageCircle, Moon, Sun, Smartphone, Monitor
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -33,7 +33,7 @@ interface MenuItem {
 /* ═══════════════════════════════════════════════════
    Sidebar
 ═══════════════════════════════════════════════════ */
-function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: () => void; isMobileView?: boolean }) {
   const router   = useRouter();
   const pathname = usePathname();
   const [userEmail, setUserEmail] = useState('');
@@ -257,7 +257,7 @@ function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
           flex flex-col shadow-2xl
           transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0 lg:z-30
+          ${!isMobileView ? 'lg:translate-x-0 lg:z-30' : ''}
         `}
       >
         {/* ── Logo ── */}
@@ -386,10 +386,18 @@ function TopBar({
   onMenuOpen,
   title,
   icon,
+  isMobileView,
+  onToggleMobileView,
+  isDark,
+  toggleDark,
 }: {
   onMenuOpen: () => void;
   title: string;
   icon?: React.ReactNode;
+  isMobileView?: boolean;
+  onToggleMobileView?: () => void;
+  isDark?: boolean;
+  toggleDark?: () => void;
 }) {
   const [userEmail, setUserEmail] = useState('');
   const [userName, setUserName] = useState('');
@@ -470,14 +478,14 @@ function TopBar({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
+    <header className="sticky top-0 z-40 bg-white dark:bg-[#0f1629] border-b border-gray-100 dark:border-white/[0.05] shadow-sm transition-colors duration-300">
       <div className="flex items-center justify-between h-14 px-4 lg:px-6">
 
         {/* Left: hamburger (mobile) + breadcrumb */}
         <div className="flex items-center gap-3">
           <button
             onClick={onMenuOpen}
-            className="lg:hidden p-2 rounded-xl hover:bg-gray-100 text-gray-600 transition-colors"
+            className="lg:hidden p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
           >
             <Menu size={20} />
           </button>
@@ -489,7 +497,7 @@ function TopBar({
         </div>
 
         {/* Center: Search */}
-        <div className="flex-1 max-w-xs mx-4 hidden md:block">
+        <div className={`flex-1 max-w-xs mx-4 hidden md:block ${isMobileView ? '!hidden' : ''}`}>
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -503,7 +511,44 @@ function TopBar({
         </div>
 
         {/* Right: notifications + user */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 lg:gap-3">
+          {/* Mobile Preview Toggle */}
+          {!isMobileView && (
+            <button
+              onClick={onToggleMobileView}
+              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                isMobileView 
+                  ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 shadow-sm' 
+                  : 'bg-white dark:bg-[#162240] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5'
+              }`}
+              title="Xem giao diện điện thoại"
+            >
+              <Smartphone size={14} /> Điện thoại
+            </button>
+          )}
+
+          {/* Theme Toggle is moved to PageLayout when in mobile view */}
+          {!isMobileView && (
+            <div className="hidden sm:flex items-center bg-gray-100 dark:bg-[#1e2f5c] rounded-full p-1 border border-gray-200 dark:border-white/10">
+            <button
+              onClick={() => { if(isDark && toggleDark) toggleDark(); }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                !isDark ? 'bg-white text-amber-500 shadow-sm' : 'text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
+              }`}
+            >
+              <Sun size={14} /> Sáng
+            </button>
+            <button
+              onClick={() => { if(!isDark && toggleDark) toggleDark(); }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                isDark ? 'bg-indigo-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Moon size={14} /> Tối
+            </button>
+          </div>
+          )}
+
           {/* ── Live Notification Bell ── */}
           <div className="relative" ref={notifRef}>
             <button
@@ -608,14 +653,15 @@ function TopBar({
             )}
           </div>
 
-          <button className="p-2 rounded-xl hover:bg-gray-100 text-gray-500 transition-colors hidden sm:flex">
+          {/* Cũ: nút trăng sao (đã bị xóa do thay bằng toggle) */}
+          <button className={`p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors hidden sm:flex ${isMobileView ? '!hidden' : ''}`}>
             <Settings size={18} />
           </button>
 
-          <div className="w-px h-6 bg-gray-200 mx-1 hidden sm:block" />
+          <div className={`w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1 hidden sm:block ${isMobileView ? '!hidden' : ''}`} />
 
           {/* User pill */}
-          <Link href="/profile" className="flex items-center gap-2 pl-1 pr-3 py-1.5 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer">
+          <Link href="/profile" className={`flex items-center gap-2 pl-1 py-1.5 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer ${isMobileView ? 'pr-1' : 'pr-3'}`}>
             {avatarUrl ? (
               <div className="h-8 w-8 rounded-full overflow-hidden flex-shrink-0 border border-gray-200">
                 <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
@@ -625,7 +671,7 @@ function TopBar({
                 {initial}
               </div>
             )}
-            <div className="hidden sm:block">
+            <div className={`hidden sm:block ${isMobileView ? '!hidden' : ''}`}>
               <p className="text-xs font-bold text-gray-800 leading-none truncate max-w-[100px]">
                 {userName || userEmail.split('@')[0] || 'User'}
               </p>
@@ -651,25 +697,101 @@ interface PageLayoutProps {
 
 export default function PageLayout({ children, title, icon }: PageLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    // Check initial dark mode preference
+    const checkDark = () => {
+      if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        setIsDark(true);
+        document.documentElement.classList.add('dark');
+      } else {
+        setIsDark(false);
+        document.documentElement.classList.remove('dark');
+      }
+    };
+    checkDark();
+  }, []);
+
+  const toggleDark = () => {
+    if (isDark) {
+      document.documentElement.classList.remove('dark');
+      localStorage.theme = 'light';
+      setIsDark(false);
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.theme = 'dark';
+      setIsDark(true);
+    }
+  };
 
   return (
     <AuthGuard>
       {/* Background */}
-      <div className="min-h-screen bg-[#f5f6fa]">
+      <div className={`min-h-screen transition-colors duration-300 ${isMobileView ? 'bg-gray-800 dark:bg-gray-950 flex flex-col items-center py-4 sm:py-8' : 'bg-[#f5f6fa] dark:bg-[#0c1226]'}`}>
+        
+        {/* Simulator controls (only visible in mobile preview mode) */}
+        {isMobileView && (
+          <div className="flex items-center gap-4 mb-6 bg-white dark:bg-[#1e2f5c] px-4 py-2 rounded-2xl shadow-xl border border-gray-200 dark:border-white/10 z-[100]">
+            <button
+              onClick={() => setIsMobileView(false)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 font-bold text-sm hover:bg-blue-200 dark:hover:bg-blue-500/30 transition-colors"
+            >
+              <Monitor size={16} /> Thoát chế độ ĐT
+            </button>
+            <div className="w-px h-6 bg-gray-200 dark:bg-gray-700" />
+            <div className="flex items-center bg-gray-100 dark:bg-black/20 rounded-xl p-1 border border-gray-200 dark:border-white/5">
+              <button
+                onClick={() => { if(isDark) toggleDark(); }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  !isDark ? 'bg-white text-amber-500 shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
+                }`}
+              >
+                <Sun size={14} /> Sáng
+              </button>
+              <button
+                onClick={() => { if(!isDark) toggleDark(); }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  isDark ? 'bg-indigo-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <Moon size={14} /> Tối
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Sidebar */}
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} isMobileView={isMobileView} />
 
         {/* Main content shifted right on desktop */}
-        <div className="lg:ml-64 flex flex-col min-h-screen">
+        <div className={`flex flex-col min-h-screen transition-all duration-300 ${
+          isMobileView 
+            ? 'w-full max-w-[375px] bg-[#f5f6fa] dark:bg-[#0c1226] rounded-[2.5rem] shadow-2xl overflow-hidden border-[12px] border-gray-900 relative h-[812px] min-h-[812px]' 
+            : 'lg:ml-64 w-full'
+        }`}>
+          
+          {/* Mobile Notch (Simulated) */}
+          {isMobileView && (
+            <div className="absolute top-0 inset-x-0 h-6 flex justify-center z-50 pointer-events-none">
+              <div className="w-32 h-6 bg-gray-900 rounded-b-2xl"></div>
+            </div>
+          )}
+
           {/* Top bar */}
           <TopBar
             onMenuOpen={() => setSidebarOpen(true)}
             title={title}
             icon={icon}
+            isMobileView={isMobileView}
+            onToggleMobileView={() => setIsMobileView(!isMobileView)}
+            isDark={isDark}
+            toggleDark={toggleDark}
           />
 
           {/* Page content */}
-          <main className="flex-1 p-4 lg:p-6">
+          <main className={`flex-1 ${isMobileView ? 'p-3 overflow-y-auto overflow-x-hidden' : 'p-4 lg:p-6'}`}>
             {children}
           </main>
         </div>

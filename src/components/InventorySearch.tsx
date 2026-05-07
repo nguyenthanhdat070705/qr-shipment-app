@@ -223,48 +223,48 @@ export default function InventorySearch({ items, showStats = false }: { items: I
   }, [items, warehouseFilter, lockedWarehouse]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 px-2 sm:px-0">
       {/* Stat cards — hiển thị khi showStats=true hoặc khi có lockedWarehouse */}
       {(showStats || lockedWarehouse) && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-2">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-2">
           {/* Card 1: Tổng SP */}
-          <div className="rounded-2xl bg-white border border-[#d5dbe9] p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eef1f7] flex-shrink-0">
-              <Warehouse size={22} className="text-[#1B2A4A]" />
+          <div className="rounded-[1.25rem] sm:rounded-2xl bg-white dark:bg-[#162240] border border-[#d5dbe9] dark:border-white/10 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-[#eef1f7] dark:bg-white/5 flex-shrink-0">
+              <Warehouse size={20} className="text-[#1B2A4A] dark:text-gray-300 sm:w-[22px] sm:h-[22px]" />
             </div>
             <div>
-              <p className="text-2xl font-extrabold text-gray-900 leading-none">{warehouseStats.total}</p>
-              <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">LOẠI HÒM</p>
+              <p className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{warehouseStats.total}</p>
+              <p className="text-[10px] sm:text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide">LOẠI HÒM</p>
             </div>
           </div>
           {/* Card 2: SP Đang bán */}
-          <div className="rounded-2xl bg-white border border-blue-200 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 flex-shrink-0">
-              <CheckCircle size={22} className="text-blue-600" />
+          <div className="rounded-[1.25rem] sm:rounded-2xl bg-white dark:bg-[#162240] border border-blue-200 dark:border-blue-500/30 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-500/10 flex-shrink-0">
+              <CheckCircle size={20} className="text-blue-600 dark:text-blue-400 sm:w-[22px] sm:h-[22px]" />
             </div>
             <div>
-              <p className="text-2xl font-extrabold text-gray-900 leading-none">{warehouseStats.active}</p>
-              <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">SP Đang bán</p>
+              <p className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{warehouseStats.active}</p>
+              <p className="text-[10px] sm:text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide">SP Đang bán</p>
             </div>
           </div>
           {/* Card 3: SP Ngừng bán */}
-          <div className="rounded-2xl bg-white border border-red-200 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 flex-shrink-0">
-              <XCircle size={22} className="text-red-600" />
+          <div className="rounded-[1.25rem] sm:rounded-2xl bg-white dark:bg-[#162240] border border-red-200 dark:border-red-500/30 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-red-50 dark:bg-red-500/10 flex-shrink-0">
+              <XCircle size={20} className="text-red-600 dark:text-red-400 sm:w-[22px] sm:h-[22px]" />
             </div>
             <div>
-              <p className="text-2xl font-extrabold text-gray-900 leading-none">{warehouseStats.inactive}</p>
-              <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">SP Ngừng bán</p>
+              <p className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{warehouseStats.inactive}</p>
+              <p className="text-[10px] sm:text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide">SP Ngừng bán</p>
             </div>
           </div>
           {/* Card 4: Tổng tồn kho */}
-          <div className="rounded-2xl bg-white border border-emerald-200 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 flex-shrink-0">
-              <Package size={22} className="text-emerald-600" />
+          <div className="rounded-[1.25rem] sm:rounded-2xl bg-white dark:bg-[#162240] border border-emerald-200 dark:border-emerald-500/30 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex-shrink-0">
+              <Package size={20} className="text-emerald-600 dark:text-emerald-400 sm:w-[22px] sm:h-[22px]" />
             </div>
             <div>
-              <p className="text-2xl font-extrabold text-gray-900 leading-none">{warehouseStats.totalStock}</p>
-              <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">Tổng tồn kho</p>
+              <p className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{warehouseStats.totalStock}</p>
+              <p className="text-[10px] sm:text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide">Tổng tồn kho</p>
             </div>
           </div>
         </div>
@@ -272,14 +272,14 @@ export default function InventorySearch({ items, showStats = false }: { items: I
       {/* Search bar */}
       <div className="flex flex-col xl:flex-row gap-3">
         <div className="relative w-full xl:w-[500px] lg:w-[400px]">
-          <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
           <input
             type="text"
             placeholder="Tìm theo tên sản phẩm hoặc mã SP..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full rounded-xl border border-gray-300 bg-white pl-10 pr-4 py-3 text-sm
-                       focus:outline-none focus:ring-2 focus:ring-[#2d4a7a] focus:border-transparent
+            className="w-full rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-[#162240] pl-10 pr-4 py-3 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500
+                       focus:outline-none focus:ring-2 focus:ring-[#2d4a7a] dark:focus:ring-indigo-500/30 focus:border-transparent
                        shadow-sm transition"
           />
         </div>
@@ -297,8 +297,8 @@ export default function InventorySearch({ items, showStats = false }: { items: I
               onClick={() => setFilter(f.key)}
               className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all whitespace-nowrap
                 ${filter === f.key
-                  ? 'bg-[#1B2A4A] text-white border-[#1B2A4A] shadow-sm'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-[#7b8db3]'
+                  ? 'bg-[#1B2A4A] dark:bg-indigo-600 text-white border-[#1B2A4A] dark:border-indigo-500 shadow-sm'
+                  : 'bg-white dark:bg-[#162240] text-gray-600 dark:text-gray-300 border-gray-200 dark:border-white/10 hover:border-[#7b8db3] dark:hover:border-white/20'
                 }`}
             >
               {f.label}
@@ -311,7 +311,7 @@ export default function InventorySearch({ items, showStats = false }: { items: I
               value={warehouseFilter}
               onChange={(e) => setWarehouseFilter(e.target.value)}
               disabled={lockedWarehouse !== null}
-              className={`px-3 py-2 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-[#2d4a7a] ${lockedWarehouse ? 'opacity-70 cursor-not-allowed bg-gray-50' : ''}`}
+              className={`px-3 py-2 rounded-xl text-xs font-semibold border border-gray-200 dark:border-white/10 bg-white dark:bg-[#162240] text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-[#2d4a7a] dark:focus:ring-indigo-500/30 ${lockedWarehouse ? 'opacity-70 cursor-not-allowed bg-gray-50 dark:bg-white/5' : ''}`}
             >
               {!lockedWarehouse && <option value="all">Tất cả kho</option>}
               {uniqueWarehouses
@@ -326,7 +326,7 @@ export default function InventorySearch({ items, showStats = false }: { items: I
           <select
             value={activeFilter}
             onChange={(e) => setActiveFilter(e.target.value as 'all' | 'active' | 'inactive')}
-            className={`px-3 py-2 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-[#2d4a7a]`}
+            className={`px-3 py-2 rounded-xl text-xs font-semibold border border-gray-200 dark:border-white/10 bg-white dark:bg-[#162240] text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-[#2d4a7a] dark:focus:ring-indigo-500/30`}
           >
             <option value="all">Tất cả hoạt động</option>
             <option value="active">Đang bán</option>
@@ -337,7 +337,7 @@ export default function InventorySearch({ items, showStats = false }: { items: I
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as 'all' | 'Đã mua' | 'Ký gửi')}
-            className={`px-3 py-2 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-[#2d4a7a]`}
+            className={`px-3 py-2 rounded-xl text-xs font-semibold border border-gray-200 dark:border-white/10 bg-white dark:bg-[#162240] text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-[#2d4a7a] dark:focus:ring-indigo-500/30`}
           >
             <option value="all">Tất cả hàng hoá</option>
             <option value="Đã mua">Hàng đã mua</option>
@@ -347,15 +347,15 @@ export default function InventorySearch({ items, showStats = false }: { items: I
       </div>
 
       {/* Sort + count */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">
-          <span className="font-bold text-gray-800">{filtered.length}</span> sản phẩm
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1 sm:px-0">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          <span className="font-bold text-gray-800 dark:text-white">{filtered.length}</span> sản phẩm
           {query && <span> cho &quot;{query}&quot;</span>}
         </p>
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as SortType)}
-          className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-[#2d4a7a]"
+          className="text-xs border border-gray-200 dark:border-white/10 rounded-lg px-2 py-1.5 bg-white dark:bg-[#162240] text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-[#2d4a7a] dark:focus:ring-indigo-500/30 w-full sm:w-auto"
         >
           <option value="name">Sắp xếp: Tên A-Z</option>
           <option value="code">Sắp xếp: Mã SP</option>
@@ -366,75 +366,75 @@ export default function InventorySearch({ items, showStats = false }: { items: I
 
       {/* Product table */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
-          <Package size={40} className="mx-auto text-gray-300 mb-3" />
-          <p className="text-gray-500 font-medium">Không tìm thấy sản phẩm nào</p>
-          <p className="text-gray-400 text-sm mt-1">Thử từ khóa khác hoặc thay đổi bộ lọc</p>
+        <div className="text-center py-16 bg-white dark:bg-[#162240] rounded-2xl border border-gray-200 dark:border-white/10 mx-2 sm:mx-0">
+          <Package size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+          <p className="text-gray-500 dark:text-gray-400 font-medium">Không tìm thấy sản phẩm nào</p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">Thử từ khóa khác hoặc thay đổi bộ lọc</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+        <div className="bg-white dark:bg-[#162240] rounded-2xl border border-gray-200 dark:border-white/10 overflow-hidden shadow-sm mx-2 sm:mx-0">
           {/* Desktop table */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide w-[25%] lg:w-[30%]">Sản phẩm</th>
-                  <th className="text-left py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Mã SP</th>
-                  <th className="text-right py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Giá bán</th>
-                  <th className="text-center py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Tổng SL</th>
-                  <th className="text-center py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Kho</th>
-                  <th className="text-center py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Loại hàng</th>
-                  <th className="text-center py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Tình trạng</th>
-                  <th className="text-center py-3 px-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">Hoạt động</th>
+                <tr className="bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10">
+                  <th className="text-left py-3 px-3 font-semibold text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide w-[25%] lg:w-[30%]">Sản phẩm</th>
+                  <th className="text-left py-3 px-3 font-semibold text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Mã SP</th>
+                  <th className="text-right py-3 px-3 font-semibold text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Giá bán</th>
+                  <th className="text-center py-3 px-3 font-semibold text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Tổng SL</th>
+                  <th className="text-center py-3 px-3 font-semibold text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Kho</th>
+                  <th className="text-center py-3 px-3 font-semibold text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Loại hàng</th>
+                  <th className="text-center py-3 px-3 font-semibold text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Tình trạng</th>
+                  <th className="text-center py-3 px-3 font-semibold text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Hoạt động</th>
                   <th className="py-3 px-3 w-[15%]"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 dark:divide-white/5">
                 {filtered.map((item, idx) => {
                   const rowKey = `${item.code}-${idx}`;
                   const isExpanded = expandedRow === rowKey;
                   const breakdown = item.warehouseBreakdown || [];
 
                   return (
-                    <tr key={rowKey} className="hover:bg-gray-50 transition-colors align-top">
+                    <tr key={rowKey} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors align-top">
                       <td className="py-3 px-3">
                         <div className="flex items-start gap-2.5">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={item.imageUrl}
                             alt={item.name}
-                            className="w-10 h-10 object-contain rounded-lg border border-gray-100 bg-gray-50 flex-shrink-0 mt-0.5"
+                            className="w-10 h-10 object-contain rounded-lg border border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-white/5 flex-shrink-0 mt-0.5"
                           />
-                          <span className="text-sm font-medium text-gray-800 leading-snug break-words">{item.name}</span>
+                          <span className="text-sm font-medium text-gray-800 dark:text-white leading-snug break-words">{item.name}</span>
                         </div>
                       </td>
                       <td className="py-3 px-3">
-                        <span className="font-mono text-xs font-bold text-[#1B2A4A] bg-[#eef1f7] px-2 py-1 rounded-lg">
+                        <span className="font-mono text-xs font-bold text-[#1B2A4A] dark:text-indigo-300 bg-[#eef1f7] dark:bg-indigo-500/20 px-2 py-1 rounded-lg">
                           {item.code}
                         </span>
                       </td>
                       <td className="py-3 px-3 text-right">
-                        <span className="text-gray-700 font-semibold">{item.price ? new Intl.NumberFormat('vi-VN').format(item.price) + 'đ' : '—'}</span>
+                        <span className="text-gray-700 dark:text-gray-300 font-semibold">{item.price ? new Intl.NumberFormat('vi-VN').format(item.price) + 'đ' : '—'}</span>
                       </td>
                       <td className="py-3 px-3 text-center">
-                        <span className="font-bold text-gray-800 text-base">{item.khaDung || '0'}</span>
+                        <span className="font-bold text-gray-800 dark:text-white text-base">{item.khaDung || '0'}</span>
                       </td>
                       <td className="py-3 px-3 text-center relative">
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); setExpandedRow(isExpanded ? null : rowKey); }}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-50 text-sky-700 text-xs font-semibold hover:bg-sky-100 border border-sky-200 transition-all"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-400 text-xs font-semibold hover:bg-sky-100 dark:hover:bg-sky-500/20 border border-sky-200 dark:border-sky-500/30 transition-all"
                         >
                           <MapPin size={12} />
                           {breakdown.length} kho
                           <ChevronDown size={12} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                         </button>
                         {isExpanded && breakdown.length > 0 && (
-                          <div className="absolute z-20 top-full mt-1 right-0 w-56 bg-white border border-gray-200 rounded-xl shadow-xl p-2 space-y-1 text-left">
+                          <div className="absolute z-20 top-full mt-1 right-0 w-56 bg-white dark:bg-[#1e2f5c] border border-gray-200 dark:border-white/10 rounded-xl shadow-xl p-2 space-y-1 text-left">
                             {breakdown.map((w, i) => (
-                              <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 hover:bg-gray-100">
-                                <span className="text-xs font-medium text-gray-700">{w.name}</span>
-                                <span className={`text-xs font-bold ${w.avail > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                              <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10">
+                                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{w.name}</span>
+                                <span className={`text-xs font-bold ${w.avail > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
                                   Tồn {w.avail}
                                 </span>
                               </div>
@@ -448,11 +448,11 @@ export default function InventorySearch({ items, showStats = false }: { items: I
                             {Object.entries(item.typeBreakdown).map(([type, qty]) => (
                               <span key={type} className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap
                                 ${type === 'Ký gửi'
-                                  ? 'bg-amber-100 text-amber-700'
-                                  : 'bg-indigo-100 text-indigo-700'
+                                  ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400'
+                                  : 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400'
                                 }`}
                               >
-                                <span className={`w-1.5 h-1.5 rounded-full ${type === 'Ký gửi' ? 'bg-amber-500' : 'bg-indigo-500'}`} />
+                                <span className={`w-1.5 h-1.5 rounded-full ${type === 'Ký gửi' ? 'bg-amber-500 dark:bg-amber-400' : 'bg-indigo-500 dark:bg-indigo-400'}`} />
                                 {type}: {qty}
                               </span>
                             ))}
@@ -460,15 +460,15 @@ export default function InventorySearch({ items, showStats = false }: { items: I
                         ) : item.status ? (
                           <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full
                             ${item.status === 'Ký gửi'
-                              ? 'bg-amber-100 text-amber-700'
-                              : 'bg-indigo-100 text-indigo-700'
+                              ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400'
+                              : 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400'
                             }`}
                           >
-                            <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'Ký gửi' ? 'bg-amber-500' : 'bg-indigo-500'}`} />
+                            <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'Ký gửi' ? 'bg-amber-500 dark:bg-amber-400' : 'bg-indigo-500 dark:bg-indigo-400'}`} />
                             {item.status}
                           </span>
                         ) : (
-                          <span className="text-gray-300">—</span>
+                          <span className="text-gray-300 dark:text-gray-600">—</span>
                         )}
                       </td>
                       <td className="py-3 px-3 text-center">
@@ -479,11 +479,11 @@ export default function InventorySearch({ items, showStats = false }: { items: I
                           const _exp = !_ok && _qty > 0;
                           return (
                             <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap
-                              ${_ok  ? 'bg-emerald-100 text-emerald-700'
-                              : _exp ? 'bg-orange-100 text-orange-700'
-                              :        'bg-red-100 text-red-700'}`}
+                              ${_ok  ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400'
+                              : _exp ? 'bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400'
+                              :        'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'}`}
                             >
-                              <span className={`w-1.5 h-1.5 rounded-full ${_ok ? 'bg-emerald-500' : _exp ? 'bg-orange-500' : 'bg-red-500'}`} />
+                              <span className={`w-1.5 h-1.5 rounded-full ${_ok ? 'bg-emerald-500 dark:bg-emerald-400' : _exp ? 'bg-orange-500 dark:bg-orange-400' : 'bg-red-500 dark:bg-red-400'}`} />
                               {_ok ? 'Còn hàng' : _exp ? 'Đã xuất' : 'Hết hàng'}
                             </span>
                           );
@@ -491,16 +491,16 @@ export default function InventorySearch({ items, showStats = false }: { items: I
                       </td>
                       <td className="py-3 px-3 text-center">
                         <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap
-                          ${item.isActive ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}
+                          ${item.isActive ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400' : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300'}`}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full ${item.isActive ? 'bg-blue-500' : 'bg-gray-400'}`} />
+                          <span className={`w-1.5 h-1.5 rounded-full ${item.isActive ? 'bg-blue-500 dark:bg-blue-400' : 'bg-gray-400 dark:bg-gray-500'}`} />
                           {item.isActive ? 'Đang bán' : 'Ngừng bán'}
                         </span>
                       </td>
                       <td className="py-3 px-3">
                         <Link
-                          href={`/inventory/${encodeURIComponent(item.code)}`}
-                          className="text-xs font-semibold text-[#1B2A4A] hover:text-[#111a33] hover:bg-[#eef1f7] px-3 py-1.5 rounded-lg transition-all"
+                          href={`/inventory/${encodeURIComponent(item.code.trim())}`}
+                          className="text-xs font-semibold text-[#1B2A4A] dark:text-indigo-300 hover:text-[#111a33] dark:hover:text-indigo-200 hover:bg-[#eef1f7] dark:hover:bg-white/10 px-3 py-1.5 rounded-lg transition-all"
                         >
                           Chi tiết →
                         </Link>
@@ -513,29 +513,29 @@ export default function InventorySearch({ items, showStats = false }: { items: I
           </div>
 
           {/* Mobile cards */}
-          <div className="md:hidden divide-y divide-gray-100">
+          <div className="md:hidden divide-y divide-gray-100 dark:divide-white/5">
             {filtered.map((item, idx) => {
               const rowKey = `m-${item.code}-${idx}`;
               const isExpanded = expandedRow === rowKey;
               const breakdown = item.warehouseBreakdown || [];
 
               return (
-                <div key={rowKey} className="p-4 hover:bg-gray-50 transition-colors">
-                  <Link href={`/inventory/${encodeURIComponent(item.code)}`} className="flex items-start gap-3">
+                <div key={rowKey} className="p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                  <Link href={`/inventory/${encodeURIComponent(item.code.trim())}`} className="flex items-start gap-3">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={item.imageUrl}
                       alt={item.name}
-                      className="w-12 h-12 object-contain rounded-xl border border-gray-100 bg-gray-50 flex-shrink-0"
+                      className="w-12 h-12 object-contain rounded-xl border border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-white/5 flex-shrink-0"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-800 text-sm leading-snug break-words">{item.name}</p>
-                      <p className="text-[#1B2A4A] font-semibold text-xs mt-0.5">{item.price ? new Intl.NumberFormat('vi-VN').format(item.price) + 'đ' : '—'}</p>
+                      <p className="font-medium text-gray-800 dark:text-white text-sm leading-snug break-words">{item.name}</p>
+                      <p className="text-[#1B2A4A] dark:text-indigo-300 font-semibold text-xs mt-0.5">{item.price ? new Intl.NumberFormat('vi-VN').format(item.price) + 'đ' : '—'}</p>
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                        <span className="font-mono text-[10px] font-bold text-[#1B2A4A] bg-[#eef1f7] px-1.5 py-0.5 rounded">
+                        <span className="font-mono text-[10px] font-bold text-[#1B2A4A] dark:text-indigo-300 bg-[#eef1f7] dark:bg-indigo-500/20 px-1.5 py-0.5 rounded">
                           {item.code}
                         </span>
-                        <span className="text-xs font-bold text-gray-800">Tồn: {item.khaDung || '0'}</span>
+                        <span className="text-xs font-bold text-gray-800 dark:text-white">Tồn: {item.khaDung || '0'}</span>
                         {(() => {
                           const _avail = Number(item.khaDung || '0');
                           const _qty   = Number(item.tonKho   || '0');
@@ -543,13 +543,13 @@ export default function InventorySearch({ items, showStats = false }: { items: I
                           const _exp = !_ok && _qty > 0;
                           return (
                             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full
-                              ${_ok ? 'bg-emerald-100 text-emerald-700' : _exp ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}
+                              ${_ok ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400' : _exp ? 'bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400' : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'}`}
                             >
                               {_ok ? 'Còn hàng' : _exp ? 'Đã xuất' : 'Hết hàng'}
                             </span>
                           );
                         })()}
-                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${item.isActive ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${item.isActive ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400' : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300'}`}>
                           {item.isActive ? 'Đang bán' : 'Ngừng bán'}
                         </span>
                       </div>
@@ -561,7 +561,7 @@ export default function InventorySearch({ items, showStats = false }: { items: I
                       <button
                         type="button"
                         onClick={() => setExpandedRow(isExpanded ? null : rowKey)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-50 text-sky-700 text-xs font-semibold hover:bg-sky-100 border border-sky-200 transition-all"
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-400 text-xs font-semibold hover:bg-sky-100 dark:hover:bg-sky-500/20 border border-sky-200 dark:border-sky-500/30 transition-all"
                       >
                         <MapPin size={11} />
                         Xem {breakdown.length} kho
@@ -570,9 +570,9 @@ export default function InventorySearch({ items, showStats = false }: { items: I
                       {isExpanded && (
                         <div className="mt-1.5 space-y-1">
                           {breakdown.map((w, i) => (
-                            <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 border border-gray-100">
-                              <span className="text-xs font-medium text-gray-700">📍 {w.name}</span>
-                              <span className={`text-xs font-bold ${w.avail > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                            <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">📍 {w.name}</span>
+                              <span className={`text-xs font-bold ${w.avail > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
                                 Tồn {w.avail}
                               </span>
                             </div>

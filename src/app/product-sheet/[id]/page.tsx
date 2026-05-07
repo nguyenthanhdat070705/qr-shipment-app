@@ -162,12 +162,14 @@ export default async function ProductSheetPage({
     console.warn('[product-sheet] Could not fetch active warehouses:', e);
   }
 
-  const size = hom.kich_thuoc || '—';
-  const material = hom.loai_go || '—';
-  const color = hom.Mau_sac || hom.mau_sac || '—';
-  const feature = hom.dac_diem || '—';
-  const origin = hom.Nguon_goc || hom.nguon_goc || '—';
-  const thickness = hom.Thanh || hom.thanh || '—';
+  const parsed = parseProductName(hom.ten_hom || '');
+
+  const size = hom.kich_thuoc && hom.kich_thuoc !== '—' ? hom.kich_thuoc : parsed.size;
+  const material = hom.loai_go && hom.loai_go !== '—' ? hom.loai_go : parsed.material;
+  const color = (hom.Mau_sac || hom.mau_sac) && (hom.Mau_sac || hom.mau_sac) !== '—' ? (hom.Mau_sac || hom.mau_sac) : parsed.color;
+  const feature = hom.dac_diem && hom.dac_diem !== '—' ? hom.dac_diem : parsed.feature;
+  const origin = (hom.Nguon_goc || hom.nguon_goc) || '—';
+  const thickness = (hom.Thanh || hom.thanh) && (hom.Thanh || hom.thanh) !== '—' ? (hom.Thanh || hom.thanh) : parsed.thickness;
   const otherSpecs = hom.thong_so_khac || '';
 
   return (
@@ -209,7 +211,7 @@ export default async function ProductSheetPage({
       />
 
       {/* ── Landscape Sheet Container ───────────────────────── */}
-      <div className="w-[210mm] min-h-[297mm] bg-white shadow-xl flex flex-col relative print:shadow-none print:w-full print:min-h-screen print:m-0 overflow-hidden box-border times-font-force">
+      <div className="w-[210mm] h-[297mm] bg-white shadow-xl flex flex-col relative print:shadow-none print:w-[210mm] print:h-[297mm] print:m-0 overflow-hidden box-border times-font-force max-h-[297mm]">
         
         <div className="flex-1 p-[8mm] border-[6px] border-gray-100/50 print:border-6 print:border-gray-50 flex flex-col">
           
@@ -249,7 +251,7 @@ export default async function ProductSheetPage({
               <div className="text-gray-900 font-black uppercase text-4xl leading-tight font-times">{hom.ma_hom}</div>
 
               <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-1.5">Tên sản phẩm:</div>
-              <div className="text-gray-900 font-black uppercase text-[36px] leading-[1.1] font-times max-w-full break-words pr-2 pb-1">{hom.ten_hom_the_hien || hom.ten_hom}</div>
+              <div className="text-gray-900 font-black uppercase text-[36px] leading-[1.1] font-times max-w-full break-words pr-2 pb-1">{hom.ten_the_hien || hom.ten_hom_the_hien || hom.ten_hom}</div>
 
               <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-1.5">Tên kỹ thuật:</div>
               <div className="text-gray-900 font-black uppercase text-[36px] leading-[1.1] font-times max-w-full break-words pr-2">{hom.ten_hom}</div>

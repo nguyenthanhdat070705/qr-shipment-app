@@ -26,7 +26,14 @@ function authorized(req: NextRequest): boolean {
   const queryKey = req.nextUrl.searchParams.get('api_key');
   const expected = process.env.SYNC_API_KEY;
 
-  if (!expected) return true; // Chế độ dev: không cần key
+  if (!expected) {
+    // Nếu server không cấu hình key, ta chỉ cho phép chạy ở local dev
+    if (process.env.NODE_ENV === 'development') {
+      return true;
+    }
+    console.error('CRITICAL: SYNC_API_KEY is not configured on the server!');
+    return false; // Chặn mọi request nếu quên cấu hình trên Production
+  }
 
   const provided = headerKey?.replace(/^Bearer\s+/, '') || queryKey;
   return provided === expected;

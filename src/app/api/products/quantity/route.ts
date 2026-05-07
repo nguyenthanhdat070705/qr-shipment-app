@@ -23,11 +23,20 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const email = (body.email as string) || '';
+  const authHeader = req.headers.get('Authorization');
+  let email = '';
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+    if (!authErr && user?.email) {
+      email = user.email;
+    }
+  }
+
   // Only VIP admin can adjust quantities
-  if (!isVIPAdmin(email)) {
+  if (!email || !isVIPAdmin(email)) {
     return NextResponse.json(
-      { error: 'Bạn không có quyền thay đổi số lượng hòm.' },
+      { error: 'Bạn không có quyền thay đổi số lượng hòm. Yêu cầu đăng nhập bằng tài khoản Admin.' },
       { status: 403 }
     );
   }
@@ -67,73 +76,25 @@ export async function PATCH(req: NextRequest) {
 
   const loaiHang = (body.loai_hang as string) || 'Đã mua';
 
-  // 3. Read current qty from fact_inventory for THIS specific (product, warehouse)
-  const { data: rawRow } = await supabase
-    .from('fact_inventory')
-    .select('Mã, "Số lượng", "Ghi chú"')
-    .eq('Tên hàng hóa', id)
-    .eq('Kho', khoId)
-    .maybeSingle();
+  // 3. Sử dụng Supabase RPC để cộng/trừ số lượng một cách an toàn (Atomic & Row-Level Lock)
+  // RPC này sẽ tự động tạo dòng fact_inventory mới nếu chưa tồn tại
+  const { data: rpcResult, error: rpcErr } = await supabase.rpc('adjust_product_quantity', {
+    p_hom_id: id,
+    p_kho_id: khoId,
+    p_qty_delta: delta,
+    p_loai_hang: loaiHang
+  });
 
-  const existingRow = rawRow as Record<string, any> | null;
-
-  const currentWarehouseQty = existingRow ? (Number(existingRow['Số lượng']) || 0) : 0;
-  const newWarehouseQty = Math.max(0, currentWarehouseQty + delta);
-
-  // 4. Update fact_inventory for this specific warehouse
-  if (existingRow) {
-    if (newWarehouseQty > 0) {
-      // Update existing row
-      await supabase
-        .from('fact_inventory')
-        .update({
-          'Số lượng': newWarehouseQty,
-          'Ghi chú': newWarehouseQty,
-          'Loại hàng': loaiHang,
-        })
-        .eq('Mã', existingRow['Mã']);
-    } else {
-      // Qty reached 0 → remove this warehouse row
-      await supabase
-        .from('fact_inventory')
-        .delete()
-        .eq('Mã', existingRow['Mã']);
-    }
-  } else if (newWarehouseQty > 0) {
-    // No existing row → insert new
-    await supabase
-      .from('fact_inventory')
-      .insert({
-        'Tên hàng hóa': id,
-        'Kho': khoId,
-        'Số lượng': newWarehouseQty,
-        'Ghi chú': newWarehouseQty,
-        'Loại hàng': loaiHang,
-      });
+  if (rpcErr || !rpcResult?.success) {
+    console.error('[products/quantity] RPC Error:', rpcErr || rpcResult);
+    return NextResponse.json({ error: rpcErr?.message || 'Hết hàng hoặc số lượng trong kho không đủ.' }, { status: 400 });
   }
-
-  // 5. Recalculate TOTAL quantity across ALL warehouses for this product
-  const { data: allRows } = await supabase
-    .from('fact_inventory')
-    .select('"Số lượng"')
-    .eq('Tên hàng hóa', id);
-
-  const totalQty = (allRows || []).reduce(
-    (sum: number, r: Record<string, unknown>) => sum + (Number(r['Số lượng']) || 0),
-    0
-  );
-
-  // 6. Cache the total back to dim_hom.so_luong
-  await supabase
-    .from('dim_hom')
-    .update({ so_luong: totalQty, updated_at: new Date().toISOString() })
-    .eq('id', id);
 
   return NextResponse.json({
     success: true,
     ma_hom: product.ma_hom,
-    old_qty: currentWarehouseQty,
-    new_qty: totalQty,   // Return the TOTAL across all warehouses
+    old_qty: rpcResult.new_warehouse_qty - delta,
+    new_qty: rpcResult.total_hom_qty,
     delta,
   });
 }

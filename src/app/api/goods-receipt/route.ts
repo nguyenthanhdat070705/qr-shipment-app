@@ -10,65 +10,85 @@ import { randomUUID } from 'crypto';
 export async function GET() {
   const supabase = getSupabaseAdmin();
 
-  const { data, error } = await supabase
-    .from('fact_nhap_hang')
-    .select('*, items:fact_nhap_hang_items(so_luong_yeu_cau, so_luong_thuc_nhan)')
-    .order('created_at', { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from('fact_nhap_hang')
+      .select('*, items:fact_nhap_hang_items(so_luong_yeu_cau, so_luong_thuc_nhan)')
+      .order('created_at', { ascending: false });
 
-  if (error) {
-    if (error.message.includes("schema cache")) {
+    if (error) {
+      if (error.message.includes("schema cache") || error.message.includes("relation")) {
+        return NextResponse.json({ data: [] });
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    if (!data || data.length === 0) {
       return NextResponse.json({ data: [] });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
 
-  // Enrich with warehouse & PO info
-  const enrichedData = await Promise.all(
-    (data || []).map(async (gr: Record<string, unknown>) => {
-      let warehouse = null;
-      let purchaseOrder = null;
+    // Batch-fetch all related data upfront to avoid N+1 queries
+    const khoIds = [...new Set(data.map((gr: any) => gr.kho_id).filter(Boolean))];
+    const donHangIds = [...new Set(data.map((gr: any) => gr.don_hang_id).filter(Boolean))];
+    const nguoiNhanIds = [...new Set(data.map((gr: any) => gr.nguoi_nhan_id).filter(Boolean))];
 
-      if (gr.kho_id) {
-        const { data: kho } = await supabase
-          .from('dim_kho')
-          .select('id, ma_kho, ten_kho')
-          .eq('id', gr.kho_id as string)
-          .single();
-        if (kho) warehouse = { id: kho.id, code: kho.ma_kho, name: kho.ten_kho };
-      }
+    // Fetch warehouses
+    const khoMap = new Map<string, any>();
+    if (khoIds.length > 0) {
+      const { data: khoData } = await supabase
+        .from('dim_kho')
+        .select('id, ma_kho, ten_kho')
+        .in('id', khoIds);
+      (khoData || []).forEach((k: any) => khoMap.set(k.id, k));
+    }
 
-      if (gr.don_hang_id) {
-        const { data: po } = await supabase
-          .from('fact_don_hang')
-          .select('id, ma_don_hang, ncc_id')
-          .eq('id', gr.don_hang_id as string)
-          .single();
-        if (po) {
-          let supplier = null;
-          if (po.ncc_id) {
-            const { data: ncc } = await supabase
-              .from('dim_ncc')
-              .select('id, ten_ncc')
-              .eq('id', po.ncc_id)
-              .single();
-            supplier = ncc ? { name: ncc.ten_ncc } : null;
-          }
-          purchaseOrder = { po_code: po.ma_don_hang, supplier_id: po.ncc_id, suppliers: supplier };
+    // Fetch POs + suppliers
+    const poMap = new Map<string, any>();
+    if (donHangIds.length > 0) {
+      const { data: poData } = await supabase
+        .from('fact_don_hang')
+        .select('id, ma_don_hang, ncc_id')
+        .in('id', donHangIds);
+      
+      if (poData && poData.length > 0) {
+        const nccIds = [...new Set(poData.map(p => p.ncc_id).filter(Boolean))];
+        const nccMap = new Map<string, any>();
+        if (nccIds.length > 0) {
+          const { data: nccData } = await supabase
+            .from('dim_ncc')
+            .select('id, ten_ncc')
+            .in('id', nccIds);
+          (nccData || []).forEach((n: any) => nccMap.set(n.id, n));
         }
+        poData.forEach((po: any) => {
+          const supplier = po.ncc_id ? nccMap.get(po.ncc_id) : null;
+          poMap.set(po.id, {
+            po_code: po.ma_don_hang,
+            supplier_id: po.ncc_id,
+            suppliers: supplier ? { name: supplier.ten_ncc } : null,
+          });
+        });
       }
+    }
 
-      // Resolve receiver name
-      let receivedByName: string | null = null;
-      if (gr.nguoi_nhan_id) {
-        const { data: account } = await supabase
-          .from('dim_account')
-          .select('ho_ten, email')
-          .eq('id', gr.nguoi_nhan_id as string)
-          .maybeSingle();
-        if (account) {
-          receivedByName = account.ho_ten || account.email?.split('@')[0] || null;
-        }
-      }
+    // Fetch account names
+    const accountMap = new Map<string, string>();
+    if (nguoiNhanIds.length > 0) {
+      const { data: accountData } = await supabase
+        .from('dim_account')
+        .select('id, ho_ten, email')
+        .in('id', nguoiNhanIds);
+      (accountData || []).forEach((a: any) => {
+        accountMap.set(a.id, a.ho_ten || a.email?.split('@')[0] || '');
+      });
+    }
+
+    // Enrich in-memory (no more N+1)
+    const enrichedData = (data || []).map((gr: Record<string, unknown>) => {
+      const kho = gr.kho_id ? khoMap.get(gr.kho_id as string) : null;
+      const warehouse = kho ? { id: kho.id, code: kho.ma_kho, name: kho.ten_kho } : null;
+      const purchaseOrder = gr.don_hang_id ? poMap.get(gr.don_hang_id as string) || null : null;
+      const receivedByName = gr.nguoi_nhan_id ? accountMap.get(gr.nguoi_nhan_id as string) || null : null;
 
       const isMissingGoods = Array.isArray(gr.items)
         ? gr.items.some((i: any) => (i.so_luong_thuc_nhan || 0) < (i.so_luong_yeu_cau || 0))
@@ -88,11 +108,15 @@ export async function GET() {
         warehouse,
         purchase_order: purchaseOrder,
         is_missing_goods: isMissingGoods,
+        items: gr.items,
       };
-    })
-  );
+    });
 
-  return NextResponse.json({ data: enrichedData });
+    return NextResponse.json({ data: enrichedData });
+  } catch (err: any) {
+    console.error('[goods-receipt GET]', err);
+    return NextResponse.json({ data: [], error: err.message }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -254,54 +278,7 @@ export async function POST(req: NextRequest) {
   // NORMAL GOODS RECEIPT (existing logic)
   // ══════════════════════════════════════════════
 
-  // ── Auto-Correction: Revert old GRPO inventory if re-scanning same PO in same warehouse ──
-  if (po_id) {
-    const { data: existingGrs } = await supabase
-      .from('fact_nhap_hang')
-      .select('id')
-      .eq('don_hang_id', po_id)
-      .eq('kho_id', warehouse_id)
-      .eq('trang_thai', 'completed');
-      
-    if (existingGrs && existingGrs.length > 0) {
-      // Find old items to revert their inventory
-      const { data: oldItemsData } = await supabase
-        .from('fact_nhap_hang_items')
-        .select('ma_hom, so_luong_thuc_nhan')
-        .in('nhap_hang_id', existingGrs.map(g => g.id));
-        
-      if (oldItemsData && oldItemsData.length > 0) {
-        const rawOldHomCodes = oldItemsData.map(i => i.ma_hom);
-        const { data: oldHomData } = await supabase.from('dim_hom').select('id, ma_hom').in('ma_hom', rawOldHomCodes);
-        const oldHomMap = new Map<string, string>();
-        if (oldHomData) for (const h of oldHomData) oldHomMap.set(h.ma_hom, h.id);
-        
-        for (const oldItem of oldItemsData) {
-          if ((oldItem.so_luong_thuc_nhan || 0) <= 0) continue;
-          const homId = oldHomMap.get(oldItem.ma_hom);
-          if (!homId) continue;
-          
-          const { data: currentInvData } = await supabase.from('fact_inventory').select('*').eq('Tên hàng hóa', homId).eq('Kho', warehouse_id);
-          if (currentInvData && currentInvData.length > 0) {
-            const invRow = currentInvData[0];
-            const newQty = Math.max(0, (Number(invRow['Số lượng']) || 0) - oldItem.so_luong_thuc_nhan);
-            const newKhadung = Math.max(0, (Number(invRow['Ghi chú']) || 0) - oldItem.so_luong_thuc_nhan);
-            await supabase.from('fact_inventory').delete().eq('Mã', invRow['Mã']);
-            await supabase.from('fact_inventory').insert({
-              'Mã': invRow['Mã'], 'Tên hàng hóa': invRow['Tên hàng hóa'], 'Kho': invRow['Kho'],
-              'Số lượng': newQty, 'Ghi chú': newKhadung, 'Loại hàng': invRow['Loại hàng'],
-            });
-          }
-        }
-      }
-      
-      // Delete the old GRPOs and their items to replace them with the new one
-      for (const oldGr of existingGrs) {
-         await supabase.from('fact_nhap_hang_items').delete().eq('nhap_hang_id', oldGr.id);
-         await supabase.from('fact_nhap_hang').delete().eq('id', oldGr.id);
-      }
-    }
-  }
+  // ── Auto-Correction logic removed to preserve Audit Log and prevent data loss ──
 
   // Generate GR code: GR-YYYYMMDD-XXX
   const now = new Date();
@@ -410,15 +387,19 @@ export async function POST(req: NextRequest) {
           const invRow = existingInv[0];
           const newQty = (Number(invRow['Số lượng']) || 0) + qty;
           const newKhadung = (Number(invRow['Ghi chú']) || 0) + qty;
-          await supabase.from('fact_inventory').delete().eq('Mã', invRow['Mã']);
-          await supabase.from('fact_inventory').insert({
-            'Mã': invRow['Mã'],
-            'Tên hàng hóa': invRow['Tên hàng hóa'],
-            'Kho': invRow['Kho'],
-            'Số lượng': newQty,
-            'Ghi chú': newKhadung,
-            'Loại hàng': invRow['Loại hàng'],
-          });
+          
+          const { error: updateError } = await supabase
+            .from('fact_inventory')
+            .update({
+              'Số lượng': newQty,
+              'Ghi chú': newKhadung,
+            })
+            .eq('Mã', invRow['Mã']);
+            
+          if (updateError) {
+             console.error('[goods-receipt POST] Inventory update error:', updateError);
+             throw new Error('Failed to update inventory');
+          }
         } else {
           await supabase.from('fact_inventory').insert({
             'Mã': randomUUID(),

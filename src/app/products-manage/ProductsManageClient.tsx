@@ -112,6 +112,10 @@ export default function ProductsManagePage() {
   const [qtyPopup, setQtyPopup] = useState<QtyPopup | null>(null);
   const [warehouses, setWarehouses] = useState<WarehouseItem[]>([]);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem('auth_user');
@@ -165,21 +169,74 @@ export default function ProductsManagePage() {
     });
   }, [form.loai_go, form.Thanh, showForm]);
 
-  // ── Image upload handler ──
-  const handleFileSelect = (file: File) => {
+  // ── Image upload handler with compression ──
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const max_size = 1200;
+          if (width > height) {
+            if (width > max_size) {
+              height *= max_size / width;
+              width = max_size;
+            }
+          } else {
+            if (height > max_size) {
+              width *= max_size / height;
+              height = max_size;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            if (blob) {
+              resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() }));
+            } else {
+              resolve(file);
+            }
+          }, 'image/jpeg', 0.8);
+        };
+        img.onerror = (e) => reject(e);
+      };
+      reader.onerror = (e) => reject(e);
+    });
+  };
+
+  const handleFileSelect = async (file: File) => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {
       setMessage({ type: 'error', text: 'Chỉ chấp nhận file ảnh (JPEG, PNG, WebP, GIF).' });
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setMessage({ type: 'error', text: 'Ảnh quá lớn. Tối đa 5MB.' });
+    
+    let processedFile = file;
+    // Nén nếu file > 1MB
+    if (file.size > 1024 * 1024) {
+      try {
+        processedFile = await compressImage(file);
+      } catch (err) {
+        console.error('Lỗi nén ảnh:', err);
+      }
+    }
+
+    if (processedFile.size > 5 * 1024 * 1024) {
+      setMessage({ type: 'error', text: 'Ảnh sau khi nén vẫn quá lớn. Tối đa 5MB.' });
       return;
     }
-    setPendingFile(file);
+    
+    setPendingFile(processedFile);
     const reader = new FileReader();
     reader.onload = (e) => setImagePreview(e.target?.result as string);
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(processedFile);
   };
 
   const uploadImage = async (productId: string, maHom: string, file: File): Promise<string | null> => {
@@ -370,9 +427,13 @@ export default function ProductsManagePage() {
     setAdjustingQty(productId);
     setQtyPopup(null);
     try {
+      const token = localStorage.getItem('auth_token') || '';
       const res = await fetch('/api/products/quantity', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
         body: JSON.stringify({ id: productId, delta, email: userEmail, kho_id, loai_hang }),
       });
       const json = await res.json();
@@ -401,6 +462,9 @@ export default function ProductsManagePage() {
       (p.loai_hom || '').toLowerCase().includes(q)
     );
   });
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const currentProducts = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="pm-container">
@@ -509,7 +573,16 @@ export default function ProductsManagePage() {
                   </div>
                   <div className="pm-field">
                     <label>Tên hòm thể hiện</label>
-                    <input type="text" value={form.ten_hom_the_hien} disabled placeholder="Được tạo tự động..." title="Tự động từ Loại gỗ và Độ dày thành" />
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input type="text" value={form.ten_hom_the_hien} onChange={e => handleChange('ten_hom_the_hien', e.target.value)} placeholder="Tên hòm thể hiện..." title="Tự động từ Loại gỗ và Độ dày thành" style={{ flex: 1 }} />
+                      <button type="button" onClick={() => {
+                        const loaiGo = form.loai_go ? ` ${form.loai_go}` : '';
+                        const thanh = form.Thanh ? ` ${form.Thanh}` : '';
+                        handleChange('ten_hom_the_hien', `Quan Tài${loaiGo}${thanh}`.trim());
+                      }} className="pm-btn-icon" title="Tạo tự động" style={{ padding: '0 8px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc' }}>
+                        <Check size={14} />
+                      </button>
+                    </div>
                   </div>
                   <div className="pm-field">
                     <label>Tên kỹ thuật</label>
@@ -802,7 +875,7 @@ export default function ProductsManagePage() {
           type="text"
           placeholder="Tìm theo mã hòm, tên, NCC, loại..."
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
         />
         {search && (
           <button className="pm-search-clear" onClick={() => setSearch('')}>
@@ -842,8 +915,8 @@ export default function ProductsManagePage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((p, i) => (
-                <>
+              {currentProducts.map((p, i) => (
+                <React.Fragment key={p.id}>
                   <tr key={p.id} className={expandedRow === p.id ? 'pm-row-expanded' : ''} style={{ opacity: p.is_active ? 1 : 0.6 }}>
                     <td>
                       <div className="pm-toggle-wrap" onClick={(e) => e.stopPropagation()}>
@@ -934,10 +1007,33 @@ export default function ProductsManagePage() {
                       </td>
                     </tr>
                   )}
-                </>
+                </React.Fragment>
               ))}
             </tbody>
           </table>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '16px', borderTop: '1px solid #e2e8f0' }}>
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                disabled={currentPage === 1}
+                style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === 1 ? '#f8fafc' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', color: '#475569', fontSize: '14px', fontWeight: 600 }}
+              >
+                Trước
+              </button>
+              <span style={{ fontSize: '14px', fontWeight: 500, color: '#475569' }}>
+                Trang {currentPage} / {totalPages}
+              </span>
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                disabled={currentPage === totalPages}
+                style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === totalPages ? '#f8fafc' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', color: '#475569', fontSize: '14px', fontWeight: 600 }}
+              >
+                Sau
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

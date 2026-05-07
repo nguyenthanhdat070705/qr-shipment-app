@@ -559,11 +559,10 @@ function CreateGoodsReceiptForm() {
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="bg-gray-50 border-b border-gray-100">
-                        <th className="px-3 py-2 text-left font-bold uppercase text-gray-400 tracking-wide">Mã SP</th>
-                        <th className="px-3 py-2 text-left font-bold uppercase text-gray-400 tracking-wide">Tên SP</th>
-                        <th className="px-3 py-2 text-right font-bold uppercase text-gray-400 tracking-wide">YC</th>
-                        <th className="px-3 py-2 text-right font-bold uppercase text-gray-400 tracking-wide">Nhận</th>
-                        <th className="px-3 py-2 text-center font-bold uppercase text-gray-400 tracking-wide">KQ</th>
+                        <th className="px-2 py-2 text-left font-bold uppercase text-gray-400 tracking-wide">Sản phẩm</th>
+                        <th className="px-2 py-2 text-center font-bold uppercase text-gray-400 tracking-wide">YC</th>
+                        <th className="px-2 py-2 text-center font-bold uppercase text-gray-400 tracking-wide">Nhận</th>
+                        <th className="px-2 py-2 text-right font-bold uppercase text-gray-400 tracking-wide">KQ</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -573,14 +572,14 @@ function CreateGoodsReceiptForm() {
                         const miss = diff < 0;
                         return (
                           <tr key={idx} className="border-b border-gray-50 last:border-0">
-                            <td className="px-3 py-2.5 font-mono font-bold text-orange-600">{item.product_code}</td>
-                            <td className="px-3 py-2.5 text-gray-700 max-w-[140px]">
-                              <span className="line-clamp-2 leading-snug">{item.product_name}</span>
+                            <td className="px-2 py-2.5 max-w-[140px] sm:max-w-none">
+                              <div className="font-mono font-bold text-orange-600 mb-0.5">{item.product_code}</div>
+                              <div className="text-gray-700 text-[11px] leading-tight line-clamp-2">{item.product_name}</div>
                             </td>
-                            <td className="px-3 py-2.5 text-right font-semibold text-gray-600">{item.expected_qty}</td>
-                            <td className="px-3 py-2.5 text-right font-extrabold text-gray-900">{item.received_qty}</td>
-                            <td className="px-3 py-2.5 text-center">
-                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            <td className="px-2 py-2.5 text-center font-semibold text-gray-600">{item.expected_qty}</td>
+                            <td className="px-2 py-2.5 text-center font-extrabold text-gray-900">{item.received_qty}</td>
+                            <td className="px-2 py-2.5 text-right">
+                              <span className={`inline-flex items-center justify-center min-w-[36px] px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
                                 ok   ? 'bg-emerald-100 text-emerald-700' :
                                 miss ? 'bg-amber-100 text-amber-700' :
                                        'bg-blue-100 text-blue-700'
@@ -616,17 +615,11 @@ function CreateGoodsReceiptForm() {
               </div>
 
               {/* Footer */}
-              <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
-                <button
-                  onClick={() => setShowCheckModal(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-                >
-                  ← Quay lại chỉnh sửa
-                </button>
+              <div className="px-4 py-4 border-t border-gray-100 flex flex-col sm:flex-row gap-2.5">
                 <button
                   onClick={handleSubmit}
                   disabled={!confirmed || submitting}
-                  className={`flex-1 py-2.5 rounded-xl text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg flex items-center justify-center gap-2 ${
+                  className={`w-full sm:flex-1 py-3 sm:py-2.5 rounded-xl text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg flex items-center justify-center gap-2 order-1 sm:order-2 ${
                     isTemporary
                       ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-200'
                       : 'bg-orange-500 hover:bg-orange-600 shadow-orange-200'
@@ -634,6 +627,12 @@ function CreateGoodsReceiptForm() {
                 >
                   {isTemporary ? <ClipboardList size={15} /> : <CheckCircle2 size={15} />}
                   {submitting ? 'Đang xử lý...' : (isTemporary ? 'Xác nhận nhập tạm' : 'Xác nhận nhập kho')}
+                </button>
+                <button
+                  onClick={() => setShowCheckModal(false)}
+                  className="w-full sm:flex-1 py-3 sm:py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors order-2 sm:order-1"
+                >
+                  ← Quay lại
                 </button>
               </div>
 

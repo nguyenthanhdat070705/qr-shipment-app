@@ -128,7 +128,7 @@ export async function PATCH(
   const { id } = await params;
   const supabase = getSupabaseAdmin();
 
-  let body: { status?: string; cancelled_by?: string; link_po_id?: string; confirm_receipt?: boolean };
+  let body: { status?: string; cancelled_by?: string; link_po_id?: string; confirm_receipt?: boolean; confirm_without_po?: boolean };
   try {
     body = await req.json();
   } catch {
@@ -197,6 +197,145 @@ export async function PATCH(
     return NextResponse.json({ 
       data: { ...data, status: data.trang_thai, gr_code: data.ma_phieu_nhap },
       message: `Đã liên kết PO ${po.ma_don_hang} thành công.`,
+    });
+  }
+
+  // ══════════════════════════════════════════════
+  // ACTION: Confirm WITHOUT PO (skip PO linkage)
+  // ══════════════════════════════════════════════
+  if (body.confirm_without_po) {
+    if (currentGr.trang_thai !== 'pending_po') {
+      return NextResponse.json({ error: 'Chỉ có thể xác nhận trực tiếp khi phiếu đang ở trạng thái "Chờ PO".' }, { status: 400 });
+    }
+
+    // Get items for this GRPO
+    const { data: grItems } = await supabase
+      .from('fact_nhap_hang_items')
+      .select('ma_hom, ten_hom, so_luong_thuc_nhan')
+      .eq('nhap_hang_id', id);
+
+    // Update inventory
+    if (grItems && grItems.length > 0) {
+      try {
+        const maHomList = grItems.filter((i: any) => (i.so_luong_thuc_nhan || 0) > 0).map((i: any) => i.ma_hom);
+        const { data: homData } = await supabase
+          .from('dim_hom')
+          .select('id, ma_hom')
+          .in('ma_hom', maHomList);
+
+        const homMap = new Map<string, string>();
+        if (homData) {
+          for (const h of homData) homMap.set(h.ma_hom, h.id);
+        }
+
+        const receivedMap = new Map<string, number>();
+        for (const item of grItems) {
+          const qty = Number(item.so_luong_thuc_nhan || 0);
+          if (qty > 0) {
+            receivedMap.set(item.ma_hom, (receivedMap.get(item.ma_hom) || 0) + qty);
+          }
+        }
+
+        const { randomUUID } = await import('crypto');
+
+        for (const [maHom, qty] of receivedMap.entries()) {
+          const homId = homMap.get(maHom);
+          if (!homId) continue;
+
+          const { data: existingInv } = await supabase
+            .from('fact_inventory')
+            .select('*')
+            .eq('Tên hàng hóa', homId)
+            .eq('Kho', currentGr.kho_id);
+
+          if (existingInv && existingInv.length > 0) {
+            const invRow = existingInv[0] as any;
+            const newQty = (Number(invRow['Số lượng']) || 0) + qty;
+            const newKhadung = (Number(invRow['Ghi chú']) || 0) + qty;
+            await supabase.from('fact_inventory').delete().eq('Mã', invRow['Mã']);
+            await supabase.from('fact_inventory').insert({
+              'Mã': invRow['Mã'],
+              'Tên hàng hóa': invRow['Tên hàng hóa'],
+              'Kho': invRow['Kho'],
+              'Số lượng': newQty,
+              'Ghi chú': newKhadung,
+              'Loại hàng': invRow['Loại hàng'],
+            });
+          } else {
+            await supabase.from('fact_inventory').insert({
+              'Mã': randomUUID(),
+              'Tên hàng hóa': homId,
+              'Kho': currentGr.kho_id,
+              'Số lượng': qty,
+              'Ghi chú': qty,
+            });
+          }
+        }
+      } catch (invErr) {
+        console.error('[goods-receipt CONFIRM_NO_PO] Inventory update error:', invErr);
+      }
+
+      // Generate QR codes
+      try {
+        const now = new Date();
+        const dateStrQR = now.toISOString().slice(0, 10).replace(/-/g, '');
+        const qrInserts = grItems
+          .filter((item: any) => (item.so_luong_thuc_nhan || 0) > 0)
+          .map((item: any, i: number) => {
+            const uniqueId = Math.random().toString(36).substring(2, 6).toUpperCase();
+            return {
+              qr_code: `INV-${dateStrQR}-${item.ma_hom}-${uniqueId}-${i}`,
+              type: 'INVENTORY',
+              reference_id: item.ma_hom,
+              quantity: item.so_luong_thuc_nhan,
+              warehouse: currentGr.kho_id,
+              status: 'active',
+              created_by: 'system',
+            };
+          });
+
+        if (qrInserts.length > 0) {
+          await supabase.from('qr_codes').insert(qrInserts);
+        }
+      } catch (qrErr) {
+        console.error('[goods-receipt CONFIRM_NO_PO] QR error:', qrErr);
+      }
+    }
+
+    // Update status to completed (skip pending_confirm)
+    const { data, error } = await supabase
+      .from('fact_nhap_hang')
+      .update({
+        trang_thai: 'completed',
+        ghi_chu: (currentGr as any).ghi_chu
+          ? `${(currentGr as any).ghi_chu} | Xác nhận trực tiếp (không PO)`
+          : 'Xác nhận trực tiếp (không PO)',
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Send notification
+    try {
+      await supabase.from('notifications').insert({
+        sender_email: 'system',
+        receiver_role: 'procurement',
+        title: '⚡ Nhập kho trực tiếp (Không PO)',
+        message: `Phiếu ${currentGr.ma_phieu_nhap} đã được xác nhận nhập kho trực tiếp mà không liên kết PO. Tồn kho đã cập nhật.`,
+        type: 'receipt_confirmed_no_po',
+        reference_id: id,
+      });
+    } catch (err) {
+      console.error('[goods-receipt CONFIRM_NO_PO] Notification error:', err);
+    }
+
+    return NextResponse.json({
+      data: { ...data, status: data.trang_thai, gr_code: data.ma_phieu_nhap },
+      message: 'Xác nhận nhập kho trực tiếp thành công! Tồn kho đã cập nhật.',
     });
   }
 

@@ -9,9 +9,18 @@ import QRCodeGenerator from '@/components/QRCodeGenerator';
 import type { DeliveryOrder } from '@/types';
 
 const STATUS_ACTIONS: Record<string, { label: string; next: string; color: string }[]> = {
-  pending:    [{ label: 'Giao việc', next: 'assigned', color: 'bg-blue-600 hover:bg-blue-700 shadow-blue-200' }],
-  assigned:   [{ label: 'Bắt đầu giao', next: 'in_transit', color: 'bg-orange-500 hover:bg-orange-600 shadow-orange-200' }],
-  in_transit: [{ label: 'Xác nhận đã giao', next: 'delivered', color: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200' }],
+  pending:    [
+    { label: 'Giao việc', next: 'assigned', color: 'bg-blue-600 hover:bg-blue-700 shadow-blue-200' },
+    { label: 'Huỷ lệnh', next: 'cancelled', color: 'bg-red-500 hover:bg-red-600 shadow-red-200' }
+  ],
+  assigned:   [
+    { label: 'Bắt đầu giao', next: 'in_transit', color: 'bg-orange-500 hover:bg-orange-600 shadow-orange-200' },
+    { label: 'Huỷ lệnh', next: 'cancelled', color: 'bg-red-500 hover:bg-red-600 shadow-red-200' }
+  ],
+  in_transit: [
+    { label: 'Xác nhận đã giao', next: 'delivered', color: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200' },
+    { label: 'Huỷ lệnh', next: 'cancelled', color: 'bg-red-500 hover:bg-red-600 shadow-red-200' }
+  ],
 };
 
 export default function OperationDetailPage({ params }: { params: Promise<{ id: string }> }) {
