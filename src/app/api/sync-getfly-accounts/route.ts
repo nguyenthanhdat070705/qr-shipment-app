@@ -162,7 +162,7 @@ export async function POST(req: NextRequest) {
       if (createFolders) {
         for (const acc of chunk) {
           try {
-            if (acc.gdrive_folder_id) continue; // Skip if already has folder
+            if ((acc as any).gdrive_folder_id) continue; // Skip if already has folder
 
             const phone = acc.phone || acc.contact_phone || '';
             const cleanPhone = phone ? ` - ${phone}` : '';

@@ -13,12 +13,11 @@ function getDriveClient() {
     throw new Error('Missing Google Drive credentials in environment variables.');
   }
 
-  const auth = new google.auth.JWT(
-    clientEmail,
-    undefined,
-    privateKey,
-    ['https://www.googleapis.com/auth/drive']
-  );
+  const auth = new google.auth.JWT({
+    email: clientEmail,
+    key: privateKey,
+    scopes: ['https://www.googleapis.com/auth/drive']
+  });
 
   return google.drive({ version: 'v3', auth });
 }
