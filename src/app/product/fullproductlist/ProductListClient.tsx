@@ -69,7 +69,7 @@ export default function ProductListClient({ products }: { products: ProductItem[
     <main className="min-h-screen bg-gray-50 pb-12">
       {/* Header */}
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-md mb-8 print:static print:border-0 print:mb-4">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+        <div className="mx-auto flex w-full items-center justify-between px-4 py-4">
           <div className="flex items-center gap-4">
             <Link
               href="/"
@@ -112,7 +112,7 @@ export default function ProductListClient({ products }: { products: ProductItem[
         }}
       />
 
-      <div className="max-w-6xl mx-auto px-4 space-y-8">
+      <div className="w-full mx-auto px-4 space-y-8">
         
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative">
           

@@ -47,29 +47,42 @@ export async function PATCH(
   }
 
   // 3. Logic: CỘNG LẠI TỒN KHO 
-  if (currentOrder.kho_id) {
-    const items = currentOrder.items || [];
-    for (const item of items) {
-      // Tìm dim_hom.id thông qua mã sản phẩm
-      const { data: homData } = await supabase
-        .from('dim_hom')
-        .select('id')
-        .eq('ma_hom', item.ma_hom)
-        .maybeSingle();
-
-      if (homData) {
-        // Cộng lại tồn kho (huỷ lệnh xuất -> trả lại kho -> + số lượng)
-        const { error: rpcError } = await supabase.rpc('adjust_product_quantity', {
-          p_hom_id: homData.id,
-          p_kho_id: currentOrder.kho_id,
-          p_qty_delta: item.so_luong,
-          p_loai_hang: 'Hoàn trả (Huỷ phiếu xuất)'
-        });
-
-        if (rpcError) {
-          console.error('[goods-issue] Lỗi hoàn tồn kho:', rpcError);
+  const items = currentOrder.items || [];
+  for (const item of items) {
+    if (item.inventory_id && item.so_luong) {
+      // Fetch current inventory
+      const { data: inv } = await supabase
+        .from('fact_inventory')
+        .select('"Số lượng", "Ghi chú"')
+        .eq('Mã', item.inventory_id)
+        .single();
+        
+      if (inv) {
+        const newQty = Number(inv['Số lượng'] || 0) + Number(item.so_luong);
+        const newKhadung = Number(inv['Ghi chú'] || 0) + Number(item.so_luong);
+        
+        const { error: updateErr } = await supabase
+          .from('fact_inventory')
+          .update({ 'Số lượng': newQty, 'Ghi chú': newKhadung, 'Loại hàng': 'Hoàn trả (Huỷ)' })
+          .eq('Mã', item.inventory_id);
+          
+        if (updateErr) {
+          console.error('[goods-issue] Lỗi update tồn kho trực tiếp:', updateErr);
         }
+      } else {
+         // Fallback if inventory_id is not found (deleted)
+         const { data: homData } = await supabase.from('dim_hom').select('id').eq('ma_hom', item.ma_hom).maybeSingle();
+         if (homData && currentOrder.kho_id) {
+           const { data: existInv } = await supabase.from('fact_inventory').select('*').eq('Tên hàng hóa', homData.id).eq('Kho', currentOrder.kho_id).maybeSingle();
+           if (existInv) {
+             const newQty = Number(existInv['Số lượng'] || 0) + Number(item.so_luong);
+             const newKhadung = Number(existInv['Ghi chú'] || 0) + Number(item.so_luong);
+             await supabase.from('fact_inventory').update({ 'Số lượng': newQty, 'Ghi chú': newKhadung }).eq('Mã', existInv['Mã']);
+           }
+         }
       }
+    } else {
+      console.warn('[goods-issue] Thiếu inventory_id hoặc so_luong để hoàn kho:', item);
     }
   }
 

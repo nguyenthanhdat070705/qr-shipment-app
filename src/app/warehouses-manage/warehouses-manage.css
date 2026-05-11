@@ -1,4 +1,4 @@
-.wh-container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+.wh-container { max-width: 100%; margin: 0 auto; padding: 24px; }
 
 /* ── Header ── */
 .wh-header {

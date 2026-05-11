@@ -212,10 +212,23 @@ export default async function GRPrintPage({
               font-family: 'Times New Roman', Times, serif !important;
             }
             @media print {
-              body { background: white !important; padding: 0 !important; }
+              body { background: white !important; padding: 0 !important; margin: 0 !important; }
               .gr-print-toolbar { display: none !important; }
-              .gr-sheet, .product-sheet { box-shadow: none !important; margin: 0 !important; width: 100% !important; }
-              @page { size: A4; margin: 0; }
+              .gr-sheet, .product-sheet { 
+                box-shadow: none !important; 
+                margin: 0 !important; 
+                width: 100% !important; 
+                height: 100vh !important; 
+                min-height: 0 !important; 
+                max-height: 100vh !important; 
+                overflow: hidden !important; 
+                page-break-inside: avoid !important;
+                padding: 5mm 10mm !important;
+              }
+              .product-sheet {
+                border: none !important;
+              }
+              @page { size: A4 portrait; margin: 0; }
             }
           `,
         }}
@@ -367,7 +380,7 @@ export default async function GRPrintPage({
               {slide.slideIndex}/{slide.totalSlides} — {slide.product_code}
             </div>
 
-            {/* Logo */}
+            {/* Header Row: Logo, Title */}
             <div className="flex flex-col items-center justify-center gap-6 mb-8 mt-2">
               <div className="w-56 relative h-12">
                 <Image
@@ -378,43 +391,45 @@ export default async function GRPrintPage({
                   style={{ filter: 'invert(1) brightness(0.1)' }}
                 />
               </div>
-              <h1 className="text-center font-extrabold text-[#111] text-[34px] tracking-widest whitespace-nowrap">
+              <h1 className="text-center font-extrabold text-[#111] text-[32px] tracking-widest whitespace-nowrap">
                 PHIẾU THÔNG TIN SẢN PHẨM
               </h1>
             </div>
 
-            {/* Main content + QR */}
+            {/* Main content */}
             <div className="flex-1 flex flex-col gap-6 relative px-[10px]">
-              <div className="absolute right-0 -top-28 bg-white p-2 z-20">
-                <div className="flex flex-col items-center">
-                  <p className="text-[12px] text-gray-500 italic mb-2">Quét QR code xuất hàng</p>
+              
+              <div className="flex justify-between items-start w-full">
+                {/* Product identity */}
+                <div className="grid grid-cols-[160px_1fr] gap-y-4 gap-x-4 text-xl font-medium leading-relaxed flex-1 mt-2">
+                  <div className="font-bold text-gray-900 uppercase tracking-widest text-[16px] pt-1">Phân loại:</div>
+                  <div className="text-gray-900 font-bold uppercase text-[22px] leading-snug">{slide.nhom_san_pham || 'AN TÁNG'}</div>
+
+                  <div className="font-bold text-gray-900 uppercase tracking-widest text-[16px] self-start pt-2">Mã sản phẩm:</div>
+                  <div className="text-gray-900 font-black uppercase text-[34px] leading-tight font-times">{slide.product_code}</div>
+
+                  <div className="font-bold text-gray-900 uppercase tracking-widest text-[16px] self-start pt-2">Tên sản phẩm:</div>
+                  <div className="text-gray-900 font-black uppercase text-[28px] leading-[1.2] font-times max-w-full break-words pr-2">
+                    {slide.ten_hom_the_hien || slide.ten_hom}
+                  </div>
+
+                  <div className="font-bold text-gray-900 uppercase tracking-widest text-[16px] self-start pt-2">Tên kỹ thuật:</div>
+                  <div className="text-gray-900 font-black uppercase text-[28px] leading-[1.2] font-times max-w-full break-words pr-2">{slide.ten_hom}</div>
+                </div>
+
+                {/* QR Code */}
+                <div className="flex flex-col items-center bg-white p-2 shrink-0 ml-4">
+                  <p className="text-[11px] text-gray-500 italic mb-2 font-medium">Quét mã xuất hàng</p>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(
                       `${PROD_URL}/product/${encodeURIComponent(slide.product_code)}`
-                    )}&size=130x130`}
-                    width={130}
-                    height={130}
+                    )}&size=120x120`}
+                    width={120}
+                    height={120}
                     alt="QR sản phẩm"
                   />
                 </div>
-              </div>
-
-              {/* Product identity */}
-              <div className="grid grid-cols-[160px_1fr] gap-y-4 gap-x-4 text-xl font-medium leading-relaxed pr-[160px] pl-2 mt-2">
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[16px] pt-1">Phân loại:</div>
-                <div className="text-gray-900 font-bold uppercase text-[22px] leading-snug">{slide.nhom_san_pham || 'AN TÁNG'}</div>
-
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[16px] self-start pt-2">Mã sản phẩm:</div>
-                <div className="text-gray-900 font-black uppercase text-[34px] leading-tight font-times">{slide.product_code}</div>
-
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[16px] self-start pt-2">Tên sản phẩm:</div>
-                <div className="text-gray-900 font-black uppercase text-[28px] leading-[1.2] font-times max-w-full break-words pr-2">
-                  {slide.ten_hom_the_hien || slide.ten_hom}
-                </div>
-
-                <div className="font-bold text-gray-900 uppercase tracking-widest text-[16px] self-start pt-2">Tên kỹ thuật:</div>
-                <div className="text-gray-900 font-black uppercase text-[28px] leading-[1.2] font-times max-w-full break-words pr-2">{slide.ten_hom}</div>
               </div>
 
               {/* Specs table */}

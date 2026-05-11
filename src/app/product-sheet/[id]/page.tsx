@@ -211,50 +211,50 @@ export default async function ProductSheetPage({
       />
 
       {/* ── Landscape Sheet Container ───────────────────────── */}
-      <div className="w-[210mm] h-[296mm] bg-white shadow-xl flex flex-col relative print:shadow-none print:w-[210mm] print:h-[296mm] print:m-0 overflow-hidden box-border times-font-force max-h-[296mm]">
+      <div className="product-sheet-container w-[210mm] min-h-[297mm] bg-white shadow-xl flex flex-col relative overflow-hidden box-border times-font-force mx-auto">
         
-        <div className="flex-1 p-[8mm] border-[6px] border-gray-100/50 print:border-6 print:border-gray-50 flex flex-col box-border">
+        <div className="product-sheet-content flex-1 p-[8mm] border-[6px] border-gray-100/50 flex flex-col box-border">
           
-          {/* Header row: logo left, title center */}
-          <div className="flex items-center gap-10 mb-10 mt-4">
-            <div className="w-56 relative h-12 shrink-0">
+          {/* Header Row: Logo, Title */}
+          <div className="flex flex-col items-center justify-center gap-6 mb-8 mt-2">
+            <div className="w-56 relative h-12">
               <Image 
                 src="/blackstones-logo.webp"
                 alt="Blackstones"
                 fill
-                className="object-contain object-left"
+                className="object-contain"
                 style={{ filter: 'invert(1) brightness(0.1)' }}
               />
             </div>
-            <h1 className="flex-1 text-center font-extrabold text-[#111] text-3xl tracking-wide">
+            <h1 className="text-center font-extrabold text-[#111] text-[32px] tracking-widest whitespace-nowrap">
               PHIẾU THÔNG TIN SẢN PHẨM
             </h1>
           </div>
 
-          {/* ── Single-column body with absolute QR ────── */}
-          <div className="flex-1 flex flex-col gap-5 relative">
+          {/* ── Single-column body ────── */}
+          <div className="flex-1 flex flex-col gap-5 relative px-[10px]">
+            
+            <div className="flex justify-between items-start w-full">
+              {/* Product identity */}
+              <div className="grid grid-cols-[180px_1fr] gap-y-4 gap-x-4 text-xl font-medium leading-relaxed flex-1 mt-4">
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg pt-1">Phân loại:</div>
+                <div className="text-gray-900 font-bold uppercase text-2xl leading-snug">{hom.nhom_san_pham || 'AN TÁNG'}</div>
 
-            {/* QR Code — absolute top-right */}
-            <div className="absolute right-0 top-0 bg-white p-2 z-20">
-              <div className="flex flex-col items-center">
-                <p className="text-sm text-gray-600 italic mb-2">Quét QR code xuất hàng</p>
-                <QRCodeDisplay code={hom.ma_hom} size={150} />
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-2">Mã sản phẩm:</div>
+                <div className="text-gray-900 font-black uppercase text-4xl leading-tight font-times">{hom.ma_hom}</div>
+
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-1.5">Tên sản phẩm:</div>
+                <div className="text-gray-900 font-black uppercase text-[36px] leading-[1.1] font-times max-w-full break-words pr-2 pb-1">{hom.ten_the_hien || hom.Ten_the_hien || hom.ten_hom_the_hien || hom.Ten_hom_the_hien || hom.ten_hom}</div>
+
+                <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-1.5">Tên kỹ thuật:</div>
+                <div className="text-gray-900 font-black uppercase text-[36px] leading-[1.1] font-times max-w-full break-words pr-2">{hom.ten_hom}</div>
               </div>
-            </div>
 
-            {/* Product identity */}
-            <div className="grid grid-cols-[180px_1fr] gap-y-4 gap-x-4 text-xl font-medium leading-relaxed pr-[200px] mt-4">
-              <div className="font-bold text-gray-900 uppercase tracking-widest text-lg pt-1">Phân loại:</div>
-              <div className="text-gray-900 font-bold uppercase text-2xl leading-snug">{hom.nhom_san_pham || 'AN TÁNG'}</div>
-
-              <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-2">Mã sản phẩm:</div>
-              <div className="text-gray-900 font-black uppercase text-4xl leading-tight font-times">{hom.ma_hom}</div>
-
-              <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-1.5">Tên sản phẩm:</div>
-              <div className="text-gray-900 font-black uppercase text-[36px] leading-[1.1] font-times max-w-full break-words pr-2 pb-1">{hom.ten_the_hien || hom.Ten_the_hien || hom.ten_hom_the_hien || hom.Ten_hom_the_hien || hom.ten_hom}</div>
-
-              <div className="font-bold text-gray-900 uppercase tracking-widest text-lg self-start pt-1.5">Tên kỹ thuật:</div>
-              <div className="text-gray-900 font-black uppercase text-[36px] leading-[1.1] font-times max-w-full break-words pr-2">{hom.ten_hom}</div>
+              {/* QR Code */}
+              <div className="flex flex-col items-center bg-white p-2 shrink-0 ml-4">
+                <p className="text-[11px] text-gray-500 italic mb-2 font-medium">Quét mã xuất hàng</p>
+                <QRCodeDisplay code={hom.ma_hom} size={120} />
+              </div>
             </div>
 
             {/* Specs table — large and spaced out */}
@@ -321,11 +321,21 @@ export default async function ProductSheetPage({
                 background: white !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                height: 100% !important;
+              }
+              .product-sheet-container {
+                box-shadow: none !important;
+                margin: 0 !important;
+                width: 100% !important;
                 height: 100vh !important;
+                min-height: 0 !important;
+                max-height: 100vh !important;
                 overflow: hidden !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
+                page-break-inside: avoid !important;
+              }
+              .product-sheet-content {
+                border: 4px solid #f9fafb !important;
+                padding: 5mm !important;
               }
               * {
                 -webkit-print-color-adjust: exact !important;
@@ -333,7 +343,7 @@ export default async function ProductSheetPage({
                 color-adjust: exact !important;
               }
               @page {
-                size: A4;
+                size: A4 portrait;
                 margin: 0;
               }
             }

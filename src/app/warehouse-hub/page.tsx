@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { 
-  Warehouse, PackageCheck, Truck, LayoutGrid, Package, LayoutDashboard, Database, Tags, ShoppingCart, ClipboardCheck, Ban
+  Warehouse, PackageCheck, ClipboardCheck, ShoppingCart, Settings
 } from "lucide-react";
 import Link from "next/link";
 import PageLayout from "@/components/PageLayout";
@@ -23,54 +23,14 @@ export default function WarehouseHubPage() {
 
   const cards = [
     ...(userRole === "admin" || userRole === "warehouse" || userRole === "procurement" ? [{
-      id: "import",
-      title: "Nhập hàng (GRPO)",
+      id: "inout-management",
+      title: "Quản lý xuất nhập",
       icon: <PackageCheck size={32} className="text-white" />,
-      desc: "Tạo phiếu nhập kho, kiểm kê hàng vào",
-      href: "/goods-receipt",
-      color: "bg-emerald-500",
-      shadow: "shadow-emerald-500/20",
-      gradient: "from-emerald-400 to-teal-600",
-    }] : []),
-    ...(userRole === "admin" || userRole === "warehouse" || userRole === "procurement" ? [{
-      id: "receipt-management",
-      title: "Quản lý phiếu nhập",
-      icon: <Database size={32} className="text-white" />,
-      desc: "Đối chiếu PO & theo dõi tiến độ nhập kho",
-      href: "/receipt-management",
-      color: "bg-indigo-500",
-      shadow: "shadow-indigo-500/20",
-      gradient: "from-indigo-400 to-blue-600",
-    }] : []),
-    ...(userRole === "admin" || userRole === "warehouse" ? [{
-      id: "export",
-      title: "Xuất hàng",
-      icon: <Truck size={32} className="text-white" />,
-      desc: "Tạo phiếu xuất IT (chuyển kho) & GRIT (trả hàng)",
-      href: "/goods-issue",
-      color: "bg-amber-500",
-      shadow: "shadow-amber-500/20",
-      gradient: "from-amber-400 to-orange-600",
-    }] : []),
-    ...(userRole === "admin" || userRole === "warehouse" ? [{
-      id: "inventory",
-      title: "Tồn kho",
-      icon: <Warehouse size={32} className="text-white" />,
-      desc: "Xem số lượng tồn, tra cứu mã lô chi tiết",
-      href: "/inventory",
-      color: "bg-sky-500",
-      shadow: "shadow-sky-500/20",
-      gradient: "from-sky-400 to-cyan-600",
-    }] : []),
-    ...(userRole === "admin" || userRole === "warehouse" ? [{
-      id: "voided-receipts",
-      title: "Phiếu Huỷ",
-      icon: <Ban size={32} className="text-white" />,
-      desc: "Huỷ phiếu nhập / xuất và tra cứu lịch sử huỷ",
-      href: "/voided-receipts",
-      color: "bg-red-500",
-      shadow: "shadow-red-500/20",
-      gradient: "from-red-400 to-rose-600",
+      desc: "Tổng hợp và quản lý dữ liệu xuất nhập kho",
+      href: "/inout-management",
+      color: "bg-blue-500",
+      shadow: "shadow-blue-500/20",
+      gradient: "from-blue-400 to-indigo-600",
     }] : []),
     ...(userRole === "admin" || userRole === "warehouse" ? [{
       id: "stocktake",
@@ -82,46 +42,6 @@ export default function WarehouseHubPage() {
       shadow: "shadow-pink-500/20",
       gradient: "from-pink-400 to-rose-600",
     }] : []),
-    ...(userRole === "admin" || userRole === "warehouse" || userRole === "procurement" ? [{
-      id: "products",
-      title: "Toàn bộ sản phẩm",
-      icon: <LayoutGrid size={32} className="text-white" />,
-      desc: "Danh mục sản phẩm, xem và in mã QR",
-      href: "/product/fullproductlist",
-      color: "bg-teal-500",
-      shadow: "shadow-teal-500/20",
-      gradient: "from-teal-400 to-emerald-600",
-    }] : []),
-    ...(userRole === "admin" || userRole === "procurement" ? [{
-      id: "boxes",
-      title: "Quản lý hòm",
-      icon: <Package size={32} className="text-white" />,
-      desc: "Khởi tạo mã hòm & thiết lập sản phẩm trong hòm",
-      href: "/products-manage",
-      color: "bg-purple-500",
-      shadow: "shadow-purple-500/20",
-      gradient: "from-purple-400 to-violet-600",
-    }] : []),
-    ...(userRole === "admin" || userRole === "procurement" ? [{
-      id: "suppliers",
-      title: "Quản lý NCC",
-      icon: <Tags size={32} className="text-white" />,
-      desc: "Thông tin và chi tiết danh sách Nhà cung cấp",
-      href: "/suppliers-manage",
-      color: "bg-orange-500",
-      shadow: "shadow-orange-500/20",
-      gradient: "from-orange-400 to-red-600",
-    }] : []),
-    ...(userRole === "admin" ? [{
-      id: "warehouses",
-      title: "Quản lý kho",
-      icon: <LayoutDashboard size={32} className="text-white" />,
-      desc: "Tạo và cấu hình các kho vật lý trong hệ thống",
-      href: "/warehouses-manage",
-      color: "bg-rose-500",
-      shadow: "shadow-rose-500/20",
-      gradient: "from-rose-400 to-rose-600",
-    }] : []),
     ...(userRole === "admin" || userRole === "procurement" || userRole === "sales" ? [{
       id: "purchase-orders",
       title: "Đặt hàng",
@@ -131,6 +51,16 @@ export default function WarehouseHubPage() {
       color: "bg-violet-500",
       shadow: "shadow-violet-500/20",
       gradient: "from-violet-400 to-fuchsia-600",
+    }] : []),
+    ...(userRole === "admin" || userRole === "warehouse" || userRole === "procurement" ? [{
+      id: "warehouse-settings",
+      title: "Quản lý & khai báo thông tin kho",
+      icon: <Settings size={32} className="text-white" />,
+      desc: "Toàn bộ sản phẩm, quản lý hòm, quản lý NCC, quản lý kho",
+      href: "/warehouse-settings",
+      color: "bg-teal-500",
+      shadow: "shadow-teal-500/20",
+      gradient: "from-teal-400 to-emerald-600",
     }] : [])
   ];
 
@@ -149,33 +79,39 @@ export default function WarehouseHubPage() {
           </div>
 
           {/* ── Grid Simple cho Kho ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-            {cards.map((card) => (
-              <Link
-                key={card.id}
-                href={card.href}
-                className="group flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-5 sm:gap-6 bg-white dark:bg-[#162240] p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border-4 border-gray-50 dark:border-white/5 shadow-xl dark:shadow-none hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer"
-              >
-                {/* Icon siêu to */}
-                <div className={`w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 rounded-[1.5rem] sm:rounded-[2rem] bg-gradient-to-br ${card.gradient} flex items-center justify-center shadow-md`}>
-                  <div className="scale-[1.5] sm:scale-[2]">
-                    {card.icon}
-                  </div>
+          <div className="space-y-12">
+            {cards.length > 0 && (
+              <div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+                  {cards.map((card) => (
+                    <Link
+                      key={card.id}
+                      href={card.href}
+                      className="group flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-5 sm:gap-6 bg-white dark:bg-[#162240] p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border-4 border-gray-50 dark:border-white/5 shadow-xl dark:shadow-none hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer"
+                    >
+                      {/* Icon siêu to */}
+                      <div className={`w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 rounded-[1.5rem] sm:rounded-[2rem] bg-gradient-to-br ${card.gradient} flex items-center justify-center shadow-md`}>
+                        <div className="scale-[1.5] sm:scale-[2]">
+                          {card.icon}
+                        </div>
+                      </div>
+                      
+                      <div className="flex-1 mt-2">
+                        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white mb-2 sm:mb-3">{card.title}</h2>
+                        <p className="text-base sm:text-lg md:text-xl text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
+                          {card.desc}
+                        </p>
+                      </div>
+                      
+                      {/* Nút mũi tên to, rõ ràng */}
+                      <div className="hidden sm:flex mt-4 sm:mt-6 w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 rounded-full bg-blue-50 dark:bg-white/5 items-center justify-center text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="sm:w-9 sm:h-9"><path d="m9 18 6-6-6-6"/></svg>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
-                
-                <div className="flex-1 mt-2">
-                  <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white mb-2 sm:mb-3">{card.title}</h2>
-                  <p className="text-base sm:text-lg md:text-xl text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
-                    {card.desc}
-                  </p>
-                </div>
-                
-                {/* Nút mũi tên to, rõ ràng */}
-                <div className="hidden sm:flex mt-4 sm:mt-6 w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 rounded-full bg-blue-50 dark:bg-white/5 items-center justify-center text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="sm:w-9 sm:h-9"><path d="m9 18 6-6-6-6"/></svg>
-                </div>
-              </Link>
-            ))}
+              </div>
+            )}
             {cards.length === 0 && (
               <div className="col-span-full border-4 border-dashed border-gray-200 rounded-[3rem] p-12 text-center text-2xl font-bold text-gray-400">
                 Tài khoản của bạn chưa được phân quyền.
@@ -194,34 +130,40 @@ export default function WarehouseHubPage() {
           </div>
 
           {/* ── Grid Mặc định ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6 max-w-7xl mx-auto px-4">
-            {cards.map((card) => (
-              <Link
-                key={card.id}
-                href={card.href}
-                className={`group bg-white dark:bg-[#162240] p-6 rounded-[2rem] border border-gray-100 dark:border-white/5 shadow-xl ${card.shadow} dark:shadow-none hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 relative overflow-hidden flex flex-col h-full`}
-              >
-                {/* Background decor */}
-                <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl ${card.gradient} opacity-5 dark:opacity-10 rounded-bl-[100px] transform group-hover:scale-110 transition-transform duration-500`}></div>
-                
-                <div className="relative z-10 flex-1 flex flex-col">
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${card.gradient} flex items-center justify-center shadow-lg mb-5 transform group-hover:rotate-6 transition-transform duration-300`}>
-                    {card.icon}
-                  </div>
-                  <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2 leading-tight">{card.title}</h2>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 leading-relaxed mb-6 flex-1">
-                    {card.desc}
-                  </p>
-                  
-                  <div className="flex items-center text-sm font-bold text-gray-400 dark:text-gray-500 group-hover:text-gray-700 dark:group-hover:text-white transition-colors mt-auto">
-                    <span className="flex-1">Chi tiết</span>
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center bg-gray-50 dark:bg-white/5 text-gray-400 dark:text-gray-500 group-hover:bg-gray-900 dark:group-hover:bg-white/20 group-hover:text-white transition-all`}>
-                      →
-                    </span>
-                  </div>
+          <div className="space-y-10 max-w-7xl mx-auto px-4">
+            {cards.length > 0 && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6">
+                  {cards.map((card) => (
+                    <Link
+                      key={card.id}
+                      href={card.href}
+                      className={`group bg-white dark:bg-[#162240] p-6 rounded-[2rem] border border-gray-100 dark:border-white/5 shadow-xl ${card.shadow} dark:shadow-none hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 relative overflow-hidden flex flex-col h-full`}
+                    >
+                      {/* Background decor */}
+                      <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl ${card.gradient} opacity-5 dark:opacity-10 rounded-bl-[100px] transform group-hover:scale-110 transition-transform duration-500`}></div>
+                      
+                      <div className="relative z-10 flex-1 flex flex-col">
+                        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${card.gradient} flex items-center justify-center shadow-lg mb-5 transform group-hover:rotate-6 transition-transform duration-300`}>
+                          {card.icon}
+                        </div>
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2 leading-tight">{card.title}</h2>
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400 leading-relaxed mb-6 flex-1">
+                          {card.desc}
+                        </p>
+                        
+                        <div className="flex items-center text-sm font-bold text-gray-400 dark:text-gray-500 group-hover:text-gray-700 dark:group-hover:text-white transition-colors mt-auto">
+                          <span className="flex-1">Chi tiết</span>
+                          <span className={`w-8 h-8 rounded-full flex items-center justify-center bg-gray-50 dark:bg-white/5 text-gray-400 dark:text-gray-500 group-hover:bg-gray-900 dark:group-hover:bg-white/20 group-hover:text-white transition-all`}>
+                            →
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
-              </Link>
-            ))}
+              </div>
+            )}
             {cards.length === 0 && (
               <div className="col-span-full border border-gray-200 rounded-2xl p-8 text-center text-gray-500">
                 Tài khoản của bạn chưa được phân quyền thao tác tính năng kho.

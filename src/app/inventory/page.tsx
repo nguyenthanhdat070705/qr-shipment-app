@@ -1,14 +1,8 @@
 import { Suspense } from 'react';
-import { Metadata } from 'next';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 import { Warehouse } from 'lucide-react';
 import InventorySearch from '@/components/InventorySearch';
 import PageLayout from '@/components/PageLayout';
-
-export const metadata: Metadata = {
-  title: 'Kho hàng — Blackstones',
-  description: 'Xem tồn kho, giá, số lượng sản phẩm.',
-};
 
 export const dynamic = 'force-dynamic';
 
@@ -61,7 +55,7 @@ interface DimNcc {
   dia_chi: string | null;
 }
 
-export default async function InventoryPage() {
+export async function InventoryContent() {
   const supabase = getSupabaseAdmin();
 
   // Fetch all 4 tables in parallel
@@ -204,7 +198,7 @@ export default async function InventoryPage() {
 
 
   return (
-    <PageLayout title="Kho hàng" icon={<Warehouse size={15} className="text-sky-500" />}>
+    <>
       <div className="mb-6 flex items-center justify-between px-2 sm:px-0">
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Kho hàng</h1>
@@ -216,6 +210,14 @@ export default async function InventoryPage() {
       <Suspense fallback={<div className="py-10 text-center text-gray-400">Đang tải...</div>}>
         <InventorySearch items={JSON.parse(JSON.stringify(items))} showStats={true} />
       </Suspense>
+    </>
+  );
+}
+
+export default async function InventoryPage() {
+  return (
+    <PageLayout title="Kho hàng" icon={<Warehouse size={15} className="text-sky-500" />}>
+      <InventoryContent />
     </PageLayout>
   );
 }

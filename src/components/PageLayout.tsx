@@ -165,6 +165,15 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
       iconBg: 'bg-blue-500/15',
       section: 'Data Outsource',
     } as MenuItem] : []),
+    ...(userRole === 'sales' || userRole === 'admin' ? [{
+      icon: <DollarSign size={18} />,
+      label: 'Quản lý hợp đồng bán',
+      desc: 'Hợp đồng từ GetFly CRM',
+      href: '/sales/contracts',
+      color: 'text-teal-400',
+      iconBg: 'bg-teal-500/15',
+      section: 'Data Outsource',
+    } as MenuItem] : []),
     {
       icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar-days"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>,
       label: 'Lịch Đám',

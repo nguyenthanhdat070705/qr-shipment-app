@@ -1,177 +1,107 @@
-/**
- * GET /api/run-migration
- * Chạy SQL migration để tạo các bảng mới cho 1Office sync
- * Chỉ dùng trong môi trường dev
- */
-
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 
-export const dynamic = 'force-dynamic';
+// This route uses Supabase Management API to run SQL
+export async function POST() {
+  const projectRef = 'zspazvdyrrkdosqigomk';
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  
+  const sql = `
+    CREATE TABLE IF NOT EXISTS getfly_accounts (
+      id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+      getfly_account_id TEXT UNIQUE NOT NULL,
+      account_code TEXT,
+      account_name TEXT,
+      phone TEXT,
+      email TEXT,
+      address TEXT,
+      description TEXT,
+      account_type TEXT,
+      account_source TEXT,
+      relation_name TEXT,
+      industry_name TEXT,
+      manager_email TEXT,
+      manager_user_name TEXT,
+      ma_hoi_vien TEXT,
+      goi_dich_vu TEXT,
+      trang_thai_hoi_vien TEXT,
+      ngay_tham_gia TEXT,
+      ho_ten_nguoi_mat TEXT,
+      ngay_mat TEXT,
+      thoi_gian_to_chuc_dam TEXT,
+      dia_chi_chon_cat TEXT,
+      dia_chi_lien_he TEXT,
+      so_cccd TEXT,
+      so_tk_ngan_hang TEXT,
+      ten_ngan_hang TEXT,
+      contact_name TEXT,
+      contact_phone TEXT,
+      province_name TEXT,
+      revenue NUMERIC DEFAULT 0,
+      gdrive_folder_id TEXT,
+      gdrive_folder_url TEXT,
+      getfly_created_at TEXT,
+      synced_at TIMESTAMPTZ DEFAULT NOW(),
+      raw_data JSONB
+    );
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder';
-const supabase = createClient(supabaseUrl, supabaseKey);
+    CREATE INDEX IF NOT EXISTS idx_getfly_accounts_name ON getfly_accounts(account_name);
+    CREATE INDEX IF NOT EXISTS idx_getfly_accounts_phone ON getfly_accounts(phone);
+    CREATE INDEX IF NOT EXISTS idx_getfly_accounts_code ON getfly_accounts(account_code);
+    CREATE INDEX IF NOT EXISTS idx_getfly_accounts_type ON getfly_accounts(account_type);
+    CREATE INDEX IF NOT EXISTS idx_getfly_accounts_relation ON getfly_accounts(relation_name);
+    CREATE INDEX IF NOT EXISTS idx_getfly_accounts_hoi_vien ON getfly_accounts(ma_hoi_vien);
+    CREATE INDEX IF NOT EXISTS idx_getfly_accounts_cccd ON getfly_accounts(so_cccd);
+    CREATE INDEX IF NOT EXISTS idx_getfly_accounts_synced ON getfly_accounts(synced_at DESC);
+  `;
 
-// SQL statements to run (split individually)
-const migrationSQL = [
-  // products table
-  `CREATE TABLE IF NOT EXISTS products (
-    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-    oneoffice_id    integer     UNIQUE,
-    code            text        NOT NULL,
-    name            text        NOT NULL,
-    barcode         text,
-    unit            text,
-    cost_price      numeric(15,2) DEFAULT 0,
-    selling_price   numeric(15,2) DEFAULT 0,
-    category        text,
-    product_type    text,
-    manage_type     text,
-    supplier_list   text,
-    description     text,
-    is_active       boolean     NOT NULL DEFAULT true,
-    created_at      timestamptz NOT NULL DEFAULT now(),
-    updated_at      timestamptz NOT NULL DEFAULT now()
-  )`,
+  // Use Supabase postgres REST endpoint to execute SQL
+  try {
+    const res = await fetch(`https://${projectRef}.supabase.co/rest/v1/rpc/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': serviceKey,
+        'Authorization': `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({ query: sql }),
+    });
 
-  `CREATE UNIQUE INDEX IF NOT EXISTS idx_products_oneoffice_id ON products (oneoffice_id) WHERE oneoffice_id IS NOT NULL`,
-  `CREATE INDEX IF NOT EXISTS idx_products_code ON products (code)`,
-
-  `ALTER TABLE products ENABLE ROW LEVEL SECURITY`,
-  `DROP POLICY IF EXISTS "Public read products" ON products`,
-  `CREATE POLICY "Public read products" ON products FOR SELECT USING (true)`,
-  `DROP POLICY IF EXISTS "Service insert products" ON products`,
-  `CREATE POLICY "Service insert products" ON products FOR INSERT WITH CHECK (true)`,
-  `DROP POLICY IF EXISTS "Service update products" ON products`,
-  `CREATE POLICY "Service update products" ON products FOR UPDATE USING (true)`,
-
-  // sale_contracts table
-  `CREATE TABLE IF NOT EXISTS sale_contracts (
-    id                  uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-    oneoffice_id        integer     UNIQUE,
-    contract_code       text        NOT NULL,
-    contract_type       text,
-    type                text,
-    customer_name       text,
-    customer_code       text,
-    customer_type       text,
-    customer_phone      text,
-    customer_email      text,
-    sign_date           date,
-    start_date          date,
-    end_date            date,
-    status              text,
-    approval_status     text,
-    total_amount        numeric(15,2) DEFAULT 0,
-    currency_unit       text        DEFAULT 'VND',
-    pay_type            text,
-    product_list        text,
-    detail_text         text,
-    note                text,
-    created_by          text,
-    created_at          timestamptz NOT NULL DEFAULT now(),
-    updated_at          timestamptz NOT NULL DEFAULT now()
-  )`,
-  `ALTER TABLE sale_contracts ENABLE ROW LEVEL SECURITY`,
-  `DROP POLICY IF EXISTS "Public read sale_contracts" ON sale_contracts`,
-  `CREATE POLICY "Public read sale_contracts" ON sale_contracts FOR SELECT USING (true)`,
-  `DROP POLICY IF EXISTS "Service insert sale_contracts" ON sale_contracts`,
-  `CREATE POLICY "Service insert sale_contracts" ON sale_contracts FOR INSERT WITH CHECK (true)`,
-  `DROP POLICY IF EXISTS "Service update sale_contracts" ON sale_contracts`,
-  `CREATE POLICY "Service update sale_contracts" ON sale_contracts FOR UPDATE USING (true)`,
-
-  // sale_quotations table
-  `CREATE TABLE IF NOT EXISTS sale_quotations (
-    id                  uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-    oneoffice_id        integer     UNIQUE,
-    quotation_code      text        NOT NULL,
-    title               text,
-    customer_id         integer,
-    customer_name       text,
-    customer_code       text,
-    customer_phone      text,
-    customer_email      text,
-    quotation_date      date,
-    expiry_date         date,
-    total_amount        numeric(15,2) DEFAULT 0,
-    currency_unit       text        DEFAULT 'VND',
-    approval_status     text,
-    product_list        text,
-    product_detail      text,
-    note                text,
-    created_by          text,
-    created_at          timestamptz NOT NULL DEFAULT now(),
-    updated_at          timestamptz NOT NULL DEFAULT now()
-  )`,
-  `ALTER TABLE sale_quotations ENABLE ROW LEVEL SECURITY`,
-  `DROP POLICY IF EXISTS "Public read sale_quotations" ON sale_quotations`,
-  `CREATE POLICY "Public read sale_quotations" ON sale_quotations FOR SELECT USING (true)`,
-  `DROP POLICY IF EXISTS "Service insert sale_quotations" ON sale_quotations`,
-  `CREATE POLICY "Service insert sale_quotations" ON sale_quotations FOR INSERT WITH CHECK (true)`,
-  `DROP POLICY IF EXISTS "Service update sale_quotations" ON sale_quotations`,
-  `CREATE POLICY "Service update sale_quotations" ON sale_quotations FOR UPDATE USING (true)`,
-
-  // stocktakes table
-  `CREATE TABLE IF NOT EXISTS stocktakes (
-    id                  uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-    oneoffice_id        integer     UNIQUE,
-    stocktake_code      text        NOT NULL,
-    warehouse_name      text,
-    warehouse_address   text,
-    status              text,
-    approval_status     text,
-    note                text,
-    stocktake_date      date,
-    created_by          text,
-    created_at          timestamptz NOT NULL DEFAULT now(),
-    updated_at          timestamptz NOT NULL DEFAULT now()
-  )`,
-  `ALTER TABLE stocktakes ENABLE ROW LEVEL SECURITY`,
-  `DROP POLICY IF EXISTS "Public read stocktakes" ON stocktakes`,
-  `CREATE POLICY "Public read stocktakes" ON stocktakes FOR SELECT USING (true)`,
-  `DROP POLICY IF EXISTS "Service insert stocktakes" ON stocktakes`,
-  `CREATE POLICY "Service insert stocktakes" ON stocktakes FOR INSERT WITH CHECK (true)`,
-  `DROP POLICY IF EXISTS "Service update stocktakes" ON stocktakes`,
-  `CREATE POLICY "Service update stocktakes" ON stocktakes FOR UPDATE USING (true)`,
-
-  // goods_receipts: thêm cột oneoffice_id nếu chưa có
-  `DO $$ BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='goods_receipts' AND column_name='oneoffice_id') THEN
-      ALTER TABLE goods_receipts ADD COLUMN oneoffice_id integer UNIQUE;
-    END IF;
-  END $$`,
-
-  // goods_receipts: bỏ NOT NULL trên warehouse_id để insert không cần warehouse
-  `ALTER TABLE goods_receipts ALTER COLUMN warehouse_id DROP NOT NULL`,
-];
-
-export async function GET() {
-  const results: { sql: string; ok: boolean; error?: string }[] = [];
-
-  for (const sql of migrationSQL) {
-    try {
-      const { error } = await supabase.rpc('exec_sql', { sql }).single();
-      if (error) {
-        // Fallback: try direct query via REST
-        results.push({ sql: sql.substring(0, 60) + '...', ok: false, error: error.message });
-      } else {
-        results.push({ sql: sql.substring(0, 60) + '...', ok: true });
-      }
-    } catch (e) {
-      results.push({
-        sql: sql.substring(0, 60) + '...',
-        ok: false,
-        error: String(e),
+    // If rpc doesn't work, try the pg_query approach
+    if (!res.ok) {
+      // Alternative: Use the database connection directly via psql-like endpoint
+      // Try via Supabase's built-in SQL execution
+      const pgRes = await fetch(`https://${projectRef}.supabase.co/pg`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${serviceKey}`,
+        },
+        body: JSON.stringify({ query: sql }),
       });
+
+      if (!pgRes.ok) {
+        // Last resort: provide the SQL for manual execution
+        return NextResponse.json({
+          status: 'manual_required',
+          message: 'Không thể tự chạy SQL migration. Vui lòng copy SQL bên dưới và chạy trong Supabase SQL Editor.',
+          sql_editor_url: `https://supabase.com/dashboard/project/${projectRef}/sql/new`,
+          sql: sql.trim(),
+        });
+      }
+
+      const pgData = await pgRes.json();
+      return NextResponse.json({ status: 'success_pg', data: pgData });
     }
+
+    const data = await res.json();
+    return NextResponse.json({ status: 'success_rpc', data });
+  } catch (err) {
+    return NextResponse.json({
+      status: 'manual_required',
+      message: 'Lỗi khi chạy migration. Vui lòng chạy SQL migration thủ công.',
+      error: String(err),
+      sql_editor_url: `https://supabase.com/dashboard/project/${projectRef}/sql/new`,
+      sql: sql.trim(),
+    });
   }
-
-  const ok = results.filter(r => r.ok).length;
-  const failed = results.filter(r => !r.ok).length;
-
-  return NextResponse.json({
-    message: `Migration done: ${ok} thành công, ${failed} lỗi`,
-    results,
-  });
 }

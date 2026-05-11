@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Truck, Search, CheckCircle2, Package, Clock, History, AlertCircle, MapPin, X } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
-import { getWarehouseFilter } from '@/config/roles.config';
+import { getWarehouseFilter, getUserRole } from '@/config/roles.config';
 
 interface InventoryItemData {
   inventory_id: string;
@@ -16,15 +16,18 @@ interface InventoryItemData {
   quantity_available: number;
 }
 
-export default function GoodsIssuePage() {
+export function GoodsIssueContent() {
   const [searchInput, setSearchInput] = useState('');
   const [lockedWarehouse, setLockedWarehouse] = useState<string | null>(null);
 
   const [scannedItems, setScannedItems] = useState<InventoryItemData[]>([]);
   const [selectedInventoryId, setSelectedInventoryId] = useState<string>('');
+  const [userRole, setUserRole] = useState<string>('sales');
 
+  const [exportType, setExportType] = useState<'dam' | 'baohanh'>('dam');
+  const [lyDoBaoHanh, setLyDoBaoHanh] = useState('');
   const [maDam, setMaDam] = useState('');
-  const [nguoiNhan, setNguoiNhan] = useState('');
+  // Removed nguoiNhan state
   const [error, setError] = useState('');
 
   // Đọc warehouse của user từ localStorage
@@ -36,6 +39,7 @@ export default function GoodsIssuePage() {
         const name = u.name || u.user_metadata?.name || u.hoten || '';
         const wf = getWarehouseFilter(u.email || '', name);
         if (wf) setLockedWarehouse(wf);
+        setUserRole(getUserRole(u.email || ''));
       }
     } catch {}
   }, []);
@@ -162,15 +166,17 @@ export default function GoodsIssuePage() {
       return;
     }
 
-    if (!maDam.trim()) {
+    if (exportType === 'dam' && !maDam.trim()) {
       setError('Vui lòng nhập Mã Đám.');
       return;
     }
 
-    if (!nguoiNhan.trim()) {
-      setError('Vui lòng nhập tên Người nhận.');
+    if (exportType === 'baohanh' && !lyDoBaoHanh.trim()) {
+      setError('Vui lòng nhập lý do xuất bảo hành / trả NCC.');
       return;
     }
+
+
 
     if (1 > selectedItem.quantity_available) {
       setError(`Số lượng xuất không hợp lệ (Tồn khả dụng: ${selectedItem.quantity_available})`);
@@ -194,9 +200,11 @@ export default function GoodsIssuePage() {
           inventory_id: selectedItem.inventory_id,
           product_code: selectedItem.product_code,
           quantity: 1,
-          ma_dam: maDam.trim(),
-          nguoi_nhan: nguoiNhan.trim(),
-          note: `Xuất cho đám ${maDam.trim()} — Người nhận: ${nguoiNhan.trim()}`,
+          ma_dam: exportType === 'dam' ? maDam.trim() : undefined,
+          nguoi_nhan: 'N/A',
+          note: exportType === 'dam' 
+            ? `Xuất cho đám ${maDam.trim()}`
+            : `Xuất bảo hành/Trả NCC — Lý do: ${lyDoBaoHanh.trim()}`,
           created_by: createdBy,
         })
       });
@@ -214,7 +222,8 @@ export default function GoodsIssuePage() {
         setScannedItems([]);
         setSelectedInventoryId('');
         setMaDam('');
-        setNguoiNhan('');
+        setLyDoBaoHanh('');
+        setExportType('dam');
         setSearchInput('');
         setSuccess(false);
       }, 3000);
@@ -227,7 +236,7 @@ export default function GoodsIssuePage() {
   };
 
   return (
-    <PageLayout title="Xuất hàng" icon={<Truck size={15} className="text-emerald-500" />}>
+    <>
       {/* Header */}
       <div className="mb-8 p-8 sm:p-10 rounded-[2rem] bg-gradient-to-br from-[#1B2A4A] via-indigo-900 to-[#1e3a8a] text-white shadow-xl shadow-indigo-900/20 max-w-4xl mx-auto relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3"></div>
@@ -377,32 +386,66 @@ export default function GoodsIssuePage() {
 
             {/* Transfer form */}
             <div className="rounded-[1.5rem] sm:rounded-2xl border border-indigo-100 dark:border-white/10 bg-white dark:bg-[#162240] shadow-lg p-5 sm:p-6 space-y-4">
-              <h2 className="text-xs sm:text-sm font-extrabold uppercase tracking-wide text-gray-900 dark:text-white flex items-center gap-2">
-                <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 text-[10px] sm:text-xs">2</span>
-                Thông tin chuyển kho
-              </h2>
-
-              <div>
-                <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Mã Đám *</label>
-                <input
-                  type="text"
-                  value={maDam}
-                  onChange={(e) => setMaDam(e.target.value)}
-                  placeholder="Nhập mã đám (vd: 260122)..."
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-sm font-medium text-gray-900 dark:text-white focus:bg-white dark:focus:bg-[#162240] focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-500/30 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                />
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs sm:text-sm font-extrabold uppercase tracking-wide text-gray-900 dark:text-white flex items-center gap-2">
+                  <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 text-[10px] sm:text-xs">2</span>
+                  Thông tin chuyển kho
+                </h2>
               </div>
 
-              <div>
-                <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Người nhận *</label>
-                <input
-                  type="text"
-                  value={nguoiNhan}
-                  onChange={(e) => setNguoiNhan(e.target.value)}
-                  placeholder="Tên người nhận hàng..."
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-sm font-medium text-gray-900 dark:text-white focus:bg-white dark:focus:bg-[#162240] focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-500/30 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                />
+              {/* Loại xuất */}
+              <div className="flex gap-4 mb-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="exportType" 
+                    value="dam" 
+                    checked={exportType === 'dam'} 
+                    onChange={() => setExportType('dam')} 
+                    className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                  />
+                  Xuất cho Đám
+                </label>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="exportType" 
+                    value="baohanh" 
+                    checked={exportType === 'baohanh'} 
+                    onChange={() => setExportType('baohanh')} 
+                    className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                  />
+                  Xuất trả NCC / Bảo hành
+                </label>
               </div>
+
+              {exportType === 'dam' && (
+                <div>
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Mã Đám *</label>
+                  <input
+                    type="text"
+                    value={maDam}
+                    onChange={(e) => setMaDam(e.target.value)}
+                    placeholder="Nhập mã đám (vd: 260122)..."
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-sm font-medium text-gray-900 dark:text-white focus:bg-white dark:focus:bg-[#162240] focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-500/30 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  />
+                </div>
+              )}
+
+              {exportType === 'baohanh' && (
+                <div>
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Lý do xuất bảo hành *</label>
+                  <input
+                    type="text"
+                    value={lyDoBaoHanh}
+                    onChange={(e) => setLyDoBaoHanh(e.target.value)}
+                    placeholder="VD: Lỗi bản lề, Đổi trả NCC..."
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-sm font-medium text-gray-900 dark:text-white focus:bg-white dark:focus:bg-[#162240] focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-500/30 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  />
+                </div>
+              )}
+
+
 
               <button
                 type="button"
@@ -623,7 +666,7 @@ export default function GoodsIssuePage() {
             
             {/* Footer */}
             <div className="p-4 bg-white dark:bg-[#162240] border-t border-gray-100 dark:border-white/5 flex justify-end gap-3 shrink-0">
-              {selectedHistoryItem.trang_thai !== 'cancelled' && (
+              {selectedHistoryItem.trang_thai !== 'cancelled' && userRole !== 'warehouse' && (
                 <button 
                   onClick={async () => {
                     if (!confirm('Bạn có chắc chắn muốn huỷ phiếu xuất này? Số lượng sẽ được cộng lại vào kho.')) return;
@@ -659,6 +702,14 @@ export default function GoodsIssuePage() {
           </div>
         </div>
       )}
+    </>
+  );
+}
+
+export default function GoodsIssuePage() {
+  return (
+    <PageLayout title="Xuất hàng" icon={<Truck size={15} className="text-emerald-500" />}>
+      <GoodsIssueContent />
     </PageLayout>
   );
 }

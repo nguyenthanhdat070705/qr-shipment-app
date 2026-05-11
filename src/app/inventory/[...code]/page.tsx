@@ -12,7 +12,7 @@ import {
 export const dynamic = 'force-dynamic';
 
 interface PageProps {
-  params: Promise<{ code: string }>;
+  params: Promise<{ code: string[] }>;
 }
 
 /* ── helpers ───────────────────────────────────── */
@@ -60,11 +60,12 @@ interface FactInventoryRow {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { code } = await params;
+  const productCode = decodeURIComponent(code.join('/')).trim();
   const supabase = getSupabaseAdmin();
   const { data } = await supabase
     .from('dim_hom')
     .select('ten_hom')
-    .eq('ma_hom', decodeURIComponent(code).trim())
+    .eq('ma_hom', productCode)
     .limit(1)
     .maybeSingle();
 
@@ -78,7 +79,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function InventoryDetailPage({ params }: PageProps) {
   const { code } = await params;
-  const productCode = decodeURIComponent(code).trim();
+  const productCode = decodeURIComponent(code.join('/')).trim();
   const supabase = getSupabaseAdmin();
 
   // 1. Find the product in dim_hom

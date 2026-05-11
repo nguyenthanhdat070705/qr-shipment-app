@@ -27,7 +27,7 @@ function StatCard({
   );
 }
 
-export default function ReceiptManagementPage() {
+export function ReceiptManagementContent() {
   const router = useRouter();
   const [receipts, setReceipts] = useState<GoodsReceipt[]>([]);
   const [loading, setLoading] = useState(true);
@@ -160,7 +160,7 @@ export default function ReceiptManagementPage() {
   ];
 
   return (
-    <PageLayout title="Quản lý nhập hàng" icon={<PackageCheck size={15} className="text-indigo-500" />}>
+    <>
       <div className="mb-6">
         <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Quản lý nhập hàng</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Thu mua đối chiếu và duyệt hàng kho đã nhận</p>
@@ -199,6 +199,14 @@ export default function ReceiptManagementPage() {
           emptyMessage="Chưa có phiếu nhập kho nào."
         />
       )}
+    </>
+  );
+}
+
+export default function ReceiptManagementPage() {
+  return (
+    <PageLayout title="Quản lý nhập hàng" icon={<PackageCheck size={15} className="text-indigo-500" />}>
+      <ReceiptManagementContent />
     </PageLayout>
   );
 }

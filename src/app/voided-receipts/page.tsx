@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Ban, PackageCheck, Truck, Trash2, Clock, AlertTriangle, X, Loader2 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
+import { getUserRole } from '@/config/roles.config';
 
 interface VoidItem {
   id: string;
@@ -47,8 +48,9 @@ const STATUS_COLORS: Record<string, string> = {
   delivered: 'bg-emerald-100 text-emerald-700 border-emerald-200',
 };
 
-export default function VoidedReceiptsPage() {
+export function VoidedReceiptsContent() {
   const [tab, setTab] = useState<Tab>('import');
+  const [userRole, setUserRole] = useState<string>('sales');
   const [imports, setImports] = useState<VoidItem[]>([]);
   const [exports, setExports] = useState<VoidItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,7 +77,15 @@ export default function VoidedReceiptsPage() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { 
+    fetchData();
+    try {
+      const raw = localStorage.getItem('auth_user');
+      if (raw) {
+        setUserRole(getUserRole(JSON.parse(raw).email || ''));
+      }
+    } catch {}
+  }, []);
 
   const handleCancel = async () => {
     if (!cancelTarget) return;
@@ -116,7 +126,7 @@ export default function VoidedReceiptsPage() {
   const statExportVoided = exports.filter(r => r.status === 'cancelled').length;
 
   return (
-    <PageLayout title="Phiếu Huỷ" icon={<Ban size={15} className="text-red-500" />}>
+    <>
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Quản lý Phiếu Huỷ</h1>
@@ -217,7 +227,7 @@ export default function VoidedReceiptsPage() {
                   <th className="px-2.5 py-2 text-left text-[11px] font-bold uppercase text-gray-400 dark:text-gray-500">Sản phẩm</th>
                   <th className="px-2.5 py-2 text-left text-[11px] font-bold uppercase text-gray-400 dark:text-gray-500">Trạng thái</th>
                   <th className="px-2.5 py-2 text-left text-[11px] font-bold uppercase text-gray-400 dark:text-gray-500">Ngày</th>
-                  {tab !== 'voided' && (
+                  {tab !== 'voided' && userRole !== 'warehouse' && (
                     <th className="px-2.5 py-2 text-center text-[11px] font-bold uppercase text-gray-400 dark:text-gray-500">Hành động</th>
                   )}
                 </tr>
@@ -260,7 +270,7 @@ export default function VoidedReceiptsPage() {
                     <td className="px-2.5 py-2 text-[11px] text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
                       {new Date(item.date).toLocaleDateString('vi-VN')}
                     </td>
-                    {tab !== 'voided' && (
+                    {tab !== 'voided' && userRole !== 'warehouse' && (
                       <td className="px-2.5 py-2 text-center">
                         {item.status !== 'cancelled' ? (
                           <button
@@ -372,6 +382,14 @@ export default function VoidedReceiptsPage() {
           </div>
         </div>
       )}
+    </>
+  );
+}
+
+export default function VoidedReceiptsPage() {
+  return (
+    <PageLayout title="Phiếu Huỷ" icon={<Ban size={15} className="text-red-500" />}>
+      <VoidedReceiptsContent />
     </PageLayout>
   );
 }

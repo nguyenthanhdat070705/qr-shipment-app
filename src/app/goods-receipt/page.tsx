@@ -28,7 +28,7 @@ function StatCard({
   );
 }
 
-export default function GoodsReceiptPage() {
+export function GoodsReceiptContent() {
   const router = useRouter();
   const [receipts, setReceipts] = useState<GoodsReceipt[]>([]);
   const [loading, setLoading] = useState(true);
@@ -143,7 +143,7 @@ export default function GoodsReceiptPage() {
   ];
 
   return (
-    <PageLayout title="Nhập hàng" icon={<PackageCheck size={15} className="text-orange-500" />}>
+    <>
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900">Danh sách phiếu nhập</h1>
@@ -168,7 +168,7 @@ export default function GoodsReceiptPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <StatCard label="Tổng phiếu" value={total} icon={<PackageOpen size={22} />} color="text-[#1B2A4A]" bg="bg-[#eef1f7]" border="border-[#d5dbe9]" />
         <StatCard label="Hoàn tất" value={completedCount} icon={<CheckCircle size={22} />} color="text-emerald-600" bg="bg-emerald-50" border="border-emerald-200" />
         {pendingPoCount > 0 && (
@@ -189,6 +189,14 @@ export default function GoodsReceiptPage() {
           emptyMessage="Chưa có phiếu nhập kho nào."
         />
       )}
+    </>
+  );
+}
+
+export default function GoodsReceiptPage() {
+  return (
+    <PageLayout title="Nhập hàng" icon={<PackageCheck size={15} className="text-orange-500" />}>
+      <GoodsReceiptContent />
     </PageLayout>
   );
 }
