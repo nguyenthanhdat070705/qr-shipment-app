@@ -113,12 +113,75 @@ function mapAccount(a: Record<string, unknown>) {
   };
 }
 
+// ── Direct insert using Supabase REST with explicit schema reload ──
+async function directUpsert(rows: ReturnType<typeof mapAccount>[]) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+  const chunkSize = 50;
+  let totalUpserted = 0;
+
+  for (let i = 0; i < rows.length; i += chunkSize) {
+    const chunk = rows.slice(i, i + chunkSize);
+
+    // Use direct REST API call with Prefer: resolution=merge-duplicates
+    const res = await fetch(`${supabaseUrl}/rest/v1/getfly_accounts`, {
+      method: 'POST',
+      headers: {
+        'apikey': serviceKey,
+        'Authorization': `Bearer ${serviceKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify(chunk),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      
+      // If schema cache error, try to reload and retry once
+      if (errText.includes('schema cache') && i === 0) {
+        console.log('[Sync Accounts] Schema cache stale, attempting reload...');
+        
+        // Wait 2s and retry
+        await new Promise(r => setTimeout(r, 2000));
+        
+        const retryRes = await fetch(`${supabaseUrl}/rest/v1/getfly_accounts`, {
+          method: 'POST',
+          headers: {
+            'apikey': serviceKey,
+            'Authorization': `Bearer ${serviceKey}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates',
+          },
+          body: JSON.stringify(chunk),
+        });
+
+        if (!retryRes.ok) {
+          const retryErr = await retryRes.text();
+          throw new Error(`Schema cache still stale after retry: ${retryErr.substring(0, 200)}`);
+        }
+      } else {
+        throw new Error(`Upsert error at chunk ${i}: ${errText.substring(0, 300)}`);
+      }
+    }
+
+    totalUpserted += chunk.length;
+    if (totalUpserted % 500 === 0 || i + chunkSize >= rows.length) {
+      console.log(`[Sync Accounts] Progress: ${totalUpserted}/${rows.length}`);
+    }
+  }
+
+  return totalUpserted;
+}
+
 // ── POST: Full sync all accounts ──
 export async function POST(req: NextRequest) {
   try {
     const supabase = getSupabaseAdmin();
     const url = new URL(req.url);
     const createFolders = url.searchParams.get('create_folders') === 'true';
+    const useDirectApi = url.searchParams.get('direct') !== 'false';
 
     console.log('[Sync Accounts] Starting sync...');
     const accounts = await fetchAllAccounts();
@@ -134,53 +197,64 @@ export async function POST(req: NextRequest) {
 
     // Map to schema
     const rows = accounts.map(mapAccount).filter(r => r.getfly_account_id);
-
-    // Batch upsert in chunks of 100
-    const chunkSize = 100;
     let totalUpserted = 0;
     let foldersCreated = 0;
 
-    for (let i = 0; i < rows.length; i += chunkSize) {
-      const chunk = rows.slice(i, i + chunkSize);
+    // Try Supabase client first, fallback to direct REST
+    try {
+      // Method 1: Supabase client (uses PostgREST)
+      const chunkSize = 100;
+      for (let i = 0; i < rows.length; i += chunkSize) {
+        const chunk = rows.slice(i, i + chunkSize);
 
-      const { error } = await supabase
-        .from('getfly_accounts')
-        .upsert(chunk, { onConflict: 'getfly_account_id', ignoreDuplicates: false });
+        const { error } = await supabase
+          .from('getfly_accounts')
+          .upsert(chunk, { onConflict: 'getfly_account_id', ignoreDuplicates: false });
 
-      if (error) {
-        console.error('[Sync Accounts] Upsert error at chunk', i, error);
-        return NextResponse.json(
-          { error: error.message, hint: error.hint, chunk_index: i },
-          { status: 500 }
-        );
-      }
-
-      totalUpserted += chunk.length;
-      console.log(`[Sync Accounts] Upserted chunk ${i / chunkSize + 1}: ${totalUpserted}/${rows.length}`);
-
-      // Optionally create Google Drive folders
-      if (createFolders) {
-        for (const acc of chunk) {
-          try {
-            if ((acc as any).gdrive_folder_id) continue; // Skip if already has folder
-
-            const phone = acc.phone || acc.contact_phone || '';
-            const cleanPhone = phone ? ` - ${phone}` : '';
-            const folderName = `${acc.account_name || 'Khach Hang'}${cleanPhone}`;
-
-            const folderId = await findOrCreateFolder(folderName);
-            const folderUrl = `https://drive.google.com/drive/folders/${folderId}`;
-
-            // Update the folder ID in DB
-            await supabase
-              .from('getfly_accounts')
-              .update({ gdrive_folder_id: folderId, gdrive_folder_url: folderUrl })
-              .eq('getfly_account_id', acc.getfly_account_id);
-
-            foldersCreated++;
-          } catch (folderErr) {
-            console.error(`[Sync Accounts] Folder error for ${acc.account_name}:`, folderErr);
+        if (error) {
+          if (error.message.includes('schema cache') && i === 0) {
+            // Schema cache issue - try direct REST approach
+            console.log('[Sync Accounts] Supabase client schema cache issue, trying direct REST...');
+            totalUpserted = await directUpsert(rows);
+            break;
           }
+          throw error;
+        }
+
+        totalUpserted += chunk.length;
+        if (totalUpserted % 500 === 0 || i + chunkSize >= rows.length) {
+          console.log(`[Sync Accounts] Upserted: ${totalUpserted}/${rows.length}`);
+        }
+      }
+    } catch (clientErr: any) {
+      if (clientErr.message?.includes('schema cache')) {
+        console.log('[Sync Accounts] Falling back to direct REST API...');
+        totalUpserted = await directUpsert(rows);
+      } else {
+        throw clientErr;
+      }
+    }
+
+    // Optionally create Google Drive folders
+    if (createFolders && totalUpserted > 0) {
+      const folderRows = rows.slice(0, Math.min(rows.length, 50)); // Limit to 50 folders per call
+      for (const acc of folderRows) {
+        try {
+          const phone = acc.phone || acc.contact_phone || '';
+          const cleanPhone = phone ? ` - ${phone}` : '';
+          const folderName = `${acc.account_name || 'Khach Hang'}${cleanPhone}`;
+
+          const folderId = await findOrCreateFolder(folderName);
+          const folderUrl = `https://drive.google.com/drive/folders/${folderId}`;
+
+          await supabase
+            .from('getfly_accounts')
+            .update({ gdrive_folder_id: folderId, gdrive_folder_url: folderUrl })
+            .eq('getfly_account_id', acc.getfly_account_id);
+
+          foldersCreated++;
+        } catch (folderErr) {
+          console.error(`[Sync Accounts] Folder error for ${acc.account_name}:`, folderErr);
         }
       }
     }
@@ -188,6 +262,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       synced: totalUpserted,
+      total_from_getfly: accounts.length,
       folders_created: foldersCreated,
       message: `Đã sync ${totalUpserted} khách hàng từ GetFly` +
         (foldersCreated > 0 ? ` | Tạo ${foldersCreated} Google Drive folders` : ''),
@@ -204,9 +279,16 @@ export async function GET() {
     const supabase = getSupabaseAdmin();
     
     // Total count
-    const { count: totalCount } = await supabase
+    const { count: totalCount, error: totalErr } = await supabase
       .from('getfly_accounts')
       .select('*', { count: 'exact', head: true });
+
+    if (totalErr) {
+      return NextResponse.json({
+        error: totalErr.message,
+        hint: 'Bảng getfly_accounts có thể chưa tồn tại hoặc schema cache chưa refresh',
+      });
+    }
 
     // Membership count (ma_hoi_vien is not null)
     const { count: memberCount } = await supabase
