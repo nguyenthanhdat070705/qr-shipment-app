@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Minus, Search, Package, Edit2, X, Check, ChevronDown, ChevronUp, Upload, Image as ImageIcon, Loader2, Trash2, ArrowLeft, AlertTriangle, Warehouse } from 'lucide-react';
 import Link from 'next/link';
 import ExcelImportModal from '@/components/ExcelImportModal';
-import { isVIPAdmin } from '@/config/roles.config';
+import { isVIPAdmin, getUserRole, UserRole } from '@/config/roles.config';
 import './products-manage.css';
 
 interface WarehouseItem {
@@ -96,6 +96,7 @@ export default function ProductsManagePage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [userEmail, setUserEmail] = useState('');
+  const [userRole, setUserRole] = useState<UserRole>('sales');
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [showExcelImport, setShowExcelImport] = useState(false);
   // Image upload state
@@ -123,12 +124,14 @@ export default function ProductsManagePage() {
       if (raw) {
         const u = JSON.parse(raw);
         setUserEmail(u.email || '');
+        setUserRole(getUserRole(u.email || ''));
       }
     } catch { /* ignore */ }
   }, []);
 
   // Only VIP admin can adjust quantities
   const isVIP = isVIPAdmin(userEmail);
+  const canEdit = userRole !== 'sales';
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -496,14 +499,18 @@ export default function ProductsManagePage() {
           Trang chủ
         </Link>
         <div className="pm-header-actions">
-          <button className="pm-btn-upload" onClick={() => setShowExcelImport(true)}>
-            <Upload size={18} />
-            Import Excel
-          </button>
-          <button className="pm-btn-create" onClick={() => { setShowForm(true); setEditingId(null); setForm(EMPTY_FORM); }}>
-            <Plus size={18} />
-            Tạo sản phẩm mới
-          </button>
+          {canEdit && (
+            <button className="pm-btn-upload" onClick={() => setShowExcelImport(true)}>
+              <Upload size={18} />
+              Import Excel
+            </button>
+          )}
+          {canEdit && (
+            <button className="pm-btn-create" onClick={() => { setShowForm(true); setEditingId(null); setForm(EMPTY_FORM); }}>
+              <Plus size={18} />
+              Tạo sản phẩm mới
+            </button>
+          )}
         </div>
       </div>
 
@@ -920,12 +927,13 @@ export default function ProductsManagePage() {
                 <React.Fragment key={p.id}>
                   <tr key={p.id} className={expandedRow === p.id ? 'pm-row-expanded' : ''} style={{ opacity: p.is_active ? 1 : 0.6 }}>
                     <td>
-                      <div className="pm-toggle-wrap" onClick={(e) => e.stopPropagation()}>
+                      <div className="pm-toggle-wrap" onClick={(e) => { e.stopPropagation(); if (canEdit) toggleActive(p); }}>
                         <label className="pm-toggle-switch" title={p.is_active ? 'Đang bán' : 'Ngừng bán'}>
                           <input
                             type="checkbox"
                             checked={!!p.is_active}
-                            onChange={() => toggleActive(p)}
+                            readOnly
+                            disabled={!canEdit}
                           />
                           <span className="pm-toggle-slider"></span>
                         </label>
@@ -933,13 +941,17 @@ export default function ProductsManagePage() {
                     </td>
                     <td className="pm-td-center">
                       {p.hinh_anh ? (
-                        <div className="pm-td-thumb" onClick={() => handleUploadForProduct(p)}>
-                          <img src={p.hinh_anh} alt={p.ma_hom} style={{ filter: p.is_active ? 'none' : 'grayscale(100%)' }} />
+                        <div className="pm-td-thumb" onClick={() => canEdit && handleUploadForProduct(p)}>
+                          <img src={p.hinh_anh} alt={p.ma_hom} style={{ filter: p.is_active ? 'none' : 'grayscale(100%)', cursor: canEdit ? 'pointer' : 'default' }} />
                         </div>
                       ) : (
-                        <button className="pm-td-add-thumb" onClick={() => handleUploadForProduct(p)} title="Thêm ảnh">
-                          <ImageIcon size={14} />
-                        </button>
+                        canEdit ? (
+                          <button className="pm-td-add-thumb" onClick={() => handleUploadForProduct(p)} title="Thêm ảnh">
+                            <ImageIcon size={14} />
+                          </button>
+                        ) : (
+                          <ImageIcon size={14} className="pm-td-add-thumb" style={{ color: '#cbd5e1', background: 'transparent', border: 'none' }} />
+                        )
                       )}
                     </td>
                     <td><span className="pm-code">{p.ma_hom}</span></td>
@@ -979,12 +991,16 @@ export default function ProductsManagePage() {
                     <td>{p.Nguon_goc || '—'}</td>
                     <td className="pm-td-price">{(p.gia_ban_1 || 0).toLocaleString('vi-VN')}₫</td>
                     <td className="pm-td-actions">
-                      <button className="pm-btn-icon" title="Chỉnh sửa" onClick={() => handleEdit(p)}>
-                        <Edit2 size={15} />
-                      </button>
-                      <button className="pm-btn-icon pm-btn-icon-danger" title="Xóa" onClick={() => setDeleteTarget(p)}>
-                        <Trash2 size={15} />
-                      </button>
+                      {canEdit && (
+                        <>
+                          <button className="pm-btn-icon" title="Chỉnh sửa" onClick={() => handleEdit(p)}>
+                            <Edit2 size={15} />
+                          </button>
+                          <button className="pm-btn-icon pm-btn-icon-danger" title="Xóa" onClick={() => setDeleteTarget(p)}>
+                            <Trash2 size={15} />
+                          </button>
+                        </>
+                      )}
                       <button
                         className="pm-btn-icon"
                         title="Chi tiết"

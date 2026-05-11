@@ -78,7 +78,7 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
       iconBg: 'bg-rose-500/15',
       section: 'Quản trị',
     },
-    {
+    ...(userRole !== 'sales' ? [{
       icon: <Search size={18} />,
       label: 'Khách hàng tìm kiếm',
       desc: 'Tra cứu công khai không cần đăng nhập',
@@ -86,7 +86,7 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
       color: 'text-[#d4af37]',
       iconBg: 'bg-[#d4af37]/15',
       section: 'Quản trị',
-    },
+    } as MenuItem] : []),
     ...(userRole === 'sales' || userRole === 'admin' ? [{
       icon: <ShoppingCart size={18} />,
       label: 'Trung tâm Bán Hàng',
@@ -99,7 +99,7 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
 
 
     /* ── Membership & CSKH (chỉ sales + admin) ── */
-    {
+    ...(userRole === 'admin' ? [{
       icon: <Crown size={18} />,
       label: 'Trung tâm CSKH Membership',
       desc: 'Hội viên & Chăm sóc khách hàng',
@@ -108,7 +108,7 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
       iconBg: 'bg-yellow-500/15',
       requiresPermission: 'canMembership',
       section: 'Chăm sóc khách hàng',
-    },
+    } as MenuItem] : []),
 
     /* ── Core SCM Flow ── */
     {
@@ -121,8 +121,8 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
       section: 'Chuỗi cung ứng',
     },
 
-    /* ── Zalo Automation (admin + sales) ── */
-    ...((userRole === 'admin' || userRole === 'sales') ? [{
+    /* ── Zalo Automation (admin) ── */
+    ...(userRole === 'admin' ? [{
       icon: <MessageCircle size={18} />,
       label: 'Zalo Automation',
       desc: 'ZNS & chăm sóc hội viên',
@@ -133,7 +133,7 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
     } as MenuItem] : []),
 
     /* ── Data Outsource Block (Ordered) ── */
-    ...((userRole === 'admin' || userRole === 'sales') ? [{
+    ...(userRole === 'admin' ? [{
       icon: (
         <svg fill="none" viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
           <rect width="24" height="24" rx="5" fill="#F05123"/>
@@ -149,7 +149,7 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
       iconBg: 'bg-orange-500/15',
       section: 'Data Outsource',
     } as MenuItem] : []),
-    ...(userRole === 'sales' || userRole === 'admin' ? [{
+    ...(userRole === 'admin' ? [{
       icon: (
         <svg fill="none" viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
           <rect width="24" height="24" rx="5" fill="#2E5AA5"/>
@@ -165,7 +165,7 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
       iconBg: 'bg-blue-500/15',
       section: 'Data Outsource',
     } as MenuItem] : []),
-    ...(userRole === 'sales' || userRole === 'admin' ? [{
+    ...(userRole === 'admin' ? [{
       icon: <DollarSign size={18} />,
       label: 'Quản lý hợp đồng bán',
       desc: 'Hợp đồng từ GetFly CRM',
@@ -174,7 +174,7 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
       iconBg: 'bg-teal-500/15',
       section: 'Data Outsource',
     } as MenuItem] : []),
-    {
+    ...(userRole !== 'sales' ? [{
       icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar-days"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>,
       label: 'Lịch Đám',
       desc: 'Thông tin tổ chức',
@@ -183,7 +183,7 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
       iconBg: 'bg-pink-500/15',
       requiresPermission: 'canViewProducts',
       section: 'Data Outsource',
-    },
+    } as MenuItem] : []),
     /* ── Hệ thống ── */
     {
       icon: <User size={18} />,

@@ -648,7 +648,7 @@ export default function AccountsPage() {
                   <span className="text-amber-400">▸</span>
                   <span>bophanbanhang@blackstone.com.vn</span>
                   <span className="text-amber-400">•</span>
-                  <span className="font-bold">123456@</span>
+                  <span className="font-bold">123456A</span>
                 </div>
                 <div className="flex items-center gap-2 text-amber-700">
                   <span className="text-amber-400">▸</span>

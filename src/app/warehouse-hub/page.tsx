@@ -22,12 +22,12 @@ export default function WarehouseHubPage() {
   }, []);
 
   const cards = [
-    ...(userRole === "admin" || userRole === "warehouse" || userRole === "procurement" ? [{
+    ...(userRole === "admin" || userRole === "warehouse" || userRole === "procurement" || userRole === "sales" ? [{
       id: "inout-management",
       title: "Quản lý xuất nhập",
       icon: <PackageCheck size={32} className="text-white" />,
       desc: "Tổng hợp và quản lý dữ liệu xuất nhập kho",
-      href: "/inout-management",
+      href: userRole === "sales" ? "/inout-management?tab=inventory" : "/inout-management",
       color: "bg-blue-500",
       shadow: "shadow-blue-500/20",
       gradient: "from-blue-400 to-indigo-600",
@@ -42,7 +42,7 @@ export default function WarehouseHubPage() {
       shadow: "shadow-pink-500/20",
       gradient: "from-pink-400 to-rose-600",
     }] : []),
-    ...(userRole === "admin" || userRole === "procurement" || userRole === "sales" ? [{
+    ...(userRole === "admin" || userRole === "procurement" ? [{
       id: "purchase-orders",
       title: "Đặt hàng",
       icon: <ShoppingCart size={32} className="text-white" />,

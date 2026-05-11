@@ -34,8 +34,8 @@ export default function InOutManagementTabs({ currentTab }: { currentTab: string
       id: "export",
       label: "Xuất hàng",
       icon: <Truck size={18} />,
-    },
-    {
+    }] : []),
+    ...(userRole === "admin" || userRole === "warehouse" || userRole === "sales" ? [{
       id: "inventory",
       label: "Tồn kho",
       icon: <Warehouse size={18} />,

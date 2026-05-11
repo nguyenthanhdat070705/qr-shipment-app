@@ -14,7 +14,7 @@ const DEFAULT_PASSWORDS: { email: string; password: string }[] = [
   { email: 'kho3@blackstone.com.vn',         password: '123456@' },
   { email: 'bophanthumua@blackstone.com.vn', password: '123456@' },
   { email: 'bophanvanhanh@blackstone.com.vn',password: '123456@' },
-  { email: 'bophanbanhang@blackstone.com.vn',password: '123456@' },
+  { email: 'bophanbanhang@blackstone.com.vn',password: '123456A' },
   { email: 'bophanpttt@blackstone.com.vn',   password: '123456@' },
 ];
 

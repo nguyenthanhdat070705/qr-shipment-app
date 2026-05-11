@@ -727,14 +727,7 @@ export default function SalesDashboard() {
                 color="text-rose-600"
                 iconBg="bg-rose-100"
               />
-              <QuickAction
-                icon={<Scale size={20} />}
-                title="Văn bản pháp lý"
-                desc="Quy chế tài chính & nội bộ"
-                href="/sales/legal-documents"
-                color="text-amber-600"
-                iconBg="bg-amber-100"
-              />
+
               <QuickAction
                 icon={<Lock size={20} />}
                 title="Sản phẩm đang giữ"
@@ -759,6 +752,14 @@ export default function SalesDashboard() {
                 href="/product/fullproductlist"
                 color="text-teal-600"
                 iconBg="bg-teal-100"
+              />
+              <QuickAction
+                icon={<Package size={20} />}
+                title="Danh sách Hòm"
+                desc="Xem thông tin và danh sách hòm"
+                href="/warehouse-settings?tab=boxes"
+                color="text-fuchsia-600"
+                iconBg="bg-fuchsia-100"
               />
               <QuickAction
                 icon={<BookOpen size={20} />}

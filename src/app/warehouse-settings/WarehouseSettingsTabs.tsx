@@ -20,12 +20,12 @@ export default function WarehouseSettingsTabs({ currentTab }: { currentTab: stri
   }, []);
 
   const tabs = [
-    ...(userRole === "admin" || userRole === "warehouse" || userRole === "procurement" ? [{
+    ...(userRole === "admin" || userRole === "warehouse" || userRole === "procurement" || userRole === "sales" ? [{
       id: "products",
       label: "Toàn bộ sản phẩm",
       icon: <LayoutGrid size={18} />,
     }] : []),
-    ...(userRole === "admin" || userRole === "procurement" ? [{
+    ...(userRole === "admin" || userRole === "procurement" || userRole === "sales" ? [{
       id: "boxes",
       label: "Quản lý hòm",
       icon: <Package size={18} />,
