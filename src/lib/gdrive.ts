@@ -116,3 +116,44 @@ export async function uploadUrlToDrive(fileUrl: string, fileName: string, folder
     return null;
   }
 }
+
+/**
+ * Uploads a Buffer directly to a specific Google Drive folder.
+ * Used for file uploads from the app (FormData).
+ * 
+ * @param buffer The file buffer
+ * @param fileName The name to save the file as
+ * @param folderId The Google Drive Folder ID to upload into
+ * @param mimeType The MIME type of the file
+ * @returns The Drive File ID
+ */
+export async function uploadBufferToDrive(
+  buffer: Buffer,
+  fileName: string,
+  folderId: string,
+  mimeType: string = 'application/octet-stream'
+): Promise<string | null> {
+  try {
+    const stream = new Readable();
+    stream.push(buffer);
+    stream.push(null);
+
+    const drive = getDriveClient();
+    const uploadRes = await drive.files.create({
+      requestBody: {
+        name: fileName,
+        parents: [folderId],
+      },
+      media: {
+        mimeType,
+        body: stream,
+      },
+      fields: 'id',
+    });
+
+    return uploadRes.data.id || null;
+  } catch (error) {
+    console.error(`[GDrive] Exception uploading buffer ${fileName}:`, error);
+    return null;
+  }
+}
