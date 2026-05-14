@@ -484,21 +484,23 @@ export default function ProductsManagePage() {
       {/* Header */}
       <div className="pm-header">
         <div className="pm-header-left">
-          <Package size={28} />
+          <span className="pm-header-icon">
+            <Package size={22} />
+          </span>
           <div>
             <h1 className="pm-title">Quản lý sản phẩm</h1>
-            <p className="pm-subtitle">
+            <div className="pm-subtitle">
               <span className="pm-stat-pill pm-stat-total">Tổng sản phẩm: <strong>{products.length}</strong></span>
               <span className="pm-stat-pill pm-stat-active">Đang bán: <strong>{products.filter(p => p.is_active).length}</strong></span>
               <span className="pm-stat-pill pm-stat-inactive">Ngừng bán: <strong>{products.filter(p => !p.is_active).length}</strong></span>
-            </p>
+            </div>
           </div>
         </div>
-        <Link href="/" className="pm-btn-back">
-          <ArrowLeft size={18} />
-          Trang chủ
-        </Link>
         <div className="pm-header-actions">
+          <Link href="/warehouse-hub" className="pm-btn-back">
+            <ArrowLeft size={17} />
+            Trung tâm kho
+          </Link>
           {canEdit && (
             <button className="pm-btn-upload" onClick={() => setShowExcelImport(true)}>
               <Upload size={18} />
@@ -923,7 +925,7 @@ export default function ProductsManagePage() {
               </tr>
             </thead>
             <tbody>
-              {currentProducts.map((p, i) => (
+              {currentProducts.map((p) => (
                 <React.Fragment key={p.id}>
                   <tr key={p.id} className={expandedRow === p.id ? 'pm-row-expanded' : ''} style={{ opacity: p.is_active ? 1 : 0.6 }}>
                     <td>
@@ -1012,7 +1014,7 @@ export default function ProductsManagePage() {
                   </tr>
                   {expandedRow === p.id && (
                     <tr key={`${p.id}-detail`} className="pm-detail-row">
-                      <td colSpan={10}>
+                      <td colSpan={11}>
                         <div className="pm-detail-grid">
                           <div><strong>Độ dày thành:</strong> {p.Thanh || '—'}</div>
                           <div><strong>Loại hòm:</strong> {p.loai_hom || '—'}</div>
@@ -1031,21 +1033,21 @@ export default function ProductsManagePage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '16px', borderTop: '1px solid #e2e8f0' }}>
+            <div className="pm-pagination">
               <button 
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
                 disabled={currentPage === 1}
-                style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === 1 ? '#f8fafc' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', color: '#475569', fontSize: '14px', fontWeight: 600 }}
+                className="pm-pagination-btn"
               >
                 Trước
               </button>
-              <span style={{ fontSize: '14px', fontWeight: 500, color: '#475569' }}>
+              <span className="pm-pagination-status">
                 Trang {currentPage} / {totalPages}
               </span>
               <button 
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
                 disabled={currentPage === totalPages}
-                style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === totalPages ? '#f8fafc' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', color: '#475569', fontSize: '14px', fontWeight: 600 }}
+                className="pm-pagination-btn"
               >
                 Sau
               </button>

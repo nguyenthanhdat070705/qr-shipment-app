@@ -50,11 +50,15 @@
 body {
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   -webkit-tap-highlight-color: transparent; /* Remove tap flash on mobile */
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* Smooth scroll for the whole page */
 html {
   scroll-behavior: smooth;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* ── Focus ring polish ────────────────────────────── */

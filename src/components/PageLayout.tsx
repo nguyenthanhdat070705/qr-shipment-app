@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, createContext, useContext } from 'react';
 import {
   Menu, X, ChevronRight, Shield, LogOut,
   Truck, Warehouse, LayoutGrid, User,
@@ -17,8 +17,10 @@ import { getUserRole, ROLE_CONFIGS, ROLE_COLORS, isVIPAdmin, type UserRole } fro
 import AuthGuard from '@/components/AuthGuard';
 
 /* ═══════════════════════════════════════════════════
-   Types
+   Contexts & Types
 ═══════════════════════════════════════════════════ */
+export const SearchContext = createContext<{ searchVal: string; setSearchVal: (val: string) => void }>({ searchVal: '', setSearchVal: () => {} });
+
 interface MenuItem {
   icon: React.ReactNode;
   label: string;
@@ -411,7 +413,7 @@ function TopBar({
   const [userEmail, setUserEmail] = useState('');
   const [userName, setUserName] = useState('');
   const [userRole, setUserRole] = useState<UserRole>('sales');
-  const [searchVal, setSearchVal] = useState('');
+  const { searchVal, setSearchVal } = useContext(SearchContext);
   const [avatarUrl, setAvatarUrl] = useState('');
 
   useEffect(() => {
@@ -488,10 +490,10 @@ function TopBar({
 
   return (
     <header className="sticky top-0 z-40 bg-white dark:bg-[#0f1629] border-b border-gray-100 dark:border-white/[0.05] shadow-sm transition-colors duration-300">
-      <div className="flex items-center justify-between h-14 px-4 lg:px-6">
+      <div className="flex min-w-0 items-center justify-between h-14 px-4 lg:px-6">
 
         {/* Left: hamburger (mobile) + breadcrumb */}
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           <button
             onClick={onMenuOpen}
             className="lg:hidden p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
@@ -501,7 +503,7 @@ function TopBar({
 
           <div className="flex items-center gap-2">
             {icon && <span className="hidden sm:flex">{icon}</span>}
-            <span className="text-sm font-bold text-gray-800 hidden sm:block">{title}</span>
+            <span className="text-sm font-bold text-gray-800 dark:text-gray-100 hidden sm:block">{title}</span>
           </div>
         </div>
 
@@ -520,7 +522,7 @@ function TopBar({
         </div>
 
         {/* Right: notifications + user */}
-        <div className="flex items-center gap-2 lg:gap-3">
+        <div className="flex flex-shrink-0 items-center gap-2 lg:gap-3">
           {/* Mobile Preview Toggle */}
           {!isMobileView && (
             <button
@@ -708,6 +710,7 @@ export default function PageLayout({ children, title, icon }: PageLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobileView, setIsMobileView] = useState(false);
   const [isDark, setIsDark] = useState(false);
+  const [searchVal, setSearchVal] = useState('');
 
   useEffect(() => {
     // Check initial dark mode preference
@@ -737,6 +740,7 @@ export default function PageLayout({ children, title, icon }: PageLayoutProps) {
 
   return (
     <AuthGuard>
+      <SearchContext.Provider value={{ searchVal, setSearchVal }}>
       {/* Background */}
       <div className={`min-h-screen transition-colors duration-300 ${isMobileView ? 'bg-gray-800 dark:bg-gray-950 flex flex-col items-center py-4 sm:py-8' : 'bg-[#f5f6fa] dark:bg-[#0c1226]'}`}>
         
@@ -775,10 +779,10 @@ export default function PageLayout({ children, title, icon }: PageLayoutProps) {
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} isMobileView={isMobileView} />
 
         {/* Main content shifted right on desktop */}
-        <div className={`flex flex-col min-h-screen transition-all duration-300 ${
+        <div className={`flex flex-col min-h-screen min-w-0 transition-all duration-300 ${
           isMobileView 
             ? 'w-full max-w-[375px] bg-[#f5f6fa] dark:bg-[#0c1226] rounded-[2.5rem] shadow-2xl overflow-hidden border-[12px] border-gray-900 relative h-[812px] min-h-[812px]' 
-            : 'lg:ml-64 w-full'
+            : 'w-full lg:ml-64 lg:w-[calc(100%-16rem)]'
         }`}>
           
           {/* Mobile Notch (Simulated) */}
@@ -800,11 +804,12 @@ export default function PageLayout({ children, title, icon }: PageLayoutProps) {
           />
 
           {/* Page content */}
-          <main className={`flex-1 ${isMobileView ? 'p-3 overflow-y-auto overflow-x-hidden' : 'p-4 lg:p-6'}`}>
+          <main className={`flex-1 min-w-0 ${isMobileView ? 'p-3 overflow-y-auto overflow-x-hidden' : 'p-4 lg:p-6 overflow-x-hidden'}`}>
             {children}
           </main>
         </div>
       </div>
+      </SearchContext.Provider>
     </AuthGuard>
   );
 }

@@ -1,23 +1,23 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { getUserRole, UserRole } from "@/config/roles.config";
 import { LayoutGrid, Package, Tags, LayoutDashboard } from "lucide-react";
 
 export default function WarehouseSettingsTabs({ currentTab }: { currentTab: string }) {
   const router = useRouter();
-  const [userRole, setUserRole] = useState<UserRole>("sales");
-
-  useEffect(() => {
+  const [userRole] = useState<UserRole>(() => {
+    if (typeof window === "undefined") return "sales";
     try {
       const raw = localStorage.getItem("auth_user");
       if (raw) {
         const u = JSON.parse(raw);
-        setUserRole(getUserRole(u.email || ""));
+        return getUserRole(u.email || "");
       }
     } catch { /* ignore */ }
-  }, []);
+    return "sales";
+  });
 
   const tabs = [
     ...(userRole === "admin" || userRole === "warehouse" || userRole === "procurement" || userRole === "sales" ? [{
@@ -43,15 +43,15 @@ export default function WarehouseSettingsTabs({ currentTab }: { currentTab: stri
   ];
 
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2 border-b border-gray-100 dark:border-white/10 mb-6 px-2 sm:px-0 scrollbar-hide">
+    <div className="mb-5 flex max-w-full gap-1.5 overflow-x-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm dark:border-white/10 dark:bg-[#111a33]">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => router.push(`/warehouse-settings?tab=${tab.id}`)}
-          className={`whitespace-nowrap inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all flex-shrink-0 ${
+          className={`inline-flex flex-shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
             currentTab === tab.id
-              ? "bg-[#1B2A4A] text-white shadow-lg shadow-[#1B2A4A]/20"
-              : "bg-gray-100 dark:bg-[#162240] text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10"
+              ? "bg-[#1B2A4A] text-white shadow-sm"
+              : "text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white"
           }`}
         >
           {tab.icon}
