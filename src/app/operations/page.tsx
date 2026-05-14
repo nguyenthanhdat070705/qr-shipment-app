@@ -99,23 +99,8 @@ const GANTT_COLORS = [
   '#FFCA28', '#78909C', '#42A5F5', '#7E57C2', '#009688',
 ];
 
-/* ── Parse DD/MM/YYYY date ────────────────────────────────── */
-function parseDateVN(str: string | null | undefined): Date | null {
-  if (!str) return null;
-  // Handle DD/MM/YYYY
-  const parts = str.trim().split('/');
-  if (parts.length === 3) {
-    const day = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10) - 1;
-    const year = parseInt(parts[2], 10);
-    if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
-      return new Date(year, month, day);
-    }
-  }
-  // Fallback: try ISO parse
-  const d = new Date(str);
-  return isNaN(d.getTime()) ? null : d;
-}
+/* ── Parse DD/MM/YYYY date (centralized) ────────────────── */
+import { parseDateVN } from '@/lib/utils/date';
 
 /* ── Gantt Categories ────────────────────────────────────── */
 const GANTT_CATEGORIES = [
@@ -123,6 +108,13 @@ const GANTT_CATEGORIES = [
   { key: 'delivery', label: 'Giao hàng', color: '#42A5F5' },
   { key: 'export', label: 'Xuất kho', color: '#66BB6A' },
 ];
+
+function getMonthFromDamCode(maDam: unknown): number | null {
+  const match = String(maDam || '').match(/^(?:BL)?\d{2}(\d{2})/i);
+  if (!match) return null;
+  const month = Number(match[1]);
+  return month >= 1 && month <= 12 ? month : null;
+}
 
 /* ── Main Dashboard ────────────────────────────────────────── */
 export default function OperationsDashboard() {
@@ -227,11 +219,13 @@ export default function OperationsDashboard() {
 
     // 1) Funerals → Gantt tasks
     funerals.forEach((f: any) => {
-      const startDate = parseDateVN(f.ngay) || (f.created_at ? new Date(f.created_at) : null);
+      const thang = parseInt(String(f.thang || ''), 10);
+      const expectedMonth = (thang >= 1 && thang <= 12 ? thang : null) || getMonthFromDamCode(f.ma_dam);
+      const startDate = parseDateVN(f.ngay, { expectedMonth }) || (f.created_at ? new Date(f.created_at) : null);
       if (!startDate) return;
 
-      const liemDate = parseDateVN(f.ngay_liem);
-      const diQuanDate = parseDateVN(f.ngay_di_quan);
+      const liemDate = parseDateVN(f.ngay_liem, { expectedMonth });
+      const diQuanDate = parseDateVN(f.ngay_di_quan, { expectedMonth });
 
       // End date: ngay_di_quan > ngay_liem > startDate + 2 days
       let endDate = diQuanDate || liemDate || new Date(startDate);

@@ -2,8 +2,8 @@
 
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
-  ChevronLeft, ChevronRight, ZoomIn, ZoomOut,
-  Calendar, Maximize2, Filter, Layers, Search
+  ZoomIn, ZoomOut,
+  Calendar, Maximize2, Filter, Layers, Search, X
 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════
@@ -19,6 +19,7 @@ export interface GanttTask {
   progress?: number;   // 0–100
   subLabel?: string;
   tooltip?: string;
+  details?: Record<string, unknown>;
 }
 
 interface GanttChartProps {
@@ -30,16 +31,6 @@ interface GanttChartProps {
 /* ═══════════════════════════════════════════════════
    Constants
 ═══════════════════════════════════════════════════ */
-const MONTH_NAMES_VI = [
-  'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
-  'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12',
-];
-
-const MONTH_SHORT = [
-  'Th1', 'Th2', 'Th3', 'Th4', 'Th5', 'Th6',
-  'Th7', 'Th8', 'Th9', 'Th10', 'Th11', 'Th12',
-];
-
 const DAY_NAMES = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
 const ROW_HEIGHT = 60;
@@ -70,10 +61,6 @@ function startOfMonth(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), 1);
 }
 
-function daysInMonth(year: number, month: number): number {
-  return new Date(year, month + 1, 0).getDate();
-}
-
 function isWeekend(d: Date): boolean {
   const day = d.getDay();
   return day === 0 || day === 6;
@@ -93,24 +80,35 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
   const headerScrollRef = useRef<HTMLDivElement>(null);
   const [dayWidth, setDayWidth] = useState(DEFAULT_DAY_WIDTH);
   const [hoveredTask, setHoveredTask] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<GanttTask | null>(null);
   const [tooltipInfo, setTooltipInfo] = useState<{ x: number; y: number; task: GanttTask } | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>('all');
-  const [filterMonthStr, setFilterMonthStr] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const today = useMemo(() => startOfDay(new Date()), []);
+  const [markerDate, setMarkerDate] = useState<Date>(today);
+  const [isDraggingMarker, setIsDraggingMarker] = useState(false);
+  
+  // Khởi tạo trực tiếp thành tháng hiện tại (không dùng 'all' để tránh race condition)
+  const currentMonthStr = `${today.getFullYear()}-${today.getMonth()}`;
+  const [filterMonthStr, setFilterMonthStr] = useState<string>(currentMonthStr);
 
   /* ── Filter Month Options ── */
   const availableMonths = useMemo(() => {
     const monthsSet = new Set<string>();
-    monthsSet.add(`${today.getFullYear()}-${today.getMonth()}`); // Tránh trường hợp tháng này không có task
+    monthsSet.add(currentMonthStr); // Luôn đảm bảo tháng hiện tại có trong list
     tasks.forEach(t => {
-      let current = startOfMonth(t.startDate);
-      const end = startOfMonth(t.endDate);
-      while (current <= end) {
-        monthsSet.add(`${current.getFullYear()}-${current.getMonth()}`);
-        current = addDays(current, 32); 
-        current = startOfMonth(current); 
+      // Chỉ thêm tháng nếu năm hợp lệ (2020-2030)
+      if (t.startDate.getFullYear() >= 2020 && t.startDate.getFullYear() <= 2030) {
+        let current = startOfMonth(t.startDate);
+        const end = startOfMonth(t.endDate);
+        while (current <= end) {
+          if (current.getFullYear() >= 2020 && current.getFullYear() <= 2030) {
+            monthsSet.add(`${current.getFullYear()}-${current.getMonth()}`);
+          }
+          current = addDays(current, 32); 
+          current = startOfMonth(current); 
+        }
       }
     });
 
@@ -120,22 +118,15 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
     });
     arr.sort((a, b) => a.date.getTime() - b.date.getTime());
     return arr;
-  }, [tasks, today]);
-
-  useEffect(() => {
-    // Luôn ưu tiên hiển thị tháng hiện tại lúc đầu
-    if (filterMonthStr === 'all') {
-      setFilterMonthStr(`${today.getFullYear()}-${today.getMonth()}`);
-    }
-  }, [today, filterMonthStr]);
+  }, [tasks, currentMonthStr]);
 
   /* ── Date range ── */
   const { viewStart, viewEnd, totalDays } = useMemo(() => {
-    const [y, m] = (filterMonthStr === 'all' ? `${today.getFullYear()}-${today.getMonth()}` : filterMonthStr).split('-').map(Number);
+    const [y, m] = filterMonthStr.split('-').map(Number);
     const s = new Date(y, m, 1);
     const e = new Date(y, m + 1, 0); // last day of month
     return { viewStart: s, viewEnd: e, totalDays: diffDays(s, e) + 1 };
-  }, [filterMonthStr, today]);
+  }, [filterMonthStr]);
 
   /* ── Filtered tasks ── */
   const filteredTasks = useMemo(() => {
@@ -199,8 +190,29 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
     return months;
   }, [viewStart, totalDays]);
 
-  /* ── Today index ── */
-  const todayIndex = useMemo(() => diffDays(viewStart, today), [viewStart, today]);
+  /* ── Movable marker ── */
+  const markerIndex = useMemo(() => diffDays(viewStart, markerDate), [viewStart, markerDate]);
+  const markerInView = markerIndex >= 0 && markerIndex < totalDays;
+
+  const updateMarkerFromPointer = useCallback((clientX: number) => {
+    if (!scrollRef.current) return;
+    const rect = scrollRef.current.getBoundingClientRect();
+    const x = clientX - rect.left + scrollRef.current.scrollLeft;
+    const dayIndex = Math.min(totalDays - 1, Math.max(0, Math.floor(x / dayWidth)));
+    setMarkerDate(addDays(viewStart, dayIndex));
+  }, [dayWidth, totalDays, viewStart]);
+
+  useEffect(() => {
+    if (!isDraggingMarker) return;
+    const handleMove = (event: MouseEvent) => updateMarkerFromPointer(event.clientX);
+    const handleUp = () => setIsDraggingMarker(false);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleUp);
+    };
+  }, [isDraggingMarker, updateMarkerFromPointer]);
 
   /* ── Sync scroll ── */
   const handleScroll = useCallback(() => {
@@ -211,11 +223,13 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
 
   /* ── Scroll to today ── */
   const scrollToToday = useCallback(() => {
+    setMarkerDate(today);
     if (scrollRef.current) {
+      const todayIndex = diffDays(viewStart, today);
       const todayPos = todayIndex * dayWidth - scrollRef.current.clientWidth / 2;
       scrollRef.current.scrollTo({ left: Math.max(0, todayPos), behavior: 'smooth' });
     }
-  }, [todayIndex, dayWidth]);
+  }, [dayWidth, today, viewStart]);
 
   useEffect(() => {
     // Auto-scroll to today on mount
@@ -269,6 +283,33 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
   }, [tasks, categories]);
 
   const timelineWidth = totalDays * dayWidth;
+  const selectedTaskId = selectedTask?.id || null;
+
+  const openTaskDetails = (task: GanttTask) => {
+    setSelectedTask(task);
+    setTooltipInfo(null);
+  };
+
+  const formatDetailValue = (value: unknown): string => {
+    if (value instanceof Date) return value.toLocaleDateString('vi-VN');
+    if (typeof value === 'boolean') return value ? 'Có' : 'Không';
+    if (value === null || value === undefined) return '';
+    return String(value).trim();
+  };
+
+  const detailEntries = selectedTask
+    ? Object.entries({
+        'Tên': selectedTask.name,
+        'Nhãn': selectedTask.category,
+        'Ngày bắt đầu': selectedTask.startDate,
+        'Ngày kết thúc': selectedTask.endDate,
+        ...(selectedTask.progress !== undefined ? { 'Tiến độ': `${selectedTask.progress}%` } : {}),
+        ...(selectedTask.details || {}),
+      }).filter(([, value]) => {
+        const text = formatDetailValue(value);
+        return text !== '' && text !== '—' && text !== 'null' && text !== 'undefined';
+      })
+    : [];
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200/60 shadow-xl shadow-slate-200/40 overflow-hidden">
@@ -306,7 +347,14 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
             <div className="relative">
               <select
                 value={filterMonthStr}
-                onChange={(e) => setFilterMonthStr(e.target.value)}
+                onChange={(e) => {
+                  const nextValue = e.target.value;
+                  setFilterMonthStr(nextValue);
+                  const [year, month] = nextValue.split('-').map(Number);
+                  const nextStart = new Date(year, month, 1);
+                  const nextEnd = new Date(year, month + 1, 0);
+                  setMarkerDate(nextStart <= today && today <= nextEnd ? today : nextStart);
+                }}
                 className="appearance-none pl-11 pr-5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-extrabold text-slate-700 cursor-pointer hover:border-slate-300 hover:bg-slate-50 transition-all focus:outline-none focus:ring-2 focus:ring-orange-200 shadow-sm"
               >
                 {availableMonths.map(m => (
@@ -408,12 +456,17 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
             {filteredTasks.map((task, idx) => (
               <div
                 key={task.id}
-                className={`flex items-center gap-3 px-6 border-b border-slate-100 transition-all ${
-                  hoveredTask === task.id ? 'bg-orange-50/80 shadow-sm z-10 relative' : idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'
+                className={`flex items-center gap-3 px-6 border-b border-slate-100 transition-all cursor-pointer ${
+                  selectedTaskId === task.id
+                    ? 'bg-orange-50/70 shadow-sm z-10 relative ring-1 ring-inset ring-orange-100'
+                    : hoveredTask === task.id
+                      ? 'bg-orange-50/50 shadow-sm z-10 relative'
+                      : idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'
                 }`}
                 style={{ height: ROW_HEIGHT }}
                 onMouseEnter={() => setHoveredTask(task.id)}
                 onMouseLeave={() => setHoveredTask(null)}
+                onClick={() => openTaskDetails(task)}
               >
                 <div
                   className="w-2.5 h-2.5 rounded-full flex-shrink-0"
@@ -460,7 +513,7 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
               {/* Row: Days */}
               <div className="flex h-[60px]">
                 {dayColumns.map((col, i) => {
-                  const isCurrent = col.isToday;
+                  const isCurrent = isSameDay(col.date, markerDate);
                   const isWeeKEnd = col.isWeekend;
                   return (
                     <div
@@ -495,6 +548,12 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
             ref={scrollRef}
             className="flex-1 overflow-x-auto overflow-y-hidden"
             onScroll={handleScroll}
+            onMouseDown={(event) => {
+              const target = event.target as HTMLElement;
+              if (target.closest('[data-gantt-task="true"]') || target.closest('[data-gantt-marker="true"]')) return;
+              setIsDraggingMarker(true);
+              updateMarkerFromPointer(event.clientX);
+            }}
             style={{ scrollbarWidth: 'thin' }}
           >
             <div
@@ -518,7 +577,7 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
                   style={{
                     left: i * dayWidth,
                     width: dayWidth,
-                    backgroundColor: col.isToday ? 'rgba(249,115,22,0.03)' : col.isWeekend ? 'rgba(254,226,226,0.1)' : undefined,
+                    backgroundColor: isSameDay(col.date, markerDate) ? 'rgba(249,115,22,0.035)' : col.isWeekend ? 'rgba(254,226,226,0.1)' : undefined,
                   }}
                 />
               ))}
@@ -527,21 +586,34 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
               {filteredTasks.map((task, idx) => (
                 <div
                   key={`row-${task.id}`}
-                  className={`absolute left-0 right-0 border-b border-slate-100/80 transition-colors ${
-                    hoveredTask === task.id ? 'bg-orange-50/30' : idx % 2 === 0 ? '' : 'bg-slate-50/30'
+                  data-gantt-task="true"
+                  className={`absolute left-0 right-0 border-b border-slate-100/80 transition-colors cursor-pointer ${
+                    selectedTaskId === task.id
+                      ? 'bg-orange-50/60 ring-1 ring-inset ring-orange-100/80'
+                      : hoveredTask === task.id
+                        ? 'bg-orange-50/30'
+                        : idx % 2 === 0 ? '' : 'bg-slate-50/30'
                   }`}
                   style={{ top: idx * ROW_HEIGHT, height: ROW_HEIGHT }}
+                  onClick={() => openTaskDetails(task)}
                 />
               ))}
 
-              {/* Today marker */}
-              {todayIndex >= 0 && todayIndex < totalDays && (
+              {/* Movable date marker */}
+              {markerInView && (
                 <div
-                  className="absolute top-0 bottom-0 z-20 pointer-events-none"
-                  style={{ left: todayIndex * dayWidth + dayWidth / 2 - 1 }}
+                  data-gantt-marker="true"
+                  className={`absolute top-0 bottom-0 z-30 w-6 -translate-x-1/2 cursor-ew-resize ${isDraggingMarker ? 'select-none' : ''}`}
+                  style={{ left: markerIndex * dayWidth + dayWidth / 2 }}
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    setIsDraggingMarker(true);
+                    updateMarkerFromPointer(event.clientX);
+                  }}
+                  title="Kéo để đổi ngày đánh dấu"
                 >
-                  <div className="w-0.5 h-full bg-orange-500/80 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
-                  <div className="absolute -top-1 left-[1px] -translate-x-1/2 w-[11px] h-[11px] rounded-full bg-orange-500 border-2 border-white shadow-sm shadow-orange-500/50" />
+                  <div className="absolute left-1/2 top-0 h-full w-0.5 -translate-x-1/2 bg-orange-500/80 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
+                  <div className="absolute -top-1 left-1/2 h-[11px] w-[11px] -translate-x-1/2 rounded-full bg-orange-500 border-2 border-white shadow-sm shadow-orange-500/50" />
                 </div>
               )}
 
@@ -554,6 +626,7 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
                 return (
                   <div
                     key={`bar-${task.id}`}
+                    data-gantt-task="true"
                     className="absolute z-10 group cursor-pointer"
                     style={{
                       left: bar.left,
@@ -582,11 +655,17 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
                         });
                       }
                     }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openTaskDetails(task);
+                    }}
                   >
                     {/* Bar body */}
                     <div
                       className={`w-full h-full transition-all duration-200 relative flex items-center ${
-                        isHovered ? 'shadow-lg scale-y-[1.08] z-20' : 'shadow-sm'
+                        selectedTaskId === task.id
+                          ? 'shadow-lg scale-y-[1.08] z-20 ring-4 ring-orange-100/70'
+                          : isHovered ? 'shadow-lg scale-y-[1.08] z-20' : 'shadow-sm'
                       } ${bar.isCutStart ? 'rounded-r-[6px] border-l-2 border-l-white/60' : ''} ${bar.isCutEnd ? 'rounded-l-[6px] border-r-2 border-r-white/60' : ''} ${!bar.isCutStart && !bar.isCutEnd ? 'rounded-[6px]' : ''}`}
                       style={{
                         backgroundColor: task.color,
@@ -678,12 +757,83 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
         </div>
       )}
 
+      {/* ═══ Detail Modal ═══ */}
+      {selectedTask && (
+        <div
+          className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-950/35 px-4 backdrop-blur-sm"
+          onClick={() => setSelectedTask(null)}
+        >
+          <div
+            className="w-full max-w-3xl max-h-[86vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-slate-200"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-3 w-3 rounded-[4px] flex-shrink-0"
+                    style={{ backgroundColor: selectedTask.color }}
+                  />
+                  <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400">
+                    Chi tiết đám
+                  </p>
+                </div>
+                <h4 className="mt-2 text-xl font-black text-slate-900 leading-tight truncate">
+                  {selectedTask.name}
+                </h4>
+                {selectedTask.subLabel && (
+                  <p className="mt-1 text-sm font-semibold text-slate-500 truncate">
+                    {selectedTask.subLabel}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedTask(null)}
+                className="h-10 w-10 rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors flex items-center justify-center"
+                aria-label="Đóng chi tiết"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="max-h-[64vh] overflow-y-auto px-6 py-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {detailEntries.map(([label, value]) => (
+                  <div
+                    key={label}
+                    className="rounded-xl border border-slate-100 bg-slate-50/70 px-4 py-3"
+                  >
+                    <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+                      {label}
+                    </p>
+                    <p className="mt-1 text-sm font-bold text-slate-800 whitespace-pre-wrap break-words leading-relaxed">
+                      {formatDetailValue(value)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              {selectedTask.tooltip && (
+                <div className="mt-4 rounded-xl border border-orange-100 bg-orange-50/60 px-4 py-3">
+                  <p className="text-[10px] font-extrabold uppercase tracking-widest text-orange-500">
+                    Ghi chú nhanh
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-orange-900 whitespace-pre-wrap leading-relaxed">
+                    {selectedTask.tooltip}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ═══ Footer ═══ */}
       <div className="flex items-center justify-between px-5 py-2.5 border-t border-gray-100 bg-gray-50/60">
         <div className="flex items-center gap-3 text-[10px] text-gray-400">
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-orange-500" />
-            Hôm nay: {today.toLocaleDateString('vi-VN')}
+            Ngày đánh dấu: {markerDate.toLocaleDateString('vi-VN')}
           </span>
           <span>·</span>
           <span>{filteredTasks.length} công việc</span>

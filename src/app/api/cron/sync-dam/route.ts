@@ -7,12 +7,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import * as xlsx from 'xlsx';
+import { normalizeDateVN } from '@/lib/utils/date';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 const GOOGLE_SHEET_ID = '1NySorW3c07R_w7smqMkGbAja6I9rIVLT4s0OGZEOIOg';
-const GOOGLE_SHEET_GID = '1072390539';
 
 function parseCSVLine(line: string) {
   const fields = [];
@@ -61,94 +62,305 @@ export async function GET(request: NextRequest) {
     if (!supabaseUrl || !supabaseKey) {
       return NextResponse.json({ error: 'Missing Supabase environment variables' }, { status: 500 });
     }
-
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // 1. Fetch từ Google Sheets
-    const url = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=csv&gid=${GOOGLE_SHEET_GID}`;
+    // Normalize Vietnamese header names to DB column names
+    const HEADER_TO_DB: Record<string, string> = {
+      'stt': 'stt',
+      'ngày': 'ngay', 'ngay': 'ngay',
+      'tháng': 'thang', 'thang': 'thang',
+      'mã đám': 'ma_dam', 'ma dam': 'ma_dam', 'mã dam': 'ma_dam',
+      'loại': 'loai', 'loai': 'loai', 'phân loại': 'loai',
+      'chi nhánh': 'chi_nhanh', 'chi nhanh': 'chi_nhanh', 'cn': 'chi_nhanh',
+      'người mất': 'nguoi_mat', 'nguoi mat': 'nguoi_mat', 'ng mất': 'nguoi_mat',
+      'địa chỉ tổ chức': 'dia_chi_to_chuc', 'đc tổ chức': 'dia_chi_to_chuc', 'nơi tổ chức': 'dia_chi_to_chuc',
+      'địa chỉ chôn thiêu': 'dia_chi_chon_thieu', 'địa chỉ chôn/thiêu': 'dia_chi_chon_thieu', 'đc chôn/thiêu': 'dia_chi_chon_thieu', 'nơi chôn/thiêu': 'dia_chi_chon_thieu',
+      'giờ liệm': 'gio_liem', 'gio liem': 'gio_liem', 'giờ khâm liệm': 'gio_liem',
+      'ngày liệm': 'ngay_liem', 'ngay liem': 'ngay_liem', 'ngày khâm liệm': 'ngay_liem',
+      'giờ di quan': 'gio_di_quan', 'gio di quan': 'gio_di_quan', 'giờ đi quan': 'gio_di_quan',
+      'ngày di quan': 'ngay_di_quan', 'ngay di quan': 'ngay_di_quan', 'ngày đi quan': 'ngay_di_quan',
+      'sale': 'sale',
+      'điều phối': 'dieu_phoi', 'dieu phoi': 'dieu_phoi',
+      'thầy sl': 'thay_so_luong', 'thay sl': 'thay_so_luong', 'thầy số lượng': 'thay_so_luong',
+      'thầy ncc': 'thay_ncc', 'thay ncc': 'thay_ncc',
+      'thầy tên': 'thay_ten', 'thay ten': 'thay_ten', 'tên thầy': 'thay_ten',
+      'hòm loại': 'hom_loai', 'hom loai': 'hom_loai', 'loại hòm': 'hom_loai',
+      'hòm ncc/kho': 'hom_ncc_hay_kho', 'hòm ncc hay kho': 'hom_ncc_hay_kho', 'hom ncc': 'hom_ncc_hay_kho',
+      'hoa': 'hoa',
+      'đá khô/tiêm focmol': 'da_kho_tiem_focmol', 'đá khô/ tiêm focmol': 'da_kho_tiem_focmol', 'đá khô': 'da_kho_tiem_focmol', 'focmol': 'da_kho_tiem_focmol',
+      'kèn tây sl': 'ken_tay_so_le', 'kèn tây số lễ': 'ken_tay_so_le', 'kèn tây số lẻ': 'ken_tay_so_le',
+      'kèn tây ncc': 'ken_tay_ncc',
+      'quay phim chụp hình gói dv': 'quay_phim_chup_hinh_goi_dv', 'quay phim + chụp hình gói dv': 'quay_phim_chup_hinh_goi_dv', 'media gói': 'quay_phim_chup_hinh_goi_dv',
+      'quay phim chụp hình ncc': 'quay_phim_chup_hinh_ncc', 'quay phim + chụp hình ncc': 'quay_phim_chup_hinh_ncc', 'media ncc': 'quay_phim_chup_hinh_ncc',
+      'mâm cúng sl': 'mam_cung_so_luong', 'mâm cúng số lượng': 'mam_cung_so_luong',
+      'mâm cúng ncc': 'mam_cung_ncc',
+      'di ảnh/cáo phó': 'di_anh_cao_pho', 'di ảnh + cáo phó': 'di_anh_cao_pho', 'di ảnh': 'di_anh_cao_pho', 'cáo phó': 'di_anh_cao_pho',
+      'băng rôn': 'bang_ron', 'bang ron': 'bang_ron',
+      'lá triệu/bài vị': 'la_trieu_bai_vi', 'lá triệu': 'la_trieu_bai_vi',
+      'nhạc': 'nhac', 'nhac': 'nhac',
+      'thuê rạp bàn ghế sl': 'thue_rap_ban_ghe_so_luong', 'rạp bàn ghế sl': 'thue_rap_ban_ghe_so_luong',
+      'thuê rạp bàn ghế ncc': 'thue_rap_ban_ghe_ncc', 'rạp bàn ghế ncc': 'thue_rap_ban_ghe_ncc',
+      'hủ tro cốt': 'hu_tro_cot', 'hu tro cot': 'hu_tro_cot',
+      'teabreak': 'teabreak', 'tea break': 'teabreak',
+      'xe tang lễ loại': 'xe_tang_le_loai', 'xe tang lễ': 'xe_tang_le_loai',
+      'xe tang lễ đạo tỳ': 'xe_tang_le_dao_ty', 'đạo tỳ': 'xe_tang_le_dao_ty',
+      'xe tang lễ ncc': 'xe_tang_le_ncc',
+      'xe khách loại': 'xe_khach_loai', 'xe khách': 'xe_khach_loai',
+      'xe khách ncc': 'xe_khach_ncc',
+      'xe cấp cứu': 'xe_cap_cuu',
+      'xe khác': 'xe_khac',
+      'thuê nv trực': 'thue_nv_truc', 'nv trực': 'thue_nv_truc',
+      'bao đồn': 'bao_don', 'bao don': 'bao_don',
+      'ghi chú': 'ghi_chu', 'ghi chu': 'ghi_chu',
+      'hình thức chôn thiêu': 'chon_thieu', 'chon thieu': 'chon_thieu', 'chôn thiêu': 'chon_thieu',
+    };
+
+    // Fallback column order (khớp với Google Sheet hiện tại) để dùng khi header detection thất bại
+    const FALLBACK_ORDER = [
+      'stt', 'ngay', 'thang', 'ma_dam', 'loai', 'chi_nhanh', 'nguoi_mat',
+      'dia_chi_to_chuc', 'dia_chi_chon_thieu', 'gio_liem', 'ngay_liem',
+      'gio_di_quan', 'ngay_di_quan', 'sale', 'dieu_phoi',
+      'thay_so_luong', 'thay_ncc', 'thay_ten',
+      'hom_loai', 'hom_ncc_hay_kho', 'hoa', 'da_kho_tiem_focmol',
+      'ken_tay_so_le', 'ken_tay_ncc',
+      'quay_phim_chup_hinh_goi_dv', 'quay_phim_chup_hinh_ncc',
+      'mam_cung_so_luong', 'mam_cung_ncc', 'di_anh_cao_pho', 'bang_ron',
+      'la_trieu_bai_vi', 'nhac', 'thue_rap_ban_ghe_so_luong', 'thue_rap_ban_ghe_ncc',
+      'hu_tro_cot', 'teabreak',
+      'xe_tang_le_loai', 'xe_tang_le_dao_ty', 'xe_tang_le_ncc',
+      'xe_khach_loai', 'xe_khach_ncc', 'xe_cap_cuu', 'xe_khac',
+      'thue_nv_truc', 'bao_don', 'ghi_chu', 'chon_thieu',
+    ];
+
+    const rows: any[] = [];
+    const syncStartedAt = new Date().toISOString();
+
+    const getSheetMonth = (sheetName: string): number | null => {
+      const match = sheetName.toLowerCase().match(/(?:tháng|thang)\s*0?(\d{1,2})/);
+      if (!match) return null;
+      const month = Number(match[1]);
+      return month >= 1 && month <= 12 ? month : null;
+    };
+
+    const getMonthFromDamCode = (maDam: string): number | null => {
+      const match = String(maDam || '').match(/^(?:BL)?\d{2}(\d{2})/i);
+      if (!match) return null;
+      const month = Number(match[1]);
+      return month >= 1 && month <= 12 ? month : null;
+    };
+
+    const normalizeHeader = (value: unknown) => String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[""]/g, '')
+      .replace(/\s+/g, ' ');
+
+    const mapHeaderCandidate = (candidate: string, colIndex: number, colMap: Record<string, number>) => {
+      const raw = normalizeHeader(candidate);
+      if (!raw) return;
+
+      if (HEADER_TO_DB[raw] && colMap[HEADER_TO_DB[raw]] === undefined) {
+        colMap[HEADER_TO_DB[raw]] = colIndex;
+        return;
+      }
+
+      for (const [pattern, dbCol] of Object.entries(HEADER_TO_DB)) {
+        if (raw.includes(pattern) && colMap[dbCol] === undefined) {
+          colMap[dbCol] = colIndex;
+          return;
+        }
+      }
+    };
+
+    // 1. Fetch toàn bộ workbook từ Google Sheets dưới dạng Excel (.xlsx)
+    console.log(`[Cron sync-dam] 📥 Đang tải file Excel từ Google Sheets...`);
+    const url = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=xlsx`;
     const res = await fetch(url);
 
     if (!res.ok) {
-      throw new Error('Không thể tải CSV từ Google Sheets. Có thể file chưa public.');
+      throw new Error('Không thể tải file XLSX từ Google Sheets. Có thể file chưa public.');
     }
 
-    const text = await res.text();
-    const lines = text.split('\n').map(l => l.replace(/\r$/, ''));
+    const arrayBuffer = await res.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const workbook = xlsx.read(buffer, { type: 'buffer' });
 
-    // Tìm Header
-    let headerIdx = 1;
-    for (let i = 0; i < Math.min(10, lines.length); i++) {
-      const lower = lines[i].toLowerCase();
-      if ((lower.startsWith('stt') || lower.match(/^["\\s]*stt/)) && (lower.includes('ng') || lower.includes('th'))) {
-        headerIdx = i; break;
+    // Lọc các sheet hợp lệ: Bắt đầu bằng "THÁNG" hoặc là "Data2Sync"
+    const validSheetNames = workbook.SheetNames.filter(name => {
+      const lower = name.toLowerCase();
+      return lower.includes('tháng') || lower.includes('thang') || lower === 'data2sync';
+    });
+
+    console.log(`[Cron sync-dam] 📄 Các sheet sẽ được đồng bộ:`, validSheetNames);
+
+    for (const sheetName of validSheetNames) {
+      const worksheet = workbook.Sheets[sheetName];
+      if (!worksheet) continue;
+
+      // Chuyển worksheet trực tiếp thành mảng JSON 2 chiều (bỏ qua CSV text và split để tránh lỗi xuống dòng trong ô)
+      const sheetData = xlsx.utils.sheet_to_json<any[]>(worksheet, { header: 1, raw: true, defval: '' });
+
+      // Tìm Header
+      let headerIdx = -1;
+      for (let i = 0; i < Math.min(10, sheetData.length); i++) {
+        const row = sheetData[i];
+        if (!row || !Array.isArray(row)) continue;
+        const rowStr = row.join(' ').toLowerCase();
+
+        if ((rowStr.includes('stt') || row[0]?.toString().toLowerCase().includes('stt')) && (rowStr.includes('ng') || rowStr.includes('th'))) {
+          headerIdx = i; break;
+        }
+        if (rowStr.includes('mã đám') || rowStr.includes('ma dam')) {
+          headerIdx = i; break;
+        }
       }
-      if (lower.includes('mã đám') || lower.includes('ma dam')) {
-        headerIdx = i; break;
+
+      if (headerIdx === -1) {
+        console.warn(`[Cron sync-dam] ⚠️ Không tìm thấy header ở sheet ${sheetName}, bỏ qua...`);
+        continue;
       }
-    }
 
-    // Parse Data
-    const rows: any[] = [];
-    for (let i = headerIdx + 1; i < lines.length; i++) {
-      const line = lines[i];
-      if (!line.trim()) continue;
+      // Try to build column map from the main header row and its subheader row.
+      const headerFields = sheetData[headerIdx].map(c => String(c));
+      const subHeaderFields = Array.isArray(sheetData[headerIdx + 1])
+        ? sheetData[headerIdx + 1].map((c: any) => String(c))
+        : [];
+      const colMap: Record<string, number> = {};
+      let headerMapped = false;
 
-      const r = parseCSVLine(line);
-      if (!r || r.length < 5) continue;
+      if (headerFields && headerFields.length >= 4) {
+        let activeGroup = '';
+        for (let ci = 0; ci < headerFields.length; ci++) {
+          const top = normalizeHeader(headerFields[ci]);
+          const sub = normalizeHeader(subHeaderFields[ci]);
 
-      if (!r[0] || r[0].trim() === '') continue;
-      const maDam = r[3]?.trim();
-      if (!maDam) continue;
+          if (top) activeGroup = top;
 
-      rows.push({
-        stt:                           r[0]?.trim()  || '',
-        ngay:                          r[1]?.trim()  || '',
-        thang:                         r[2]?.trim()  || '',
-        ma_dam:                        maDam,
-        loai:                          r[4]?.trim()  || '',
-        chi_nhanh:                     r[5]?.trim()  || '',
-        nguoi_mat:                     r[6]?.trim()  || '',
-        dia_chi_to_chuc:               r[7]?.trim()  || '',
-        dia_chi_chon_thieu:            r[8]?.trim()  || '',
-        gio_liem:                      r[9]?.trim()  || '',
-        ngay_liem:                     r[10]?.trim() || '',
-        gio_di_quan:                   r[11]?.trim() || '',
-        ngay_di_quan:                  r[12]?.trim() || '',
-        sale:                          r[13]?.trim() || '',
-        dieu_phoi:                     r[14]?.trim() || '',
-        thay_so_luong:                 r[15]?.trim() || '',
-        thay_ncc:                      r[16]?.trim() || '',
-        thay_ten:                      r[17]?.trim() || '',
-        hom_loai:                      r[18]?.trim() || '',
-        hom_ncc_hay_kho:               r[19]?.trim() || '',
-        hoa:                           r[20]?.trim() || '',
-        da_kho_tiem_focmol:            r[21]?.trim() || '',
-        ken_tay_so_le:                 r[22]?.trim() || '',
-        ken_tay_ncc:                   r[23]?.trim() || '',
-        quay_phim_chup_hinh_goi_dv:    r[24]?.trim() || '',
-        quay_phim_chup_hinh_ncc:       r[25]?.trim() || '',
-        mam_cung_so_luong:             r[26]?.trim() || '',
-        mam_cung_ncc:                  r[27]?.trim() || '',
-        di_anh_cao_pho:                r[28]?.trim() || '',
-        bang_ron:                      r[29]?.trim() || '',
-        la_trieu_bai_vi:               r[30]?.trim() || '',
-        nhac:                          r[31]?.trim() || '',
-        thue_rap_ban_ghe_so_luong:     r[32]?.trim() || '',
-        thue_rap_ban_ghe_ncc:          r[33]?.trim() || '',
-        hu_tro_cot:                    r[34]?.trim() || '',
-        teabreak:                      r[35]?.trim() || '',
-        xe_tang_le_loai:               r[36]?.trim() || '',
-        xe_tang_le_dao_ty:             r[37]?.trim() || '',
-        xe_tang_le_ncc:                r[38]?.trim() || '',
-        xe_khach_loai:                 r[39]?.trim() || '',
-        xe_khach_ncc:                  r[40]?.trim() || '',
-        xe_cap_cuu:                    r[41]?.trim() || '',
-        xe_khac:                       r[42]?.trim() || '',
-        thue_nv_truc:                  r[43]?.trim() || '',
-        bao_don:                       r[44]?.trim() || '',
-        ghi_chu:                       r[45]?.trim() || '',
-        chon_thieu:                    r[46]?.trim() || '',
-      });
+          mapHeaderCandidate(top, ci, colMap);
+          mapHeaderCandidate(sub, ci, colMap);
+          if (activeGroup && sub) {
+            mapHeaderCandidate(`${activeGroup} ${sub}`, ci, colMap);
+          }
+        }
+        // Some month tabs have a blank A1 where STT should be, while values still live in column A.
+        if (colMap['stt'] === undefined && colMap['ma_dam'] !== undefined && colMap['ma_dam'] >= 3) {
+          colMap['stt'] = 0;
+        }
+        // Consider header mapped if we found at least ma_dam + 3 other columns
+        headerMapped = !!colMap['ma_dam'] && Object.keys(colMap).length >= 4;
+      }
+
+      if (headerMapped) {
+        console.log(`[Cron sync-dam] ✅ Header auto-mapped for sheet ${sheetName}: ${Object.keys(colMap).length} columns detected`);
+      } else {
+        console.warn(`[Cron sync-dam] ⚠️ Header mapping failed for sheet ${sheetName}, falling back to index-based mapping`);
+        FALLBACK_ORDER.forEach((col, idx) => { colMap[col] = idx; });
+      }
+
+      // Helper: convert Excel date to DD/MM/YYYY string
+      const parseExcelValue = (val: any) => {
+        if (typeof val === 'number') {
+           // If it's a typical Excel date serial (between year 2000 and 2050 -> ~36000 to ~54000)
+           if (val > 36000 && val < 55000) {
+             const utc_days  = Math.floor(val - 25569);
+             const utc_value = utc_days * 86400;                                        
+             const date_info = new Date(utc_value * 1000);
+             const d = String(date_info.getUTCDate()).padStart(2, '0');
+             const m = String(date_info.getUTCMonth() + 1).padStart(2, '0');
+             const y = date_info.getUTCFullYear();
+             return `${d}/${m}/${y}`;
+           }
+           return val.toString();
+        }
+        return val?.toString().trim() || '';
+      };
+
+      // Helper: get value from row by DB column name
+      const getCol = (r: any[], col: string) => parseExcelValue(r[colMap[col] ?? -1]);
+
+      // Helper: get normalized date value, using thang column as anchor
+      const getDateCol = (r: any[], col: string, expectedMonth: number | null) => {
+        const raw = parseExcelValue(r[colMap[col] ?? -1]);
+        return normalizeDateVN(raw, { expectedMonth });
+      };
+
+      // Parse Data
+      let countForGid = 0;
+      for (let i = headerIdx + 1; i < sheetData.length; i++) {
+        const r = sheetData[i];
+        if (!r || !Array.isArray(r) || r.length === 0) continue;
+
+        const stt = getCol(r, 'stt');
+        const maDam = getCol(r, 'ma_dam');
+        
+        // Bỏ qua nếu không có mã đám hoặc stt
+        if (!maDam || !stt) continue;
+        
+        // Bỏ qua các dòng rác bị gõ nhầm (Mã đám thật thường chỉ có 6 ký tự, ví dụ 260501 hoặc BL2601)
+        if (maDam.length > 20) {
+           console.warn(`[Cron sync-dam] ⚠️ Bỏ qua dòng rác có mã đám quá dài: ${maDam.substring(0, 30)}...`);
+           continue;
+        }
+
+        const thangRaw = getCol(r, 'thang');
+        const thangNum = parseInt(thangRaw, 10);
+        const expectedMonth = (thangNum >= 1 && thangNum <= 12 ? thangNum : null)
+          || getSheetMonth(sheetName)
+          || getMonthFromDamCode(maDam);
+
+        rows.push({
+          stt,
+          ngay:                          getDateCol(r, 'ngay', expectedMonth),
+          thang:                         thangRaw,
+          ma_dam:                        maDam,
+          loai:                          getCol(r, 'loai'),
+          chi_nhanh:                     getCol(r, 'chi_nhanh'),
+          nguoi_mat:                     getCol(r, 'nguoi_mat'),
+          dia_chi_to_chuc:               getCol(r, 'dia_chi_to_chuc'),
+          dia_chi_chon_thieu:            getCol(r, 'dia_chi_chon_thieu'),
+          gio_liem:                      getCol(r, 'gio_liem'),
+          ngay_liem:                     getDateCol(r, 'ngay_liem', expectedMonth),
+          gio_di_quan:                   getCol(r, 'gio_di_quan'),
+          ngay_di_quan:                  getDateCol(r, 'ngay_di_quan', expectedMonth),
+          sale:                          getCol(r, 'sale'),
+          dieu_phoi:                     getCol(r, 'dieu_phoi'),
+          thay_so_luong:                 getCol(r, 'thay_so_luong'),
+          thay_ncc:                      getCol(r, 'thay_ncc'),
+          thay_ten:                      getCol(r, 'thay_ten'),
+          hom_loai:                      getCol(r, 'hom_loai'),
+          hom_ncc_hay_kho:               getCol(r, 'hom_ncc_hay_kho'),
+          hoa:                           getCol(r, 'hoa'),
+          da_kho_tiem_focmol:            getCol(r, 'da_kho_tiem_focmol'),
+          ken_tay_so_le:                 getCol(r, 'ken_tay_so_le'),
+          ken_tay_ncc:                   getCol(r, 'ken_tay_ncc'),
+          quay_phim_chup_hinh_goi_dv:    getCol(r, 'quay_phim_chup_hinh_goi_dv'),
+          quay_phim_chup_hinh_ncc:       getCol(r, 'quay_phim_chup_hinh_ncc'),
+          mam_cung_so_luong:             getCol(r, 'mam_cung_so_luong'),
+          mam_cung_ncc:                  getCol(r, 'mam_cung_ncc'),
+          di_anh_cao_pho:                getCol(r, 'di_anh_cao_pho'),
+          bang_ron:                      getCol(r, 'bang_ron'),
+          la_trieu_bai_vi:               getCol(r, 'la_trieu_bai_vi'),
+          nhac:                          getCol(r, 'nhac'),
+          thue_rap_ban_ghe_so_luong:     getCol(r, 'thue_rap_ban_ghe_so_luong'),
+          thue_rap_ban_ghe_ncc:          getCol(r, 'thue_rap_ban_ghe_ncc'),
+          hu_tro_cot:                    getCol(r, 'hu_tro_cot'),
+          teabreak:                      getCol(r, 'teabreak'),
+          xe_tang_le_loai:               getCol(r, 'xe_tang_le_loai'),
+          xe_tang_le_dao_ty:             getCol(r, 'xe_tang_le_dao_ty'),
+          xe_tang_le_ncc:                getCol(r, 'xe_tang_le_ncc'),
+          xe_khach_loai:                 getCol(r, 'xe_khach_loai'),
+          xe_khach_ncc:                  getCol(r, 'xe_khach_ncc'),
+          xe_cap_cuu:                    getCol(r, 'xe_cap_cuu'),
+          xe_khac:                       getCol(r, 'xe_khac'),
+          thue_nv_truc:                  getCol(r, 'thue_nv_truc'),
+          bao_don:                       getCol(r, 'bao_don'),
+          ghi_chu:                       getCol(r, 'ghi_chu'),
+          chon_thieu:                    getCol(r, 'chon_thieu'),
+          updated_at:                     syncStartedAt,
+        });
+        countForGid++;
+      }
+      console.log(`[Cron sync-dam] 📥 Sheet ${sheetName} parsed ${countForGid} rows`);
     }
 
     if (rows.length === 0) {
@@ -217,7 +429,7 @@ export async function GET(request: NextRequest) {
     }
 
     const summary = {
-      scheduled_at: new Date().toISOString(),
+      scheduled_at: syncStartedAt,
       success: true,
       message: 'Đồng bộ tự động thành công!',
       sheet_rows_parsed: rows.length,
