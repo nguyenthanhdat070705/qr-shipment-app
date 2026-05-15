@@ -27,6 +27,29 @@ function maskIdNumber(id: string): string {
   if (!id || id.length <= 4) return '****';
   return id.slice(0, 3) + '****' + id.slice(-3);
 }
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  return digits.startsWith('84') ? `0${digits.slice(2)}` : digits;
+}
+function toIsoDate(value: unknown): string | null {
+  const text = String(value || '').trim();
+  if (!text) return null;
+
+  const ddmmyyyy = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (ddmmyyyy) {
+    const [, day, month, year] = ddmmyyyy;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+
+  const date = new Date(text);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
+}
+function mapContractStatusToMemberStatus(status: unknown, expiryDate: unknown): string {
+  if (String(status || '') === 'Đã hủy') return 'terminated';
+  const expiryIso = toIsoDate(expiryDate);
+  if (expiryIso && expiryIso < new Date().toISOString().slice(0, 10)) return 'expired';
+  return 'active';
+}
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -85,12 +108,67 @@ export async function GET(req: NextRequest) {
       if (cccd) {
         query = query.eq('id_number', cccd);
       } else if (phone) {
-        query = query.eq('phone', phone);
+        const normalizedPhone = normalizePhone(phone);
+        query = normalizedPhone && normalizedPhone !== phone
+          ? query.or(`phone.eq.${phone},phone.eq.${normalizedPhone}`)
+          : query.eq('phone', phone);
       }
 
       ({ data, error } = await query
         .order('registered_date', { ascending: false })
         .limit(1));
+
+      // Fallback cho dữ liệu hợp đồng bán:
+      // nếu SĐT khách hàng chưa có trong bảng members nhưng đã có ở hợp đồng GetFly,
+      // vẫn cho phép tra cứu công khai bằng chính SĐT đó.
+      if (!error && phone && (!data || data.length === 0)) {
+        const normalizedPhone = normalizePhone(phone);
+        const { data: contracts, error: contractError } = await supabase
+          .from('getfly_contracts')
+          .select([
+            'getfly_contract_id',
+            'source_contract_code',
+            'contract_name',
+            'customer_name',
+            'customer_phone',
+            'contract_status',
+            'effective_date',
+            'expiry_date',
+            'beneficiary_name_1',
+            'beneficiary_name_2',
+            'beneficiary_address_1',
+            'beneficiary_address_2',
+            'person_in_charge',
+            'paid_amount',
+          ].join(','))
+          .eq('customer_phone', normalizedPhone || phone)
+          .order('effective_date', { ascending: false })
+          .limit(1);
+
+        if (contractError) {
+          error = contractError;
+        } else if (contracts && contracts.length > 0) {
+          data = contracts.map((contract) => ({
+            id: `contract-${contract.getfly_contract_id}`,
+            member_code: contract.source_contract_code || contract.contract_name,
+            full_name: contract.customer_name,
+            phone: contract.customer_phone,
+            email: null,
+            id_number: null,
+            status: mapContractStatusToMemberStatus(contract.contract_status, contract.expiry_date),
+            registered_date: toIsoDate(contract.effective_date),
+            expiry_date: toIsoDate(contract.expiry_date),
+            branch: null,
+            service_package: null,
+            consultant_name: contract.person_in_charge,
+            address: contract.beneficiary_address_1 || contract.beneficiary_address_2,
+            notes: contract.beneficiary_name_1,
+            beneficiary_name_2: contract.beneficiary_name_2,
+            contract_value: contract.paid_amount,
+            lookup_source: 'getfly_sale_contract',
+          }));
+        }
+      }
     } else {
       // Admin backoffice search
       const searchType = req.nextUrl.searchParams.get('type') || 'auto';
@@ -215,7 +293,9 @@ export async function GET(req: NextRequest) {
         consultant_name: m.consultant_name,
         address: m.address,
         notes: m.notes,
+        beneficiary_name_2: m.beneficiary_name_2,
         contract_value: m.contract_value,
+        lookup_source: m.lookup_source || 'members',
         matched_field: matchedField,
         // Trả về phần highlight an toàn (không lộ dữ liệu nhạy cảm)
         matched_preview: matchedField === 'address'

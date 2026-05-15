@@ -21,6 +21,7 @@ interface MemberResult {
   consultant_name: string;
   address?: string;
   notes?: string;
+  beneficiary_name_2?: string;
   contract_value?: number;
 }
 
@@ -83,7 +84,7 @@ function MembershipCard({ member }: { member: MemberResult }) {
         <DottedRow label="Ngày hết hạn" value={expDate} />
         <DottedRow label="Địa chỉ" value={member.address || '—'} />
         <DottedRow label="Người thụ hưởng 1" value={member.notes || '—'} />
-        <DottedRow label="Người thụ hưởng 2" value="—" />
+        <DottedRow label="Người thụ hưởng 2" value={member.beneficiary_name_2 || '—'} />
         <DottedRow label="Số tiền đã đóng" value={member.contract_value ? `${Number(member.contract_value).toLocaleString('vi-VN')} VNĐ` : '—'} />
         <DottedRow label="Sale phụ trách" value={member.consultant_name || '—'} />
       </div>
