@@ -10,7 +10,7 @@ import {
   Boxes, ArrowUpRight, X, XCircle, Ban,
   ShoppingCart, ClipboardList, DollarSign
 } from 'lucide-react';
-import PageLayout, { SearchContext } from '@/components/PageLayout';
+import PageLayout, { MobileLayoutContext, SearchContext } from '@/components/PageLayout';
 import { getWarehouseFilter } from '@/config/roles.config';
 
 function formatVND(value: number): string {
@@ -332,6 +332,93 @@ function QuickAction({
   );
 }
 
+function MobileMetric({
+  label,
+  value,
+  tone,
+  icon,
+  onClick,
+}: {
+  label: string;
+  value: string | number;
+  tone: string;
+  icon: React.ReactNode;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-2xl border p-3 text-left shadow-sm transition-all active:scale-[0.98] ${tone}`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-bold uppercase tracking-wide opacity-70">{label}</span>
+        <span className="opacity-80">{icon}</span>
+      </div>
+      <p className="mt-2 text-2xl font-black leading-none">{value}</p>
+    </button>
+  );
+}
+
+function MobileHistoryCard({ item }: { item: any }) {
+  const createdAt = new Date(item.created_at);
+  const isImport = item.type === 'import';
+  const isCancelled = item.trang_thai === 'cancelled';
+
+  return (
+    <div className={`rounded-2xl border p-4 shadow-sm ${isCancelled ? 'border-orange-100 bg-orange-50/60' : 'border-gray-100 bg-white'}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-extrabold ${
+              isCancelled
+                ? 'bg-orange-100 text-orange-700'
+                : isImport
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-rose-100 text-rose-700'
+            }`}>
+              {isCancelled ? 'ĐÃ HUỶ' : isImport ? 'NHẬP' : 'XUẤT'}
+            </span>
+            <span className="font-mono text-[11px] font-bold text-gray-500">
+              {isImport ? `GRPO • ${item.voucher}` : `IT • ${item.voucher}`}
+            </span>
+          </div>
+          <h3 className={`mt-2 line-clamp-2 text-sm font-extrabold ${isCancelled ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+            {item.ten_sp}
+          </h3>
+        </div>
+        <div className={`shrink-0 rounded-2xl px-3 py-2 text-right ${
+          isCancelled ? 'bg-orange-100 text-orange-700' : isImport ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+        }`}>
+          <p className="text-[10px] font-bold uppercase">Số lượng</p>
+          <p className="text-xl font-black">{item.so_luong}</p>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+        <div>
+          <p className="text-gray-400">Kho</p>
+          <p className="mt-0.5 font-bold text-sky-700">{item.kho_name || 'Khác'}</p>
+        </div>
+        <div>
+          <p className="text-gray-400">Thời gian</p>
+          <p className="mt-0.5 font-bold text-gray-700">
+            {createdAt.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} ·{' '}
+            {createdAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+          </p>
+        </div>
+        <div>
+          <p className="text-gray-400">Mã SP</p>
+          <p className="mt-0.5 font-mono font-bold text-gray-700">{item.ma_sp}</p>
+        </div>
+        <div>
+          <p className="text-gray-400">Mã đám</p>
+          <p className="mt-0.5 font-bold text-gray-700">{item.ma_dam || '—'}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const STATUS_COLORS: Record<string, string> = {
   pending:    'bg-teal-100 text-teal-700 border-teal-200',
   assigned:   'bg-blue-100 text-blue-700 border-blue-200',
@@ -369,6 +456,7 @@ export default function WarehouseDashboard() {
   const [globalData, setGlobalData] = useState<any>(null);
 
   const { searchVal } = useContext(SearchContext);
+  const { isMobileLayout } = useContext(MobileLayoutContext);
 
   /* Live clock */
   useEffect(() => {
@@ -522,6 +610,186 @@ export default function WarehouseDashboard() {
     fetchPendingPOs();
     fetchGlobalStats();
   };
+
+  const lowerSearch = searchVal.toLowerCase();
+  const filteredHistory = history.filter(item => {
+    if (!lowerSearch) return true;
+    const searchStr = `${item.voucher} ${item.ma_sp} ${item.ten_sp} ${item.kho_name} ${item.ghi_chu || ''} ${item.ma_dam || ''}`.toLowerCase();
+    return searchStr.includes(lowerSearch);
+  });
+
+  if (isMobileLayout) {
+    return (
+      <PageLayout title={`Kho — ${warehouseLabel}`} icon={<Warehouse size={16} className="text-emerald-500" />}>
+        <PendingOrdersDrawer
+          open={pendingDrawerOpen}
+          onClose={() => setPendingDrawerOpen(false)}
+          orders={pendingPOs}
+        />
+        <OutOfStockDrawer
+          open={outOfStockDrawerOpen}
+          onClose={() => setOutOfStockDrawerOpen(false)}
+          products={outOfStockProducts}
+          warehouseLabel={warehouseLabel}
+        />
+
+        <div className="space-y-4 pb-4">
+          <section className="relative overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-[#0f2417] via-emerald-900 to-[#1a3a28] p-4 shadow-xl">
+            <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-emerald-400/10 blur-3xl" />
+            <div className="relative">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold text-white/80">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                    {warehouseLabel}
+                  </div>
+                  <h1 className="mt-3 text-xl font-black tracking-tight text-white">Xin chào, {userName} 👋</h1>
+                  <p className="mt-1 text-xs text-emerald-100/70">{nowStr}</p>
+                </div>
+                <button
+                  onClick={handleRefresh}
+                  className="rounded-2xl border border-white/15 bg-white/10 p-3 text-white/80"
+                  aria-label="Làm mới"
+                >
+                  <RefreshCw size={16} className={statsLoading || historyLoading ? 'animate-spin' : ''} />
+                </button>
+              </div>
+
+              <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+                <span className="shrink-0 rounded-full border border-red-400/30 bg-red-500/20 px-3 py-1 text-[11px] font-bold text-red-100">
+                  {todayExportCount} xuất hôm nay
+                </span>
+                <span className="shrink-0 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-bold text-white">
+                  {todayImportCount} nhập hôm nay
+                </span>
+                <span className="shrink-0 rounded-full border border-teal-400/30 bg-teal-500/20 px-3 py-1 text-[11px] font-bold text-teal-100">
+                  {pendingCount} đã hoàn thành
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <section className="grid grid-cols-2 gap-3">
+            <MobileMetric
+              label="Xuất hôm nay"
+              value={todayExportCount}
+              tone="border-rose-100 bg-rose-50 text-rose-700"
+              icon={<Truck size={16} />}
+              onClick={() => router.push('/goods-issue')}
+            />
+            <MobileMetric
+              label="Nhập hôm nay"
+              value={todayImportCount}
+              tone="border-emerald-100 bg-emerald-50 text-emerald-700"
+              icon={<PackageCheck size={16} />}
+              onClick={() => router.push('/goods-receipt')}
+            />
+            <MobileMetric
+              label="Tổng lượng tồn"
+              value={statsLoading ? '...' : stats.totalQuantity}
+              tone="border-indigo-100 bg-indigo-50 text-indigo-700"
+              icon={<Boxes size={16} />}
+            />
+            <MobileMetric
+              label="Hết hàng"
+              value={statsLoading ? '...' : stats.outOfStock}
+              tone="border-orange-100 bg-orange-50 text-orange-700"
+              icon={<AlertTriangle size={16} />}
+              onClick={() => setOutOfStockDrawerOpen(true)}
+            />
+          </section>
+
+          <section className="rounded-[1.5rem] border border-gray-100 bg-white p-4 shadow-sm">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-black text-gray-900">Thao tác nhanh</h2>
+              <span className="text-[11px] font-semibold text-gray-400">Ưu tiên mobile</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5">
+              <QuickAction
+                icon={<Truck size={20} />}
+                title="Xuất hàng"
+                desc="Tạo phiếu xuất kho mới"
+                href="/goods-issue"
+                color="text-emerald-600"
+                iconBg="bg-emerald-100"
+                badge={pendingCount}
+              />
+              <QuickAction
+                icon={<PackageCheck size={20} />}
+                title="Nhập hàng"
+                desc="Kiểm tra hàng vào"
+                href="/goods-receipt"
+                color="text-orange-600"
+                iconBg="bg-orange-100"
+              />
+              <QuickAction
+                icon={<ScanLine size={20} />}
+                title="Quét QR"
+                desc="Scan nhanh"
+                href="/"
+                color="text-indigo-600"
+                iconBg="bg-indigo-100"
+              />
+              <QuickAction
+                icon={<Warehouse size={20} />}
+                title="Tồn kho"
+                desc="Xem hàng tồn"
+                href="/inventory"
+                color="text-sky-600"
+                iconBg="bg-sky-100"
+              />
+            </div>
+          </section>
+
+          <section className="rounded-[1.5rem] border border-gray-100 bg-white p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Tình trạng tồn kho</p>
+                <p className="mt-1 text-3xl font-black text-indigo-600">{statsLoading ? '...' : stats.totalQuantity}</p>
+              </div>
+              <button
+                onClick={() => router.push('/inventory')}
+                className="rounded-full bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-600"
+              >
+                Xem chi tiết
+              </button>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+              <div className="rounded-2xl bg-gray-50 p-3">
+                <p className="text-gray-400">Loại hòm</p>
+                <p className="mt-1 text-lg font-black text-gray-900">{statsLoading ? '...' : stats.total}</p>
+              </div>
+              <div className="rounded-2xl bg-gray-50 p-3">
+                <p className="text-gray-400">Còn hàng</p>
+                <p className="mt-1 text-lg font-black text-emerald-700">{statsLoading ? '...' : stats.available}</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-black text-gray-900">Lịch sử gần đây</h2>
+              <button onClick={handleRefresh} className="text-xs font-bold text-emerald-600">
+                Làm mới
+              </button>
+            </div>
+
+            {historyLoading ? (
+              <div className="rounded-2xl border border-gray-100 bg-white py-10 text-center text-sm text-gray-400">
+                Đang tải dữ liệu...
+              </div>
+            ) : filteredHistory.length === 0 ? (
+              <div className="rounded-2xl border border-gray-100 bg-white py-10 text-center text-sm text-gray-400">
+                Không có dữ liệu phù hợp
+              </div>
+            ) : (
+              filteredHistory.slice(0, 5).map(item => <MobileHistoryCard key={item.id} item={item} />)
+            )}
+          </section>
+        </div>
+      </PageLayout>
+    );
+  }
 
   return (
     <PageLayout title={`Kho — ${warehouseLabel}`} icon={<Warehouse size={16} className="text-emerald-500" />}>
@@ -708,13 +976,6 @@ export default function WarehouseDashboard() {
                 </div>
               </div>
             ) : (() => {
-              const lowerSearch = searchVal.toLowerCase();
-              const filteredHistory = history.filter(item => {
-                if (!lowerSearch) return true;
-                const searchStr = `${item.voucher} ${item.ma_sp} ${item.ten_sp} ${item.kho_name} ${item.ghi_chu || ''} ${item.ma_dam || ''}`.toLowerCase();
-                return searchStr.includes(lowerSearch);
-              });
-
               if (filteredHistory.length === 0) {
                 return (
                   <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
@@ -749,7 +1010,7 @@ export default function WarehouseDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 text-[13px]">
-                    {history.map((item: any, i) => {
+                    {filteredHistory.map((item: any, i) => {
                       const createdAt = new Date(item.created_at);
                       const dateStr = createdAt.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
                       const timeStr = createdAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });

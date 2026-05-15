@@ -20,6 +20,10 @@ import AuthGuard from '@/components/AuthGuard';
    Contexts & Types
 ═══════════════════════════════════════════════════ */
 export const SearchContext = createContext<{ searchVal: string; setSearchVal: (val: string) => void }>({ searchVal: '', setSearchVal: () => {} });
+export const MobileLayoutContext = createContext<{ isMobileLayout: boolean; isMobilePreview: boolean }>({
+  isMobileLayout: false,
+  isMobilePreview: false,
+});
 
 interface MenuItem {
   icon: React.ReactNode;
@@ -709,8 +713,21 @@ interface PageLayoutProps {
 export default function PageLayout({ children, title, icon }: PageLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobileView, setIsMobileView] = useState(false);
+  const [isViewportMobile, setIsViewportMobile] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [searchVal, setSearchVal] = useState('');
+
+  useEffect(() => {
+    const mobileMedia = window.matchMedia('(max-width: 767px)');
+    const syncViewport = () => setIsViewportMobile(mobileMedia.matches);
+    syncViewport();
+    if (mobileMedia.addEventListener) {
+      mobileMedia.addEventListener('change', syncViewport);
+      return () => mobileMedia.removeEventListener('change', syncViewport);
+    }
+    mobileMedia.addListener(syncViewport);
+    return () => mobileMedia.removeListener(syncViewport);
+  }, []);
 
   useEffect(() => {
     // Check initial dark mode preference
@@ -738,9 +755,12 @@ export default function PageLayout({ children, title, icon }: PageLayoutProps) {
     }
   };
 
+  const isMobileLayout = isMobileView || isViewportMobile;
+
   return (
     <AuthGuard>
       <SearchContext.Provider value={{ searchVal, setSearchVal }}>
+      <MobileLayoutContext.Provider value={{ isMobileLayout, isMobilePreview: isMobileView }}>
       {/* Background */}
       <div className={`min-h-screen transition-colors duration-300 ${isMobileView ? 'bg-gray-800 dark:bg-gray-950 flex flex-col items-center py-4 sm:py-8' : 'bg-[#f5f6fa] dark:bg-[#0c1226]'}`}>
         
@@ -804,11 +824,12 @@ export default function PageLayout({ children, title, icon }: PageLayoutProps) {
           />
 
           {/* Page content */}
-          <main className={`flex-1 min-w-0 ${isMobileView ? 'p-3 overflow-y-auto overflow-x-hidden' : 'p-4 lg:p-6 overflow-x-hidden'}`}>
+          <main className={`flex-1 min-w-0 ${isMobileLayout ? 'p-3 overflow-y-auto overflow-x-hidden' : 'p-4 lg:p-6 overflow-x-hidden'}`}>
             {children}
           </main>
         </div>
       </div>
+      </MobileLayoutContext.Provider>
       </SearchContext.Provider>
     </AuthGuard>
   );
