@@ -1,16 +1,16 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Warehouse, PackageCheck, Truck, Search,
   ScanLine, RefreshCw, ArrowRight,
   ChevronRight, Package, CheckCircle2, AlertTriangle,
   Clock, User, MapPin, BarChart3, QrCode, TrendingUp,
-  Boxes, ArrowUpRight, X,
+  Boxes, ArrowUpRight, X, XCircle, Ban,
   ShoppingCart, ClipboardList, DollarSign
 } from 'lucide-react';
-import PageLayout from '@/components/PageLayout';
+import PageLayout, { SearchContext } from '@/components/PageLayout';
 import { getWarehouseFilter } from '@/config/roles.config';
 
 function formatVND(value: number): string {
@@ -358,7 +358,7 @@ export default function WarehouseDashboard() {
   const [nowStr, setNowStr] = useState('');
   const [history, setHistory] = useState<any[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
-  const [historySummary, setHistorySummary] = useState<{ importCount: number; exportCount: number; totalCount: number }>({ importCount: 0, exportCount: 0, totalCount: 0 });
+  const [historySummary, setHistorySummary] = useState<{ importCount: number; exportCount: number; cancelledCount: number; totalCount: number }>({ importCount: 0, exportCount: 0, cancelledCount: 0, totalCount: 0 });
   const [stats, setStats] = useState<InventoryStat>({ total: 0, available: 0, outOfStock: 0, totalQuantity: 0, warehouseName: '' });
   const [outOfStockProducts, setOutOfStockProducts] = useState<OutOfStockProduct[]>([]);
   const [pendingPOs, setPendingPOs] = useState<PurchaseOrder[]>([]);
@@ -367,6 +367,8 @@ export default function WarehouseDashboard() {
   const [pendingDrawerOpen, setPendingDrawerOpen] = useState(false);
   const [outOfStockDrawerOpen, setOutOfStockDrawerOpen] = useState(false);
   const [globalData, setGlobalData] = useState<any>(null);
+
+  const { searchVal } = useContext(SearchContext);
 
   /* Live clock */
   useEffect(() => {
@@ -510,6 +512,9 @@ export default function WarehouseDashboard() {
     const now = new Date();
     return d.toDateString() === now.toDateString() && h.type === 'import';
   }).length;
+  const todayCancelledCount = history.filter(h => {
+    return h.trang_thai === 'cancelled';
+  }).length;
 
   const handleRefresh = () => {
     fetchHistory();
@@ -570,6 +575,12 @@ export default function WarehouseDashboard() {
                   {pendingCount} đã hoàn thành
                 </div>
               )}
+              {todayCancelledCount > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/20 border border-orange-400/30 text-orange-200 text-xs font-semibold">
+                  <Ban size={12} className="text-orange-300" />
+                  {todayCancelledCount} đã huỷ
+                </div>
+              )}
             </div>
           </div>
 
@@ -590,7 +601,7 @@ export default function WarehouseDashboard() {
       </div>
 
       {/* ── KPI Cards ────────────────────────────────── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-9 gap-3 mb-6">
         <StatCard
           label="Xuất hôm nay"
           value={todayExportCount}
@@ -653,6 +664,14 @@ export default function WarehouseDashboard() {
           icon={<DollarSign size={18} />}
           gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
         />
+        <StatCard
+          label="Phiếu đã huỷ"
+          value={globalData?.adminStats?.totalVoided ?? '...'}
+          sub={`${globalData?.adminStats?.todayVoided ?? 0} phiếu hôm nay`}
+          icon={<XCircle size={18} />}
+          gradient="bg-gradient-to-br from-orange-500 to-red-600"
+          onClick={() => router.push('/inout-management?tab=voided')}
+        />
       </div>
 
       {/* ── Main Grid ────────────────────────────────── */}
@@ -688,10 +707,32 @@ export default function WarehouseDashboard() {
                   <p className="text-sm font-bold text-gray-400">Chưa có dữ liệu lịch sử</p>
                 </div>
               </div>
-            ) : (
-              <div className="min-w-[900px]">
-                <table className="w-full text-left border-collapse">
-                  <thead>
+            ) : (() => {
+              const lowerSearch = searchVal.toLowerCase();
+              const filteredHistory = history.filter(item => {
+                if (!lowerSearch) return true;
+                const searchStr = `${item.voucher} ${item.ma_sp} ${item.ten_sp} ${item.kho_name} ${item.ghi_chu || ''} ${item.ma_dam || ''}`.toLowerCase();
+                return searchStr.includes(lowerSearch);
+              });
+
+              if (filteredHistory.length === 0) {
+                return (
+                  <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
+                      <Search size={28} className="text-gray-200" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-400">Không tìm thấy kết quả</p>
+                      <p className="text-xs text-gray-400 mt-1">Vui lòng thử từ khóa khác</p>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="min-w-[900px]">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
                     <tr className="bg-gray-50 border-b border-gray-100 text-[10px] font-extrabold text-gray-500 uppercase tracking-widest">
                       <th className="py-2 px-1 text-center w-10">STT</th>
                       <th className="py-2 px-2 whitespace-nowrap">Ngày tháng</th>
@@ -713,18 +754,25 @@ export default function WarehouseDashboard() {
                       const dateStr = createdAt.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
                       const timeStr = createdAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
                       const isImport = item.type === 'import';
+                      const isCancelled = item.trang_thai === 'cancelled';
 
                       return (
-                        <tr key={item.id} className="hover:bg-gray-50/60 transition-colors">
+                        <tr key={item.id} className={`transition-colors ${isCancelled ? 'bg-red-50/40 hover:bg-red-50/70' : 'hover:bg-gray-50/60'}`}>
                           <td className="py-1.5 px-1 text-center text-[10px] font-bold text-gray-400">{i + 1}</td>
                           <td className="py-1.5 px-2 text-[11px] whitespace-nowrap">
                             <span className="font-semibold text-gray-700">{dateStr}</span>
                             <span className="text-gray-400 ml-1 block text-[9px] sm:inline">{timeStr}</span>
                           </td>
                           <td className="py-1.5 px-2 text-center whitespace-nowrap">
-                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold ${isImport ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
-                              {isImport ? 'NHẬP' : 'XUẤT'}
-                            </span>
+                            {isCancelled ? (
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-50 text-orange-600 border border-orange-200">
+                                <XCircle size={9} /> ĐÃ HUỶ
+                              </span>
+                            ) : (
+                              <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold ${isImport ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                                {isImport ? 'NHẬP' : 'XUẤT'}
+                              </span>
+                            )}
                           </td>
                           <td className="py-1.5 px-2 whitespace-nowrap">
                             <span className="font-mono text-[10px] font-bold text-gray-700 bg-gray-100 px-1 py-0.5 rounded">
@@ -735,11 +783,15 @@ export default function WarehouseDashboard() {
                             <span className="font-mono text-[11px] font-bold text-gray-900">{item.ma_sp}</span>
                           </td>
                           <td className="py-1.5 px-2 min-w-[180px]">
-                            <span className="font-semibold text-gray-700 text-xs">{item.ten_sp}</span>
+                            <span className={`font-semibold text-xs ${isCancelled ? 'text-gray-400 line-through' : 'text-gray-700'}`}>{item.ten_sp}</span>
                           </td>
                           <td className="py-1.5 px-1 text-center text-[11px] text-gray-500 font-medium">cái</td>
                           <td className="py-1.5 px-2 text-right font-extrabold text-xs">
-                            {isImport ? (
+                            {isCancelled ? (
+                              <span className="text-orange-500 inline-flex items-center gap-0.5 line-through opacity-60">
+                                {item.so_luong}
+                              </span>
+                            ) : isImport ? (
                               <span className="text-emerald-600 inline-flex items-center gap-0.5">
                                 <ArrowRight size={10} className="-rotate-90 stroke-[3]" />
                                 {item.so_luong}
@@ -765,17 +817,18 @@ export default function WarehouseDashboard() {
                             Chờ
                           </td>
                           <td className="py-1.5 px-2 min-w-[150px]">
-                            <span className="text-[10px] text-gray-500 line-clamp-1" title={item.ghi_chu}>
-                              {item.ghi_chu || ''}
+                            <span className={`text-[10px] line-clamp-1 ${isCancelled ? 'text-orange-500 font-semibold' : 'text-gray-500'}`} title={isCancelled ? `Phiếu đã huỷ — ${item.ghi_chu || ''}` : item.ghi_chu}>
+                              {isCancelled ? 'Phiếu đã bị huỷ' : (item.ghi_chu || '')}
                             </span>
                           </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
           </div>
         </div>
 

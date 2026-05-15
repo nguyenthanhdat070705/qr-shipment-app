@@ -168,12 +168,14 @@ export async function GET(req: Request) {
     }
 
     /* ── Additional admin stats ── */
-    const [poRes, grRes, nccRes, accountRes, damRes] = await Promise.all([
+    const [poRes, grRes, nccRes, accountRes, damRes, cancelledGRRes, cancelledGIRes] = await Promise.all([
       supabase.from('fact_don_hang').select('id, trang_thai, tong_tien', { count: 'exact' }),
       supabase.from('fact_nhap_hang').select('id, trang_thai', { count: 'exact' }),
       supabase.from('dim_ncc').select('id', { count: 'exact' }),
       supabase.from('dim_account').select('id', { count: 'exact' }),
       supabase.from('dim_dam').select('id', { count: 'exact' }).then(r => r, () => ({ data: null, count: 0 })),
+      supabase.from('fact_nhap_hang').select('id, created_at', { count: 'exact' }).eq('trang_thai', 'cancelled'),
+      supabase.from('fact_xuat_hang').select('id, created_at', { count: 'exact' }).eq('trang_thai', 'cancelled'),
     ]);
 
     const poData = poRes.data || [];
@@ -194,6 +196,19 @@ export async function GET(req: Request) {
 
     // Account stats
     const totalAccounts = accountRes.count || accountData.length;
+
+    // Cancelled/Voided receipts stats
+    const cancelledGRData = cancelledGRRes.data || [];
+    const cancelledGIData = cancelledGIRes.data || [];
+    const totalCancelledGR = cancelledGRRes.count || cancelledGRData.length;
+    const totalCancelledGI = cancelledGIRes.count || cancelledGIData.length;
+    const totalVoided = totalCancelledGR + totalCancelledGI;
+
+    // Count today's voided
+    const todayStr = new Date().toDateString();
+    const todayCancelledGR = cancelledGRData.filter((r: any) => new Date(r.created_at).toDateString() === todayStr).length;
+    const todayCancelledGI = cancelledGIData.filter((r: any) => new Date(r.created_at).toDateString() === todayStr).length;
+    const todayVoided = todayCancelledGR + todayCancelledGI;
 
     // Inventory value (gia_von * quantity for each product)
     let totalInventoryValue = 0;
@@ -224,6 +239,10 @@ export async function GET(req: Request) {
         totalAccounts,
         totalInventoryValue,
         totalDam,
+        totalVoided,
+        totalCancelledGR,
+        totalCancelledGI,
+        todayVoided,
       },
       byWarehouse: Object.values(khoStats).sort((a, b) => b.total - a.total),
       outOfStockProducts: outOfStockProducts.sort((a, b) => a.name.localeCompare(b.name)),

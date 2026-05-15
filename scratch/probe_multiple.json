@@ -1,0 +1,37 @@
+[
+  {
+    "endpoint": "/contract",
+    "status": 404,
+    "error": "<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n<meta charset=\"utf-8\">\r\n<title>404 Page Not Found</title>"
+  },
+  {
+    "endpoint": "/contract/1850",
+    "status": 404,
+    "error": "<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n<meta charset=\"utf-8\">\r\n<title>404 Page Not Found</title>"
+  },
+  {
+    "endpoint": "/contract/MBS26003",
+    "status": 404,
+    "error": "<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n<meta charset=\"utf-8\">\r\n<title>404 Page Not Found</title>"
+  },
+  {
+    "endpoint": "/contracts",
+    "status": 404,
+    "error": "<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n<meta charset=\"utf-8\">\r\n<title>404 Page Not Found</title>"
+  },
+  {
+    "endpoint": "/custom-fields",
+    "status": 404,
+    "error": "<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n<meta charset=\"utf-8\">\r\n<title>404 Page Not Found</title>"
+  },
+  {
+    "endpoint": "/custom_field",
+    "status": 404,
+    "error": "<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n<meta charset=\"utf-8\">\r\n<title>404 Page Not Found</title>"
+  },
+  {
+    "endpoint": "/orders/1850/custom-fields",
+    "status": 400,
+    "error": "{\"message\":\"order_type ch\\u1ec9 bao g\\u1ed3m 2 gi\\u00e1 tr\\u1ecb 1 v\\u00e0 2\"}"
+  }
+]

@@ -1,6 +1,10 @@
 import { google } from 'googleapis';
 import { Readable } from 'stream';
 
+function escapeDriveQueryValue(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
 /**
  * Initializes the Google Drive API client using Service Account credentials.
  * Ensure GOOGLE_CLIENT_EMAIL and GOOGLE_PRIVATE_KEY are set in .env.local
@@ -38,7 +42,7 @@ export async function findOrCreateFolder(folderName: string): Promise<string> {
   }
 
   // 1. Search for existing folder
-  const query = `name = '${folderName.replace(/'/g, "\\'")}' and '${rootFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
+  const query = `name = '${escapeDriveQueryValue(folderName)}' and '${rootFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
   
   const searchRes = await drive.files.list({
     q: query,
@@ -61,6 +65,60 @@ export async function findOrCreateFolder(folderName: string): Promise<string> {
   });
 
   return createRes.data.id!;
+}
+
+/**
+ * Finds a folder by name inside a specific parent folder (not root).
+ * If it doesn't exist, creates it.
+ * 
+ * @param folderName The name of the subfolder
+ * @param parentFolderId The parent folder ID to create the subfolder in
+ * @returns The Drive Folder ID
+ */
+export async function findOrCreateSubFolder(folderName: string, parentFolderId: string): Promise<string> {
+  const drive = getDriveClient();
+
+  // 1. Search for existing folder inside parent
+  const query = `name = '${escapeDriveQueryValue(folderName)}' and '${parentFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
+  
+  const searchRes = await drive.files.list({
+    q: query,
+    fields: 'files(id, name)',
+    spaces: 'drive',
+  });
+
+  if (searchRes.data.files && searchRes.data.files.length > 0) {
+    return searchRes.data.files[0].id!;
+  }
+
+  // 2. Create if not found
+  const createRes = await drive.files.create({
+    requestBody: {
+      name: folderName,
+      mimeType: 'application/vnd.google-apps.folder',
+      parents: [parentFolderId],
+    },
+    fields: 'id',
+  });
+
+  return createRes.data.id!;
+}
+
+/**
+ * Finds an existing file by exact name inside a Drive folder.
+ */
+export async function findFileInFolder(fileName: string, folderId: string): Promise<string | null> {
+  const drive = getDriveClient();
+  const query = `name = '${escapeDriveQueryValue(fileName)}' and '${folderId}' in parents and trashed = false`;
+
+  const searchRes = await drive.files.list({
+    q: query,
+    fields: 'files(id, name)',
+    spaces: 'drive',
+    pageSize: 1,
+  });
+
+  return searchRes.data.files?.[0]?.id || null;
 }
 
 /**
@@ -115,6 +173,26 @@ export async function uploadUrlToDrive(fileUrl: string, fileName: string, folder
     console.error(`[GDrive] Exception uploading file ${fileUrl}:`, error);
     return null;
   }
+}
+
+/**
+ * Uploads a URL to Drive only when the exact target file name is not present.
+ * Returns whether it reused an existing file or uploaded a new one.
+ */
+export async function uploadUrlToDriveIfMissing(
+  fileUrl: string,
+  fileName: string,
+  folderId: string
+): Promise<{ fileId: string | null; uploaded: boolean; skipped: boolean }> {
+  if (!fileUrl) return { fileId: null, uploaded: false, skipped: false };
+
+  const existingFileId = await findFileInFolder(fileName, folderId);
+  if (existingFileId) {
+    return { fileId: existingFileId, uploaded: false, skipped: true };
+  }
+
+  const fileId = await uploadUrlToDrive(fileUrl, fileName, folderId);
+  return { fileId, uploaded: !!fileId, skipped: false };
 }
 
 /**

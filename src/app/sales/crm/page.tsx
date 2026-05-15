@@ -66,7 +66,7 @@ type TabType = 'overview' | 'customers' | 'deals' | 'tasks' | 'contracts' | 'loc
 export default function CRMPage() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<{ success?: boolean; synced?: number; message?: string; error?: string } | null>(null);
+  const [syncResult, setSyncResult] = useState<{ success?: boolean; synced?: number; message?: string; error?: string; files_uploaded?: number; folders_created?: number } | null>(null);
 
   const tabs = [
     { id: 'overview', label: 'Tổng quan', icon: <BarChart3 size={15} /> },
@@ -82,7 +82,7 @@ export default function CRMPage() {
     setSyncing(true);
     setSyncResult(null);
     try {
-      const res = await fetch('/api/sync-getfly', { method: 'POST' });
+      const res = await fetch('/api/sync-getfly-accounts?sync_drive=true&create_new_folders=true', { method: 'POST' });
       const data = await res.json();
       setSyncResult(data);
     } catch (err) {
@@ -565,7 +565,7 @@ function formatVND(n: number): string {
 // ═══════════════════════════════
 interface LocalCustomer {
   id: string;
-  getfly_id: string;
+  getfly_account_id: string;
   account_name: string;
   phone: string;
   email: string | null;
@@ -575,10 +575,11 @@ interface LocalCustomer {
   account_source: string | null;
   relation_name: string | null;
   manager_user_name: string | null;
-  agency_manager_name: string | null;
+  agency_manager_name?: string | null;
   revenue: string | null;
   ma_hoi_vien: string | null;
   goi_dich_vu: string | null;
+  gdrive_folder_url?: string | null;
   synced_at: string;
 }
 
@@ -595,9 +596,9 @@ function LocalDataTab() {
 
   async function loadInfo() {
     try {
-      const res = await fetch('/api/sync-getfly');
+      const res = await fetch('/api/sync-getfly-accounts');
       const d = await res.json();
-      setTotal(d.synced_count || 0);
+      setTotal(d.total_accounts || 0);
       setLastSync(d.last_sync || null);
     } catch { /* ignore */ }
   }
@@ -606,13 +607,11 @@ function LocalDataTab() {
     setLoading(true);
     try {
       const params = new URLSearchParams({
-        type: 'local',
         page: String(page),
         per_page: String(perPage),
       });
       if (search) params.set('search', search);
-      // Call via internal supabase API
-      const res = await fetch(`/api/getfly-local?${params}`);
+      const res = await fetch(`/api/getfly-accounts?${params}`);
       const d = await res.json();
       setCustomers(d.records || []);
       setTotal(d.total || 0);
@@ -769,7 +768,7 @@ function CustomerDetailModal({ customer: c, onClose }: { customer: LocalCustomer
     { icon: <Briefcase size={14} />, label: 'Loại khách hàng', value: c.account_type },
     { icon: <TrendingUp size={14} />, label: 'Nguồn tiếp cận', value: c.account_source },
     { icon: <User size={14} />, label: 'NV phụ trách (Sales)', value: c.manager_user_name },
-    { icon: <Briefcase size={14} />, label: 'Quản lý đại lý', value: c.agency_manager_name },
+    { icon: <Briefcase size={14} />, label: 'Thư mục Drive', value: c.gdrive_folder_url },
     { icon: <Calendar size={14} />, label: 'Ngày sync gần nhất', value: c.synced_at ? new Date(c.synced_at).toLocaleString('vi-VN') : undefined },
   ];
 
@@ -788,7 +787,7 @@ function CustomerDetailModal({ customer: c, onClose }: { customer: LocalCustomer
             </div>
             <div>
               <h2 className="text-lg font-extrabold text-gray-900">{c.account_name}</h2>
-              <p className="text-xs text-gray-500 mt-0.5">GetFly ID: #{c.getfly_id}</p>
+              <p className="text-xs text-gray-500 mt-0.5">GetFly ID: #{c.getfly_account_id}</p>
               {c.ma_hoi_vien && (
                 <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-amber-50 border border-amber-200 rounded-full text-[10px] font-bold text-amber-700">
                   <Crown size={10} /> HV: {c.ma_hoi_vien}
@@ -874,7 +873,7 @@ function CustomerDetailModal({ customer: c, onClose }: { customer: LocalCustomer
         {/* Footer actions */}
         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex gap-3">
           <a
-            href={`https://blackstonesdvtl.getflycrm.com/account/view/${c.getfly_id}`}
+            href={`https://blackstonesdvtl.getflycrm.com/account/view/${c.getfly_account_id}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-bold hover:bg-violet-700 transition-all"
@@ -924,6 +923,14 @@ interface Contract {
   beneficiary_address_2: string | null;
   buyer_email: string | null;
   synced_at: string;
+  // GDrive fields
+  gdrive_folder_id: string | null;
+  gdrive_folder_url: string | null;
+  gdrive_vneid_front: string | null;
+  gdrive_vneid_back: string | null;
+  gdrive_contract_scan: string | null;
+  gdrive_membership_form: string | null;
+  gdrive_last_sync: string | null;
 }
 
 const STATUS_TABS = [
@@ -958,7 +965,7 @@ function ContractsTab() {
   const [searchInput, setSearchInput] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<{success?:boolean;synced?:number;message?:string;error?:string}|null>(null);
+  const [syncResult, setSyncResult] = useState<{success?:boolean;synced?:number;message?:string;error?:string;drive_stats?:Record<string,unknown>}|null>(null);
   const [selected, setSelected] = useState<Contract|null>(null);
   const perPage = 20;
 
@@ -983,7 +990,7 @@ function ContractsTab() {
   async function handleSync() {
     setSyncing(true); setSyncResult(null);
     try {
-      const res = await fetch('/api/sync-getfly-contracts', { method: 'POST' });
+      const res = await fetch('/api/sync-getfly-contracts?sync_drive=true', { method: 'POST' });
       const data = await res.json();
       setSyncResult(data);
       if (data.success) { loadContracts(); }
@@ -1100,10 +1107,19 @@ function ContractsTab() {
                         <td className="px-4 py-3 text-right text-xs font-semibold text-emerald-600">{c.paid_amount ? formatVND(c.paid_amount) : '0'}</td>
                         <td className="px-4 py-3 text-right text-xs font-bold text-red-600">{c.debt_amount ? formatVND(c.debt_amount) : '0'}</td>
                         <td className="px-4 py-3 text-center">
-                          <button onClick={() => setSelected(c)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-violet-50 text-violet-600 text-[10px] font-semibold hover:bg-violet-100 transition-all opacity-0 group-hover:opacity-100">
-                            <Eye size={12} /> Chi tiết
-                          </button>
+                          <div className="flex items-center gap-1 justify-center">
+                            {c.gdrive_folder_url && (
+                              <a href={c.gdrive_folder_url} target="_blank" rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 text-[10px] font-semibold hover:bg-emerald-100 transition-all"
+                                title="Mở thư mục Google Drive">
+                                📁
+                              </a>
+                            )}
+                            <button onClick={() => setSelected(c)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-violet-50 text-violet-600 text-[10px] font-semibold hover:bg-violet-100 transition-all opacity-0 group-hover:opacity-100">
+                              <Eye size={12} /> Chi tiết
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -1227,6 +1243,39 @@ function ContractDetailModal({ contract: c, onClose }: { contract: Contract; onC
               ))}
             </div>
           ))}
+          {/* Google Drive */}
+          <div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">📁 Google Drive</p>
+            {c.gdrive_folder_url ? (
+              <>
+                <a href={c.gdrive_folder_url} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm font-semibold text-emerald-700 hover:bg-emerald-100 transition-all mb-3">
+                  <ExternalLink size={14} /> Mở thư mục Drive của HĐ này
+                </a>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: 'VNeID Mặt trước', has: !!c.gdrive_vneid_front },
+                    { label: 'VNeID Mặt sau', has: !!c.gdrive_vneid_back },
+                    { label: 'Scan Hợp đồng', has: !!c.gdrive_contract_scan },
+                    { label: 'Phiếu Hội viên', has: !!c.gdrive_membership_form },
+                  ].map(doc => (
+                    <div key={doc.label} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold ${
+                      doc.has ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-50 text-gray-400'
+                    }`}>
+                      {doc.has ? <CheckCircle size={12} /> : <span className="w-3 h-3 rounded-full border-2 border-gray-300 inline-block" />}
+                      {doc.label}
+                    </div>
+                  ))}
+                </div>
+                {c.gdrive_last_sync && (
+                  <p className="text-[10px] text-gray-400 mt-2">Drive sync: {new Date(c.gdrive_last_sync).toLocaleString('vi-VN')}</p>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-gray-400 italic">Chưa sync lên Google Drive. Nhấn "Sync Hợp đồng" để tạo thư mục.</p>
+            )}
+          </div>
+
           {/* Sync info */}
           <div>
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Hệ thống</p>
@@ -1242,6 +1291,12 @@ function ContractDetailModal({ contract: c, onClose }: { contract: Contract; onC
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex gap-3">
+          {c.gdrive_folder_url && (
+            <a href={c.gdrive_folder_url} target="_blank" rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-all">
+              📁 Mở Drive
+            </a>
+          )}
           <button onClick={onClose}
             className="flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all">
             Đóng
@@ -1251,4 +1306,3 @@ function ContractDetailModal({ contract: c, onClose }: { contract: Contract; onC
     </div>
   );
 }
-

@@ -1,0 +1,4 @@
+{
+  "error": "Not JSON",
+  "text": "<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n<meta charset=\"utf-8\">\r\n<title>404 Page Not Found</title>\r\n<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css'>\r\n<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Arvo'>\r\n<style>\r\n    .page_404{padding:40px 0;background:#fff;font-family:Arvo,serif}.page_404 img{width:100%}.four_zero_four_bg{background-image:url(/assets/images/404.gif);height:400px;background-position:cente"
+}

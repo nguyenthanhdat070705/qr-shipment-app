@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { BookOpen, Search, X, Calendar, MapPin, Users, Heart, Package, Loader2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { BookOpen, Search, X, Calendar, MapPin, Users, Heart, Package, Loader2, RefreshCw, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import PageLayout from '@/components/PageLayout';
 import { getSupabase } from '@/lib/supabase/client';
@@ -34,25 +34,84 @@ export default function FuneralsPage() {
   const [search, setSearch] = useState('');
   const [filterDate, setFilterDate] = useState('');
   const [selectedFuneral, setSelectedFuneral] = useState<any | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ success: boolean; message: string } | null>(null);
 
-  // Lấy dữ liệu từ dim_dam
-  useEffect(() => {
-    async function fetchFunerals() {
-      try {
-        const response = await fetch('/api/funerals');
-        if (!response.ok) {
-           throw new Error(`Lỗi HTTP: ${response.status}`);
-        }
-        const json = await response.json();
-        setFunerals(json.data || []);
-      } catch (err) {
-        console.error('Lỗi lấy dữ liệu Đám:', err);
-      } finally {
-        setLoading(false);
+  // Lấy dữ liệu từ fact_dam (qua /api/funerals)
+  const fetchFunerals = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/funerals?t=' + new Date().getTime(), {
+        cache: 'no-store'
+      });
+      if (!response.ok) {
+         throw new Error(`Lỗi HTTP: ${response.status}`);
       }
+      const json = await response.json();
+      setFunerals(json.data || []);
+    } catch (err) {
+      console.error('Lỗi lấy dữ liệu Đám:', err);
+    } finally {
+      setLoading(false);
     }
-    fetchFunerals();
   }, []);
+
+  useEffect(() => {
+    fetchFunerals();
+  }, [fetchFunerals]);
+
+  // Sync thủ công từ Google Sheets
+  const handleManualSync = async () => {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await fetch('/api/sync-dam', { method: 'POST' });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setSyncResult({
+          success: true,
+          message: `Đồng bộ thành công! ${json.fact_dam_upserted || 0} bản ghi fact_dam, ${json.dim_dam_upserted || 0} bản ghi dim_dam.`,
+        });
+        // Refresh data sau khi sync
+        await fetchFunerals();
+      } else {
+        setSyncResult({
+          success: false,
+          message: json.error || 'Sync thất bại. Vui lòng thử lại.',
+        });
+      }
+    } catch (err: any) {
+      setSyncResult({
+        success: false,
+        message: `Lỗi kết nối: ${err.message}`,
+      });
+    } finally {
+      setSyncing(false);
+      // Tự động ẩn thông báo sau 8 giây
+      setTimeout(() => setSyncResult(null), 8000);
+    }
+  };
+
+  // Helper: Chuẩn hóa hiển thị ngày tháng sang DD/MM/YYYY
+  const formatDateDisplay = (dateStr: string | undefined | null) => {
+    if (!dateStr || dateStr === '—' || dateStr === '-') return '—';
+    const trimmed = dateStr.trim();
+    const match = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+    if (match) {
+      let d = match[1].padStart(2, '0');
+      let m = match[2].padStart(2, '0');
+      let y = match[3];
+      
+      if (y.length === 2) {
+        // xlsx exports M/D/YY by default
+        d = match[2].padStart(2, '0');
+        m = match[1].padStart(2, '0');
+        y = `20${y}`;
+      }
+      return `${d}/${m}/${y}`;
+    }
+    return trimmed;
+  };
 
   const filtered = funerals.filter(f => {
     const matchSearch = (f.ma_dam && f.ma_dam.toLowerCase().includes(search.toLowerCase())) ||
@@ -61,14 +120,22 @@ export default function FuneralsPage() {
     
     let matchDate = true;
     if (filterDate) {
-      // Convert filterDate from YYYY-MM-DD to DD/MM/YYYY to match `ngay` format in CSV
-      const [year, month, day] = filterDate.split('-');
-      const formattedFilterDate = `${day}/${month}/${year}`;
-      matchDate = (f.ngay === formattedFilterDate);
+      const [fYear, fMonth, fDay] = filterDate.split('-').map(Number);
+      // Sử dụng formatDateDisplay để lấy ngày đã được chuẩn hóa (DD/MM/YYYY)
+      const normalizedNgay = formatDateDisplay(f.ngay);
+      const parts = normalizedNgay.split('/');
+      if (parts.length === 3) {
+        const [csvDay, csvMonth, csvYear] = parts.map(Number);
+        matchDate = (csvDay === fDay && csvMonth === fMonth && csvYear === fYear);
+      } else {
+        matchDate = false;
+      }
     }
     
     return matchSearch && matchDate;
   });
+
+
 
   return (
     <PageLayout title="Danh Sách Đám" icon={<BookOpen size={15} className="text-pink-500" />}>
@@ -114,21 +181,55 @@ export default function FuneralsPage() {
                />
              </div>
              
-             {/* Nút Xem Dashboard Gantt */}
-             <Link 
-                href="/funerals/dashboard"
-                className="flex-shrink-0 flex items-center justify-center bg-indigo-500 hover:bg-indigo-400 text-white px-4 py-4 rounded-2xl text-sm font-bold shadow-lg transition-all border border-indigo-400/50 hover:shadow-indigo-500/30 h-[54px]"
-             >
+             {/* Nút Sync thủ công */}
+              <button
+                onClick={handleManualSync}
+                disabled={syncing}
+                className={`flex-shrink-0 flex items-center justify-center px-4 py-4 rounded-2xl text-sm font-bold shadow-lg transition-all border h-[54px] ${
+                  syncing 
+                    ? 'bg-amber-500/80 border-amber-400/50 text-white cursor-wait' 
+                    : 'bg-emerald-500 hover:bg-emerald-400 border-emerald-400/50 hover:shadow-emerald-500/30 text-white'
+                }`}
+                title="Đồng bộ dữ liệu từ Google Sheets ngay lập tức"
+              >
                 <div className="flex items-center gap-2">
-                   <Calendar size={18} />
-                   <span className="hidden sm:inline">Gantt & Dashboard</span>
+                   <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
+                   <span className="hidden sm:inline">{syncing ? 'Đang sync...' : 'Sync Sheets'}</span>
                 </div>
-             </Link>
-          </div>
+              </button>
+
+              {/* Nút Xem Dashboard Gantt */}
+              <Link 
+                 href="/funerals/dashboard"
+                 className="flex-shrink-0 flex items-center justify-center bg-indigo-500 hover:bg-indigo-400 text-white px-4 py-4 rounded-2xl text-sm font-bold shadow-lg transition-all border border-indigo-400/50 hover:shadow-indigo-500/30 h-[54px]"
+              >
+                 <div className="flex items-center gap-2">
+                    <Calendar size={18} />
+                    <span className="hidden sm:inline">Gantt</span>
+                 </div>
+              </Link>
+           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto pb-12">
+         {/* ── Sync Result Banner ── */}
+         {syncResult && (
+           <div className={`mb-4 flex items-center gap-3 px-5 py-3.5 rounded-2xl border text-sm font-semibold transition-all animate-in fade-in duration-300 ${
+             syncResult.success 
+               ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+               : 'bg-red-50 border-red-200 text-red-800'
+           }`}>
+             {syncResult.success 
+               ? <CheckCircle size={18} className="text-emerald-500 flex-shrink-0" />
+               : <X size={18} className="text-red-500 flex-shrink-0" />
+             }
+             <span className="flex-1">{syncResult.message}</span>
+             <button onClick={() => setSyncResult(null)} className="p-1 rounded-lg hover:bg-white/50 transition-colors flex-shrink-0">
+               <X size={14} />
+             </button>
+           </div>
+         )}
          {/* ── Table / Grid ── */}
          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/50 overflow-hidden">
            {loading ? (
@@ -148,7 +249,7 @@ export default function FuneralsPage() {
                <table className="w-full text-left text-sm">
                  <thead>
                    <tr className="bg-gray-50/80 border-b border-gray-100 uppercase text-[10px] font-black tracking-widest text-gray-500 whitespace-nowrap">
-                     <th className="px-3 py-3 lg:px-4 w-[120px]">Ngày / Tạo</th>
+                     <th className="px-3 py-3 lg:px-4 w-[120px]">Ngày</th>
                      <th className="px-3 py-3 lg:px-4">Mã Đám</th>
                      <th className="px-3 py-3 lg:px-4">Người Mất</th>
                      <th className="px-3 py-3 lg:px-4">Phân Loại / CN</th>
@@ -162,12 +263,8 @@ export default function FuneralsPage() {
                      <tr key={row.id || row.ma_dam} className="hover:bg-indigo-50/30 transition-colors group text-xs sm:text-[13px]">
                        <td className="px-3 py-3 lg:px-4 font-bold text-gray-600 whitespace-nowrap">
                          <div className="flex flex-col gap-1">
-                           {row.ngay ? <span className="flex items-center gap-1.5"><Calendar size={12} className="text-gray-400" /> {row.ngay}</span> : <span className="text-gray-300">—</span>}
-                           {row.created_at && (
-                             <span className="text-[10px] text-gray-400 font-semibold tracking-wider bg-gray-100/50 px-1.5 py-0.5 rounded w-fit">
-                               Tạo: {new Date(row.created_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                             </span>
-                           )}
+                           {row.ngay ? <span className="flex items-center gap-1.5"><Calendar size={12} className="text-gray-400" /> {formatDateDisplay(row.ngay)}</span> : <span className="text-gray-300">—</span>}
+                           {/* Đã ẩn ngày Tạo (Sync) theo yêu cầu để tránh gây hiểu nhầm */}
                          </div>
                        </td>
                        <td className="px-3 py-3 lg:px-4 font-bold text-indigo-700 whitespace-nowrap">{row.ma_dam}</td>
@@ -184,7 +281,7 @@ export default function FuneralsPage() {
                        </td>
                        <td className="px-3 py-3 lg:px-4 whitespace-nowrap">
                          <div className="flex flex-col gap-1">
-                           <span className="font-bold text-gray-700 inline-flex items-center gap-1.5"><Calendar size={12}/> {row.ngay_liem || '—'}</span>
+                           <span className="font-bold text-gray-700 inline-flex items-center gap-1.5"><Calendar size={12}/> {formatDateDisplay(row.ngay_liem) || '—'}</span>
                            <span className="text-[11px] font-semibold text-gray-500">{row.gio_liem}</span>
                          </div>
                        </td>

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getUserRole, UserRole } from "@/config/roles.config";
-import { PackageCheck, Database, Truck, Warehouse, Ban } from "lucide-react";
+import { PackageCheck, Database, Truck, Warehouse, Ban, FileText, XOctagon } from "lucide-react";
 
 export default function InOutManagementTabs({ currentTab }: { currentTab: string }) {
   const router = useRouter();
@@ -34,16 +34,26 @@ export default function InOutManagementTabs({ currentTab }: { currentTab: string
       id: "export",
       label: "Xuất hàng",
       icon: <Truck size={18} />,
-    }] : []),
-    ...(userRole === "admin" || userRole === "warehouse" || userRole === "sales" ? [{
-      id: "inventory",
-      label: "Tồn kho",
-      icon: <Warehouse size={18} />,
+    },
+    {
+      id: "export-management",
+      label: "Quản lý phiếu xuất",
+      icon: <FileText size={18} />,
+    },
+    {
+      id: "void-receipt",
+      label: "Huỷ phiếu nhập xuất",
+      icon: <XOctagon size={18} />,
     }] : []),
     ...(userRole === "admin" ? [{
       id: "voided-receipts",
-      label: "Phiếu Huỷ",
+      label: "Quản lý phiếu huỷ",
       icon: <Ban size={18} />,
+    }] : []),
+    ...(userRole === "admin" || userRole === "warehouse" || userRole === "sales" ? [{
+      id: "inventory",
+      label: "Quản lý tồn kho",
+      icon: <Warehouse size={18} />,
     }] : [])
   ];
 

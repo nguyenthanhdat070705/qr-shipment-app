@@ -1,0 +1,22 @@
+[
+  {
+    "url": "https://blackstonesdvtl.getflycrm.com/api/v3/contracts/17",
+    "status": 404,
+    "error": "<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n<meta charset=\"utf-8\">\r\n<title>404 Page Not Found</title>"
+  },
+  {
+    "url": "https://blackstonesdvtl.getflycrm.com/api/v3/contract/17",
+    "status": 404,
+    "error": "<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n<meta charset=\"utf-8\">\r\n<title>404 Page Not Found</title>"
+  },
+  {
+    "url": "https://blackstonesdvtl.getflycrm.com/crm/contract/detail?contract_id=17",
+    "status": 401,
+    "error": "{\"message\":\"TOKEN INVALID\",\"refresh\":true}"
+  },
+  {
+    "url": "https://blackstonesdvtl.getflycrm.com/api/v3/orders?contract_id=17",
+    "status": 400,
+    "error": "{\"message\":\"order_type ch\\u1ec9 bao g\\u1ed3m 2 gi\\u00e1 tr\\u1ecb 1 v\\u00e0 2\"}"
+  }
+]

@@ -1,0 +1,60 @@
+[
+  {
+    "account_code": "KH12119",
+    "account_name": "TRẦN THỊ MỸ VÂN",
+    "raw_data": {
+      "logo": "https://blackstonesdvtl.getflycrm.com/assets/images/noavatar.png",
+      "email": null,
+      "phone": "0938925295",
+      "gender": null,
+      "address": null,
+      "revenue": "205145000",
+      "so_cccd": "",
+      "website": null,
+      "birthday": null,
+      "contacts": [
+        {
+          "email": null,
+          "title": "",
+          "last_name": null,
+          "contact_id": "12120",
+          "first_name": "TRẦN THỊ MỸ VÂN",
+          "phone_home": "0938925295",
+          "description": "",
+          "phone_mobile": "0938925295"
+        }
+      ],
+      "industry": null,
+      "ngay_mat": "",
+      "sic_code": null,
+      "account_id": "12119",
+      "country_id": "1",
+      "created_at": "2025-03-26 10:18:56",
+      "description": "",
+      "district_id": "0",
+      "goi_dich_vu": null,
+      "ma_hoi_vien": null,
+      "province_id": "0",
+      "relation_id": "11",
+      "account_code": "KH12119",
+      "account_name": "TRẦN THỊ MỸ VÂN",
+      "account_type": "KH Trăm Tuổi",
+      "industry_name": null,
+      "manager_email": "hung.lm@blackstones.vn",
+      "ngay_tham_gia": null,
+      "province_name": null,
+      "relation_name": "Đã Nghiệm Thu",
+      "ten_ngan_hang": "",
+      "account_source": "MKT-Zalo",
+      "account_type_id": "35",
+      "dia_chi_lien_he": "",
+      "so_tk_ngan_hang": "",
+      "dia_chi_chon_cat": "",
+      "ho_ten_nguoi_mat": "",
+      "account_source_id": "2",
+      "manager_user_name": "hung.lm@blackstones.vn",
+      "trang_thai_hoi_vien": null,
+      "thoi_gian_to_chuc_dam": ""
+    }
+  }
+]

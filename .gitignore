@@ -52,3 +52,4 @@ google-drive-credentials.json
 Membership/*.docx
 .env.preview
 scripts/cred_minified.txt
+.env*.local

@@ -50,7 +50,7 @@ export async function GET(request: Request) {
         so_luong:so_luong_thuc_nhan,
         ghi_chu,
         created_at,
-        fact_nhap_hang!inner(ma_phieu_nhap, kho_id, dim_kho (ten_kho))
+        fact_nhap_hang!inner(ma_phieu_nhap, kho_id, trang_thai, dim_kho (ten_kho))
       `)
       .order('created_at', { ascending: false })
       .limit(limit);
@@ -120,7 +120,8 @@ export async function GET(request: Request) {
           so_luong: item.so_luong || 0,
           ma_dam: '', // Nhập không có mã đám
           ghi_chu: item.ghi_chu || '',
-          kho_name: item.fact_nhap_hang?.dim_kho?.ten_kho || ''
+          kho_name: item.fact_nhap_hang?.dim_kho?.ten_kho || '',
+          trang_thai: item.fact_nhap_hang?.trang_thai || 'completed',
         });
       });
     }
@@ -252,12 +253,14 @@ export async function GET(request: Request) {
     // Calculate summary counts
     const importCount = allItems.filter(i => i.type === 'import').length;
     const exportCount = allItems.filter(i => i.type === 'export').length;
+    const cancelledCount = allItems.filter(i => i.trang_thai === 'cancelled').length;
 
     return NextResponse.json({ 
       data: allItems,
       summary: {
         importCount,
         exportCount,
+        cancelledCount,
         totalCount: allItems.length,
       }
     });

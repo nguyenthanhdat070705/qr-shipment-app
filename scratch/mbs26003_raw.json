@@ -1,0 +1,34 @@
+{
+  "data": [
+    {
+      "contract_name": "MBS26003",
+      "raw_data": {
+        "amount": "2,160,000",
+        "status": "2",
+        "discount": "0",
+        "f_amount": "2,160,000",
+        "order_id": "1850",
+        "created_at": "2026-05-12 13:51:15",
+        "order_code": "MBS26003",
+        "order_date": "2026-05-11",
+        "order_type": "2",
+        "updated_at": "2026-05-12 13:51:23",
+        "vat_amount": "160,000",
+        "lading_code": "",
+        "lading_info": [],
+        "account_info": {
+          "email": null,
+          "phone": "0938925295",
+          "address": "308 Lô X C/c Ngô Gia Tự, Phường Vườn Lài, TP HCM",
+          "account_id": "12119",
+          "account_code": "KH12119"
+        },
+        "assigned_name": "LÊ MINH HƯNG",
+        "assigned_user": "15",
+        "payment_status": "paid",
+        "discount_amount": "0"
+      }
+    }
+  ],
+  "error": null
+}

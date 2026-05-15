@@ -1,0 +1,64 @@
+{
+  "order_info": {
+    "order_id": 1850,
+    "order_code": "MBS26003",
+    "order_date": "11/05/2026",
+    "order_type": 2,
+    "order_status": 2,
+    "amount": 2160000,
+    "discount": 0,
+    "discount_amount": 0,
+    "created_at": "12/05/2026",
+    "installation": 0,
+    "installation_amount": 0,
+    "transport": 0,
+    "transport_amount": 0,
+    "lading_status": null,
+    "store_id": 0,
+    "account_id": 12119,
+    "account_name": "TRẦN THỊ MỸ VÂN",
+    "account_code": "KH12119",
+    "account_phone": "0938925295",
+    "account_email": null,
+    "address": "308 Lô X C/c Ngô Gia Tự, Phường Vườn Lài, TP HCM",
+    "country_name": "Việt Nam",
+    "province_name": "",
+    "district_name": "",
+    "assigned_name": "LÊ MINH HƯNG",
+    "assigned_user_email": "hung.lm@blackstones.vn",
+    "is_repay": "0",
+    "account_created_at": "2025-03-26 10:18:56",
+    "account_address": "308 Lô X C/c Ngô Gia Tự, Phường Vườn Lài, TP HCM",
+    "payment_status": "paid",
+    "lading_code": "",
+    "lading_info": []
+  },
+  "products": [
+    {
+      "product_id": 151,
+      "product_code": "M01",
+      "product_name": "Membership_2_042026",
+      "quantity": 1,
+      "price": 2000000,
+      "discount_amount": 0,
+      "discount": 0,
+      "vat": 8,
+      "vat_amount": 160000,
+      "amount": 2160000,
+      "description": "",
+      "unit_name": "Gói"
+    }
+  ],
+  "payments": [
+    {
+      "amount": 2160000,
+      "pay_date": "12/05/2026",
+      "description": "",
+      "created_at": "12/05/2026"
+    }
+  ],
+  "terms": [
+    "Thời gian giao hàng:",
+    "Địa chỉ giao hàng:"
+  ]
+}

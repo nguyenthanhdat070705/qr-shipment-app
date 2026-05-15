@@ -37,8 +37,42 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Fetch GDrive tracking data for these contracts
+    const contractIds = (data || []).map((c: Record<string, unknown>) => c.getfly_contract_id).filter(Boolean);
+    let driveMap = new Map<string, Record<string, unknown>>();
+
+    if (contractIds.length > 0) {
+      const { data: driveData } = await supabase
+        .from('membership_gdrive_attachments')
+        .select('*')
+        .in('getfly_contract_id', contractIds);
+
+      if (driveData) {
+        driveMap = new Map(
+          driveData.map((d: Record<string, unknown>) => [d.getfly_contract_id as string, d])
+        );
+      }
+    }
+
+    // Merge GDrive info into contract records
+    const enrichedRecords = (data || []).map((contract: Record<string, unknown>) => {
+      const driveInfo = driveMap.get(contract.getfly_contract_id as string);
+      return {
+        ...contract,
+        gdrive_folder_id: driveInfo?.gdrive_folder_id || null,
+        gdrive_folder_url: driveInfo?.gdrive_folder_id
+          ? `https://drive.google.com/drive/folders/${driveInfo.gdrive_folder_id}`
+          : null,
+        gdrive_vneid_front: driveInfo?.vneid_front_file_id || null,
+        gdrive_vneid_back: driveInfo?.vneid_back_file_id || null,
+        gdrive_contract_scan: driveInfo?.contract_scan_file_id || null,
+        gdrive_membership_form: driveInfo?.membership_form_file_id || null,
+        gdrive_last_sync: driveInfo?.last_sync_at || null,
+      };
+    });
+
     return NextResponse.json({
-      records: data || [],
+      records: enrichedRecords,
       total: count || 0,
       page,
       per_page: perPage,
