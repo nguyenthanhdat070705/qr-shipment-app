@@ -4,6 +4,7 @@ import { findOrCreateFolder, findOrCreateSubFolder, uploadUrlToDriveIfMissing } 
 
 const GETFLY_API_KEY = process.env.GETFLY_API_KEY || '';
 const GETFLY_BASE = 'https://blackstonesdvtl.getflycrm.com/api/v3';
+const GETFLY_WEB_BASE = 'https://blackstonesdvtl.getflycrm.com';
 
 // ═══════════════════════════════════════════════════════
 // Types
@@ -17,24 +18,97 @@ interface DriveSyncStats {
   errors: string[];
 }
 
-// ── Helper: fetch all contracts (order_type=2) from GetFly with pagination ──
+type GetflyWebCredentials = {
+  username: string;
+  password: string;
+};
+
+// ── Helpers: web-session auth for the exact "Quản lý hợp đồng bán" screen ──
+function getWebCredentials(): GetflyWebCredentials | null {
+  const encoded = process.env.GETFLY_WEB_BASIC_AUTH?.trim();
+  if (encoded) {
+    try {
+      const decoded = Buffer.from(encoded, 'base64').toString('utf8');
+      const separatorIndex = decoded.indexOf(':');
+      if (separatorIndex > 0) {
+        return {
+          username: decoded.slice(0, separatorIndex),
+          password: decoded.slice(separatorIndex + 1),
+        };
+      }
+    } catch {
+      // Fall through to explicit username/password below.
+    }
+  }
+
+  const username = process.env.GETFLY_WEB_USERNAME?.trim();
+  const password = process.env.GETFLY_WEB_PASSWORD?.trim();
+  if (!username || !password) return null;
+  return { username, password };
+}
+
+async function getWebAccessToken(): Promise<string> {
+  const credentials = getWebCredentials();
+  if (!credentials) {
+    throw new Error(
+      'Thiếu GETFLY_WEB_USERNAME/GETFLY_WEB_PASSWORD hoặc GETFLY_WEB_BASIC_AUTH để sync đúng màn "Quản lý hợp đồng bán".'
+    );
+  }
+
+  const res = await fetch(`${GETFLY_WEB_BASE}/authenticate/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({
+      username: credentials.username,
+      password: credentials.password,
+      locale: 'vi',
+      version: 5,
+      is_desktop: true,
+    }),
+    cache: 'no-store',
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`GetFly web login failed ${res.status}: ${errText.substring(0, 200)}`);
+  }
+
+  const data = await res.json();
+  if (!data.access_token) {
+    throw new Error('GetFly web login không trả về access_token.');
+  }
+  return String(data.access_token);
+}
+
+function webHeaders(accessToken: string) {
+  return {
+    'X-Authorization': `Bearer ${accessToken}`,
+    'X-Getfly-Version': '5',
+    Accept: 'application/json',
+  };
+}
+
+// ── Helper: fetch all sale contracts from the exact GetFly contracts screen ──
 async function fetchAllContracts(): Promise<Record<string, unknown>[]> {
+  const accessToken = await getWebAccessToken();
   const allRecords: Record<string, unknown>[] = [];
   let page = 1;
-  const perPage = 50;
+  const perPage = 100;
 
   while (true) {
-    const url = new URL(`${GETFLY_BASE}/orders`);
-    url.searchParams.set('order_type', '2');
-    url.searchParams.set('page', String(page));
-    url.searchParams.set('per_page', String(perPage));
+    const url = new URL(`${GETFLY_WEB_BASE}/crm/contracts`);
+    url.searchParams.set('contract_type', '2');
+    url.searchParams.set('p', String(page));
+    url.searchParams.set('limit', String(perPage));
+    // Getfly defaults to the current expiry year, which hides long-term contracts.
+    // "all" matches the intended "Tất cả" view from the UI.
+    url.searchParams.set('filter_end_year', 'all');
 
     const res = await fetch(url.toString(), {
-      headers: {
-        'X-API-KEY': GETFLY_API_KEY,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
+      headers: webHeaders(accessToken),
       cache: 'no-store',
     });
 
@@ -45,14 +119,14 @@ async function fetchAllContracts(): Promise<Record<string, unknown>[]> {
     }
 
     const data = await res.json();
-    const records: Record<string, unknown>[] = data.records || data.data || [];
+    const records: Record<string, unknown>[] = data.data || [];
 
     console.log(`[Sync Contracts] Page ${page}: got ${records.length} records | Total: ${allRecords.length + records.length}`);
 
     if (records.length === 0) break;
     allRecords.push(...records);
 
-    const totalRecord = data.pagination?.total_record || data.total_record;
+    const totalRecord = data.total_record;
     if (totalRecord && allRecords.length >= parseInt(String(totalRecord), 10)) break;
     if (records.length < perPage) break;
     if (page >= 200) {
@@ -64,23 +138,6 @@ async function fetchAllContracts(): Promise<Record<string, unknown>[]> {
   }
 
   return allRecords;
-}
-
-// ── Helper: fetch contract detail with custom fields ──
-async function fetchContractDetail(orderId: string): Promise<Record<string, unknown> | null> {
-  try {
-    const res = await fetch(`${GETFLY_BASE}/orders/${orderId}`, {
-      headers: {
-        'X-API-KEY': GETFLY_API_KEY,
-        'Accept': 'application/json',
-      },
-      cache: 'no-store',
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
 }
 
 // ── Helper: fetch account detail to get image URLs ──
@@ -111,6 +168,12 @@ function num(val: unknown): number {
   if (val === undefined || val === null || val === '') return 0;
   const n = parseFloat(String(val).replace(/,/g, ''));
   return isNaN(n) ? 0 : n;
+}
+
+function intOrNull(val: unknown): number | null {
+  if (val === undefined || val === null || val === '') return null;
+  const n = parseInt(String(val), 10);
+  return Number.isFinite(n) ? n : null;
 }
 
 function isHttpUrl(val: unknown): val is string {
@@ -191,60 +254,93 @@ function findUrlByAliases(raw: unknown, aliases: readonly string[]): string | nu
   return walk(raw);
 }
 
-// ── Map GetFly contract to DB schema ──
+function extractCustomerPhone(value: unknown): string | null {
+  const text = str(value);
+  if (!text) return null;
+
+  const afterDash = text.includes(' - ') ? text.split(' - ').at(-1) : text;
+  const digits = String(afterDash || '').replace(/\D/g, '');
+  return digits.length >= 8 ? digits : null;
+}
+
+function buildContractDisplayName(sourceCode: string | null, rawName: string | null, customerPhone: string | null) {
+  const cleanRawName = rawName?.trim() || null;
+  if (cleanRawName && cleanRawName.includes(' - ')) return cleanRawName;
+  if (sourceCode && customerPhone) return `${sourceCode} - ${customerPhone}`;
+  if (sourceCode && cleanRawName) return `${sourceCode} - ${cleanRawName}`;
+  return cleanRawName || sourceCode;
+}
+
+function mapContractStatus(val: unknown): string | null {
+  const s = String(val || '').trim();
+  switch (s) {
+    case '0': return 'Chờ duyệt';
+    case '1': return 'Đã duyệt';
+    case '2': return 'Đã gia hạn';
+    case '3': return 'Đang thực hiện';
+    case '4': return 'Đã hoàn thành';
+    case '5': return 'Tự động gia hạn lần 1';
+    case '6': return 'Đã kết thúc';
+    case '7': return 'Đã hủy';
+    default: return s || null;
+  }
+}
+
+function mapContractType(c: Record<string, unknown>): string | null {
+  if (String(c.new_contract || '') === '1') return 'Mới';
+  if (String(c.new_contract || '') === '0') return 'Gia hạn';
+  return str(c.contract_type);
+}
+
+// ── Map exact GetFly sale-contract list payload to DB schema ──
 function mapContract(c: Record<string, unknown>) {
-  const accountInfo = (c.account_info || {}) as Record<string, unknown>;
+  const sourceContractCode = str(c.contract_code);
+  const rawContractName = str(c.contract_name);
+  const customerPhone = extractCustomerPhone(rawContractName);
 
   return {
-    getfly_contract_id: str(c.order_id || c.contract_id || c.id),
-    contract_name: str(c.order_code || c.contract_name || c.order_name || c.name),
-    contract_code: str(c.order_code || c.contract_code || c.code),
-    contract_status: mapStatus(c.status || c.order_status || c.contract_status),
-    contract_type: str(c.contract_type || c.type || c.type_name),
-    remaining_days: c.remaining_days !== undefined ? parseInt(String(c.remaining_days), 10) || null : null,
+    getfly_contract_id: str(c.contract_id),
+    contract_name: buildContractDisplayName(sourceContractCode, rawContractName, customerPhone),
+    contract_code: str(c.number_of_contract),
+    source_contract_code: sourceContractCode,
+    contract_status: mapContractStatus(c.contract_status),
+    contract_status_code: str(c.contract_status),
+    contract_type: mapContractType(c),
+    remaining_days: intOrNull(c.day_left),
 
-    created_date: str(c.created_at || c.created_date || c.create_date),
-    effective_date: str(c.effective_date || c.start_date || c.order_date),
-    expiry_date: str(c.expiry_date || c.end_date || c.expire_date),
+    created_date: str(c.created_at),
+    effective_date: str(c.effective_date),
+    expiry_date: str(c.expiration_date),
 
-    customer_name: str(c.account_name || c.customer_name || accountInfo.account_code),
-    person_in_charge: str(c.assigned_name || c.person_in_charge || c.manager_name),
+    customer_name: str(c.vendor_account_name),
+    customer_phone: customerPhone,
+    person_in_charge: str(c.vendor_account_manager),
 
-    contract_value: num(c.amount || c.contract_value || c.value || c.total_amount),
-    actual_value: num(c.f_amount || c.actual_value || c.real_value),
-    executed_amount: num(c.executed_amount || c.done_amount),
-    paid_amount: num(c.paid_amount || c.payment_amount),
-    debt_amount: num(c.debt_amount || c.debt),
+    contract_value: num(c.total_payment),
+    actual_value: num(c.order_real_amount),
+    executed_amount: num(c.performed || c.order_real_amount),
+    paid_amount: num(c.order_f_amount),
+    debt_amount: num(c.order_l_amount),
 
-    beneficiary_name_1: str(c.beneficiary_name_1 || c.ten_nguoi_thu_huong_so_1),
-    beneficiary_vneid_1: str(c.beneficiary_vneid_1 || c.vneid_nguoi_thu_huong_1),
-    beneficiary_phone_1: str(c.beneficiary_phone_1 || c.so_dien_thoai_nguoi_thu_huong_01),
-    beneficiary_address_1: str(c.beneficiary_address_1 || c.dia_chi_nguoi_thu_huong_01),
+    beneficiary_name_1: str(c.nguoi_thu_huong_so_1),
+    beneficiary_vneid_1: str(c.vneid_nguoi_thu_huong_1),
+    beneficiary_phone_1: str(c.so_dien_thoai_nguoi_thu_huong_01),
+    beneficiary_address_1: str(c.dia_chi_nguoi_thu_huong_01),
 
-    beneficiary_name_2: str(c.beneficiary_name_2 || c.ten_nguoi_thu_huong_02),
-    beneficiary_vneid_2: str(c.beneficiary_vneid_2 || c.vneid_nguoi_thu_huong_02),
-    beneficiary_phone_2: str(c.beneficiary_phone_2 || c.so_dien_thoai_nguoi_thu_huong_02),
-    beneficiary_address_2: str(c.beneficiary_address_2 || c.dia_chi_nguoi_thu_huong_02),
+    beneficiary_name_2: str(c.nguoi_thu_huong_02),
+    beneficiary_vneid_2: str(c.vneid_nguoi_thu_huong_02),
+    beneficiary_phone_2: str(c.so_dien_thoai_nguoi_thu_huong_02),
+    beneficiary_address_2: str(c.dia_chi_nguoi_thu_huong_02),
 
-    buyer_email: str(c.buyer_email || c.email_nguoi_mua || accountInfo.email),
+    buyer_email: str(c.email_nguoi_mua),
 
     // Store account_id for GDrive cross-reference
-    account_id: str(c.account_id || accountInfo.account_id),
-    account_phone: str(c.account_phone || accountInfo.phone),
+    account_id: str(c.vendor_account_id),
+    account_phone: customerPhone,
 
     synced_at: new Date().toISOString(),
     raw_data: c,
   };
-}
-
-function mapStatus(val: unknown): string | null {
-  const s = String(val || '').trim();
-  switch (s) {
-    case '1': return 'Đang xử lý';
-    case '2': return 'Hoàn thành';
-    case '3': return 'Đã hủy';
-    default: return s || null;
-  }
 }
 
 // ═══════════════════════════════════════════════════════

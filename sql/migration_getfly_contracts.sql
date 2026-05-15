@@ -8,9 +8,11 @@ CREATE TABLE IF NOT EXISTS getfly_contracts (
   getfly_contract_id TEXT UNIQUE NOT NULL,
 
   -- Core contract fields
-  contract_name TEXT,                 -- Tên hợp đồng
-  contract_code TEXT,                 -- Số hợp đồng
+  contract_name TEXT,                 -- Tên hợp đồng hiển thị (vd: MBS26007 - 0834466303)
+  contract_code TEXT,                 -- Số hợp đồng hiển thị (vd: 01)
+  source_contract_code TEXT,          -- Mã hợp đồng gốc từ Getfly (vd: MBS26007)
   contract_status TEXT,               -- Trạng thái (Đã duyệt, Đã hoàn thành, Mới, ...)
+  contract_status_code TEXT,          -- Mã trạng thái gốc từ Getfly
   contract_type TEXT,                 -- Kiểu hợp đồng (Mới, Gia hạn, ...)
   remaining_days INTEGER,             -- Số ngày còn lại
 
@@ -21,6 +23,7 @@ CREATE TABLE IF NOT EXISTS getfly_contracts (
 
   -- People
   customer_name TEXT,                 -- Khách hàng
+  customer_phone TEXT,                -- SĐT khách hàng / phần sau dấu " - " trong tên HĐ
   person_in_charge TEXT,              -- Người phụ trách
 
   -- Financial
@@ -54,4 +57,6 @@ CREATE TABLE IF NOT EXISTS getfly_contracts (
 CREATE INDEX IF NOT EXISTS idx_getfly_contracts_status ON getfly_contracts(contract_status);
 CREATE INDEX IF NOT EXISTS idx_getfly_contracts_customer ON getfly_contracts(customer_name);
 CREATE INDEX IF NOT EXISTS idx_getfly_contracts_code ON getfly_contracts(contract_code);
+CREATE INDEX IF NOT EXISTS idx_getfly_contracts_source_code ON getfly_contracts(source_contract_code);
+CREATE INDEX IF NOT EXISTS idx_getfly_contracts_customer_phone ON getfly_contracts(customer_phone);
 CREATE INDEX IF NOT EXISTS idx_getfly_contracts_synced ON getfly_contracts(synced_at DESC);

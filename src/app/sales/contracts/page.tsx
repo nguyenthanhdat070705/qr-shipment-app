@@ -12,13 +12,16 @@ interface Contract {
   getfly_contract_id: string;
   contract_name: string | null;
   contract_code: string | null;
+  source_contract_code: string | null;
   contract_status: string | null;
+  contract_status_code: string | null;
   contract_type: string | null;
   remaining_days: number | null;
   created_date: string | null;
   effective_date: string | null;
   expiry_date: string | null;
   customer_name: string | null;
+  customer_phone: string | null;
   person_in_charge: string | null;
   contract_value: number;
   actual_value: number;
@@ -45,6 +48,7 @@ const STATUS_TABS = [
   { id: 'Đã duyệt', label: 'Đã duyệt' },
   { id: 'Đã gia hạn', label: 'Đã gia hạn' },
   { id: 'Đang thực hiện', label: 'Đang thực hiện' },
+  { id: 'Đã hoàn thành', label: 'Đã hoàn thành' },
   { id: 'Tự động gia hạn lần 1', label: 'Tự động gia hạn lần 1' },
   { id: 'Đã kết thúc', label: 'Đã kết thúc' },
   { id: 'Đã hủy', label: 'Đã hủy' },
@@ -193,7 +197,7 @@ export default function ContractsPage() {
           <div className="relative flex-1">
             <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
             <input className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-              placeholder="Tìm theo tên HĐ, số HĐ, khách hàng, người thụ hưởng..."
+              placeholder="Tìm theo tên hợp đồng, số hợp đồng hoặc SĐT khách hàng..."
               value={searchInput} onChange={e => setSearchInput(e.target.value)} />
           </div>
           <button type="submit" className="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-all">Tìm</button>
@@ -222,18 +226,28 @@ export default function ContractsPage() {
                       <th className="text-left px-3 py-3 font-bold text-gray-600 text-[10px] uppercase whitespace-nowrap">Hiệu lực</th>
                       <th className="text-left px-3 py-3 font-bold text-gray-600 text-[10px] uppercase whitespace-nowrap">Hết hiệu lực</th>
                       <th className="text-left px-3 py-3 font-bold text-gray-600 text-[10px] uppercase whitespace-nowrap">Khách hàng</th>
+                      <th className="text-left px-3 py-3 font-bold text-gray-600 text-[10px] uppercase whitespace-nowrap">SĐT KH</th>
                       <th className="text-left px-3 py-3 font-bold text-gray-600 text-[10px] uppercase whitespace-nowrap">Phụ trách</th>
                       <th className="text-right px-3 py-3 font-bold text-gray-600 text-[10px] uppercase whitespace-nowrap">GT HĐ</th>
                       <th className="text-right px-3 py-3 font-bold text-gray-600 text-[10px] uppercase whitespace-nowrap">GT Thực</th>
                       <th className="text-right px-3 py-3 font-bold text-gray-600 text-[10px] uppercase whitespace-nowrap">Đã TH</th>
                       <th className="text-right px-3 py-3 font-bold text-gray-600 text-[10px] uppercase whitespace-nowrap">Đã TT</th>
                       <th className="text-right px-3 py-3 font-bold text-gray-600 text-[10px] uppercase whitespace-nowrap">Công nợ</th>
+                      <th className="text-left px-3 py-3 font-bold text-gray-600 text-[10px] uppercase whitespace-nowrap">Người TH 1</th>
+                      <th className="text-left px-3 py-3 font-bold text-gray-600 text-[10px] uppercase whitespace-nowrap">VnEID TH 1</th>
+                      <th className="text-left px-3 py-3 font-bold text-gray-600 text-[10px] uppercase whitespace-nowrap">Người TH 2</th>
+                      <th className="text-left px-3 py-3 font-bold text-gray-600 text-[10px] uppercase whitespace-nowrap">VnEID TH 2</th>
+                      <th className="text-left px-3 py-3 font-bold text-gray-600 text-[10px] uppercase whitespace-nowrap">Email người mua</th>
+                      <th className="text-left px-3 py-3 font-bold text-gray-600 text-[10px] uppercase whitespace-nowrap">SĐT TH 1</th>
+                      <th className="text-left px-3 py-3 font-bold text-gray-600 text-[10px] uppercase whitespace-nowrap">SĐT TH 2</th>
+                      <th className="text-left px-3 py-3 font-bold text-gray-600 text-[10px] uppercase whitespace-nowrap">Địa chỉ TH 1</th>
+                      <th className="text-left px-3 py-3 font-bold text-gray-600 text-[10px] uppercase whitespace-nowrap">Địa chỉ TH 2</th>
                       <th className="text-center px-3 py-3 font-bold text-gray-600 text-[10px] uppercase whitespace-nowrap"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {loading ? (
-                      <tr><td colSpan={16} className="py-12 text-center">
+                      <tr><td colSpan={26} className="py-12 text-center">
                         <RefreshCw size={24} className="mx-auto mb-2 text-gray-300 animate-spin" />
                         <p className="text-sm text-gray-400">Đang tải...</p>
                       </td></tr>
@@ -262,12 +276,22 @@ export default function ContractsPage() {
                           <td className="px-3 py-2.5 text-xs text-gray-500">{c.effective_date || '—'}</td>
                           <td className="px-3 py-2.5 text-xs text-gray-500">{c.expiry_date || '—'}</td>
                           <td className="px-3 py-2.5 text-xs text-gray-700 font-medium truncate max-w-[120px]">{c.customer_name || '—'}</td>
+                          <td className="px-3 py-2.5 text-xs text-gray-600 font-mono">{c.customer_phone || '—'}</td>
                           <td className="px-3 py-2.5 text-xs text-gray-500">{c.person_in_charge || '—'}</td>
                           <td className="px-3 py-2.5 text-right text-xs font-bold text-indigo-600">{c.contract_value ? fmtVND(c.contract_value) : '—'}</td>
                           <td className="px-3 py-2.5 text-right text-xs font-bold text-emerald-600">{c.actual_value ? fmtVND(c.actual_value) : '—'}</td>
                           <td className="px-3 py-2.5 text-right text-xs text-gray-600">{c.executed_amount ? fmtVND(c.executed_amount) : '0'}</td>
                           <td className="px-3 py-2.5 text-right text-xs text-emerald-600">{c.paid_amount ? fmtVND(c.paid_amount) : '0'}</td>
                           <td className="px-3 py-2.5 text-right text-xs text-red-600 font-semibold">{c.debt_amount ? fmtVND(c.debt_amount) : '0'}</td>
+                          <td className="px-3 py-2.5 text-xs text-gray-600 min-w-[140px]">{c.beneficiary_name_1 || '—'}</td>
+                          <td className="px-3 py-2.5 text-xs text-gray-600 min-w-[140px]">{c.beneficiary_vneid_1 || '—'}</td>
+                          <td className="px-3 py-2.5 text-xs text-gray-600 min-w-[140px]">{c.beneficiary_name_2 || '—'}</td>
+                          <td className="px-3 py-2.5 text-xs text-gray-600 min-w-[140px]">{c.beneficiary_vneid_2 || '—'}</td>
+                          <td className="px-3 py-2.5 text-xs text-gray-600 min-w-[180px]">{c.buyer_email || '—'}</td>
+                          <td className="px-3 py-2.5 text-xs text-gray-600 font-mono">{c.beneficiary_phone_1 || '—'}</td>
+                          <td className="px-3 py-2.5 text-xs text-gray-600 font-mono">{c.beneficiary_phone_2 || '—'}</td>
+                          <td className="px-3 py-2.5 text-xs text-gray-600 min-w-[220px]">{c.beneficiary_address_1 || '—'}</td>
+                          <td className="px-3 py-2.5 text-xs text-gray-600 min-w-[220px]">{c.beneficiary_address_2 || '—'}</td>
                           <td className="px-3 py-2.5 text-center">
                             <button onClick={() => setSelected(c)}
                               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-600 text-[10px] font-semibold hover:bg-indigo-100 transition-all opacity-0 group-hover:opacity-100">
@@ -282,12 +306,13 @@ export default function ContractsPage() {
                   {!loading && contracts.length > 0 && (
                     <tfoot>
                       <tr className="bg-gray-50 border-t-2 border-gray-200">
-                        <td colSpan={10} className="px-3 py-2.5 text-right text-xs font-bold text-gray-600">Tổng trang này:</td>
+                        <td colSpan={11} className="px-3 py-2.5 text-right text-xs font-bold text-gray-600">Tổng trang này:</td>
                         <td className="px-3 py-2.5 text-right text-xs font-extrabold text-indigo-700">{fmtVND(totalContractValue)}</td>
                         <td className="px-3 py-2.5"></td>
                         <td className="px-3 py-2.5"></td>
                         <td className="px-3 py-2.5 text-right text-xs font-extrabold text-emerald-700">{fmtVND(totalPaid)}</td>
                         <td className="px-3 py-2.5 text-right text-xs font-extrabold text-red-700">{fmtVND(totalDebt)}</td>
+                        <td colSpan={9}></td>
                         <td></td>
                       </tr>
                     </tfoot>
@@ -324,6 +349,7 @@ function ContractDetailModal({ contract: c, onClose }: { contract: Contract; onC
     { title: 'Thông tin hợp đồng', rows: [
       { label: 'Tên hợp đồng', value: c.contract_name },
       { label: 'Số hợp đồng', value: c.contract_code },
+      { label: 'Mã hợp đồng Getfly', value: c.source_contract_code },
       { label: 'Trạng thái', value: c.contract_status },
       { label: 'Kiểu hợp đồng', value: c.contract_type },
       { label: 'Số ngày còn lại', value: c.remaining_days !== null ? String(c.remaining_days) : null },
@@ -331,6 +357,7 @@ function ContractDetailModal({ contract: c, onClose }: { contract: Contract; onC
       { label: 'Ngày có hiệu lực', value: c.effective_date },
       { label: 'Ngày hết hiệu lực', value: c.expiry_date },
       { label: 'Khách hàng', value: c.customer_name },
+      { label: 'SĐT khách hàng', value: c.customer_phone },
       { label: 'Người phụ trách', value: c.person_in_charge },
     ]},
     { title: 'Tài chính', rows: [

@@ -21,7 +21,12 @@ export async function GET(req: NextRequest) {
     // Search filter
     if (search) {
       query = query.or(
-        `contract_name.ilike.%${search}%,contract_code.ilike.%${search}%,customer_name.ilike.%${search}%,beneficiary_name_1.ilike.%${search}%,beneficiary_name_2.ilike.%${search}%`
+        [
+          `contract_name.ilike.%${search}%`,
+          `contract_code.ilike.%${search}%`,
+          `source_contract_code.ilike.%${search}%`,
+          `customer_phone.ilike.%${search}%`,
+        ].join(',')
       );
     }
 
