@@ -4,6 +4,8 @@ import { findOrCreateFolder, uploadUrlToDriveIfMissing } from '@/lib/gdrive';
 
 const GETFLY_API_KEY = process.env.GETFLY_API_KEY || '';
 const GETFLY_BASE = 'https://blackstonesdvtl.getflycrm.com/api/v3';
+const GETFLY_PAGE_DELAY_MS = 150;
+const GETFLY_MAX_RETRIES = 4;
 
 type AccountRow = ReturnType<typeof mapAccount>;
 
@@ -75,8 +77,40 @@ const DOC_DEFINITIONS = [
   },
 ] as const;
 
+export const maxDuration = 300;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function getflyFetchWithRetry(url: string, attempt = 0): Promise<Response> {
+  const res = await fetch(url, {
+    headers: {
+      'X-API-KEY': GETFLY_API_KEY,
+      Accept: 'application/json',
+    },
+    cache: 'no-store',
+  });
+
+  if (res.status === 429 && attempt < GETFLY_MAX_RETRIES) {
+    const retryAfter = Number(res.headers.get('retry-after'));
+    const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
+      ? retryAfter * 1000
+      : 1000 * 2 ** attempt;
+    console.warn(`[Sync Accounts] Rate limited, retrying in ${waitMs}ms (attempt ${attempt + 1}/${GETFLY_MAX_RETRIES})`);
+    await sleep(waitMs);
+    return getflyFetchWithRetry(url, attempt + 1);
+  }
+
+  return res;
+}
+
 // ── Helper: fetch all accounts from GetFly with pagination ──
 async function fetchAllAccounts(): Promise<Record<string, unknown>[]> {
+  if (!GETFLY_API_KEY) {
+    throw new Error('Thiếu GETFLY_API_KEY để sync tài khoản GetFly.');
+  }
+
   const allRecords: Record<string, unknown>[] = [];
   let page = 1;
   const perPage = 50;
@@ -84,13 +118,7 @@ async function fetchAllAccounts(): Promise<Record<string, unknown>[]> {
   while (true) {
     const url = `${GETFLY_BASE}/accounts?page=${page}&per_page=${perPage}`;
 
-    const res = await fetch(url, {
-      headers: {
-        'X-API-KEY': GETFLY_API_KEY,
-        Accept: 'application/json',
-      },
-      cache: 'no-store',
-    });
+    const res = await getflyFetchWithRetry(url);
 
     if (!res.ok) {
       const errText = await res.text();
@@ -114,6 +142,7 @@ async function fetchAllAccounts(): Promise<Record<string, unknown>[]> {
       break;
     }
 
+    await sleep(GETFLY_PAGE_DELAY_MS);
     page++;
   }
 

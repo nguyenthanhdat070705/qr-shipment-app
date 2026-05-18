@@ -82,7 +82,9 @@ export default function CRMPage() {
     setSyncing(true);
     setSyncResult(null);
     try {
-      const res = await fetch('/api/sync-getfly-accounts?sync_drive=true&create_new_folders=true', { method: 'POST' });
+      // Keep the top-level CRM sync lightweight, like the earlier versions:
+      // sync GetFly data first, without coupling the button to Drive work.
+      const res = await fetch('/api/sync-getfly-accounts?sync_drive=false&create_new_folders=false', { method: 'POST' });
       const data = await res.json();
       setSyncResult(data);
     } catch (err) {

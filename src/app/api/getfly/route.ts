@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
         }, 0);
 
         return NextResponse.json({
-          accounts_total: accounts.total_record || accounts.records?.length || 0,
+          accounts_total: accounts.pagination?.total_record || accounts.total_record || accounts.records?.length || 0,
           deals_recent: dealRecords.slice(0, 5),
           deals_total_value: totalDealValue,
           deals_count: dealRecords.length,
