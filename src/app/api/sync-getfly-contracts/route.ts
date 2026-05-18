@@ -91,8 +91,8 @@ function webHeaders(accessToken: string) {
   };
 }
 
-// ── Helper: fetch all sale contracts from the exact GetFly contracts screen ──
-async function fetchAllContracts(): Promise<Record<string, unknown>[]> {
+// ── Helper: fetch sale contracts from the exact GetFly contracts screen ──
+async function fetchAllWebContracts(): Promise<Record<string, unknown>[]> {
   const accessToken = await getWebAccessToken();
   const allRecords: Record<string, unknown>[] = [];
   let page = 1;
@@ -131,6 +131,57 @@ async function fetchAllContracts(): Promise<Record<string, unknown>[]> {
     if (records.length < perPage) break;
     if (page >= 200) {
       console.warn('[Sync Contracts] Hit 200-page safety limit.');
+      break;
+    }
+
+    page++;
+  }
+
+  return allRecords;
+}
+
+// ── Helper: fetch all sale contracts from the official API for full coverage ──
+async function fetchAllApiContracts(): Promise<Record<string, unknown>[]> {
+  if (!GETFLY_API_KEY) return [];
+
+  const allRecords: Record<string, unknown>[] = [];
+  let page = 1;
+  const perPage = 50;
+
+  while (true) {
+    const url = new URL(`${GETFLY_BASE}/orders`);
+    url.searchParams.set('order_type', '2');
+    url.searchParams.set('page', String(page));
+    url.searchParams.set('per_page', String(perPage));
+
+    const res = await fetch(url.toString(), {
+      headers: {
+        'X-API-KEY': GETFLY_API_KEY,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`[Sync Contracts] Official API page ${page} returned ${res.status}: ${errText.substring(0, 200)}`);
+      throw new Error(`GetFly official API Error ${res.status}: ${errText.substring(0, 200)}`);
+    }
+
+    const data = await res.json();
+    const records: Record<string, unknown>[] = data.records || data.data || [];
+
+    console.log(`[Sync Contracts] Official API page ${page}: got ${records.length} records | Total: ${allRecords.length + records.length}`);
+
+    if (records.length === 0) break;
+    allRecords.push(...records);
+
+    const totalRecord = data.pagination?.total_record || data.total_record;
+    if (totalRecord && allRecords.length >= parseInt(String(totalRecord), 10)) break;
+    if (records.length < perPage) break;
+    if (page >= 200) {
+      console.warn('[Sync Contracts] Official API hit 200-page safety limit.');
       break;
     }
 
@@ -293,7 +344,7 @@ function mapContractType(c: Record<string, unknown>): string | null {
 }
 
 // ── Map exact GetFly sale-contract list payload to DB schema ──
-function mapContract(c: Record<string, unknown>) {
+function mapWebContract(c: Record<string, unknown>) {
   const sourceContractCode = str(c.contract_code);
   const rawContractName = str(c.contract_name);
   const customerPhone = extractCustomerPhone(rawContractName);
@@ -343,11 +394,100 @@ function mapContract(c: Record<string, unknown>) {
   };
 }
 
+function mapApiStatus(val: unknown): string | null {
+  const s = String(val || '').trim();
+  switch (s) {
+    case '1': return 'Đang xử lý';
+    case '2': return 'Hoàn thành';
+    case '3': return 'Đã hủy';
+    default: return s || null;
+  }
+}
+
+// ── Map official API order payload for full-list fallback/coverage ──
+function mapApiContract(c: Record<string, unknown>) {
+  const accountInfo = (c.account_info || {}) as Record<string, unknown>;
+  const contractCode = str(c.order_code || c.contract_code || c.code);
+  const accountPhone = str(c.account_phone || accountInfo.phone);
+
+  return {
+    getfly_contract_id: str(c.order_id || c.contract_id || c.id),
+    contract_name: str(c.order_code || c.contract_name || c.order_name || c.name),
+    contract_code: contractCode,
+    source_contract_code: contractCode,
+    contract_status: mapApiStatus(c.status || c.order_status || c.contract_status),
+    contract_status_code: str(c.status || c.order_status || c.contract_status),
+    contract_type: str(c.contract_type || c.type || c.type_name),
+    remaining_days: intOrNull(c.remaining_days),
+
+    created_date: str(c.created_at || c.created_date || c.create_date),
+    effective_date: str(c.effective_date || c.start_date || c.order_date),
+    expiry_date: str(c.expiry_date || c.end_date || c.expire_date),
+
+    customer_name: str(c.account_name || c.customer_name || accountInfo.account_code),
+    customer_phone: accountPhone,
+    person_in_charge: str(c.assigned_name || c.person_in_charge || c.manager_name),
+
+    contract_value: num(c.amount || c.contract_value || c.value || c.total_amount),
+    actual_value: num(c.f_amount || c.actual_value || c.real_value),
+    executed_amount: num(c.executed_amount || c.done_amount),
+    paid_amount: num(c.paid_amount || c.payment_amount),
+    debt_amount: num(c.debt_amount || c.debt),
+
+    beneficiary_name_1: str(c.beneficiary_name_1 || c.ten_nguoi_thu_huong_so_1),
+    beneficiary_vneid_1: str(c.beneficiary_vneid_1 || c.vneid_nguoi_thu_huong_1),
+    beneficiary_phone_1: str(c.beneficiary_phone_1 || c.so_dien_thoai_nguoi_thu_huong_01),
+    beneficiary_address_1: str(c.beneficiary_address_1 || c.dia_chi_nguoi_thu_huong_01),
+
+    beneficiary_name_2: str(c.beneficiary_name_2 || c.ten_nguoi_thu_huong_02),
+    beneficiary_vneid_2: str(c.beneficiary_vneid_2 || c.vneid_nguoi_thu_huong_02),
+    beneficiary_phone_2: str(c.beneficiary_phone_2 || c.so_dien_thoai_nguoi_thu_huong_02),
+    beneficiary_address_2: str(c.beneficiary_address_2 || c.dia_chi_nguoi_thu_huong_02),
+
+    buyer_email: str(c.buyer_email || c.email_nguoi_mua || accountInfo.email),
+
+    account_id: str(c.account_id || accountInfo.account_id),
+    account_phone: accountPhone,
+
+    synced_at: new Date().toISOString(),
+    raw_data: c,
+  };
+}
+
+function getApiContractId(c: Record<string, unknown>) {
+  return str(c.order_id || c.contract_id || c.id);
+}
+
+function buildContractRows(
+  apiContracts: Record<string, unknown>[],
+  webContracts: Record<string, unknown>[],
+) {
+  const webById = new Map(
+    webContracts
+      .map((contract) => [str(contract.contract_id), contract] as const)
+      .filter(([id]) => !!id),
+  );
+
+  const rows = apiContracts.map((contract) => {
+    const id = getApiContractId(contract);
+    const webContract = id ? webById.get(id) : undefined;
+    return webContract ? mapWebContract(webContract) : mapApiContract(contract);
+  });
+
+  const apiIds = new Set(apiContracts.map(getApiContractId).filter(Boolean));
+  for (const contract of webContracts) {
+    const id = str(contract.contract_id);
+    if (id && !apiIds.has(id)) rows.push(mapWebContract(contract));
+  }
+
+  return rows.filter((row) => row.getfly_contract_id);
+}
+
 // ═══════════════════════════════════════════════════════
 // Google Drive Sync Per Contract
 // ═══════════════════════════════════════════════════════
 async function syncContractDocsToDrive(
-  contractRow: ReturnType<typeof mapContract>,
+  contractRow: ReturnType<typeof mapWebContract> | ReturnType<typeof mapApiContract>,
   accountData: Record<string, unknown> | null,
   stats: DriveSyncStats,
 ): Promise<{
@@ -443,10 +583,19 @@ export async function POST(req: NextRequest) {
     const syncDrive = url.searchParams.get('sync_drive') !== 'false';
 
     console.log('[Sync Contracts] Starting sync...');
-    const contracts = await fetchAllContracts();
-    console.log(`[Sync Contracts] Fetched ${contracts.length} contracts from GetFly`);
 
-    if (contracts.length === 0) {
+    let webContracts: Record<string, unknown>[] = [];
+    try {
+      webContracts = await fetchAllWebContracts();
+      console.log(`[Sync Contracts] Fetched ${webContracts.length} contracts from exact GetFly screen`);
+    } catch (webErr) {
+      console.warn('[Sync Contracts] Exact screen fetch unavailable:', webErr);
+    }
+
+    const apiContracts = await fetchAllApiContracts();
+    console.log(`[Sync Contracts] Fetched ${apiContracts.length} contracts from official GetFly API`);
+
+    if (apiContracts.length === 0 && webContracts.length === 0) {
       return NextResponse.json({
         success: true,
         synced: 0,
@@ -454,8 +603,11 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Map to our schema
-    const rows = contracts.map(mapContract).filter(r => r.getfly_contract_id);
+    // Use the official API for full coverage, then overlay richer exact-screen
+    // payloads when they are available for the same contract IDs.
+    const rows = apiContracts.length > 0
+      ? buildContractRows(apiContracts, webContracts)
+      : webContracts.map(mapWebContract).filter((row) => row.getfly_contract_id);
     const driveStats: DriveSyncStats = {
       foldersCreated: 0,
       contractFoldersCreated: 0,
