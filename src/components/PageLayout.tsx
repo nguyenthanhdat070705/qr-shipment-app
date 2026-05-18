@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, createContext, useContext } f
 import {
   Menu, X, ChevronRight, Shield, LogOut,
   Truck, Warehouse, LayoutGrid, User,
-  ShoppingCart, PackageCheck, TruckIcon,
+  ShoppingCart, PackageCheck, ClipboardCheck, TruckIcon,
   Bell, Search, BarChart3, Settings, BookOpen, Users,
   Package, Clock, ExternalLink, CheckCheck, Receipt,
   Crown, UserPlus, List, Scale, DollarSign, Building, HardDrive,
@@ -84,7 +84,7 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
       iconBg: 'bg-rose-500/15',
       section: 'Quản trị',
     },
-    ...(userRole !== 'sales' ? [{
+    ...(userRole !== 'sales' && userRole !== 'warehouse' ? [{
       icon: <Search size={18} />,
       label: 'Khách hàng tìm kiếm',
       desc: 'Tra cứu công khai không cần đăng nhập',
@@ -117,7 +117,26 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
     } as MenuItem] : []),
 
     /* ── Core SCM Flow ── */
-    {
+    ...(warehouseRole ? [
+      {
+        icon: <PackageCheck size={18} />,
+        label: 'Quản lý xuất nhập',
+        desc: 'Tổng hợp dữ liệu xuất nhập kho',
+        href: '/inout-management',
+        color: 'text-blue-400',
+        iconBg: 'bg-blue-500/15',
+        section: 'Chuỗi cung ứng',
+      } as MenuItem,
+      {
+        icon: <ClipboardCheck size={18} />,
+        label: 'Kiểm kho',
+        desc: 'Kiểm kê & đối chiếu tồn kho',
+        href: '/stocktake',
+        color: 'text-pink-400',
+        iconBg: 'bg-pink-500/15',
+        section: 'Chuỗi cung ứng',
+      } as MenuItem,
+    ] : [{
       icon: <Warehouse size={18} />,
       label: 'Trung tâm Kho Vận',
       desc: 'Quản lý kho & vận hành',
@@ -125,7 +144,7 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
       color: 'text-emerald-400',
       iconBg: 'bg-emerald-500/15',
       section: 'Chuỗi cung ứng',
-    },
+    } as MenuItem]),
 
     /* ── Zalo Automation (admin) ── */
     ...(userRole === 'admin' ? [{
