@@ -237,6 +237,13 @@
 .pm-btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* ── Search ────────────────────────────── */
+.pm-filter-row {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) auto;
+  gap: 12px;
+  align-items: stretch;
+  margin-bottom: 20px;
+}
 .pm-search-bar {
   display: flex;
   align-items: center;
@@ -245,7 +252,6 @@
   border: 1.5px solid #e2e8f0;
   border-radius: 12px;
   padding: 10px 16px;
-  margin-bottom: 20px;
   transition: border-color 0.2s;
 }
 .pm-search-bar:focus-within {
@@ -267,6 +273,55 @@
   cursor: pointer;
   color: #94a3b8;
   padding: 2px;
+}
+.pm-qty-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 8px 10px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.pm-qty-filter:focus-within {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.08);
+}
+.pm-qty-filter svg {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+.pm-qty-filter select,
+.pm-qty-filter input {
+  height: 30px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #334155;
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  outline: none;
+}
+.pm-qty-filter select {
+  min-width: 126px;
+  padding: 0 8px;
+  cursor: pointer;
+}
+.pm-qty-filter input {
+  width: 68px;
+  padding: 0 9px;
+}
+.pm-qty-filter input:focus,
+.pm-qty-filter select:focus {
+  border-color: #a78bfa;
+  background: #fff;
+}
+.pm-qty-filter-separator {
+  color: #94a3b8;
+  font-weight: 700;
 }
 
 /* ── Table ────────────────────────────── */
@@ -1745,6 +1800,7 @@
 
 .dark .pm-header,
 .dark .pm-search-bar,
+.dark .pm-qty-filter,
 .dark .pm-table-wrap,
 .dark .pm-pagination {
   background: #111a33;
@@ -1764,6 +1820,13 @@
 }
 
 .dark .pm-search-bar input {
+  color: #e5edf8;
+}
+
+.dark .pm-qty-filter select,
+.dark .pm-qty-filter input {
+  background: #162240;
+  border-color: rgba(255, 255, 255, 0.12);
   color: #e5edf8;
 }
 
@@ -1837,6 +1900,19 @@
     width: 100%;
     justify-content: flex-start;
   }
+
+  .pm-filter-row {
+    grid-template-columns: 1fr;
+  }
+
+  .pm-qty-filter {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .pm-qty-filter select {
+    flex: 1;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1859,6 +1935,11 @@
 
   .pm-search-bar {
     padding: 9px 12px;
+  }
+
+  .pm-qty-filter input {
+    flex: 1;
+    min-width: 88px;
   }
 
   .pm-table {

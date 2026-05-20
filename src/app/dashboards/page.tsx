@@ -10,13 +10,19 @@ export default function DashboardsHubPage() {
   const [userRole, setUserRole] = useState<UserRole>('sales');
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('auth_user');
-      if (raw) {
-        const u = JSON.parse(raw);
-        setUserRole(getUserRole(u.email || ''));
-      }
-    } catch { /* ignore */ }
+    const timer = window.setTimeout(() => {
+      try {
+        const raw = localStorage.getItem('auth_user');
+        if (raw) {
+          const u = JSON.parse(raw);
+          setUserRole(getUserRole(u.email || ''));
+        }
+      } catch { /* ignore */ }
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, []);
 
   const dashboards = [
