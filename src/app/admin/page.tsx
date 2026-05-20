@@ -282,7 +282,14 @@ export default function AdminDashboard() {
         {activeWarnings.length > 0 && (
           <div className="flex items-start gap-3 rounded-2xl border border-amber-100 bg-amber-50 px-5 py-4 text-sm font-semibold text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
             <AlertCircle size={18} className="mt-0.5 flex-shrink-0" />
-            Một phần dữ liệu nhập/xuất/tồn chưa đọc được. Bảng vẫn hiển thị các phần dữ liệu còn lại.
+            <div>
+              <p>Một phần dữ liệu nhập/xuất/tồn cần rà lại. Bảng vẫn hiển thị các phần dữ liệu hợp lệ.</p>
+              <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs font-medium">
+                {activeWarnings.map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+              </ul>
+            </div>
           </div>
         )}
 

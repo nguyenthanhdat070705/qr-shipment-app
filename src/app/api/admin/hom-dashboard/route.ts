@@ -16,6 +16,8 @@ const dimensionKeys = [
   'Thanh',
 ] as const;
 
+const MAX_REASONABLE_HOM_IMPORT_QTY = 500;
+
 function numberValue(value: unknown): number {
   const num = Number(value);
   return Number.isFinite(num) ? num : 0;
@@ -60,6 +62,12 @@ function parentStatus(row: Record<string, unknown>, parentKey: string): string {
   const parent = row[parentKey];
   if (!parent || typeof parent !== 'object') return '';
   return textValue((parent as Record<string, unknown>).trang_thai);
+}
+
+function parentText(row: Record<string, unknown>, parentKey: string, field: string): string {
+  const parent = row[parentKey];
+  if (!parent || typeof parent !== 'object') return '';
+  return textValue((parent as Record<string, unknown>)[field]);
 }
 
 function uniqueOptions(rows: DashboardOutputRow[], key: string): string[] {
@@ -110,7 +118,7 @@ export async function GET() {
           ma_hom,
           ten_hom,
           so_luong_thuc_nhan,
-          fact_nhap_hang!inner(trang_thai)
+          fact_nhap_hang!inner(ma_phieu_nhap, trang_thai)
         `)
         .range(0, 9999),
       supabase
@@ -137,12 +145,19 @@ export async function GET() {
     const importQtyByCode = new Map<string, number>();
     const exportQtyByCode = new Map<string, number>();
     const stockQtyByCode = new Map<string, number>();
+    const abnormalImports: string[] = [];
 
     if (!importRes.error) {
       for (const item of importRes.data || []) {
         const row = item as Record<string, unknown>;
         const status = parentStatus(row, 'fact_nhap_hang');
         if (['cancelled', 'rejected'].includes(status)) continue;
+        const qty = numberValue(row.so_luong_thuc_nhan);
+        if (qty > MAX_REASONABLE_HOM_IMPORT_QTY) {
+          const receiptCode = parentText(row, 'fact_nhap_hang', 'ma_phieu_nhap') || 'không rõ phiếu';
+          abnormalImports.push(`${receiptCode}/${textValue(row.ma_hom)}=${qty.toLocaleString('vi-VN')}`);
+          continue;
+        }
         addToMap(importQtyByCode, row.ma_hom, row.so_luong_thuc_nhan);
       }
     }
@@ -245,6 +260,9 @@ export async function GET() {
       rows: rows.sort((a, b) => b.totalExport - a.totalExport || b.totalImport - a.totalImport || a.ma_hom.localeCompare(b.ma_hom, 'vi')),
       warnings: {
         imports: importRes.error?.message || null,
+        importAnomalies: abnormalImports.length
+          ? `Đã loại ${abnormalImports.length} dòng nhập bất thường khỏi tổng: ${abnormalImports.slice(0, 6).join(', ')}${abnormalImports.length > 6 ? '...' : ''}`
+          : null,
         exports: exportRes.error?.message || null,
         inventory: inventoryRes.error?.message || null,
       },
