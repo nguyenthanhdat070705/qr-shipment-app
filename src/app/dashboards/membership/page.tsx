@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import PageLayout from '@/components/PageLayout';
 import {
   Activity, BarChart3, CalendarDays, Crown, Database, FileCheck2, Filter,
-  Eye, LineChart, PieChart, RefreshCw, Search, ShieldCheck, Sparkles, TrendingUp,
+  Eye, HandCoins, LineChart, PieChart, Receipt, RefreshCw, Search, ShieldCheck, Sparkles, TrendingUp,
   Users, WalletCards
 } from 'lucide-react';
 
@@ -183,7 +183,7 @@ function KpiCard({ label, value, sub, icon, tone }: {
   value: string;
   sub: string;
   icon: React.ReactNode;
-  tone: 'indigo' | 'emerald' | 'amber' | 'rose' | 'cyan' | 'slate';
+  tone: 'indigo' | 'emerald' | 'amber' | 'rose' | 'cyan' | 'slate' | 'violet' | 'teal';
 }) {
   const tones = {
     indigo: { iconBg: 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white border-indigo-200 shadow-indigo-500/30', cardBg: 'from-indigo-50 via-white to-violet-50/40 border-indigo-100', orb: 'bg-indigo-300/30' },
@@ -192,6 +192,8 @@ function KpiCard({ label, value, sub, icon, tone }: {
     rose: { iconBg: 'bg-gradient-to-br from-rose-500 to-pink-600 text-white border-rose-200 shadow-rose-500/30', cardBg: 'from-rose-50 via-white to-pink-50/40 border-rose-100', orb: 'bg-rose-300/30' },
     cyan: { iconBg: 'bg-gradient-to-br from-cyan-500 to-sky-600 text-white border-cyan-200 shadow-cyan-500/30', cardBg: 'from-cyan-50 via-white to-sky-50/40 border-cyan-100', orb: 'bg-cyan-300/30' },
     slate: { iconBg: 'bg-gradient-to-br from-slate-500 to-slate-700 text-white border-slate-200 shadow-slate-500/30', cardBg: 'from-slate-50 via-white to-gray-50/40 border-slate-100', orb: 'bg-slate-300/30' },
+    violet: { iconBg: 'bg-gradient-to-br from-violet-500 to-purple-600 text-white border-violet-200 shadow-violet-500/30', cardBg: 'from-violet-50 via-white to-purple-50/40 border-violet-100', orb: 'bg-violet-300/30' },
+    teal: { iconBg: 'bg-gradient-to-br from-teal-500 to-cyan-600 text-white border-teal-200 shadow-teal-500/30', cardBg: 'from-teal-50 via-white to-cyan-50/40 border-teal-100', orb: 'bg-teal-300/30' },
   };
   const t = tones[tone];
 
@@ -378,6 +380,12 @@ export default function MembershipAdminDashboardPage() {
   const typeMax = useMemo(() => Math.max(1, ...data.charts.types.map((item) => item.value)), [data.charts.types]);
   const remainingMax = useMemo(() => Math.max(1, ...data.charts.remaining.map((item) => item.count)), [data.charts.remaining]);
 
+  const paidAmount = data.summary.paid_amount;
+  const taxAmount = paidAmount * 8 / 108;
+  const grossRevenue = paidAmount - taxAmount;
+  const grossCommission = grossRevenue * 0.10;
+  const netCommission = grossCommission * 0.90;
+
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     const hasTextSearch = searchInput.trim().length > 0;
@@ -506,11 +514,13 @@ export default function MembershipAdminDashboardPage() {
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</div>
         )}
 
-        <div className="relative grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
+        <div className="relative grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-8">
           <KpiCard label="Tổng HĐ" value={loading ? '...' : fmtNumber(data.summary.total_contracts)} sub={`${fmtNumber(data.summary.beneficiaries)} người thụ hưởng`} icon={<Crown size={20} />} tone="indigo" />
           <KpiCard label="Giá trị HĐ" value={loading ? '...' : fmtMoney(data.summary.total_value)} sub={`TB ${fmtMoney(data.summary.average_value)} / HĐ`} icon={<WalletCards size={20} />} tone="cyan" />
           <KpiCard label="Giá trị thực" value={loading ? '...' : fmtMoney(data.summary.actual_value)} sub={`Đã TH ${fmtMoney(data.summary.executed_amount)}`} icon={<TrendingUp size={20} />} tone="emerald" />
           <KpiCard label="Đã thanh toán" value={loading ? '...' : fmtMoney(data.summary.paid_amount)} sub={`Tỷ lệ thu ${data.summary.collection_rate}%`} icon={<ShieldCheck size={20} />} tone="emerald" />
+          <KpiCard label="Tiền thuế" value={loading ? '...' : fmtMoney(taxAmount)} sub={`VAT 8% · DT thực ${fmtMoney(grossRevenue)}`} icon={<Receipt size={20} />} tone="violet" />
+          <KpiCard label="Hoa hồng CTV" value={loading ? '...' : fmtMoney(netCommission)} sub={`Gộp ${fmtMoney(grossCommission)} − thuế TNCN 10%`} icon={<HandCoins size={20} />} tone="teal" />
           <KpiCard label="Công nợ" value={loading ? '...' : fmtMoney(data.summary.debt_amount)} sub={`Tỷ lệ nợ ${data.summary.debt_rate}%`} icon={<Activity size={20} />} tone="rose" />
           <KpiCard label="Sắp hết hạn" value={loading ? '...' : fmtNumber(data.summary.expiring_soon)} sub={`${fmtNumber(data.summary.expired)} HĐ đã quá hạn`} icon={<CalendarDays size={20} />} tone="amber" />
         </div>
