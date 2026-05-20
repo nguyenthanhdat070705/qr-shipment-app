@@ -15,13 +15,13 @@ function StatCard({
   icon: React.ReactNode; color: string; bg: string; border: string;
 }) {
   return (
-    <div className={`rounded-2xl bg-white dark:bg-[#162240] border ${border} dark:border-white/10 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow`}>
-      <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${bg} dark:bg-white/5 flex-shrink-0`}>
+    <div className={`rounded-2xl bg-white dark:bg-[#162240] border ${border} dark:border-white/10 p-3 sm:p-5 flex items-center gap-2 sm:gap-4 shadow-sm hover:shadow-md transition-shadow`}>
+      <div className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl ${bg} dark:bg-white/5 flex-shrink-0`}>
         <span className={`${color} dark:text-white`}>{icon}</span>
       </div>
-      <div>
-        <p className="text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{value}</p>
-        <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide">{label}</p>
+      <div className="min-w-0">
+        <p className="text-lg sm:text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{value}</p>
+        <p className="text-[10px] sm:text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide truncate">{label}</p>
       </div>
     </div>
   );
@@ -81,6 +81,7 @@ export function ReceiptManagementContent() {
       key: 'gr_code',
       label: 'Mã phiếu',
       sortable: true,
+      primaryOnMobile: true,
       render: (row: GoodsReceipt) => (
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
@@ -93,6 +94,7 @@ export function ReceiptManagementContent() {
     {
       key: 'po',
       label: 'PO liên kết',
+      hideOnMobile: true,
       render: (row: GoodsReceipt) => (
         <span className="text-purple-600 font-mono text-xs">
           {(row.purchase_order as unknown as Record<string, unknown> | undefined)?.po_code as string || '—'}
@@ -110,6 +112,7 @@ export function ReceiptManagementContent() {
       key: 'received_by',
       label: 'Người nhận (Kho)',
       sortable: true,
+      hideOnMobile: true,
     },
     {
       key: 'status',
@@ -144,6 +147,7 @@ export function ReceiptManagementContent() {
     {
       key: 'actions',
       label: 'Hành động',
+      hideOnMobile: true,
       render: (row: GoodsReceipt) => (
         <button
           onClick={(e) => {
@@ -161,13 +165,13 @@ export function ReceiptManagementContent() {
 
   return (
     <>
-      <div className="mb-6">
-        <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Quản lý nhập hàng</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Thu mua đối chiếu và duyệt hàng kho đã nhận</p>
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white">Quản lý nhập hàng</h1>
+        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">Thu mua đối chiếu và duyệt hàng kho đã nhận</p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
         <StatCard label="Tổng phiếu" value={total} icon={<PackageCheck size={22} />} color="text-[#1B2A4A]" bg="bg-[#eef1f7]" border="border-[#d5dbe9]" />
         <StatCard label="Cần duyệt" value={pendingCount} icon={<Clock size={22} />} color="text-yellow-600" bg="bg-yellow-50" border="border-yellow-200" />
         <StatCard label="Đã duyệt" value={completedCount} icon={<CheckCircle size={22} />} color="text-emerald-600" bg="bg-emerald-50" border="border-emerald-200" />

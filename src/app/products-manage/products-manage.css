@@ -1871,4 +1871,124 @@
   .pm-table td:nth-child(7) {
     display: none;
   }
+
+  /* ── Modal & Form responsive ─────────────── */
+  .pm-form-overlay {
+    padding: 8px;
+    align-items: flex-end;
+  }
+  .pm-form-card,
+  .excel-modal {
+    max-width: 100%;
+    max-height: 95vh;
+    border-radius: 18px 18px 0 0;
+  }
+  .pm-form-header,
+  .excel-modal-header {
+    padding: 14px 16px;
+  }
+  .pm-form-header h2,
+  .excel-modal-header h2 {
+    font-size: 1rem;
+  }
+  .excel-modal-subtitle {
+    font-size: 0.75rem;
+  }
+  .pm-form {
+    padding: 16px;
+  }
+  .pm-form-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .pm-form-actions,
+  .excel-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+  .pm-form-actions > *,
+  .excel-actions > * {
+    width: 100%;
+    justify-content: center;
+  }
+  .excel-modal-body {
+    padding: 16px;
+  }
+  .excel-steps {
+    padding: 10px 12px;
+    gap: 4px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    scrollbar-width: none;
+  }
+  .excel-steps::-webkit-scrollbar { display: none; }
+  .excel-step {
+    padding: 5px 10px;
+    font-size: 0.72rem;
+    flex-shrink: 0;
+  }
+  .excel-step span {
+    display: none;
+  }
+  .excel-step.active span {
+    display: inline;
+  }
+  .excel-upload-area {
+    padding: 32px 16px;
+  }
+  .excel-upload-area h3 {
+    font-size: 0.95rem;
+  }
+  .excel-mapping-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 10px 12px;
+  }
+  .excel-mapping-header-row {
+    display: none;
+  }
+  .excel-arrow {
+    display: none;
+  }
+  .excel-col-name {
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+  .excel-col-name::before {
+    content: "Excel: ";
+    color: #94a3b8;
+    font-weight: 500;
+    font-size: 0.78rem;
+  }
+  .excel-sample {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    padding-left: 0;
+  }
+  .excel-sample::before {
+    content: "Mẫu: ";
+    font-weight: 500;
+  }
+  .excel-preview-table {
+    font-size: 0.78rem;
+  }
+  .excel-preview-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .excel-done-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .pm-pagination {
+    padding: 10px;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .pm-pagination-status {
+    width: 100%;
+    text-align: center;
+    order: -1;
+  }
 }

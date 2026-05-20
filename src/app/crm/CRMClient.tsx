@@ -243,31 +243,31 @@ export default function CRMClient() {
   const totalPages = Math.ceil(total / LIMIT);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
 
       {/* ── Header ─────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-        <div className="flex flex-wrap gap-3 justify-between items-start">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 justify-between items-start">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Building2 size={22} className="text-violet-600" />
-              <h1 className="text-xl font-extrabold text-gray-900">1Office CRM</h1>
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <Building2 size={20} className="text-violet-600" />
+              <h1 className="text-lg sm:text-xl font-extrabold text-gray-900">1Office CRM</h1>
               <span className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${autoSync ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
                 {autoSync ? <Wifi size={11} /> : <WifiOff size={11} />}
                 {autoSync ? 'Live' : 'Manual'}
               </span>
             </div>
-            <p className="text-sm text-gray-500">
+            <p className="text-xs sm:text-sm text-gray-500">
               {lastRefresh ? `Cập nhật: ${timeAgo(lastRefresh.toISOString())}` : 'Chưa tải dữ liệu'}
               {stats?.last_sync && ` · Sync: ${timeAgo(stats.last_sync.finished_at)}`}
             </p>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
             {/* Auto sync toggle */}
             <button
               onClick={() => setAutoSync(v => !v)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-all border
+              className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all border min-h-[40px]
                 ${autoSync ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}
             >
               {autoSync ? <Wifi size={14} /> : <WifiOff size={14} />}
@@ -278,7 +278,7 @@ export default function CRMClient() {
             <button
               onClick={() => handleSync('delta')}
               disabled={syncing}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all disabled:opacity-50"
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all disabled:opacity-50 min-h-[40px]"
             >
               <RefreshCw size={14} className={syncing ? 'animate-spin' : ''} />
               Delta Sync
@@ -288,7 +288,7 @@ export default function CRMClient() {
             <button
               onClick={() => handleSync('full')}
               disabled={syncing}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold bg-violet-600 text-white hover:bg-violet-700 transition-all disabled:opacity-50 shadow-sm"
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-violet-600 text-white hover:bg-violet-700 transition-all disabled:opacity-50 shadow-sm min-h-[40px]"
             >
               <Download size={14} />
               Full Sync
@@ -305,38 +305,39 @@ export default function CRMClient() {
 
         {/* Stats row */}
         {stats && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
-            <div className="bg-violet-50 rounded-xl p-3 border border-violet-100">
-              <p className="text-xs text-violet-600 font-medium">Khách Hàng</p>
-              <p className="text-2xl font-extrabold text-violet-700">{stats.customers.total.toLocaleString()}</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-4">
+            <div className="bg-violet-50 rounded-xl p-2.5 sm:p-3 border border-violet-100">
+              <p className="text-[10px] sm:text-xs text-violet-600 font-medium">Khách Hàng</p>
+              <p className="text-xl sm:text-2xl font-extrabold text-violet-700">{stats.customers.total.toLocaleString()}</p>
             </div>
-            <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
-              <p className="text-xs text-blue-600 font-medium">Cơ Hội</p>
-              <p className="text-2xl font-extrabold text-blue-700">{stats.leads.total.toLocaleString()}</p>
+            <div className="bg-blue-50 rounded-xl p-2.5 sm:p-3 border border-blue-100">
+              <p className="text-[10px] sm:text-xs text-blue-600 font-medium">Cơ Hội</p>
+              <p className="text-xl sm:text-2xl font-extrabold text-blue-700">{stats.leads.total.toLocaleString()}</p>
             </div>
-            <div className="bg-amber-50 rounded-xl p-3 border border-amber-100">
-              <p className="text-xs text-amber-600 font-medium">Giá Trị Pipeline</p>
-              <p className="text-2xl font-extrabold text-amber-700">{fmtCurrency(stats.leads.total_value)}</p>
+            <div className="bg-amber-50 rounded-xl p-2.5 sm:p-3 border border-amber-100">
+              <p className="text-[10px] sm:text-xs text-amber-600 font-medium">Pipeline</p>
+              <p className="text-xl sm:text-2xl font-extrabold text-amber-700">{fmtCurrency(stats.leads.total_value)}</p>
             </div>
-            <div className="bg-rose-50 rounded-xl p-3 border border-rose-100">
-              <p className="text-xs text-rose-600 font-medium">Tasks Chờ</p>
-              <p className="text-2xl font-extrabold text-rose-700">{stats.tasks.pending}</p>
+            <div className="bg-rose-50 rounded-xl p-2.5 sm:p-3 border border-rose-100">
+              <p className="text-[10px] sm:text-xs text-rose-600 font-medium">Tasks Chờ</p>
+              <p className="text-xl sm:text-2xl font-extrabold text-rose-700">{stats.tasks.pending}</p>
             </div>
           </div>
         )}
       </div>
 
       {/* ── Tabs ──────────────────────────────────────────────── */}
-      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl">
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl overflow-x-auto no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-1">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-sm font-semibold transition-all
+            className={`flex-shrink-0 sm:flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap min-h-[40px]
               ${activeTab === tab.id ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
             <tab.icon size={15} />
             <span className="hidden sm:inline">{tab.label}</span>
+            <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
             {tab.count !== undefined && (
               <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${activeTab === tab.id ? 'bg-violet-100 text-violet-700' : 'bg-gray-200 text-gray-500'}`}>
                 {tab.count.toLocaleString()}
@@ -349,15 +350,15 @@ export default function CRMClient() {
       {/* ── Search & Filter ─────────────────────────────────────── */}
       {activeTab !== 'sync' && (
         <div className="flex gap-2 flex-wrap">
-          <div className="relative flex-1 min-w-[200px]">
+          <div className="relative flex-1 min-w-0 sm:min-w-[200px]">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder={
                 activeTab === 'customers' ? 'Tìm tên, SĐT, email, mã...' :
-                activeTab === 'leads' ? 'Tìm tên cơ hội, khách hàng...' :
-                activeTab === 'products' ? 'Tìm mã sản phẩm, tên, barcode...' :
+                activeTab === 'leads' ? 'Tìm tên cơ hội, KH...' :
+                activeTab === 'products' ? 'Tìm mã, tên, barcode...' :
                 'Tìm tên công việc...'
               }
               className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/30 focus:border-violet-400"
@@ -366,10 +367,10 @@ export default function CRMClient() {
           <button
             onClick={() => { setPage(1); fetchData(activeTab, 1, search, statusFilter); }}
             disabled={loading}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700 transition-all shadow-sm disabled:opacity-60"
+            className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700 transition-all shadow-sm disabled:opacity-60 min-h-[44px]"
           >
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-            Làm mới
+            <span className="hidden sm:inline">Làm mới</span>
           </button>
         </div>
       )}
@@ -582,20 +583,20 @@ export default function CRMClient() {
 
       {/* ── Pagination ──────────────────────────────────────────── */}
       {activeTab !== 'sync' && totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-500">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
+          <p className="text-xs sm:text-sm text-gray-500">
             {total.toLocaleString()} bản ghi · Trang {page}/{totalPages}
           </p>
           <div className="flex gap-2">
             <button
               disabled={page <= 1}
               onClick={() => { setPage(p => p - 1); fetchData(activeTab, page - 1, search, statusFilter); }}
-              className="px-3 py-1.5 rounded-lg border text-sm disabled:opacity-40 hover:bg-gray-50"
+              className="px-3 py-2 rounded-lg border text-sm disabled:opacity-40 hover:bg-gray-50 min-h-[40px]"
             >← Trước</button>
             <button
               disabled={page >= totalPages}
               onClick={() => { setPage(p => p + 1); fetchData(activeTab, page + 1, search, statusFilter); }}
-              className="px-3 py-1.5 rounded-lg border text-sm disabled:opacity-40 hover:bg-gray-50"
+              className="px-3 py-2 rounded-lg border text-sm disabled:opacity-40 hover:bg-gray-50 min-h-[40px]"
             >Tiếp →</button>
           </div>
         </div>

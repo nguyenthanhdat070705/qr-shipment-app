@@ -36,15 +36,15 @@ const STATUS_CONFIG: Record<string, { color: string; label: string; dot: string 
 function DottedRow({ label, value }: { label: string; value: string }) {
   // Bolding value specifically to make it stand out against the labels
   return (
-    <div className="flex items-end mb-4 sm:mb-6 w-full group">
-      <span className="text-[#1a2a50] font-medium text-base sm:text-lg whitespace-nowrap">{label}:</span>
-      
+    <div className="flex flex-col sm:flex-row sm:items-end mb-3 sm:mb-6 w-full group gap-0.5 sm:gap-0">
+      <span className="text-[#1a2a50] font-medium text-sm sm:text-lg whitespace-nowrap">{label}:</span>
+
       {/* Container display flexible cho phần giá trị và đường chấm */}
-      <div className="ml-2 flex-1 flex flex-wrap items-end relative overflow-hidden">
+      <div className="sm:ml-2 flex-1 flex flex-wrap items-end relative overflow-hidden">
         {/* Phần giá trị thực tế */}
-        <span className="text-[#1a2a50] font-bold text-base sm:text-lg z-10 px-3 bg-[#fafafa] sm:bg-white">{value}</span>
-        {/* Đường gạch chấm chạy tuốt ra cuối */}
-        <div className="absolute bottom-1.5 sm:bottom-2 left-0 w-full border-b-[2.5px] border-dotted border-gray-300 group-hover:border-[#d4af37]/50 transition-colors -z-0"></div>
+        <span className="text-[#1a2a50] font-bold text-sm sm:text-lg z-10 sm:px-3 bg-[#fafafa] sm:bg-white break-words">{value}</span>
+        {/* Đường gạch chấm chạy tuốt ra cuối - chỉ hiển thị trên desktop */}
+        <div className="hidden sm:block absolute bottom-1.5 sm:bottom-2 left-0 w-full border-b-[2.5px] border-dotted border-gray-300 group-hover:border-[#d4af37]/50 transition-colors -z-0"></div>
       </div>
     </div>
   );
@@ -58,21 +58,21 @@ function MembershipCard({ member }: { member: MemberResult }) {
   const expDate = member.expiry_date ? new Date(member.expiry_date).toLocaleDateString('vi-VN') : '—';
 
   return (
-    <div className="mt-8 relative w-full border border-[#e5e7eb] bg-[#fafafa] sm:bg-white p-6 sm:p-10 sm:px-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] max-w-4xl mx-auto rounded-xl">
-      
+    <div className="mt-6 sm:mt-8 relative w-full border border-[#e5e7eb] bg-[#fafafa] sm:bg-white p-4 sm:p-10 sm:px-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] max-w-4xl mx-auto rounded-xl">
+
       {/* Decorative top border in gold gradient */}
       <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#d4af37] via-[#f3e5ab] to-[#d4af37] rounded-t-xl" />
 
       {/* Status Badge (Top Right) */}
-      <div className={`absolute top-6 sm:top-8 right-6 sm:right-10 flex items-center gap-1.5 ${config.color} border-b-2 border-dotted border-current font-bold text-sm sm:text-base px-1 pb-0.5 tracking-wide`}>
+      <div className={`absolute top-4 sm:top-8 right-4 sm:right-10 flex items-center gap-1.5 ${config.color} border-b-2 border-dotted border-current font-bold text-xs sm:text-base px-1 pb-0.5 tracking-wide`}>
         <span className={`w-2 h-2 rounded-full ${config.dot} animate-pulse`}></span>
         {config.label}
       </div>
 
-      <div className="text-center mb-10 pt-8 sm:pt-0">
-        <h2 className="text-[#1a2a50] text-xl sm:text-2xl font-bold uppercase tracking-wider flex items-center justify-center gap-2">
-          <ShieldCheck className="text-[#d4af37]" size={28} />
-          Thông tin Hội Viên Trăm Tuổi
+      <div className="text-center mb-6 sm:mb-10 pt-8 sm:pt-0">
+        <h2 className="text-[#1a2a50] text-base sm:text-2xl font-bold uppercase tracking-wider flex items-center justify-center gap-2 flex-wrap">
+          <ShieldCheck className="text-[#d4af37]" size={22} />
+          <span>Thông tin Hội Viên Trăm Tuổi</span>
         </h2>
         <div className="w-16 h-0.5 bg-[#d4af37] mx-auto mt-3 opacity-50"></div>
       </div>
@@ -150,26 +150,26 @@ export default function PublicLookupPage() {
       <div className="w-full bg-[#1a2a50] h-4"></div>
 
       {/* Top Left Logo Area */}
-      <div className="absolute top-8 left-4 sm:left-8 z-10 flex flex-col items-center sm:items-start group cursor-pointer transition-all">
+      <div className="relative sm:absolute sm:top-8 sm:left-8 z-10 flex flex-col items-center sm:items-start group cursor-pointer transition-all pt-6 sm:pt-0">
         {/* Đổi nền box thành màu Xanh Navy để logo trắng nổi bật hoàn toàn */}
-        <div className="bg-[#1a2a50] p-3 sm:px-4 sm:py-3 rounded-xl shadow-md border border-[#1a2a50]/20 group-hover:shadow-lg">
+        <div className="bg-[#1a2a50] p-2 sm:px-4 sm:py-3 rounded-xl shadow-md border border-[#1a2a50]/20 group-hover:shadow-lg">
           <Image
             src="/blackstones-logo.webp"
             alt="BlackStones Logo"
             width={160}
             height={50}
-            className="h-8 sm:h-10 w-auto object-contain"
+            className="h-7 sm:h-10 w-auto object-contain"
           />
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 pt-32 sm:pt-20">
+      <div className="max-w-5xl mx-auto px-4 pt-6 sm:pt-20">
         {/* Title Section */}
-        <div className="text-center mb-10">
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#1a2a50] mb-3 tracking-wide">
+        <div className="text-center mb-6 sm:mb-10">
+          <h1 className="text-xl sm:text-3xl font-bold text-[#1a2a50] mb-2 sm:mb-3 tracking-wide">
             Tra Cứu Hội Viên Trăm Tuổi – <span className="text-[#d4af37]">Blackstones Lifecare</span>
           </h1>
-          <p className="text-gray-500 text-sm sm:text-base font-medium">
+          <p className="text-gray-500 text-xs sm:text-base font-medium">
             (Vui lòng cung cấp CCCD hoặc Số điện thoại để tra cứu)
           </p>
         </div>
@@ -179,22 +179,22 @@ export default function PublicLookupPage() {
           <form onSubmit={handleSearch} className="flex flex-col gap-4 justify-center">
             
             {/* Search Type Selector */}
-            <div className="flex justify-center items-center gap-6 mb-2">
-              <label className="flex items-center gap-2 cursor-pointer text-[#1a2a50] font-medium transition-colors hover:text-[#d4af37]">
-                <input 
-                  type="radio" 
-                  name="searchBy" 
-                  checked={searchBy === 'cccd'} 
+            <div className="flex flex-col sm:flex-row justify-center items-start sm:items-center gap-3 sm:gap-6 mb-2">
+              <label className="flex items-center gap-2 cursor-pointer text-[#1a2a50] font-medium transition-colors hover:text-[#d4af37] text-sm sm:text-base">
+                <input
+                  type="radio"
+                  name="searchBy"
+                  checked={searchBy === 'cccd'}
                   onChange={() => { setSearchBy('cccd'); setSearchValue(''); setError(''); inputRef.current?.focus(); }}
                   className="w-5 h-5 accent-[#d4af37] focus:ring-[#d4af37]"
                 />
                 Tra cứu bằng CCCD
               </label>
-              <label className="flex items-center gap-2 cursor-pointer text-[#1a2a50] font-medium transition-colors hover:text-[#d4af37]">
-                <input 
-                  type="radio" 
-                  name="searchBy" 
-                  checked={searchBy === 'phone'} 
+              <label className="flex items-center gap-2 cursor-pointer text-[#1a2a50] font-medium transition-colors hover:text-[#d4af37] text-sm sm:text-base">
+                <input
+                  type="radio"
+                  name="searchBy"
+                  checked={searchBy === 'phone'}
                   onChange={() => { setSearchBy('phone'); setSearchValue(''); setError(''); inputRef.current?.focus(); }}
                   className="w-5 h-5 accent-[#d4af37] focus:ring-[#d4af37]"
                 />
@@ -207,33 +207,34 @@ export default function PublicLookupPage() {
                 <input
                   ref={inputRef}
                   type="text"
+                  inputMode={searchBy === 'phone' ? 'tel' : 'numeric'}
                   value={searchValue}
                   onChange={e => setSearchValue(e.target.value)}
                   placeholder={searchBy === 'cccd' ? "Nhập mã CCCD..." : "Nhập số điện thoại..."}
-                  className="w-full px-6 py-4 border-[2px] border-gray-200 rounded-xl text-lg text-[#1a2a50] font-medium placeholder-gray-400 focus:outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/10 transition-all bg-white"
+                  className="w-full px-4 sm:px-6 py-3 sm:py-4 border-[2px] border-gray-200 rounded-xl text-base sm:text-lg text-[#1a2a50] font-medium placeholder-gray-400 focus:outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/10 transition-all bg-white"
                   autoComplete="off"
                 />
               </div>
             </div>
-            
-            <div className="flex justify-center mt-2">
+
+            <div className="flex flex-col sm:flex-row justify-center mt-2 gap-3 sm:gap-0">
               <button
                 type="submit"
                 disabled={loading || !searchValue.trim()}
-                className="w-full sm:w-auto px-12 py-4 bg-gradient-to-r from-[#1a2a50] to-[#25396b] hover:from-[#0d162a] hover:to-[#1a2a50] text-[#d4af37] border border-[#1a2a50] rounded-xl text-lg font-bold transition-all shadow-[0_4px_14px_0_rgba(26,42,80,0.39)] disabled:opacity-60 disabled:shadow-none flex items-center justify-center gap-2 uppercase tracking-wide"
+                className="w-full sm:w-auto px-8 sm:px-12 py-3 sm:py-4 bg-gradient-to-r from-[#1a2a50] to-[#25396b] hover:from-[#0d162a] hover:to-[#1a2a50] text-[#d4af37] border border-[#1a2a50] rounded-xl text-base sm:text-lg font-bold transition-all shadow-[0_4px_14px_0_rgba(26,42,80,0.39)] disabled:opacity-60 disabled:shadow-none flex items-center justify-center gap-2 uppercase tracking-wide min-h-[48px]"
               >
                 {loading ? (
-                  <><RefreshCw size={22} className="animate-spin" /> Đang tìm...</>
+                  <><RefreshCw size={20} className="animate-spin" /> Đang tìm...</>
                 ) : (
                   <>Tìm kiếm</>
                 )}
               </button>
-              
+
               {searchValue && (
                 <button
                   type="button"
                   onClick={handleClear}
-                  className="ml-4 px-6 py-4 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-lg font-bold transition-all shadow-sm flex items-center justify-center"
+                  className="w-full sm:w-auto sm:ml-4 px-6 py-3 sm:py-4 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-base sm:text-lg font-bold transition-all shadow-sm flex items-center justify-center min-h-[48px]"
                   title="Xoá nội dung"
                 >
                   Làm mới
@@ -252,12 +253,12 @@ export default function PublicLookupPage() {
 
         {/* Loading Spinner Skeleton */}
         {loading && (
-          <div className="mt-16 max-w-4xl mx-auto border border-gray-100 bg-white p-10 animate-pulse rounded-xl shadow-sm">
-            <div className="h-8 bg-gray-100 rounded-full w-1/3 mx-auto mb-10"></div>
-            <div className="space-y-6">
+          <div className="mt-8 sm:mt-16 max-w-4xl mx-auto border border-gray-100 bg-white p-4 sm:p-10 animate-pulse rounded-xl shadow-sm">
+            <div className="h-6 sm:h-8 bg-gray-100 rounded-full w-2/3 sm:w-1/3 mx-auto mb-6 sm:mb-10"></div>
+            <div className="space-y-3 sm:space-y-6">
               {[1, 2, 3, 4, 5, 6].map(i => (
                 <div key={i} className="flex items-end">
-                  <div className="h-4 bg-gray-100 rounded w-1/4 mr-4 mb-2"></div>
+                  <div className="h-4 bg-gray-100 rounded w-1/3 sm:w-1/4 mr-4 mb-2"></div>
                   <div className="h-0.5 bg-gray-100 rounded flex-1 mb-2"></div>
                 </div>
               ))}
@@ -276,17 +277,18 @@ export default function PublicLookupPage() {
 
         {/* Not Found */}
         {!loading && notFound && (
-          <div className="mt-16 text-center py-12 border border-gray-100 bg-white max-w-4xl mx-auto rounded-xl shadow-sm">
-            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-5">
-              <AlertCircle size={40} className="text-gray-400" />
+          <div className="mt-8 sm:mt-16 text-center py-8 sm:py-12 px-4 border border-gray-100 bg-white max-w-4xl mx-auto rounded-xl shadow-sm">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-5">
+              <AlertCircle size={32} className="text-gray-400 sm:hidden" />
+              <AlertCircle size={40} className="text-gray-400 hidden sm:block" />
             </div>
-            <h3 className="text-xl font-bold text-[#1a2a50] mb-2">Không tìm thấy dữ liệu</h3>
-            <p className="text-gray-500 max-w-md mx-auto text-base">
+            <h3 className="text-lg sm:text-xl font-bold text-[#1a2a50] mb-2">Không tìm thấy dữ liệu</h3>
+            <p className="text-gray-500 max-w-md mx-auto text-sm sm:text-base">
               Hệ thống không tìm thấy hội viên nào khớp với thông tin cung cấp.<br /> Vui lòng kiểm tra lại sự chính xác của CCCD và Số điện thoại.
             </p>
             <button
                onClick={handleClear}
-               className="mt-6 px-8 py-3 border-2 border-[#1a2a50] text-[#1a2a50] font-semibold rounded-lg hover:bg-[#1a2a50] hover:text-[#d4af37] transition-all"
+               className="mt-6 px-8 py-3 border-2 border-[#1a2a50] text-[#1a2a50] font-semibold rounded-lg hover:bg-[#1a2a50] hover:text-[#d4af37] transition-all min-h-[44px]"
             >
               Thử lại
             </button>

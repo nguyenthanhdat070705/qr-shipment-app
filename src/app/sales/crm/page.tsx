@@ -96,19 +96,19 @@ export default function CRMPage() {
 
   return (
     <PageLayout title="CRM GetFly" icon={<Building size={18} className="text-violet-500" />}>
-      <div className="space-y-5">
+      <div className="space-y-4 sm:space-y-5">
         {/* Header */}
-        <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-xl font-extrabold text-gray-900">GetFly CRM</h1>
-            <p className="text-sm text-gray-500">Dữ liệu thời gian thực từ GetFly</p>
+            <h1 className="text-lg sm:text-xl font-extrabold text-gray-900">GetFly CRM</h1>
+            <p className="text-xs sm:text-sm text-gray-500">Dữ liệu thời gian thực từ GetFly</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Sync button */}
             <button
               onClick={handleSync}
               disabled={syncing}
-              className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-xl text-sm font-semibold hover:bg-violet-700 disabled:opacity-60 transition-all"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-violet-600 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-violet-700 disabled:opacity-60 transition-all min-h-[40px]"
             >
               {syncing ? <RefreshCw size={14} className="animate-spin" /> : <Download size={14} />}
               {syncing ? 'Đang sync...' : 'Sync từ GetFly'}
@@ -117,7 +117,7 @@ export default function CRMPage() {
               href="https://blackstonesdvtl.getflycrm.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all min-h-[40px]"
             >
               <ExternalLink size={14} />
               Mở GetFly
@@ -137,12 +137,12 @@ export default function CRMPage() {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-2xl overflow-x-auto">
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-2xl overflow-x-auto no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-1">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex-1 justify-center whitespace-nowrap ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex-shrink-0 sm:flex-1 justify-center whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
@@ -191,16 +191,16 @@ function OverviewTab() {
   if (loading) return <LoadingState />;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard icon={<Users size={20} />} label="Khách hàng" value={data?.accounts_total || 0} color="blue" />
         <StatCard icon={<ShoppingCart size={20} />} label="Deals gần đây" value={data?.deals_count || 0} color="violet" />
-        <StatCard icon={<DollarSign size={20} />} label="Doanh số (recent)" value={formatVND(data?.deals_total_value || 0)} color="emerald" />
+        <StatCard icon={<DollarSign size={20} />} label="Doanh số" value={formatVND(data?.deals_total_value || 0)} color="emerald" />
         <StatCard icon={<User size={20} />} label="Nhân viên" value={data?.users_count || 0} color="amber" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
         {/* Recent Deals */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
@@ -292,18 +292,53 @@ function CustomersTab() {
   return (
     <div className="space-y-4">
       {/* Search */}
-      <form onSubmit={handleSearch} className="flex gap-3">
+      <form onSubmit={handleSearch} className="flex gap-2 sm:gap-3">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all"
             placeholder="Tìm KH theo tên, SĐT..." value={searchInput} onChange={e => setSearchInput(e.target.value)} />
         </div>
-        <button type="submit" className="px-4 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-semibold hover:bg-violet-700 transition-all">Tìm</button>
+        <button type="submit" className="px-4 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-semibold hover:bg-violet-700 transition-all min-h-[44px]">Tìm</button>
       </form>
 
       {/* Table */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile: card list */}
+        <div className="lg:hidden divide-y divide-gray-50">
+          {loading ? (
+            <div className="py-12 text-center">
+              <RefreshCw size={24} className="mx-auto mb-2 text-gray-300 animate-spin" />
+              <p className="text-sm text-gray-400">Đang tải...</p>
+            </div>
+          ) : accounts.length === 0 ? (
+            <div className="py-12 text-center text-gray-400 text-sm">Không tìm thấy khách hàng</div>
+          ) : accounts.map(a => (
+            <div key={a.account_id} className="px-4 py-3.5 hover:bg-violet-50/30 transition-colors">
+              <div className="flex items-start gap-3 mb-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 text-white text-xs font-bold flex-shrink-0">
+                  {a.account_name?.charAt(0) || '?'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-800 text-sm truncate">{a.account_name}</p>
+                  {a.ma_hoi_vien && <p className="text-[10px] text-yellow-600 font-mono">HV: {a.ma_hoi_vien}</p>}
+                  <p className="text-xs text-gray-600 flex items-center gap-1 mt-0.5"><Phone size={11} />{a.phone || '—'}</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {a.account_type && <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-semibold">{a.account_type}</span>}
+                {a.relation_name && <span className="px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 text-[10px] font-semibold truncate max-w-[160px]">{a.relation_name}</span>}
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-500">
+                <div><span className="text-gray-400">Kênh:</span> {a.account_source || '—'}</div>
+                <div className="text-right"><span className="text-gray-400">NV:</span> {a.manager_user_name?.split('@')[0] || '—'}</div>
+              </div>
+              {a.revenue && parseFloat(a.revenue) > 0 && (
+                <p className="mt-2 text-xs font-bold text-emerald-600 text-right">{formatVND(parseFloat(a.revenue))}</p>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
@@ -346,14 +381,14 @@ function CustomersTab() {
           </table>
         </div>
         {/* Pagination */}
-        <div className="flex items-center justify-center gap-3 px-4 py-3 border-t border-gray-100 bg-gray-50">
+        <div className="flex items-center justify-center gap-2 sm:gap-3 px-4 py-3 border-t border-gray-100 bg-gray-50">
           <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-white disabled:opacity-30 transition-all">
+            className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-white disabled:opacity-30 transition-all min-h-[36px]">
             <ChevronLeft size={14} /> Trước
           </button>
-          <span className="text-xs font-semibold text-gray-600 bg-white px-3 py-1.5 rounded-lg border border-gray-200">Trang {page}</span>
+          <span className="text-xs font-semibold text-gray-600 bg-white px-3 py-2 rounded-lg border border-gray-200">Trang {page}</span>
           <button onClick={() => setPage(p => p + 1)} disabled={accounts.length < 20}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-white disabled:opacity-30 transition-all">
+            className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-white disabled:opacity-30 transition-all min-h-[36px]">
             Sau <ChevronRight size={14} />
           </button>
         </div>
@@ -384,16 +419,16 @@ function DealsTab() {
   return (
     <div className="space-y-4">
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-          <p className="text-xs font-semibold text-gray-500">Deals trang này</p>
-          <p className="text-2xl font-extrabold text-gray-900 mt-1">{deals.length}</p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+        <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4 shadow-sm">
+          <p className="text-[10px] sm:text-xs font-semibold text-gray-500">Deals trang này</p>
+          <p className="text-xl sm:text-2xl font-extrabold text-gray-900 mt-1">{deals.length}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4 shadow-sm">
           <p className="text-xs font-semibold text-gray-500">Tổng giá trị</p>
           <p className="text-2xl font-extrabold text-emerald-600 mt-1">{formatVND(totalValue)}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4 shadow-sm">
           <p className="text-xs font-semibold text-gray-500">Chưa thanh toán</p>
           <p className="text-2xl font-extrabold text-amber-600 mt-1">{deals.filter(d => d.payment_status !== 'paid').length}</p>
         </div>
@@ -476,16 +511,16 @@ function TasksTab() {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+        <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4 shadow-sm">
           <p className="text-xs font-semibold text-gray-500">Tổng CV</p>
           <p className="text-2xl font-extrabold text-gray-900 mt-1">{tasks.length}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4 shadow-sm">
           <p className="text-xs font-semibold text-gray-500">Quá hạn</p>
           <p className="text-2xl font-extrabold text-red-600 mt-1">{overdue}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4 shadow-sm">
           <p className="text-xs font-semibold text-gray-500">Hoàn thành</p>
           <p className="text-2xl font-extrabold text-emerald-600 mt-1">{tasks.filter(t => t.task_status === '2').length}</p>
         </div>
@@ -539,10 +574,10 @@ function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label:
     amber: 'bg-amber-500/15 text-amber-500',
   };
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-      <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${colorMap[color]} mb-2`}>{icon}</div>
-      <p className="text-2xl font-extrabold text-gray-900">{value}</p>
-      <p className="text-xs font-semibold text-gray-500 mt-0.5">{label}</p>
+    <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-5 shadow-sm">
+      <div className={`flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl ${colorMap[color]} mb-2`}>{icon}</div>
+      <p className="text-xl sm:text-2xl font-extrabold text-gray-900 truncate">{value}</p>
+      <p className="text-[10px] sm:text-xs font-semibold text-gray-500 mt-0.5 truncate">{label}</p>
     </div>
   );
 }
@@ -776,19 +811,19 @@ function CustomerDetailModal({ customer: c, onClose }: { customer: LocalCustomer
 
   return (
     <div
-      className="fixed inset-0 z-[300] flex items-center justify-end bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center sm:justify-end bg-black/40 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      {/* Slide-in panel from right */}
-      <div className="h-full w-full max-w-lg bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+      {/* Slide-in panel from right (desktop) / bottom (mobile) */}
+      <div className="h-[92vh] sm:h-full w-full sm:max-w-lg bg-white shadow-2xl flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-right duration-300 rounded-t-2xl sm:rounded-none">
         {/* Header */}
-        <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-gray-100">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white text-lg font-extrabold shadow-lg">
+        <div className="flex items-start justify-between gap-2 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-gray-100">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+            <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white text-base sm:text-lg font-extrabold shadow-lg flex-shrink-0">
               {initials}
             </div>
-            <div>
-              <h2 className="text-lg font-extrabold text-gray-900">{c.account_name}</h2>
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 truncate">{c.account_name}</h2>
               <p className="text-xs text-gray-500 mt-0.5">GetFly ID: #{c.getfly_account_id}</p>
               {c.ma_hoi_vien && (
                 <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-amber-50 border border-amber-200 rounded-full text-[10px] font-bold text-amber-700">
@@ -797,13 +832,13 @@ function CustomerDetailModal({ customer: c, onClose }: { customer: LocalCustomer
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 transition-colors">
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 transition-colors flex-shrink-0">
             <X size={20} />
           </button>
         </div>
 
         {/* Badges */}
-        <div className="flex items-center gap-2 px-6 py-3 bg-gray-50 border-b border-gray-100 flex-wrap">
+        <div className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-gray-50 border-b border-gray-100 flex-wrap">
           {c.relation_name && (
             <span className="px-3 py-1 rounded-full bg-violet-100 text-violet-700 text-xs font-semibold">
               📁 {c.relation_name}
@@ -822,7 +857,7 @@ function CustomerDetailModal({ customer: c, onClose }: { customer: LocalCustomer
         </div>
 
         {/* Info list */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-1">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-1">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Thông tin liên hệ</p>
           {infoRows.map(({ icon, label, value }) => (
             <div key={label} className="flex items-start gap-3 py-2.5 border-b border-gray-50">
@@ -873,18 +908,18 @@ function CustomerDetailModal({ customer: c, onClose }: { customer: LocalCustomer
         </div>
 
         {/* Footer actions */}
-        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex gap-3">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-100 bg-gray-50 flex gap-2 sm:gap-3 safe-bottom">
           <a
             href={`https://blackstonesdvtl.getflycrm.com/account/view/${c.getfly_account_id}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-bold hover:bg-violet-700 transition-all"
+            className="flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-3 bg-violet-600 text-white rounded-xl text-xs sm:text-sm font-bold hover:bg-violet-700 transition-all min-h-[44px]"
           >
-            <ExternalLink size={14} /> Xem trên GetFly
+            <ExternalLink size={14} /> Xem GetFly
           </a>
           <button
             onClick={onClose}
-            className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all"
+            className="px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all min-h-[44px]"
           >
             Đóng
           </button>
@@ -1014,21 +1049,21 @@ function ContractsTab() {
   return (
     <div className="space-y-4 animate-in fade-in duration-300">
       {/* Search & Actions */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <form onSubmit={handleSearch} className="flex gap-3 flex-1 min-w-[300px]">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:flex-wrap">
+        <form onSubmit={handleSearch} className="flex gap-2 sm:gap-3 flex-1 sm:min-w-[300px]">
           <div className="relative flex-1">
             <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
             <input className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all"
-              placeholder="Tìm theo tên HĐ, số HĐ, khách hàng..."
+              placeholder="Tìm tên HĐ, số HĐ, KH..."
               value={searchInput} onChange={e => setSearchInput(e.target.value)} />
           </div>
-          <button type="submit" className="px-4 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-semibold hover:bg-violet-700 transition-all">Tìm</button>
+          <button type="submit" className="px-4 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-semibold hover:bg-violet-700 transition-all min-h-[44px]">Tìm</button>
         </form>
-        
+
         <button onClick={handleSync} disabled={syncing}
-          className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-50 disabled:opacity-60 transition-all shadow-sm">
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-50 disabled:opacity-60 transition-all shadow-sm min-h-[44px]">
           {syncing ? <RefreshCw size={14} className="animate-spin text-violet-500" /> : <Download size={14} className="text-violet-500" />}
-          {syncing ? 'Đang sync...' : 'Sync Hợp đồng từ GetFly'}
+          {syncing ? 'Đang sync...' : 'Sync Hợp đồng'}
         </button>
       </div>
 
@@ -1044,10 +1079,10 @@ function ContractsTab() {
       )}
 
       {/* Status filter tabs */}
-      <div className="flex gap-1 overflow-x-auto pb-1">
+      <div className="flex gap-1 overflow-x-auto pb-1 no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0">
         {STATUS_TABS.map(tab => (
           <button key={tab.id} onClick={() => { setStatusFilter(tab.id); setPage(1); }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
               statusFilter === tab.id ? 'bg-violet-600 text-white shadow-sm' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
             }`}>
             {tab.label}
@@ -1065,7 +1100,62 @@ function ContractsTab() {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            {/* Mobile: card list */}
+            <div className="lg:hidden divide-y divide-gray-50">
+              {loading ? (
+                <div className="py-12 text-center">
+                  <RefreshCw size={24} className="mx-auto mb-2 text-gray-300 animate-spin" />
+                  <p className="text-sm text-gray-400">Đang tải...</p>
+                </div>
+              ) : contracts.map(c => {
+                const remain = c.remaining_days;
+                return (
+                  <button key={c.id} onClick={() => setSelected(c)}
+                    className="w-full px-4 py-3.5 hover:bg-violet-50/30 transition-colors text-left">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-800 text-sm truncate">{c.contract_name || '—'}</p>
+                        <p className="font-mono text-[11px] text-violet-600 font-semibold mt-0.5">{c.contract_code || '—'}</p>
+                      </div>
+                      {remain !== null && remain !== undefined && (
+                        <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          remain < 0 ? 'bg-red-100 text-red-700' : remain < 90 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                        }`}>{remain}d</span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {c.contract_status && (
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusBadge(c.contract_status)}`}>
+                          {c.contract_status}
+                        </span>
+                      )}
+                      {c.gdrive_folder_url && <span className="text-[10px] font-semibold">📁</span>}
+                    </div>
+                    <div className="text-[11px] text-gray-500 mb-2 truncate">
+                      <span className="text-gray-400">KH:</span> <span className="text-gray-700 font-medium">{c.customer_name || '—'}</span>
+                      {c.person_in_charge && <> · <span className="text-gray-600">{c.person_in_charge}</span></>}
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100">
+                      <div>
+                        <p className="text-[9px] text-gray-400 uppercase">GT HĐ</p>
+                        <p className="text-xs font-bold text-violet-600">{c.contract_value ? formatVND(c.contract_value) : '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] text-gray-400 uppercase">Đã TT</p>
+                        <p className="text-xs font-semibold text-emerald-600">{c.paid_amount ? formatVND(c.paid_amount) : '0'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] text-gray-400 uppercase">Công nợ</p>
+                        <p className="text-xs font-bold text-red-600">{c.debt_amount ? formatVND(c.debt_amount) : '0'}</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden lg:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-100">
@@ -1204,18 +1294,18 @@ function ContractDetailModal({ contract: c, onClose }: { contract: Contract; onC
   ];
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-end bg-black/40 backdrop-blur-sm"
+    <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center sm:justify-end bg-black/40 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="h-full w-full max-w-xl bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+      <div className="h-[92vh] sm:h-full w-full sm:max-w-xl bg-white shadow-2xl flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-right duration-300 rounded-t-2xl sm:rounded-none">
         {/* Header */}
-        <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-gray-100">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white text-lg font-extrabold shadow-lg">
-              <FileText size={24} />
+        <div className="flex items-start justify-between gap-2 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-gray-100">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+            <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white text-lg font-extrabold shadow-lg flex-shrink-0">
+              <FileText size={22} />
             </div>
-            <div>
-              <h2 className="text-lg font-extrabold text-gray-900">{c.contract_name || 'Hợp đồng'}</h2>
-              <p className="text-xs text-gray-500 mt-0.5">Mã: {c.contract_code || c.getfly_contract_id}</p>
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 truncate">{c.contract_name || 'Hợp đồng'}</h2>
+              <p className="text-xs text-gray-500 mt-0.5 truncate">Mã: {c.contract_code || c.getfly_contract_id}</p>
               {c.contract_status && (
                 <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${statusBadge(c.contract_status)}`}>
                   {c.contract_status}
@@ -1223,13 +1313,13 @@ function ContractDetailModal({ contract: c, onClose }: { contract: Contract; onC
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 transition-colors">
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 transition-colors flex-shrink-0">
             <X size={20} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-5 sm:space-y-6">
           {sections.map(section => (
             <div key={section.title}>
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">{section.title}</p>

@@ -808,7 +808,7 @@ export default function WarehouseDashboard() {
       />
 
       {/* ── Welcome Banner ─────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f2417] via-emerald-900 to-[#1a3a28] p-6 mb-6 shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f2417] via-emerald-900 to-[#1a3a28] p-4 sm:p-6 mb-4 sm:mb-6 shadow-xl">
         {/* Decorative */}
         <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-emerald-400/10 blur-3xl" />
         <div className="absolute bottom-0 left-16 w-32 h-32 rounded-full bg-teal-400/10 blur-2xl" />
@@ -869,7 +869,7 @@ export default function WarehouseDashboard() {
       </div>
 
       {/* ── KPI Cards ────────────────────────────────── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-9 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-9 gap-2 sm:gap-3 mb-4 sm:mb-6">
         <StatCard
           label="Xuất hôm nay"
           value={todayExportCount}
@@ -943,7 +943,7 @@ export default function WarehouseDashboard() {
       </div>
 
       {/* ── Main Grid ────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
 
         {/* ── Left: Combined History Table (2/3 width) ── */}
         <div className="lg:col-span-2 space-y-4">
@@ -960,7 +960,7 @@ export default function WarehouseDashboard() {
             </button>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden overflow-x-auto">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             {historyLoading ? (
               <div className="flex items-center justify-center gap-3 py-14 text-gray-300">
                 <span className="animate-spin h-6 w-6 border-3 border-emerald-400 border-t-transparent rounded-full" />
@@ -991,8 +991,8 @@ export default function WarehouseDashboard() {
               }
 
               return (
-                <div className="min-w-[900px]">
-                  <table className="w-full text-left border-collapse">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[900px] text-left border-collapse">
                     <thead>
                     <tr className="bg-gray-50 border-b border-gray-100 text-[10px] font-extrabold text-gray-500 uppercase tracking-widest">
                       <th className="py-2 px-1 text-center w-10">STT</th>
@@ -1102,7 +1102,7 @@ export default function WarehouseDashboard() {
               <div className="w-1 h-5 rounded-full bg-sky-500" />
               <h2 className="font-extrabold text-gray-900 text-base">Thao tác nhanh</h2>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               <QuickAction
                 icon={<Truck size={20} />}
                 title="Xuất hàng"
@@ -1156,11 +1156,11 @@ export default function WarehouseDashboard() {
           </div>
 
           {/* Inventory summary card */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center gap-2 mb-6">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
+            <div className="flex items-center gap-2 mb-4 sm:mb-6">
               <BarChart3 size={18} className="text-sky-500" />
               <h3 className="font-extrabold text-gray-900 text-base">Tình trạng tồn kho</h3>
-              <span className="ml-auto text-xs text-gray-400 font-medium">{warehouseLabel}</span>
+              <span className="ml-auto text-xs text-gray-400 font-medium truncate">{warehouseLabel}</span>
             </div>
             {statsLoading ? (
               <div className="flex items-center justify-center py-6">
@@ -1169,9 +1169,9 @@ export default function WarehouseDashboard() {
             ) : (
               <div className="space-y-4">
                 {/* Highlight Physical Quantity */}
-                <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-indigo-50 border border-indigo-100 shadow-inner">
-                  <p className="text-sm font-bold text-gray-500 mb-1">TỔNG LƯỢNG TỒN (Sản phẩm)</p>
-                  <span className="text-5xl font-black text-indigo-600 tracking-tight">{stats.totalQuantity}</span>
+                <div className="flex flex-col items-center justify-center p-4 sm:p-6 rounded-2xl bg-indigo-50 border border-indigo-100 shadow-inner">
+                  <p className="text-xs sm:text-sm font-bold text-gray-500 mb-1 text-center">TỔNG LƯỢNG TỒN (Sản phẩm)</p>
+                  <span className="text-4xl sm:text-5xl font-black text-indigo-600 tracking-tight">{stats.totalQuantity}</span>
                 </div>
 
                 {/* Optional Financial Value if they care */}

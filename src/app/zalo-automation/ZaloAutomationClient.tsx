@@ -181,25 +181,25 @@ export default function ZaloAutomationClient() {
   // ════════════════════════════════════════════════════════
   return (
     <PageLayout title="Zalo Automation" icon={<MessageSquare size={18} className="text-blue-500" />}>
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
 
         {/* ── Hero Header ── */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0068ff] via-[#0050cc] to-[#1a1a6e] p-6 text-white shadow-xl">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0068ff] via-[#0050cc] to-[#1a1a6e] p-4 sm:p-6 text-white shadow-xl">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-white -translate-y-1/2 translate-x-1/4" />
             <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-blue-300 translate-y-1/2 -translate-x-1/4" />
           </div>
-          <div className="relative flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-2xl">💬</span>
-                <h1 className="text-2xl font-extrabold tracking-tight">Zalo ZNS Automation</h1>
+          <div className="relative flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <span className="text-xl sm:text-2xl">💬</span>
+                <h1 className="text-lg sm:text-2xl font-extrabold tracking-tight">Zalo ZNS Automation</h1>
               </div>
-              <p className="text-blue-100 text-sm max-w-lg">
+              <p className="text-blue-100 text-xs sm:text-sm max-w-lg">
                 Hệ thống chăm sóc hội viên tự động — Gửi tin chào mừng ngay khi đăng ký &amp; thiệp sinh nhật tự động qua Zalo
               </p>
             </div>
-            <div className="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2 text-xs font-semibold border border-white/20">
+            <div className="hidden sm:flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2 text-xs font-semibold border border-white/20 flex-shrink-0">
               <Zap size={14} className="text-yellow-300" />
               AI-Powered
             </div>
@@ -207,16 +207,16 @@ export default function ZaloAutomationClient() {
 
           {/* Quick Stats */}
           {summary && (
-            <div className="relative mt-5 grid grid-cols-4 gap-3">
+            <div className="relative mt-4 sm:mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
               {[
                 { label: 'Tổng đã gửi', value: summary.total, color: 'text-white' },
                 { label: 'Chào mừng', value: summary.welcome_sent, color: 'text-blue-200' },
                 { label: 'Sinh nhật', value: summary.birthday_sent, color: 'text-yellow-300' },
                 { label: 'Thất bại', value: summary.failed, color: 'text-red-300' },
               ].map(s => (
-                <div key={s.label} className="bg-white/10 rounded-xl p-3 border border-white/20">
-                  <div className={`text-2xl font-black ${s.color}`}>{s.value}</div>
-                  <div className="text-xs text-white/70 mt-0.5">{s.label}</div>
+                <div key={s.label} className="bg-white/10 rounded-xl p-2.5 sm:p-3 border border-white/20">
+                  <div className={`text-lg sm:text-2xl font-black ${s.color}`}>{s.value}</div>
+                  <div className="text-[10px] sm:text-xs text-white/70 mt-0.5">{s.label}</div>
                 </div>
               ))}
             </div>
@@ -224,17 +224,17 @@ export default function ZaloAutomationClient() {
         </div>
 
         {/* ── Tab Nav ── */}
-        <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto no-scrollbar">
           {[
             { id: 'dashboard', label: 'Dashboard', icon: <TrendingUp size={14} /> },
             { id: 'birthdays', label: 'Sinh Nhật', icon: <Gift size={14} /> },
-            { id: 'logs', label: 'Lịch Sử Gửi', icon: <Bell size={14} /> },
-            { id: 'settings', label: 'Cài Đặt & Test', icon: <Settings size={14} /> },
+            { id: 'logs', label: 'Lịch Sử', icon: <Bell size={14} /> },
+            { id: 'settings', label: 'Cài Đặt', icon: <Settings size={14} /> },
           ].map(t => (
             <button
               key={t.id}
               onClick={() => setActiveTab(t.id as typeof activeTab)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap min-h-[40px] ${
                 activeTab === t.id
                   ? 'bg-white text-[#0068ff] shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
@@ -251,19 +251,19 @@ export default function ZaloAutomationClient() {
         {activeTab === 'dashboard' && (
           <div className="space-y-4">
             {/* Flow diagram */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <h2 className="font-bold text-gray-800 mb-4">🔄 Luồng Tự Động Hóa</h2>
-              <div className="flex items-center gap-2 flex-wrap">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
+              <h2 className="font-bold text-gray-800 mb-3 sm:mb-4 text-sm sm:text-base">🔄 Luồng Tự Động Hóa</h2>
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 -mx-4 sm:mx-0 px-4 sm:px-0 snap-x-chips">
                 {[
                   { icon: '📝', label: 'Đăng ký HV', sub: 'Form điền thông tin' },
                   { icon: '✅', label: 'Đăng ký thành công', sub: 'Lưu vào database' },
                   { icon: '💬', label: 'ZNS Welcome', sub: 'Bắn ngay tức thì' },
                   { icon: '📱', label: 'HV nhận Zalo', sub: 'Link hợp đồng điện tử' },
                 ].map((step, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <div className="flex flex-col items-center bg-blue-50 rounded-xl p-3 border border-blue-100 min-w-[100px]">
-                      <span className="text-2xl">{step.icon}</span>
-                      <span className="text-xs font-bold text-gray-800 mt-1 text-center">{step.label}</span>
+                  <div key={i} className="flex items-center gap-2 snap-start flex-shrink-0">
+                    <div className="flex flex-col items-center bg-blue-50 rounded-xl p-2.5 sm:p-3 border border-blue-100 min-w-[100px]">
+                      <span className="text-xl sm:text-2xl">{step.icon}</span>
+                      <span className="text-[11px] sm:text-xs font-bold text-gray-800 mt-1 text-center">{step.label}</span>
                       <span className="text-[10px] text-gray-400 text-center">{step.sub}</span>
                     </div>
                     {i < 3 && <ChevronRight size={16} className="text-blue-400 flex-shrink-0" />}
@@ -271,19 +271,19 @@ export default function ZaloAutomationClient() {
                 ))}
               </div>
 
-              <hr className="my-4 border-gray-100" />
+              <hr className="my-3 sm:my-4 border-gray-100" />
 
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 -mx-4 sm:mx-0 px-4 sm:px-0 snap-x-chips">
                 {[
                   { icon: '⏰', label: 'Cron 8:00 SA', sub: 'Chạy mỗi ngày' },
                   { icon: '🎂', label: 'Quét sinh nhật', sub: 'Trong 3 ngày tới' },
                   { icon: '🔔', label: 'Nhắc Sales', sub: 'Gọi điện chúc mừng' },
                   { icon: '💌', label: 'ZNS Thiệp', sub: 'Đúng ngày sinh nhật' },
                 ].map((step, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <div className="flex flex-col items-center bg-yellow-50 rounded-xl p-3 border border-yellow-100 min-w-[100px]">
-                      <span className="text-2xl">{step.icon}</span>
-                      <span className="text-xs font-bold text-gray-800 mt-1 text-center">{step.label}</span>
+                  <div key={i} className="flex items-center gap-2 snap-start flex-shrink-0">
+                    <div className="flex flex-col items-center bg-yellow-50 rounded-xl p-2.5 sm:p-3 border border-yellow-100 min-w-[100px]">
+                      <span className="text-xl sm:text-2xl">{step.icon}</span>
+                      <span className="text-[11px] sm:text-xs font-bold text-gray-800 mt-1 text-center">{step.label}</span>
                       <span className="text-[10px] text-gray-400 text-center">{step.sub}</span>
                     </div>
                     {i < 3 && <ChevronRight size={16} className="text-yellow-400 flex-shrink-0" />}
@@ -293,7 +293,7 @@ export default function ZaloAutomationClient() {
             </div>
 
             {/* Recent logs preview */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-bold text-gray-800">📋 Gửi Gần Đây</h2>
                 <button
@@ -340,22 +340,23 @@ export default function ZaloAutomationClient() {
         ════════════════════════════════════════════════════ */}
         {activeTab === 'birthdays' && (
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="font-bold text-gray-800">🎂 Sinh Nhật Hội Viên (30 ngày tới)</h2>
-              <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-3">
+              <h2 className="font-bold text-gray-800 text-sm sm:text-base">🎂 Sinh Nhật Hội Viên (30 ngày tới)</h2>
+              <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={fetchBirthdays}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all"
+                  className="flex items-center justify-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all min-h-[40px]"
                 >
                   <RefreshCw size={13} /> Làm mới
                 </button>
                 <button
                   onClick={runBirthdayCron}
                   disabled={cronStatus === 'running'}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-yellow-500 text-white rounded-xl text-sm font-bold hover:bg-yellow-600 transition-all disabled:opacity-50"
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 bg-yellow-500 text-white rounded-xl text-xs sm:text-sm font-bold hover:bg-yellow-600 transition-all disabled:opacity-50 min-h-[40px]"
                 >
                   <Zap size={13} />
-                  {cronStatus === 'running' ? 'Đang chạy...' : 'Chạy ZNS Birthday Ngay'}
+                  <span className="hidden sm:inline">{cronStatus === 'running' ? 'Đang chạy...' : 'Chạy ZNS Birthday Ngay'}</span>
+                  <span className="sm:hidden">{cronStatus === 'running' ? 'Đang chạy...' : 'Chạy Birthday'}</span>
                 </button>
               </div>
             </div>
@@ -372,8 +373,8 @@ export default function ZaloAutomationClient() {
             )}
 
             {/* Today */}
-            <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-2xl border border-yellow-200 p-5">
-              <h3 className="font-bold text-yellow-800 mb-3 flex items-center gap-2">
+            <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-2xl border border-yellow-200 p-4 sm:p-5">
+              <h3 className="font-bold text-yellow-800 mb-3 flex items-center gap-2 text-sm sm:text-base">
                 <Gift size={16} /> Sinh Nhật Hôm Nay
                 {birthdayToday.length > 0 && (
                   <span className="px-2 py-0.5 bg-yellow-500 text-white rounded-full text-xs font-bold">
@@ -388,17 +389,17 @@ export default function ZaloAutomationClient() {
               ) : (
                 <div className="space-y-2">
                   {birthdayToday.map(m => (
-                    <div key={m.id} className="bg-white rounded-xl p-3 border border-yellow-200 flex items-center gap-3">
-                      <span className="text-2xl">🎂</span>
-                      <div className="flex-1">
-                        <div className="font-bold text-gray-800 text-sm">{m.full_name}</div>
-                        <div className="text-xs text-gray-500 flex items-center gap-2 mt-0.5">
+                    <div key={m.id} className="bg-white rounded-xl p-3 border border-yellow-200 flex items-center gap-2 sm:gap-3">
+                      <span className="text-xl sm:text-2xl flex-shrink-0">🎂</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-gray-800 text-sm truncate">{m.full_name}</div>
+                        <div className="text-xs text-gray-500 flex items-center gap-1.5 sm:gap-2 mt-0.5 flex-wrap">
                           <Phone size={10} /> {m.phone}
-                          {m.consultant_name && <span>· Sales: {m.consultant_name}</span>}
+                          {m.consultant_name && <span className="truncate">· Sales: {m.consultant_name}</span>}
                         </div>
                       </div>
                       <a href={`tel:${m.phone}`}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-yellow-500 text-white rounded-lg text-xs font-bold hover:bg-yellow-600 transition-all">
+                        className="flex items-center gap-1 px-3 py-1.5 bg-yellow-500 text-white rounded-lg text-xs font-bold hover:bg-yellow-600 transition-all flex-shrink-0 min-h-[36px]">
                         <Phone size={11} /> Gọi
                       </a>
                     </div>
@@ -408,8 +409,8 @@ export default function ZaloAutomationClient() {
             </div>
 
             {/* Upcoming */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+              <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm sm:text-base">
                 <Calendar size={16} className="text-blue-500" /> Sắp Có Sinh Nhật
               </h3>
               {bdLoading ? (
@@ -419,14 +420,14 @@ export default function ZaloAutomationClient() {
               ) : (
                 <div className="space-y-2">
                   {birthdayUpcoming.map(m => (
-                    <div key={m.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border ${
+                    <div key={m.id} className={`flex items-center gap-2 sm:gap-3 px-3 py-2.5 rounded-xl border ${
                       (m.days_until ?? 99) <= 3
                         ? 'bg-red-50 border-red-200'
                         : (m.days_until ?? 99) <= 7
                           ? 'bg-orange-50 border-orange-200'
                           : 'bg-gray-50 border-gray-100'
                     }`}>
-                      <div className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center font-black text-sm ${
+                      <div className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center font-black text-sm flex-shrink-0 ${
                         (m.days_until ?? 99) <= 3 ? 'bg-red-500 text-white' :
                         (m.days_until ?? 99) <= 7 ? 'bg-orange-400 text-white' :
                         'bg-gray-200 text-gray-700'
@@ -435,17 +436,17 @@ export default function ZaloAutomationClient() {
                         <span className="text-[9px] leading-none opacity-80">ngày</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-bold text-sm text-gray-800">{m.full_name}</div>
-                        <div className="text-xs text-gray-500 flex items-center gap-2 mt-0.5">
+                        <div className="font-bold text-sm text-gray-800 truncate">{m.full_name}</div>
+                        <div className="text-[11px] sm:text-xs text-gray-500 flex items-center gap-1.5 sm:gap-2 mt-0.5 flex-wrap">
                           <span>🎂 {fmtDOB(m.date_of_birth)}</span>
                           <span>·</span>
                           <Phone size={10} /> {m.phone}
-                          {m.consultant_name && <span>· {m.consultant_name}</span>}
+                          {m.consultant_name && <span className="truncate">· {m.consultant_name}</span>}
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-shrink-0">
                         <a href={`tel:${m.phone}`}
-                          className="flex items-center gap-1 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-all">
+                          className="flex items-center gap-1 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-all min-h-[36px]">
                           <Phone size={10} /> Gọi
                         </a>
                       </div>
@@ -461,9 +462,9 @@ export default function ZaloAutomationClient() {
             TAB: Logs
         ════════════════════════════════════════════════════ */}
         {activeTab === 'logs' && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+              <div className="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto no-scrollbar">
                 {[
                   { val: '', label: 'Tất cả' },
                   { val: 'welcome', label: '👋 Welcome' },
@@ -473,7 +474,7 @@ export default function ZaloAutomationClient() {
                   <button
                     key={f.val}
                     onClick={() => { setLogFilter(f.val); }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
                       logFilter === f.val ? 'bg-white shadow text-gray-800' : 'text-gray-500 hover:text-gray-700'
                     }`}
                   >
@@ -483,7 +484,7 @@ export default function ZaloAutomationClient() {
               </div>
               <button
                 onClick={fetchLogs}
-                className="ml-auto flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all"
+                className="sm:ml-auto flex items-center justify-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all min-h-[40px]"
               >
                 <RefreshCw size={13} className={logsLoading ? 'animate-spin' : ''} /> Làm mới
               </button>
@@ -498,47 +499,83 @@ export default function ZaloAutomationClient() {
                   <p className="text-sm text-gray-400 font-semibold">Chưa có lịch sử gửi</p>
                 </div>
               ) : (
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b border-gray-100">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-500">MÃ HV</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-500">SĐT</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-500">LOẠI</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-500">TRẠNG THÁI</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-500">THỜI GIAN</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-500">CHI TIẾT</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
+                <>
+                  {/* Mobile: card list */}
+                  <div className="sm:hidden divide-y divide-gray-50">
                     {logs.map(log => {
                       const s = STATUS_STYLE[log.status] || STATUS_STYLE.pending;
                       return (
-                        <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
-                          <td className="px-4 py-3">
-                            <span className="font-mono text-xs font-bold text-gray-700">{log.member_code}</span>
-                          </td>
-                          <td className="px-4 py-3 text-gray-500 text-xs">{log.phone}</td>
-                          <td className="px-4 py-3">
-                            <span className="text-xs">{TYPE_LABEL[log.message_type] || log.message_type}</span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-[11px] font-bold ${s.bg} ${s.text}`}>
+                        <div key={log.id} className="p-3 space-y-1.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <span className="font-mono text-xs font-bold text-gray-700">{log.member_code}</span>
+                              <p className="text-xs text-gray-500 mt-0.5">{log.phone}</p>
+                            </div>
+                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] font-bold flex-shrink-0 ${s.bg} ${s.text}`}>
                               {s.icon} {log.status.toUpperCase()}
                             </span>
-                          </td>
-                          <td className="px-4 py-3 text-xs text-gray-400">{fmtDate(log.sent_at)}</td>
-                          <td className="px-4 py-3 text-xs text-gray-400 max-w-[180px] truncate">
-                            {log.message_id
-                              ? <span className="text-emerald-600 font-mono">ID: {log.message_id.slice(0, 12)}...</span>
-                              : log.error_message
-                                ? <span className="text-red-500">{log.error_message.slice(0, 40)}</span>
-                                : '—'}
-                          </td>
-                        </tr>
+                          </div>
+                          <div className="flex items-center justify-between text-[11px] text-gray-400 gap-2">
+                            <span>{TYPE_LABEL[log.message_type] || log.message_type}</span>
+                            <span>{fmtDate(log.sent_at)}</span>
+                          </div>
+                          {(log.message_id || log.error_message) && (
+                            <div className="text-[11px] text-gray-400 truncate">
+                              {log.message_id
+                                ? <span className="text-emerald-600 font-mono">ID: {log.message_id.slice(0, 18)}...</span>
+                                : <span className="text-red-500">{log.error_message?.slice(0, 60)}</span>}
+                            </div>
+                          )}
+                        </div>
                       );
                     })}
-                  </tbody>
-                </table>
+                  </div>
+
+                  {/* Desktop table */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-500">MÃ HV</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-500">SĐT</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-500">LOẠI</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-500">TRẠNG THÁI</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-500">THỜI GIAN</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-500">CHI TIẾT</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {logs.map(log => {
+                          const s = STATUS_STYLE[log.status] || STATUS_STYLE.pending;
+                          return (
+                            <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
+                              <td className="px-4 py-3">
+                                <span className="font-mono text-xs font-bold text-gray-700">{log.member_code}</span>
+                              </td>
+                              <td className="px-4 py-3 text-gray-500 text-xs">{log.phone}</td>
+                              <td className="px-4 py-3">
+                                <span className="text-xs">{TYPE_LABEL[log.message_type] || log.message_type}</span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-[11px] font-bold ${s.bg} ${s.text}`}>
+                                  {s.icon} {log.status.toUpperCase()}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-xs text-gray-400">{fmtDate(log.sent_at)}</td>
+                              <td className="px-4 py-3 text-xs text-gray-400 max-w-[180px] truncate">
+                                {log.message_id
+                                  ? <span className="text-emerald-600 font-mono">ID: {log.message_id.slice(0, 12)}...</span>
+                                  : log.error_message
+                                    ? <span className="text-red-500">{log.error_message.slice(0, 40)}</span>
+                                    : '—'}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </div>
           </div>
@@ -548,9 +585,9 @@ export default function ZaloAutomationClient() {
             TAB: Settings & Test
         ════════════════════════════════════════════════════ */}
         {activeTab === 'settings' && (
-          <div className="space-y-5">
+          <div className="space-y-4 sm:space-y-5">
             {/* Config checklist */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
               <h2 className="font-bold text-gray-800 mb-4">⚙️ Cấu Hình Cần Thiết</h2>
               <div className="space-y-3">
                 {[
@@ -616,8 +653,8 @@ export default function ZaloAutomationClient() {
             </div>
 
             {/* Test send */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <h2 className="font-bold text-gray-800 mb-1">🧪 Gửi Test Welcome Message</h2>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
+              <h2 className="font-bold text-gray-800 mb-1 text-sm sm:text-base">🧪 Gửi Test Welcome Message</h2>
               <p className="text-xs text-gray-500 mb-4">Gửi tin nhắn thử nghiệm để kiểm tra kết nối Zalo ZNS</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
@@ -643,7 +680,7 @@ export default function ZaloAutomationClient() {
               <button
                 onClick={handleTestSend}
                 disabled={testSending || !testPhone || !testName}
-                className="mt-3 flex items-center gap-2 px-5 py-2.5 bg-[#0068ff] text-white rounded-xl font-bold text-sm shadow hover:bg-blue-700 transition-all disabled:opacity-50"
+                className="mt-3 flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 bg-[#0068ff] text-white rounded-xl font-bold text-sm shadow hover:bg-blue-700 transition-all disabled:opacity-50 min-h-[44px]"
               >
                 <Send size={14} />
                 {testSending ? 'Đang gửi...' : 'Gửi Test'}
@@ -660,7 +697,7 @@ export default function ZaloAutomationClient() {
             </div>
 
             {/* Quick links */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
               <h2 className="font-bold text-gray-800 mb-3">🔗 Links Hữu Ích</h2>
               <div className="space-y-2">
                 {[

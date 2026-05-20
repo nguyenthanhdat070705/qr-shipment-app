@@ -68,15 +68,15 @@ export default function ProductListClient({ products }: { products: ProductItem[
   return (
     <main className="min-h-screen bg-gray-50 pb-12">
       {/* Header */}
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-md mb-8 print:static print:border-0 print:mb-4">
-        <div className="mx-auto flex w-full items-center justify-between px-4 py-4">
-          <div className="flex items-center gap-4">
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-md mb-4 sm:mb-8 print:static print:border-0 print:mb-4 safe-top">
+        <div className="mx-auto flex w-full items-center justify-between gap-2 px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors print:hidden"
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors print:hidden flex-shrink-0"
             >
               <ArrowLeft size={16} />
-              Về trang chủ
+              <span className="hidden sm:inline">Về trang chủ</span>
             </Link>
             <div className="hidden sm:block w-px h-5 bg-gray-200 print:hidden" />
             <Image
@@ -88,18 +88,18 @@ export default function ProductListClient({ products }: { products: ProductItem[
               style={{ height: 'auto', filter: 'invert(1) brightness(0.2)' }}
             />
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-bold text-gray-800">
-              {filteredProducts.length} sản phẩm
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <span className="text-xs sm:text-sm font-bold text-gray-800 whitespace-nowrap">
+              {filteredProducts.length} SP
             </span>
             <DownloadAllQR products={downloadProducts} />
             <button
               onClick={undefined}
-              className="print:hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors shadow-sm"
+              className="print:hidden inline-flex items-center gap-1.5 px-2 sm:px-3 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 text-xs sm:text-sm font-semibold hover:bg-gray-50 transition-colors shadow-sm"
               id="print-btn"
             >
               <Printer size={14} />
-              In QR
+              <span className="hidden sm:inline">In QR</span>
             </button>
           </div>
         </div>
@@ -112,37 +112,37 @@ export default function ProductListClient({ products }: { products: ProductItem[
         }}
       />
 
-      <div className="w-full mx-auto px-4 space-y-8">
-        
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative">
-          
+      <div className="w-full mx-auto px-3 sm:px-4 space-y-4 sm:space-y-8">
+
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-6 relative">
+
           {/* Left Stat Block */}
-          <div className="flex-1 w-full md:w-auto text-left print:hidden">
-            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm inline-block w-full md:w-auto">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Thống kê</p>
-              <p className="text-sm font-semibold text-gray-800">
-                Có bao nhiêu loại hòm: <span className="text-2xl font-black text-blue-600 ml-2">{filteredProducts.length}</span>
+          <div className="flex-1 w-full md:w-auto text-left print:hidden order-2 md:order-1">
+            <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 shadow-sm inline-block w-full md:w-auto">
+              <p className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Thống kê</p>
+              <p className="text-xs sm:text-sm font-semibold text-gray-800">
+                Có bao nhiêu loại hòm: <span className="text-xl sm:text-2xl font-black text-blue-600 ml-2">{filteredProducts.length}</span>
               </p>
             </div>
           </div>
 
           {/* Center Title */}
-          <div className="text-center md:flex-[2] shrink-0">
-            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+          <div className="text-center md:flex-[2] shrink-0 order-1 md:order-2">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">
               Danh sách Mã QR Sản Phẩm
             </h1>
-            <p className="mt-2 text-gray-500 max-w-2xl mx-auto text-sm">
+            <p className="mt-1.5 sm:mt-2 text-gray-500 max-w-2xl mx-auto text-xs sm:text-sm">
               Mỗi mã QR liên kết trực tiếp đến trang chi tiết sản phẩm tương ứng.
               Nhấn <strong>Tải PDF QR</strong> để tải toàn bộ mã QR của danh sách hiện tại.
             </p>
           </div>
 
           {/* Right spacer for perfect centering */}
-          <div className="flex-1 hidden md:block" />
+          <div className="flex-1 hidden md:block order-3" />
         </div>
 
         {/* ── Filter & Search Bar ───────────────────── */}
-        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row gap-4 print:hidden">
+        <div className="bg-white p-3 sm:p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row gap-3 sm:gap-4 print:hidden">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search size={18} className="text-gray-400" />
@@ -177,20 +177,20 @@ export default function ProductListClient({ products }: { products: ProductItem[
 
         {/* Product Grid */}
         {filteredProducts.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-2xl border border-gray-200">
-            <p className="text-gray-500">
+          <div className="text-center py-12 sm:py-20 bg-white rounded-2xl border border-gray-200 px-4">
+            <p className="text-gray-500 text-sm sm:text-base">
               {products.length === 0 ? 'Chưa có sản phẩm nào trong kho hàng.' : 'Không tìm thấy sản phẩm nào khớp với bộ lọc.'}
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 print:grid-cols-3 print:gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 print:grid-cols-3 print:gap-3">
             {filteredProducts.map((product, idx) => {
               const isOutOfStock = product.quantity <= 0;
 
               return (
                 <div
                   key={`${product.productCode}-${idx}`}
-                  className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 flex flex-col items-center text-center hover:shadow-md hover:border-[#a8b4ce] transition-all duration-200 print:shadow-none print:border print:p-3 print:break-inside-avoid"
+                  className="bg-white rounded-2xl shadow-sm border border-gray-200 p-3 sm:p-5 flex flex-col items-center text-center hover:shadow-md hover:border-[#a8b4ce] transition-all duration-200 print:shadow-none print:border print:p-3 print:break-inside-avoid"
                 >
                   {/* Status indicator */}
                   <div className="self-end mb-2 print:hidden">
@@ -225,13 +225,14 @@ export default function ProductListClient({ products }: { products: ProductItem[
                   <QRCodeDisplay code={product.productCode} size={130} />
 
                   {/* Action button */}
-                  <div className="mt-4 w-full print:hidden">
+                  <div className="mt-3 sm:mt-4 w-full print:hidden">
                     <Link
                       href={`/product-sheet/${encodeURIComponent(product.productCode)}`}
-                      className="block w-full text-sm font-semibold text-[#1B2A4A] bg-[#eef1f7] hover:bg-[#d5dbe9] py-2.5 rounded-xl transition-colors"
+                      className="block w-full text-xs sm:text-sm font-semibold text-[#1B2A4A] bg-[#eef1f7] hover:bg-[#d5dbe9] py-2 sm:py-2.5 rounded-xl transition-colors min-h-[40px] flex items-center justify-center"
                       target="_blank"
                     >
-                      Xem phiếu thông tin →
+                      <span className="hidden sm:inline">Xem phiếu thông tin →</span>
+                      <span className="sm:hidden">Xem phiếu →</span>
                     </Link>
                   </div>
                 </div>

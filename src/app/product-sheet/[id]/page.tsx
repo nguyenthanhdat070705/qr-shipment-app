@@ -173,21 +173,21 @@ export default async function ProductSheetPage({
   const otherSpecs = hom.thong_so_khac || '';
 
   return (
-    <main className="min-h-screen bg-gray-100 flex flex-col items-center py-6 print:bg-white print:py-0">
-      
+    <main className="min-h-screen bg-gray-100 flex flex-col items-center py-3 sm:py-6 print:bg-white print:py-0 overflow-x-auto">
+
       {/* ── Toolbar for print/back ───────────────────── */}
-      <div className="w-[210mm] max-w-full flex items-center justify-between mb-4 px-4 print:hidden">
+      <div className="w-full sm:w-[210mm] max-w-full flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 mb-3 sm:mb-4 px-3 sm:px-4 print:hidden">
         <Link
           href="/product/fullproductlist"
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-gray-900 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-200"
+          className="inline-flex items-center justify-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-gray-900 bg-white px-4 py-2.5 rounded-xl shadow-sm border border-gray-200 min-h-[44px]"
         >
           <ArrowLeft size={16} />
           Trở lại danh sách
         </Link>
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3">
           <Link
             href={`/product/${decodedId}`}
-            className="inline-flex items-center gap-1.5 text-sm font-bold text-white bg-emerald-600 px-5 py-2 rounded-xl shadow-md hover:bg-emerald-700 transition-colors"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 text-sm font-bold text-white bg-emerald-600 px-4 sm:px-5 py-2.5 rounded-xl shadow-md hover:bg-emerald-700 transition-colors min-h-[44px]"
           >
             <Truck size={16} />
             Xuất hàng
@@ -195,7 +195,7 @@ export default async function ProductSheetPage({
           <button
             onClick={undefined}
             id="print-btn"
-            className="inline-flex items-center gap-1.5 text-sm font-bold text-white bg-[#1B2A4A] px-5 py-2 rounded-xl shadow-md hover:bg-[#162240] transition-colors"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 text-sm font-bold text-white bg-[#1B2A4A] px-4 sm:px-5 py-2.5 rounded-xl shadow-md hover:bg-[#162240] transition-colors min-h-[44px]"
           >
             <Printer size={16} />
             In phiếu
@@ -315,6 +315,20 @@ export default async function ProductSheetPage({
           __html: `
             .times-font-force, .times-font-force * {
               font-family: 'Times New Roman', Times, serif !important;
+            }
+            /* Mobile preview - scale the A4 sheet down to fit screen */
+            @media (max-width: 768px) {
+              .product-sheet-container {
+                transform: scale(var(--sheet-scale, 0.45));
+                transform-origin: top center;
+                margin-bottom: calc((297mm * (var(--sheet-scale, 0.45) - 1)));
+              }
+            }
+            @media (min-width: 480px) and (max-width: 768px) {
+              .product-sheet-container { --sheet-scale: 0.6; }
+            }
+            @media (min-width: 640px) and (max-width: 768px) {
+              .product-sheet-container { --sheet-scale: 0.75; }
             }
             @media print {
               body, html {

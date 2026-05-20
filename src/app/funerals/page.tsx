@@ -140,71 +140,71 @@ export default function FuneralsPage() {
   return (
     <PageLayout title="Danh Sách Đám" icon={<BookOpen size={15} className="text-pink-500" />}>
       {/* ── Header ── */}
-      <div className="mb-8 p-8 sm:p-10 rounded-[2rem] bg-gradient-to-br from-[#1B2A4A] via-indigo-900 to-[#0f172a] text-white shadow-xl shadow-indigo-900/20 max-w-7xl mx-auto relative overflow-hidden">
+      <div className="mb-6 sm:mb-8 p-5 sm:p-8 lg:p-10 rounded-[1.5rem] sm:rounded-[2rem] bg-gradient-to-br from-[#1B2A4A] via-indigo-900 to-[#0f172a] text-white shadow-xl shadow-indigo-900/20 max-w-7xl mx-auto relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-pink-500/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px] translate-y-1/3 -translate-x-1/4"></div>
-        
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md mb-4 flex-shrink-0">
-              <BookOpen size={14} className="text-pink-400" />
-              <span className="text-[11px] font-bold text-white tracking-widest uppercase">Quản lý Đám</span>
+            <div className="inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md mb-3 sm:mb-4 flex-shrink-0">
+              <BookOpen size={12} className="text-pink-400 sm:w-3.5 sm:h-3.5" />
+              <span className="text-[10px] sm:text-[11px] font-bold text-white tracking-widest uppercase">Quản lý Đám</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold mb-3 tracking-tight">Hồ Sơ Đám</h1>
-            <p className="text-indigo-100 text-sm max-w-lg leading-relaxed">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold mb-2 sm:mb-3 tracking-tight">Hồ Sơ Đám</h1>
+            <p className="text-indigo-100 text-xs sm:text-sm max-w-lg leading-relaxed">
               Duyệt qua danh sách, tìm kiếm và xem toàn bộ chi tiết tổ chức, thông tin các gói dịch vụ của từng đám.
             </p>
           </div>
-          
-          <div className="w-full md:w-auto mt-4 md:mt-0 relative max-w-md flex-1 flex gap-2">
-             <div className="relative flex-1">
-               <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                  <Search size={18} className="text-indigo-300" />
+
+          <div className="w-full lg:w-auto relative lg:max-w-md lg:flex-1 grid grid-cols-2 sm:grid-cols-[1fr_auto_auto_auto] gap-2">
+             <div className="relative col-span-2 sm:col-span-1">
+               <div className="absolute inset-y-0 left-3 sm:left-4 flex items-center pointer-events-none">
+                  <Search size={16} className="text-indigo-300 sm:w-[18px] sm:h-[18px]" />
                </div>
                <input
                  type="text"
                  value={search}
                  onChange={(e) => setSearch(e.target.value)}
                  placeholder="Mã đám, Người mất..."
-                 className="w-full pl-11 pr-4 py-4 bg-white/10 border border-white/20 focus:bg-white focus:border-indigo-300 rounded-2xl text-sm font-medium text-white focus:text-gray-900 placeholder:text-indigo-200 focus:placeholder:text-gray-400 transition-all shadow-inner outline-none backdrop-blur-md"
+                 className="w-full pl-9 sm:pl-11 pr-3 sm:pr-4 py-3 sm:py-4 bg-white/10 border border-white/20 focus:bg-white focus:border-indigo-300 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-medium text-white focus:text-gray-900 placeholder:text-indigo-200 focus:placeholder:text-gray-400 transition-all shadow-inner outline-none backdrop-blur-md"
                />
              </div>
-             
+
              {/* Bộ lọc Date */}
-             <div className="relative w-36 sm:w-40 flex-shrink-0">
+             <div className="relative flex-shrink-0">
                <input
                  type="date"
                  value={filterDate}
                  onChange={(e) => setFilterDate(e.target.value)}
-                 className="w-full px-3 py-4 bg-white/10 border border-white/20 focus:bg-white focus:border-indigo-300 rounded-2xl text-sm font-medium text-white focus:text-gray-900 transition-all shadow-inner outline-none backdrop-blur-md cursor-pointer h-[54px]"
+                 className="w-full px-2.5 sm:px-3 py-3 sm:py-4 bg-white/10 border border-white/20 focus:bg-white focus:border-indigo-300 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-medium text-white focus:text-gray-900 transition-all shadow-inner outline-none backdrop-blur-md cursor-pointer h-[46px] sm:h-[54px]"
                  title="Lọc theo ngày"
                />
              </div>
-             
+
              {/* Nút Sync thủ công */}
               <button
                 onClick={handleManualSync}
                 disabled={syncing}
-                className={`flex-shrink-0 flex items-center justify-center px-4 py-4 rounded-2xl text-sm font-bold shadow-lg transition-all border h-[54px] ${
-                  syncing 
-                    ? 'bg-amber-500/80 border-amber-400/50 text-white cursor-wait' 
+                className={`flex-shrink-0 flex items-center justify-center px-3 sm:px-4 py-3 sm:py-4 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold shadow-lg transition-all border h-[46px] sm:h-[54px] ${
+                  syncing
+                    ? 'bg-amber-500/80 border-amber-400/50 text-white cursor-wait'
                     : 'bg-emerald-500 hover:bg-emerald-400 border-emerald-400/50 hover:shadow-emerald-500/30 text-white'
                 }`}
                 title="Đồng bộ dữ liệu từ Google Sheets ngay lập tức"
               >
                 <div className="flex items-center gap-2">
-                   <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
+                   <RefreshCw size={14} className={`${syncing ? 'animate-spin' : ''} sm:w-4 sm:h-4`} />
                    <span className="hidden sm:inline">{syncing ? 'Đang sync...' : 'Sync Sheets'}</span>
                 </div>
               </button>
 
               {/* Nút Xem Dashboard Gantt */}
-              <Link 
+              <Link
                  href="/funerals/dashboard"
-                 className="flex-shrink-0 flex items-center justify-center bg-indigo-500 hover:bg-indigo-400 text-white px-4 py-4 rounded-2xl text-sm font-bold shadow-lg transition-all border border-indigo-400/50 hover:shadow-indigo-500/30 h-[54px]"
+                 className="flex-shrink-0 flex items-center justify-center bg-indigo-500 hover:bg-indigo-400 text-white px-3 sm:px-4 py-3 sm:py-4 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold shadow-lg transition-all border border-indigo-400/50 hover:shadow-indigo-500/30 h-[46px] sm:h-[54px]"
               >
                  <div className="flex items-center gap-2">
-                    <Calendar size={18} />
+                    <Calendar size={16} className="sm:w-[18px] sm:h-[18px]" />
                     <span className="hidden sm:inline">Gantt</span>
                  </div>
               </Link>
@@ -212,17 +212,17 @@ export default function FuneralsPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto pb-12">
+      <div className="max-w-7xl mx-auto pb-8 sm:pb-12">
          {/* ── Sync Result Banner ── */}
          {syncResult && (
-           <div className={`mb-4 flex items-center gap-3 px-5 py-3.5 rounded-2xl border text-sm font-semibold transition-all animate-in fade-in duration-300 ${
-             syncResult.success 
-               ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+           <div className={`mb-4 flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border text-xs sm:text-sm font-semibold transition-all animate-in fade-in duration-300 ${
+             syncResult.success
+               ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                : 'bg-red-50 border-red-200 text-red-800'
            }`}>
-             {syncResult.success 
-               ? <CheckCircle size={18} className="text-emerald-500 flex-shrink-0" />
-               : <X size={18} className="text-red-500 flex-shrink-0" />
+             {syncResult.success
+               ? <CheckCircle size={16} className="text-emerald-500 flex-shrink-0 sm:w-[18px] sm:h-[18px]" />
+               : <X size={16} className="text-red-500 flex-shrink-0 sm:w-[18px] sm:h-[18px]" />
              }
              <span className="flex-1">{syncResult.message}</span>
              <button onClick={() => setSyncResult(null)} className="p-1 rounded-lg hover:bg-white/50 transition-colors flex-shrink-0">
@@ -231,7 +231,7 @@ export default function FuneralsPage() {
            </div>
          )}
          {/* ── Table / Grid ── */}
-         <div className="bg-white rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/50 overflow-hidden">
+         <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/50 overflow-hidden">
            {loading ? (
              <div className="flex flex-col items-center justify-center p-20 gap-4 text-indigo-400">
                <Loader2 className="animate-spin w-10 h-10" />
@@ -310,34 +310,34 @@ export default function FuneralsPage() {
 
       {/* ── Modal Chi Tiết Đám ── */}
       {selectedFuneral && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-md p-4 sm:p-6 sm:py-10 transition-opacity duration-300">
-          <div className="bg-white rounded-[2rem] w-full max-w-5xl h-full flex flex-col shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-md p-2 sm:p-4 lg:p-6 sm:py-10 transition-opacity duration-300">
+          <div className="bg-white rounded-[1.25rem] sm:rounded-[2rem] w-full max-w-5xl h-full sm:max-h-[95vh] flex flex-col shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 sm:px-8 py-5 sm:py-6 border-b border-gray-100 bg-gray-50/80 backdrop-blur-md relative">
-              <div className="flex flex-col gap-1.5 min-w-0 pr-4">
-                <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight flex items-center gap-3">
-                  <span className="w-2 h-7 bg-pink-500 rounded-full inline-block flex-shrink-0"></span>
+            <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4 sm:py-5 lg:py-6 border-b border-gray-100 bg-gray-50/80 backdrop-blur-md relative gap-2">
+              <div className="flex flex-col gap-1 sm:gap-1.5 min-w-0 pr-2 sm:pr-4">
+                <h2 className="text-base sm:text-xl lg:text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2 sm:gap-3">
+                  <span className="w-1.5 sm:w-2 h-5 sm:h-7 bg-pink-500 rounded-full inline-block flex-shrink-0"></span>
                   <span className="truncate">Hồ Sơ Đám: <span className="text-pink-600 ml-1">{selectedFuneral.ma_dam}</span></span>
                 </h2>
-                <div className="flex items-center gap-3 text-[13px] font-bold text-gray-500 sm:ml-5">
-                  <span className="inline-flex items-center gap-1.5"><Users size={14} className="text-indigo-400"/> {selectedFuneral.chi_nhanh}</span>
+                <div className="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-[13px] font-bold text-gray-500 sm:ml-5 flex-wrap">
+                  <span className="inline-flex items-center gap-1.5"><Users size={12} className="text-indigo-400 sm:w-3.5 sm:h-3.5"/> {selectedFuneral.chi_nhanh}</span>
                   <span className="w-1 h-1 rounded-full bg-gray-300" />
-                  <span className="inline-flex items-center gap-1.5"><Heart size={14} className="text-rose-400"/> {selectedFuneral.nguoi_mat}</span>
+                  <span className="inline-flex items-center gap-1.5 min-w-0"><Heart size={12} className="text-rose-400 sm:w-3.5 sm:h-3.5"/> <span className="truncate">{selectedFuneral.nguoi_mat}</span></span>
                 </div>
               </div>
-              
-              <button onClick={() => setSelectedFuneral(null)} className="p-2 sm:p-3 bg-white hover:bg-gray-100 border border-gray-200 text-gray-600 hover:text-red-600 rounded-full transition-all shadow-sm cursor-pointer hover:shadow-md hover:rotate-90 flex-shrink-0">
-                <X size={20} className="sm:w-6 sm:h-6" />
+
+              <button onClick={() => setSelectedFuneral(null)} className="p-1.5 sm:p-2 lg:p-3 bg-white hover:bg-gray-100 border border-gray-200 text-gray-600 hover:text-red-600 rounded-full transition-all shadow-sm cursor-pointer hover:shadow-md hover:rotate-90 flex-shrink-0">
+                <X size={16} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
               </button>
             </div>
-            
+
             {/* Modal Content */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-[#f8fafc] modal-scrollbar">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 items-start">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-8 bg-[#f8fafc] modal-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 items-start">
                 
                 {/* Cột 1: Thông tin chung & Thời gian */}
-                <div className="space-y-4 sm:space-y-6">
-                  <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-indigo-100/50 hover:border-indigo-200 hover:shadow-md transition-all relative overflow-hidden">
+                <div className="space-y-3 sm:space-y-4 lg:space-y-6">
+                  <div className="bg-white p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-indigo-100/50 hover:border-indigo-200 hover:shadow-md transition-all relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-50 rounded-bl-full -z-0"></div>
                     <h3 className="text-sm font-black uppercase text-indigo-700 tracking-widest mb-4 flex items-center gap-2 relative z-10">
                       <span className="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
@@ -357,7 +357,7 @@ export default function FuneralsPage() {
                     </div>
                   </div>
 
-                  <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-rose-100/50 hover:border-rose-200 hover:shadow-md transition-all relative overflow-hidden">
+                  <div className="bg-white p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-rose-100/50 hover:border-rose-200 hover:shadow-md transition-all relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-rose-50 rounded-bl-full -z-0"></div>
                     <h3 className="text-sm font-black uppercase text-rose-700 tracking-widest mb-4 flex items-center gap-2 relative z-10">
                       <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
@@ -374,8 +374,8 @@ export default function FuneralsPage() {
                 </div>
 
                 {/* Cột 2: Sản phẩm & Logistics */}
-                <div className="space-y-4 sm:space-y-6">
-                  <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-emerald-100/50 hover:border-emerald-200 hover:shadow-md transition-all relative overflow-hidden">
+                <div className="space-y-3 sm:space-y-4 lg:space-y-6">
+                  <div className="bg-white p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-emerald-100/50 hover:border-emerald-200 hover:shadow-md transition-all relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-50 rounded-bl-full -z-0"></div>
                     <h3 className="text-sm font-black uppercase text-emerald-700 tracking-widest mb-4 flex items-center gap-2 relative z-10">
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
@@ -396,8 +396,8 @@ export default function FuneralsPage() {
                 </div>
 
                 {/* Cột 3: Xe & Dịch vụ Khác */}
-                <div className="space-y-4 sm:space-y-6">
-                  <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-amber-100/50 hover:border-amber-200 hover:shadow-md transition-all relative overflow-hidden">
+                <div className="space-y-3 sm:space-y-4 lg:space-y-6">
+                  <div className="bg-white p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-amber-100/50 hover:border-amber-200 hover:shadow-md transition-all relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-amber-50 rounded-bl-full -z-0"></div>
                     <h3 className="text-sm font-black uppercase text-amber-700 tracking-widest mb-4 flex items-center gap-2 relative z-10">
                       <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
@@ -411,7 +411,7 @@ export default function FuneralsPage() {
                     </div>
                   </div>
 
-                  <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-violet-100/50 hover:border-violet-200 hover:shadow-md transition-all relative overflow-hidden">
+                  <div className="bg-white p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-violet-100/50 hover:border-violet-200 hover:shadow-md transition-all relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-violet-50 rounded-bl-full -z-0"></div>
                     <h3 className="text-sm font-black uppercase text-violet-700 tracking-widest mb-4 flex items-center gap-2 relative z-10">
                       <span className="w-2.5 h-2.5 rounded-full bg-violet-500"></span>

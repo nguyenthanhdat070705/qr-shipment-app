@@ -44,16 +44,16 @@ function StatCard({
   return (
     <button
       onClick={onClick}
-      className="group relative overflow-hidden rounded-2xl bg-white border border-gray-100 p-5 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 w-full text-left"
+      className="group relative overflow-hidden rounded-2xl bg-white border border-gray-100 p-3 sm:p-5 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 w-full text-left"
     >
       <div className={`absolute -top-6 -right-6 w-28 h-28 rounded-full opacity-[0.07] ${gradient}`} />
-      <div className="flex items-start justify-between relative">
-        <div className="flex-1">
-          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">{label}</p>
-          <p className={`text-3xl font-black leading-none ${accent}`}>{value}</p>
-          {sub && <p className="text-xs text-gray-400 mt-2 font-medium">{sub}</p>}
+      <div className="flex items-start justify-between gap-2 relative">
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 sm:mb-2 truncate">{label}</p>
+          <p className={`text-xl sm:text-3xl font-black leading-none ${accent}`}>{value}</p>
+          {sub && <p className="text-[10px] sm:text-xs text-gray-400 mt-1.5 sm:mt-2 font-medium line-clamp-2">{sub}</p>}
         </div>
-        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${gradient} text-white shadow-lg flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+        <div className={`flex h-9 w-9 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl ${gradient} text-white shadow-lg flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
           {icon}
         </div>
       </div>
@@ -321,44 +321,44 @@ export default function OperationsDashboard() {
       {/* ═══════════════════════════════════════════════════
           Welcome Banner
       ═══════════════════════════════════════════════════ */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f2027] p-6 mb-6 shadow-2xl">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f2027] p-4 sm:p-6 mb-4 sm:mb-6 shadow-2xl">
         {/* Decorative orbs */}
         <div className="absolute -top-12 -right-12 w-56 h-56 rounded-full bg-orange-500/10 blur-3xl" />
         <div className="absolute bottom-0 left-20 w-40 h-40 rounded-full bg-amber-400/10 blur-2xl" />
         <div className="absolute top-1/2 right-1/3 w-32 h-32 rounded-full bg-indigo-500/10 blur-2xl" />
 
-        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/20 border border-orange-500/30">
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2.5 mb-2 sm:mb-3">
+              <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-orange-500/20 border border-orange-500/30">
                 <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
-                <span className="text-[11px] font-bold text-orange-300 tracking-wider uppercase">Bộ phận Vận hành · Online</span>
+                <span className="text-[10px] sm:text-[11px] font-bold text-orange-300 tracking-wider uppercase">Vận hành · Online</span>
               </div>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white mb-1.5">
-              Chào buổi sáng, {userName} 🚛
+            <h1 className="text-xl sm:text-3xl font-black text-white mb-1 sm:mb-1.5">
+              Chào, {userName} 🚛
             </h1>
-            <p className="text-white/50 text-sm capitalize">{today}</p>
+            <p className="text-white/50 text-xs sm:text-sm capitalize">{today}</p>
           </div>
 
-          <div className="hidden sm:flex flex-col items-end gap-3">
+          <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:gap-3 flex-wrap">
             {/* Live clock */}
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-2">
+            <div className="hidden sm:flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-2">
               <Activity size={14} className="text-orange-400" />
               <span className="font-mono text-lg font-black text-white tabular-nums">{nowStr}</span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <button
                 onClick={() => { loadData(); loadFunerals(); }}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 border border-white/10 text-white/70 text-xs font-semibold hover:bg-white/20 transition-colors"
+                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 border border-white/10 text-white/70 text-xs font-semibold hover:bg-white/20 transition-colors min-h-[40px]"
               >
                 <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
-                Làm mới
+                <span className="hidden sm:inline">Làm mới</span>
               </button>
               <button
                 onClick={() => router.push('/goods-issue')}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm font-bold shadow-lg shadow-orange-500/30 hover:from-orange-600 hover:to-amber-600 transition-all"
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm font-bold shadow-lg shadow-orange-500/30 hover:from-orange-600 hover:to-amber-600 transition-all min-h-[40px]"
               >
                 <Truck size={15} />
                 Xuất hàng
@@ -369,14 +369,14 @@ export default function OperationsDashboard() {
 
         {/* Urgent alerts */}
         {pending > 0 && (
-          <div className="mt-4 flex items-center gap-2.5 bg-amber-400/15 border border-amber-400/25 rounded-xl px-4 py-2.5">
+          <div className="mt-3 sm:mt-4 flex items-center gap-2 sm:gap-2.5 bg-amber-400/15 border border-amber-400/25 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 flex-wrap">
             <Bell size={14} className="text-amber-300 flex-shrink-0" />
-            <p className="text-xs text-amber-200 font-medium">
+            <p className="text-[11px] sm:text-xs text-amber-200 font-medium flex-1 min-w-0">
               Có <strong className="text-amber-100">{pending} đơn giao</strong> đang chờ xử lý — cần điều phối ngay!
             </p>
             <button
               onClick={() => { setFilterStatus('pending'); setActiveTab('dashboard'); }}
-              className="ml-auto text-[11px] font-bold text-amber-300 hover:text-white underline underline-offset-2"
+              className="text-[11px] font-bold text-amber-300 hover:text-white underline underline-offset-2 whitespace-nowrap"
             >
               Xem ngay →
             </button>
@@ -387,12 +387,12 @@ export default function OperationsDashboard() {
       {/* ═══════════════════════════════════════════════════
           Tab Navigation
       ═══════════════════════════════════════════════════ */}
-      <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-2xl mb-6 w-fit">
+      <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-2xl mb-4 sm:mb-6 w-full sm:w-fit overflow-x-auto no-scrollbar">
         {tabs.map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
+            className={`flex items-center justify-center gap-2 flex-1 sm:flex-initial px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 whitespace-nowrap ${
               activeTab === tab.key
                 ? 'bg-white text-gray-900 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
@@ -410,7 +410,7 @@ export default function OperationsDashboard() {
       {activeTab === 'dashboard' && (
         <>
           {/* KPI Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
             <StatCard
               label="Tổng đơn giao"
               value={total}
@@ -450,13 +450,13 @@ export default function OperationsDashboard() {
           </div>
 
           {/* Main Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
 
             {/* ── LEFT: Orders Table (2/3) ── */}
-            <div className="lg:col-span-2 space-y-4">
+            <div className="lg:col-span-2 space-y-3 sm:space-y-4">
 
               {/* Search + Filter Bar */}
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                 <div className="relative flex-1">
                   <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
@@ -467,7 +467,7 @@ export default function OperationsDashboard() {
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 transition-all"
                   />
                 </div>
-                <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl p-1">
+                <div className="flex items-center gap-1 sm:gap-1.5 bg-white border border-gray-200 rounded-xl p-1 overflow-x-auto no-scrollbar">
                   {[
                     { val: 'all',        label: 'Tất cả' },
                     { val: 'pending',    label: 'Chờ' },
@@ -477,7 +477,7 @@ export default function OperationsDashboard() {
                     <button
                       key={f.val}
                       onClick={() => setFilterStatus(f.val)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
                         filterStatus === f.val
                           ? 'bg-orange-500 text-white shadow-sm'
                           : 'text-gray-500 hover:text-gray-700'
@@ -490,20 +490,21 @@ export default function OperationsDashboard() {
               </div>
 
               {/* Header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-5 rounded-full bg-orange-500" />
-                  <h2 className="font-black text-gray-900 text-base">Danh sách đơn giao hàng</h2>
-                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-orange-100 text-orange-600 text-[10px] font-black">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-1 h-5 rounded-full bg-orange-500 flex-shrink-0" />
+                  <h2 className="font-black text-gray-900 text-sm sm:text-base truncate">Danh sách đơn giao hàng</h2>
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-orange-100 text-orange-600 text-[10px] font-black flex-shrink-0">
                     {filteredOrders.length}
                   </span>
                 </div>
                 <button
                   onClick={() => router.push('/operations/create')}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-500 text-white text-xs font-black hover:bg-orange-600 shadow-lg shadow-orange-200 transition-all"
+                  className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-orange-500 text-white text-xs font-black hover:bg-orange-600 shadow-lg shadow-orange-200 transition-all whitespace-nowrap min-h-[36px]"
                 >
                   <Plus size={14} />
-                  Tạo đơn mới
+                  <span className="hidden sm:inline">Tạo đơn mới</span>
+                  <span className="sm:hidden">Mới</span>
                 </button>
               </div>
 
@@ -536,17 +537,17 @@ export default function OperationsDashboard() {
                       <div
                         key={order.id}
                         onClick={() => router.push(`/operations/${order.id}`)}
-                        className="flex items-center gap-4 px-5 py-4 hover:bg-orange-50/40 cursor-pointer group transition-colors"
+                        className="flex items-center gap-3 sm:gap-4 px-3 sm:px-5 py-3 sm:py-4 hover:bg-orange-50/40 cursor-pointer group transition-colors"
                       >
                         {/* Icon */}
-                        <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-                          <Truck size={18} className="text-orange-500" />
+                        <div className="flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
+                          <Truck size={16} className="text-orange-500 sm:w-[18px] sm:h-[18px]" />
                         </div>
 
                         {/* Info */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-mono text-xs font-black text-orange-700 bg-orange-50 px-2 py-0.5 rounded-md">
+                          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                            <span className="font-mono text-[10px] sm:text-xs font-black text-orange-700 bg-orange-50 px-2 py-0.5 rounded-md">
                               {order.do_code}
                             </span>
                             <StatusPill status={order.status} />
@@ -554,14 +555,14 @@ export default function OperationsDashboard() {
                           <p className="text-sm font-semibold text-gray-800 mt-0.5 truncate">
                             {order.customer_name || '—'}
                           </p>
-                          <div className="flex items-center gap-3 mt-0.5">
+                          <div className="flex items-center gap-2 sm:gap-3 mt-0.5 flex-wrap">
                             {order.customer_phone && (
-                              <span className="flex items-center gap-1 text-xs text-gray-400">
+                              <span className="flex items-center gap-1 text-[10px] sm:text-xs text-gray-400">
                                 <Phone size={10} /> {order.customer_phone}
                               </span>
                             )}
                             {order.warehouse?.name && (
-                              <span className="flex items-center gap-1 text-xs text-gray-400">
+                              <span className="flex items-center gap-1 text-[10px] sm:text-xs text-gray-400 truncate">
                                 <Warehouse size={10} /> {order.warehouse.name}
                               </span>
                             )}
@@ -569,7 +570,7 @@ export default function OperationsDashboard() {
                         </div>
 
                         {/* Right */}
-                        <div className="flex-shrink-0 text-right">
+                        <div className="flex-shrink-0 text-right hidden sm:block">
                           {order.delivery_date && (
                             <p className="text-xs font-semibold text-gray-700">
                               {new Date(order.delivery_date).toLocaleDateString('vi-VN')}
@@ -580,7 +581,7 @@ export default function OperationsDashboard() {
                           )}
                         </div>
 
-                        <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex-shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                           <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center">
                             <Eye size={13} className="text-orange-600" />
                           </div>
@@ -593,7 +594,7 @@ export default function OperationsDashboard() {
 
               {/* Progress Bar */}
               {total > 0 && (
-                <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5">
                   <div className="flex items-center gap-2 mb-4">
                     <Target size={15} className="text-orange-500" />
                     <h3 className="text-sm font-black text-gray-900">Tiến độ giao hàng hôm nay</h3>
@@ -677,7 +678,7 @@ export default function OperationsDashboard() {
               </div>
 
               {/* Today Summary */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+              <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 shadow-sm">
                 <div className="flex items-center gap-2 mb-4">
                   <Activity size={15} className="text-orange-500" />
                   <h3 className="text-sm font-black text-gray-900">Xuất hàng hôm nay</h3>
@@ -723,7 +724,7 @@ export default function OperationsDashboard() {
               </div>
 
               {/* Workflow Guide */}
-              <div className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] rounded-2xl p-5">
+              <div className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] rounded-2xl p-4 sm:p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <Shield size={14} className="text-orange-400" />
                   <h3 className="text-sm font-black text-white">Quy trình vận hành</h3>
@@ -761,43 +762,43 @@ export default function OperationsDashboard() {
           Tab: Gantt Chart
       ═══════════════════════════════════════════════════ */}
       {activeTab === 'gantt' && (
-        <div className="space-y-5">
+        <div className="space-y-4 sm:space-y-5">
           {/* Summary Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 flex-shrink-0">
-                <BookOpen size={18} className="text-red-600" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
+              <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-red-100 flex-shrink-0">
+                <BookOpen size={16} className="text-red-600 sm:w-[18px] sm:h-[18px]" />
               </div>
-              <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Tang lễ</p>
-                <p className="text-xl font-black text-gray-900">{funerals.length}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 flex-shrink-0">
-                <Truck size={18} className="text-blue-600" />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Giao hàng</p>
-                <p className="text-xl font-black text-gray-900">{orders.length}</p>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate">Tang lễ</p>
+                <p className="text-lg sm:text-xl font-black text-gray-900">{funerals.length}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-100 flex-shrink-0">
-                <Package size={18} className="text-green-600" />
+            <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
+              <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-blue-100 flex-shrink-0">
+                <Truck size={16} className="text-blue-600 sm:w-[18px] sm:h-[18px]" />
               </div>
-              <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Xuất kho</p>
-                <p className="text-xl font-black text-gray-900">{issueHistory.length}</p>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate">Giao hàng</p>
+                <p className="text-lg sm:text-xl font-black text-gray-900">{orders.length}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 flex-shrink-0">
-                <Layers size={18} className="text-purple-600" />
+            <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
+              <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-green-100 flex-shrink-0">
+                <Package size={16} className="text-green-600 sm:w-[18px] sm:h-[18px]" />
               </div>
-              <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Tổng công việc</p>
-                <p className="text-xl font-black text-gray-900">{ganttTasks.length}</p>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate">Xuất kho</p>
+                <p className="text-lg sm:text-xl font-black text-gray-900">{issueHistory.length}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
+              <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-purple-100 flex-shrink-0">
+                <Layers size={16} className="text-purple-600 sm:w-[18px] sm:h-[18px]" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate">Tổng công việc</p>
+                <p className="text-lg sm:text-xl font-black text-gray-900">{ganttTasks.length}</p>
               </div>
             </div>
           </div>

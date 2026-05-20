@@ -55,31 +55,31 @@ export default function CareHistoryPage() {
   return (
     <PageLayout title="Lịch sử chăm sóc" icon={<Clock size={20} className="text-pink-500" />}>
       {/* Header */}
-      <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center mb-8">
+      <div className="flex flex-col md:flex-row gap-3 sm:gap-4 justify-between items-stretch md:items-center mb-4 sm:mb-8">
         <div className="relative w-full md:w-96">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input 
-            type="text" 
-            placeholder="Tra cứu theo tên KH, SĐT, nội dung..." 
+          <input
+            type="text"
+            placeholder="Tra cứu theo tên KH, SĐT, nội dung..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 shadow-sm"
           />
         </div>
         <div className="flex gap-2 w-full md:w-auto">
-          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 font-semibold text-sm rounded-xl hover:bg-gray-50 shadow-sm transition-colors">
+          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 font-semibold text-sm rounded-xl hover:bg-gray-50 shadow-sm transition-colors min-h-[44px]">
             <Calendar size={16} />
             Hôm nay
           </button>
-          <button className="flex-1 md:flex-none px-4 py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-semibold text-sm rounded-xl hover:from-pink-600 hover:to-rose-600 shadow-md shadow-pink-500/20 active:scale-95 transition-all">
+          <button className="flex-1 md:flex-none px-4 py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-semibold text-sm rounded-xl hover:from-pink-600 hover:to-rose-600 shadow-md shadow-pink-500/20 active:scale-95 transition-all min-h-[44px]">
             Xuất Excel
           </button>
         </div>
       </div>
 
       {/* Timeline Layout */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-8">
-        <div className="relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bgGradient-to-b before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4 md:p-8">
+        <div className="relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
           
           {filteredHistory.length === 0 ? (
             <div className="text-center py-12">
@@ -100,28 +100,28 @@ export default function CareHistoryPage() {
                   </div>
 
                   {/* Card Main */}
-                  <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-gray-100 bg-white hover:border-gray-300 transition-colors shadow-sm ml-4 md:ml-0 hover:shadow-md">
+                  <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] p-3 sm:p-4 rounded-xl border border-gray-100 bg-white hover:border-gray-300 transition-colors shadow-sm ml-4 md:ml-0 hover:shadow-md">
                     <div className="flex flex-wrap shadow-none justify-between items-start gap-2 mb-2">
-                       <div>
-                         <h4 className="font-bold text-gray-800 text-sm flex items-center gap-1.5">
-                           {item.customer}
+                       <div className="min-w-0 flex-1">
+                         <h4 className="font-bold text-gray-800 text-sm flex items-center gap-1.5 flex-wrap">
+                           <span className="truncate max-w-[140px] sm:max-w-none">{item.customer}</span>
                            <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full font-medium">{item.phone}</span>
                          </h4>
                          <span className="text-xs text-gray-400 block mt-0.5">{label}</span>
                        </div>
-                       <div className="text-right">
-                         <span className="text-xs font-semibold text-gray-600 flex items-center gap-1"><Clock size={10}/> {new Date(item.createdAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}</span>
+                       <div className="text-right flex-shrink-0">
+                         <span className="text-xs font-semibold text-gray-600 flex items-center gap-1 justify-end"><Clock size={10}/> {new Date(item.createdAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}</span>
                          <span className="text-[10px] text-gray-400 block">{new Date(item.createdAt).toLocaleDateString('vi-VN')}</span>
                        </div>
                     </div>
                     <div className="mt-3">
-                      <p className="text-sm text-gray-600 leading-relaxed bg-gray-50/50 p-3 rounded-lg border border-gray-50 border-l-2 border-l-pink-400">
+                      <p className="text-xs sm:text-sm text-gray-600 leading-relaxed bg-gray-50/50 p-3 rounded-lg border border-gray-50 border-l-2 border-l-pink-400">
                         {item.content}
                       </p>
                     </div>
-                    <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-50">
+                    <div className="flex flex-wrap justify-between items-center mt-3 pt-3 border-t border-gray-50 gap-2">
                       <span className="text-[11px] font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-md flex items-center gap-1">
-                        <UserCheck size={12} className="text-gray-400"/> Nhân viên: <strong className="text-gray-700">{item.staff}</strong>
+                        <UserCheck size={12} className="text-gray-400"/> NV: <strong className="text-gray-700">{item.staff}</strong>
                       </span>
                       <button className="text-pink-500 hover:text-pink-600 text-xs font-bold flex items-center gap-1 group/btn">
                         Chi tiết <ArrowRight size={12} className="group-hover/btn:translate-x-1 transition-transform" />

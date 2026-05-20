@@ -70,13 +70,13 @@ export default function IOManagementPage() {
   return (
     <PageLayout title="Quản lý xuất nhập" icon={<Database size={15} className="text-indigo-500" />}>
       {/* ── Tabs Navigation ────────────────────── */}
-      <div className="@container">
-        <div className="mb-5 flex items-center gap-1 border-b border-gray-200 dark:border-slate-700 overflow-x-auto scrollbar-thin">
+      <div className="@container -mx-3 sm:mx-0">
+        <div className="mb-4 sm:mb-5 flex items-center gap-1 border-b border-gray-200 dark:border-slate-700 overflow-x-auto no-scrollbar snap-x-chips px-3 sm:px-0">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-3 @lg:px-5 py-2.5 @lg:py-3 text-xs @lg:text-sm font-bold border-b-[3px] transition-all whitespace-nowrap rounded-t-xl ${
+              className={`flex items-center gap-1.5 px-3 @lg:px-5 py-2.5 @lg:py-3 min-h-[44px] text-xs @lg:text-sm font-bold border-b-[3px] transition-all whitespace-nowrap rounded-t-xl ${
                 activeTab === tab.id
                   ? tab.activeColor
                   : 'border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-slate-800 dark:hover:text-gray-300'

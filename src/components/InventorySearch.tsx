@@ -223,7 +223,7 @@ export default function InventorySearch({ items, showStats = false }: { items: I
   }, [items, warehouseFilter, lockedWarehouse]);
 
   return (
-    <div className="space-y-4 px-2 sm:px-0 w-max max-w-full">
+    <div className="space-y-4 px-2 sm:px-0 w-full max-w-full">
       {/* Stat cards — hiển thị khi showStats=true hoặc khi có lockedWarehouse */}
       {(showStats || lockedWarehouse) && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-2 w-full">

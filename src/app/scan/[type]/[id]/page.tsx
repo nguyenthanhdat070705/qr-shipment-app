@@ -85,21 +85,21 @@ async function POScanPage({ id }: { id: string }) {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-purple-700 to-purple-900 pb-12">
+    <main className="min-h-screen bg-gradient-to-b from-purple-700 to-purple-900 pb-12 safe-bottom">
       {/* Header */}
-      <div className="px-4 pt-10 pb-6 text-white">
-        <div className="flex items-center gap-2 mb-6 opacity-70">
+      <div className="px-4 sm:px-6 pt-8 sm:pt-10 pb-6 text-white max-w-2xl mx-auto safe-top">
+        <div className="flex items-center gap-2 mb-4 sm:mb-6 opacity-70">
           <ShoppingCart size={16} />
-          <span className="text-sm font-medium uppercase tracking-widest">Đơn mua hàng</span>
+          <span className="text-xs sm:text-sm font-medium uppercase tracking-widest">Đơn mua hàng</span>
         </div>
-        <h1 className="text-3xl font-extrabold font-mono mb-2">{poCode}</h1>
+        <h1 className="text-2xl sm:text-3xl font-extrabold font-mono mb-2 break-all">{poCode}</h1>
         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${statusColors[status]}`}>
           {statusLabels[status] || status}
         </span>
       </div>
 
       {/* Cards */}
-      <div className="px-4 space-y-4 -mt-2">
+      <div className="px-4 sm:px-6 space-y-3 sm:space-y-4 -mt-2 max-w-2xl mx-auto">
 
         {/* PO Info */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -169,7 +169,7 @@ async function POScanPage({ id }: { id: string }) {
                 </div>
                 <Link
                   href={`/goods-receipt/create?po_id=${id}&po_code=${poCode}&warehouse_id=${po.kho_id || ''}`}
-                  className="flex items-center justify-center gap-2 w-full py-4 bg-white/20 text-white font-bold rounded-2xl border-2 border-white/30 hover:bg-white/30 transition-all text-sm"
+                  className="flex items-center justify-center gap-2 w-full py-3 sm:py-4 min-h-[44px] bg-white/20 text-white font-bold rounded-2xl border-2 border-white/30 hover:bg-white/30 transition-all text-sm"
                 >
                   <PackageCheck size={18} />
                   Tạo thêm phiếu nhập
@@ -179,7 +179,7 @@ async function POScanPage({ id }: { id: string }) {
               /* Chưa có GRPO — hiện nút to nổi bật */
               <Link
                 href={`/goods-receipt/create?po_id=${id}&po_code=${poCode}&warehouse_id=${po.kho_id || ''}`}
-                className="flex items-center justify-center gap-3 w-full py-5 bg-white rounded-2xl shadow-xl font-extrabold text-purple-700 text-lg hover:bg-purple-50 active:scale-95 transition-all"
+                className="flex items-center justify-center gap-3 w-full py-4 sm:py-5 min-h-[56px] bg-white rounded-2xl shadow-xl font-extrabold text-purple-700 text-base sm:text-lg hover:bg-purple-50 active:scale-95 transition-all"
               >
                 <PackageCheck size={22} />
                 Nhập hàng vào kho
@@ -307,35 +307,35 @@ export default async function ScanPage({
   const colors = colorMap[config.color] || colorMap.blue;
 
   return (
-    <main className="min-h-screen bg-gray-50 pb-12">
-      <header className={`${colors.bg} text-white py-8 px-6`}>
+    <main className="min-h-screen bg-gray-50 pb-12 safe-bottom">
+      <header className={`${colors.bg} text-white py-6 sm:py-8 px-4 sm:px-6 safe-top`}>
         <div className="max-w-lg mx-auto">
           <Link
             href={`${config.detailRoute}/${id}`}
-            className="inline-flex items-center gap-1.5 text-white/70 hover:text-white text-sm mb-4 transition-colors"
+            className="inline-flex items-center gap-1.5 text-white/70 hover:text-white text-sm mb-3 sm:mb-4 transition-colors"
           >
             <ArrowLeft size={16} />
             Xem chi tiết đầy đủ
           </Link>
           <p className="text-xs font-semibold text-white/70 uppercase tracking-wider">{config.label}</p>
-          <h1 className="text-2xl font-extrabold font-mono">{code}</h1>
+          <h1 className="text-xl sm:text-2xl font-extrabold font-mono break-all">{code}</h1>
         </div>
       </header>
 
-      <div className="max-w-lg mx-auto px-4 -mt-4 space-y-4">
+      <div className="max-w-lg mx-auto px-4 -mt-4 space-y-3 sm:space-y-4">
         {items.length > 0 && (
           <div className={`rounded-2xl border ${colors.border} bg-white shadow-sm overflow-hidden`}>
-            <div className="px-5 py-3 border-b border-gray-100">
+            <div className="px-4 sm:px-5 py-3 border-b border-gray-100">
               <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">Sản phẩm ({items.length})</h2>
             </div>
             <div className="divide-y divide-gray-50">
               {items.map((item, i) => (
-                <div key={i} className="px-5 py-3 flex items-center justify-between">
-                  <div>
-                    <p className={`font-mono font-semibold text-sm ${colors.text}`}>{String(item.ma_hom || item.product_code || '')}</p>
-                    <p className="text-sm text-gray-600">{String(item.ten_hom || item.product_name || '')}</p>
+                <div key={i} className="px-4 sm:px-5 py-3 flex items-start gap-3 justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className={`font-mono font-semibold text-sm ${colors.text} break-all`}>{String(item.ma_hom || item.product_code || '')}</p>
+                    <p className="text-sm text-gray-600 break-words">{String(item.ten_hom || item.product_name || '')}</p>
                   </div>
-                  <p className="font-bold text-gray-900">x{String(item.so_luong || item.quantity || '—')}</p>
+                  <p className="font-bold text-gray-900 flex-shrink-0">x{String(item.so_luong || item.quantity || '—')}</p>
                 </div>
               ))}
             </div>
@@ -344,7 +344,7 @@ export default async function ScanPage({
 
         <Link
           href={`${config.detailRoute}/${id}`}
-          className={`block text-center py-3 rounded-xl ${colors.bg} text-white font-bold text-sm shadow-lg transition-all hover:opacity-90`}
+          className={`block text-center py-3 min-h-[44px] rounded-xl ${colors.bg} text-white font-bold text-sm shadow-lg transition-all hover:opacity-90`}
         >
           Xem chi tiết đầy đủ →
         </Link>
@@ -355,10 +355,10 @@ export default async function ScanPage({
 
 function InfoRow({ icon, label, value, highlight }: { icon: React.ReactNode; label: string; value: string; highlight?: boolean }) {
   return (
-    <div className="px-4 py-3 flex items-center gap-3">
+    <div className="px-4 py-3 flex items-center gap-2 sm:gap-3">
       <span className="text-gray-400 flex-shrink-0">{icon}</span>
-      <span className="text-sm text-gray-500 w-32 flex-shrink-0">{label}</span>
-      <span className={`text-sm font-semibold flex-1 text-right ${highlight ? 'text-purple-700' : 'text-gray-900'}`}>{value || '—'}</span>
+      <span className="text-xs sm:text-sm text-gray-500 w-24 sm:w-32 flex-shrink-0">{label}</span>
+      <span className={`text-sm font-semibold flex-1 text-right break-words ${highlight ? 'text-purple-700' : 'text-gray-900'}`}>{value || '—'}</span>
     </div>
   );
 }

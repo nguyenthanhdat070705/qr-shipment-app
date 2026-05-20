@@ -102,21 +102,22 @@ export default function CreateOperationsPage() {
 
   return (
     <PageLayout title="Tạo đơn giao hàng" icon={<Truck size={16} className="text-amber-500" />}>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-3xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
         <button
           onClick={() => router.push('/operations')}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-6"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-4 sm:mb-6"
         >
           <ArrowLeft size={16} />
-          Danh sách đơn giao
+          <span className="hidden sm:inline">Danh sách đơn giao</span>
+          <span className="sm:hidden">Quay lại</span>
         </button>
 
-        <h1 className="text-2xl font-extrabold text-gray-900 mb-6">Tạo đơn giao hàng mới</h1>
+        <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-4 sm:mb-6">Tạo đơn giao hàng mới</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           {/* Customer Info */}
-          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 space-y-4">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400">Thông tin giao hàng</h2>
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-4 sm:p-6 space-y-4">
+            <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-400">Thông tin giao hàng</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -185,13 +186,13 @@ export default function CreateOperationsPage() {
           </div>
 
           {/* Items */}
-          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400">Sản phẩm giao</h2>
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-4 sm:p-6 space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-400">Sản phẩm giao</h2>
               <button
                 type="button"
                 onClick={addItem}
-                className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-xs font-semibold hover:bg-amber-100 transition-colors"
+                className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-xs font-semibold hover:bg-amber-100 transition-colors min-h-[36px]"
               >
                 <Plus size={14} />
                 Thêm SP
@@ -200,8 +201,8 @@ export default function CreateOperationsPage() {
 
             <div className="space-y-3">
               {items.map((item, i) => (
-                <div key={i} className="grid grid-cols-12 gap-2 items-end p-3 rounded-xl bg-gray-50 border border-gray-100">
-                  <div className="col-span-4">
+                <div key={i} className="grid grid-cols-2 sm:grid-cols-12 gap-2 items-end p-3 rounded-xl bg-gray-50 border border-gray-100">
+                  <div className="col-span-2 sm:col-span-4">
                     <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">Mã SP</label>
                     <input
                       type="text"
@@ -211,7 +212,7 @@ export default function CreateOperationsPage() {
                       required
                     />
                   </div>
-                  <div className="col-span-4">
+                  <div className="col-span-2 sm:col-span-4">
                     <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">Tên SP</label>
                     <input
                       type="text"
@@ -221,7 +222,7 @@ export default function CreateOperationsPage() {
                       required
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div className="col-span-1 sm:col-span-2">
                     <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">SL</label>
                     <input
                       type="number"
@@ -231,12 +232,12 @@ export default function CreateOperationsPage() {
                       className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200"
                     />
                   </div>
-                  <div className="col-span-2 flex justify-center">
+                  <div className="col-span-1 sm:col-span-2 flex justify-end sm:justify-center">
                     <button
                       type="button"
                       onClick={() => removeItem(i)}
                       disabled={items.length <= 1}
-                      className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-30 transition-colors"
+                      className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-30 transition-colors min-h-[38px] min-w-[38px] flex items-center justify-center"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -255,7 +256,7 @@ export default function CreateOperationsPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3 bg-amber-500 text-white rounded-xl font-bold text-sm hover:bg-amber-600 disabled:opacity-50 shadow-lg shadow-amber-200 transition-all"
+            className="w-full py-3 bg-amber-500 text-white rounded-xl font-bold text-sm hover:bg-amber-600 disabled:opacity-50 shadow-lg shadow-amber-200 transition-all min-h-[48px]"
           >
             {submitting ? 'Đang tạo...' : 'Tạo đơn giao hàng'}
           </button>

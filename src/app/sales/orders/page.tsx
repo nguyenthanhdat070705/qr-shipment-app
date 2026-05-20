@@ -131,25 +131,26 @@ export default function CreateOrderPage() {
   if (orderComplete) {
     return (
       <PageLayout title="Lên đơn sản phẩm" icon={<ShoppingCart size={16} className="text-amber-500" />}>
-        <div className="max-w-2xl mx-auto mt-10">
-          <div className="bg-white rounded-3xl p-10 shadow-xl border border-amber-100 text-center animate-in zoom-in-95 duration-500">
-            <div className="w-24 h-24 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-              <Check size={48} className="text-amber-500" />
+        <div className="max-w-2xl mx-auto mt-4 sm:mt-10 px-3 sm:px-0">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-10 shadow-xl border border-amber-100 text-center animate-in zoom-in-95 duration-500">
+            <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-inner">
+              <Check size={36} className="text-amber-500 sm:hidden" />
+              <Check size={48} className="text-amber-500 hidden sm:block" />
             </div>
-            <h2 className="text-2xl font-black text-gray-900 mb-2">Đơn hàng đã được tạo!</h2>
-            <p className="text-gray-500 mb-8">
-              Mã đơn hàng <span className="font-mono text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded">ORD-{Math.floor(Math.random() * 100000)}</span> đã được lưu. <br/>
+            <h2 className="text-xl sm:text-2xl font-black text-gray-900 mb-2">Đơn hàng đã được tạo!</h2>
+            <p className="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8">
+              Mã đơn hàng <span className="font-mono text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded inline-block">ORD-{Math.floor(Math.random() * 100000)}</span> đã được lưu. <br className="hidden sm:inline"/>
               Kho hàng sẽ sớm nhận được yêu cầu xuất vật tư cho đơn hàng này.
             </p>
-            
-            <div className="flex justify-center gap-4">
-              <button 
+
+            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+              <button
                 onClick={() => router.push('/sales')}
-                className="px-6 py-3 border border-gray-200 rounded-xl font-bold text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                className="w-full sm:w-auto px-6 py-3 border border-gray-200 rounded-xl font-bold text-sm text-gray-700 hover:bg-gray-50 transition-colors min-h-[44px]"
               >
                 Về trang Bán hàng
               </button>
-              <button 
+              <button
                 onClick={() => {
                   setCart([]);
                   setCustomerName('');
@@ -157,7 +158,7 @@ export default function CreateOrderPage() {
                   setNote('');
                   setOrderComplete(false);
                 }}
-                className="px-6 py-3 bg-[#1B2A4A] rounded-xl font-bold text-sm text-white hover:bg-blue-900 transition-colors flex items-center gap-2 shadow-md"
+                className="w-full sm:w-auto px-6 py-3 bg-[#1B2A4A] rounded-xl font-bold text-sm text-white hover:bg-blue-900 transition-colors flex items-center justify-center gap-2 shadow-md min-h-[44px]"
               >
                 Tạo đơn hàng khác <ChevronRight size={16} />
               </button>
@@ -170,28 +171,28 @@ export default function CreateOrderPage() {
 
   return (
     <PageLayout title="Lên đơn sản phẩm" icon={<ShoppingCart size={16} className="text-amber-500" />}>
-      <div className="max-w-7xl mx-auto h-[calc(100vh-120px)] flex flex-col lg:flex-row gap-6">
-        
+      <div className="max-w-7xl mx-auto lg:h-[calc(100vh-120px)] flex flex-col lg:flex-row gap-4 sm:gap-6">
+
         {/* ── Left side: Product Catalog ── */}
-        <div className="flex-1 bg-white rounded-3xl shadow-sm border border-gray-200 flex flex-col overflow-hidden">
+        <div className="flex-1 bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-200 flex flex-col overflow-hidden">
           {/* Header & Search */}
-          <div className="p-5 border-b border-gray-100 bg-gray-50/50">
-            <button 
+          <div className="p-3 sm:p-5 border-b border-gray-100 bg-gray-50/50">
+            <button
               onClick={() => router.push('/sales')}
-              className="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors mb-4"
+              className="flex items-center gap-1 text-xs sm:text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors mb-3 sm:mb-4"
             >
               <ChevronLeft size={16} /> Về trang chủ Sale
             </button>
-            
-            <div className="flex items-center justify-between gap-4">
-              <h2 className="text-xl font-extrabold text-gray-900 flex items-center gap-2">
-                <Package className="text-amber-500" size={24} /> Danh mục sản phẩm
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+              <h2 className="text-lg sm:text-xl font-extrabold text-gray-900 flex items-center gap-2">
+                <Package className="text-amber-500" size={20} /> Danh mục sản phẩm
               </h2>
-              
-              <div className="relative w-72">
+
+              <div className="relative w-full sm:w-72">
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Tìm tên hoặc mã sản phẩm..."
@@ -202,19 +203,19 @@ export default function CreateOrderPage() {
           </div>
 
           {/* Product Grid */}
-          <div className="flex-1 overflow-y-auto p-5 bg-gray-50/20">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-5 bg-gray-50/20">
             {loading ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-400">
+              <div className="flex flex-col items-center justify-center h-full text-gray-400 py-12">
                 <Loader2 size={32} className="animate-spin mb-3 text-amber-500" />
                 <p className="text-sm font-medium">Đang tải danh mục...</p>
               </div>
             ) : filteredProducts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-400">
+              <div className="flex flex-col items-center justify-center h-full text-gray-400 py-12">
                 <Search size={40} className="mb-3 opacity-20" />
                 <p className="text-sm font-medium">Không tìm thấy sản phẩm nào phù hợp</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
                 {filteredProducts.map(p => (
                   <div key={p.code} className="bg-white border text-left border-gray-100 rounded-2xl p-4 hover:shadow-md hover:border-amber-200 transition-all flex flex-col group">
                     <div className="flex items-start justify-between mb-2">
@@ -250,10 +251,10 @@ export default function CreateOrderPage() {
         </div>
 
         {/* ── Right side: Cart & Checkout ── */}
-        <div className="w-full lg:w-[400px] xl:w-[450px] bg-white rounded-3xl shadow-lg border border-gray-200 flex flex-col overflow-hidden relative">
-          
-          <div className="p-5 bg-gradient-to-r from-gray-900 to-[#1B2A4A] text-white">
-            <h2 className="text-lg font-extrabold flex items-center gap-2">
+        <div className="w-full lg:w-[400px] xl:w-[450px] bg-white rounded-2xl sm:rounded-3xl shadow-lg border border-gray-200 flex flex-col overflow-hidden relative">
+
+          <div className="p-4 sm:p-5 bg-gradient-to-r from-gray-900 to-[#1B2A4A] text-white">
+            <h2 className="text-base sm:text-lg font-extrabold flex items-center gap-2">
               <Calculator size={20} className="text-amber-400" />
               Chi tiết Đơn hàng
             </h2>
@@ -262,7 +263,7 @@ export default function CreateOrderPage() {
             </p>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-5 py-2">
+          <div className="flex-1 overflow-y-auto px-3 sm:px-5 py-2">
             {cart.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-300 py-20 text-center">
                 <ShoppingCart size={48} className="mb-4 opacity-20" />
@@ -318,32 +319,32 @@ export default function CreateOrderPage() {
             )}
           </div>
 
-          <div className="p-5 bg-gray-50 border-t border-gray-200 space-y-4">
+          <div className="p-3 sm:p-5 bg-gray-50 border-t border-gray-200 space-y-3 sm:space-y-4 safe-bottom">
             <h3 className="text-xs font-black uppercase text-gray-700 tracking-wider">Thông tin bắt buộc</h3>
-            
+
             <div className="space-y-3">
               <div className="relative">
                 <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input 
+                <input
                   type="text" placeholder="Tên khách hàng hoặc Đại diện..."
                   value={customerName} onChange={e => setCustomerName(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all shadow-sm"
+                  className="w-full pl-9 pr-3 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all shadow-sm"
                 />
               </div>
-              
-              <div className="grid grid-cols-2 gap-3">
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="relative">
                   <FileText size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input 
+                  <input
                     type="text" placeholder="Mã Đám (VD: DAM-001)"
                     value={funeralCode} onChange={e => setFuneralCode(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all shadow-sm uppercase placeholder:normal-case"
+                    className="w-full pl-9 pr-3 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all shadow-sm uppercase placeholder:normal-case"
                   />
                 </div>
-                <input 
+                <input
                   type="text" placeholder="Ghi chú thêm..."
                   value={note} onChange={e => setNote(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all shadow-sm"
+                  className="w-full px-3 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all shadow-sm"
                 />
               </div>
             </div>
@@ -353,9 +354,9 @@ export default function CreateOrderPage() {
               disabled={isSubmitting || cart.length === 0}
               className={`
                 w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-white shadow-md
-                transition-all
-                ${cart.length === 0 
-                  ? 'bg-gray-300 cursor-not-allowed' 
+                transition-all min-h-[48px]
+                ${cart.length === 0
+                  ? 'bg-gray-300 cursor-not-allowed'
                   : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-90 hover:shadow-lg'
                 }
               `}

@@ -141,13 +141,13 @@ export default function HoldProductButton({ productCode, productName }: HoldProd
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-3">
           <Lock size={18} className="text-blue-500" />
-          <h3 className="font-bold text-gray-900">Giữ hàng</h3>
+          <h3 className="font-bold text-gray-900 text-sm sm:text-base">Giữ hàng</h3>
         </div>
 
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-xs sm:text-sm text-gray-500 mb-4">
           Giữ sản phẩm <strong>{productName}</strong> trong 24 giờ. Nếu không ai xuất hàng trong thời gian này, sản phẩm sẽ được mở lại tự động.
         </p>
 
@@ -167,11 +167,11 @@ export default function HoldProductButton({ productCode, productName }: HoldProd
         {holdStatus.isHeld ? (
           <div>
             {/* Currently held */}
-            <div className="flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 mb-4">
-              <Clock size={16} className="text-amber-500 flex-shrink-0" />
-              <div>
+            <div className="flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3 sm:px-4 py-3 mb-4">
+              <Clock size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-amber-700">Đang được giữ</p>
-                <p className="text-xs text-amber-600">
+                <p className="text-xs text-amber-600 truncate">
                   Bởi: {holdStatus.heldByEmail}
                 </p>
                 {holdStatus.expiresAt && (
@@ -190,7 +190,7 @@ export default function HoldProductButton({ productCode, productName }: HoldProd
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl
                            bg-gray-100 border border-gray-200 text-gray-600
                            hover:bg-red-50 hover:border-red-200 hover:text-red-600
-                           disabled:opacity-50 transition-all font-semibold text-sm"
+                           disabled:opacity-50 transition-all font-semibold text-sm min-h-[48px]"
               >
                 {holding ? <Loader2 size={16} className="animate-spin" /> : <Unlock size={16} />}
                 Hủy giữ hàng
@@ -204,7 +204,7 @@ export default function HoldProductButton({ productCode, productName }: HoldProd
             className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl
                        bg-gradient-to-r from-[#1B2A4A] to-teal-500 text-white
                        hover:from-[#162240] hover:to-teal-600
-                       disabled:opacity-50 transition-all font-bold text-sm shadow-sm"
+                       disabled:opacity-50 transition-all font-bold text-sm shadow-sm min-h-[48px]"
           >
             {holding ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} />}
             Giữ hàng (24 giờ)

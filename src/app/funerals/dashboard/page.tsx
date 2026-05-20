@@ -231,40 +231,40 @@ export default function FuneralsDashboardPage() {
     <PageLayout title="Dashboard Đám & Gantt" icon={<LayoutDashboard size={15} className="text-indigo-500" />}>
       
       {/* ── Header ── */}
-      <div className="mb-8 p-6 sm:p-8 rounded-[2rem] bg-gradient-to-br from-[#1B2A4A] via-indigo-800 to-[#1e1b4b] text-white shadow-xl shadow-indigo-900/20 max-w-full mx-auto relative overflow-hidden">
+      <div className="mb-6 sm:mb-8 p-5 sm:p-6 lg:p-8 rounded-[1.5rem] sm:rounded-[2rem] bg-gradient-to-br from-[#1B2A4A] via-indigo-800 to-[#1e1b4b] text-white shadow-xl shadow-indigo-900/20 max-w-full mx-auto relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-pink-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-72 h-72 bg-blue-500/10 rounded-full blur-[60px] translate-y-1/3 -translate-x-1/4"></div>
-        
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md mb-4">
-              <TrendingUp size={14} className="text-pink-300" />
-              <span className="text-[11px] font-bold text-white tracking-widest uppercase">Thống kê & Tiến độ</span>
+            <div className="inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md mb-3 sm:mb-4">
+              <TrendingUp size={12} className="text-pink-300 sm:w-3.5 sm:h-3.5" />
+              <span className="text-[10px] sm:text-[11px] font-bold text-white tracking-widest uppercase">Thống kê & Tiến độ</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold mb-2 tracking-tight">Dashboard Quản Lý Đám</h1>
-            <p className="text-indigo-100 text-sm max-w-lg">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold mb-2 tracking-tight">Dashboard Quản Lý Đám</h1>
+            <p className="text-indigo-100 text-xs sm:text-sm max-w-lg">
               Theo dõi tổng quan trạng thái, biểu đồ tiến độ thực hiện các đám trên hệ thống.
             </p>
           </div>
-          
-          <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             {/* Nút Sync */}
             <button
               onClick={handleManualSync}
               disabled={syncing}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all border shadow-md ${
+              className={`flex items-center justify-center gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all border shadow-md flex-1 sm:flex-initial ${
                 syncing
                   ? 'bg-amber-500/80 border-amber-400/50 text-white cursor-wait'
                   : 'bg-emerald-500 hover:bg-emerald-400 border-emerald-400/50 text-white hover:shadow-emerald-500/30'
               }`}
             >
-              <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
+              <RefreshCw size={14} className={`${syncing ? 'animate-spin' : ''} sm:w-4 sm:h-4`} />
               {syncing ? 'Đang sync...' : 'Sync Sheets'}
             </button>
 
-            <Link href="/funerals" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all backdrop-blur-md">
-              <ArrowLeft size={16} />
-              Quay lại Hồ sơ
+            <Link href="/funerals" className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all backdrop-blur-md flex-1 sm:flex-initial">
+              <ArrowLeft size={14} className="sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Quay lại Hồ sơ</span><span className="sm:hidden">Quay lại</span>
             </Link>
           </div>
         </div>
@@ -272,14 +272,14 @@ export default function FuneralsDashboardPage() {
 
       {/* Sync Result Banner */}
       {syncResult && (
-        <div className={`mb-4 flex items-center gap-3 px-5 py-3.5 rounded-2xl border text-sm font-semibold transition-all ${
+        <div className={`mb-4 flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border text-xs sm:text-sm font-semibold transition-all ${
           syncResult.success
             ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
             : 'bg-red-50 border-red-200 text-red-800'
         }`}>
           {syncResult.success
-            ? <CheckCircle size={18} className="text-emerald-500 flex-shrink-0" />
-            : <X size={18} className="text-red-500 flex-shrink-0" />
+            ? <CheckCircle size={16} className="text-emerald-500 flex-shrink-0 sm:w-[18px] sm:h-[18px]" />
+            : <X size={16} className="text-red-500 flex-shrink-0 sm:w-[18px] sm:h-[18px]" />
           }
           <span className="flex-1">{syncResult.message}</span>
           <button onClick={() => setSyncResult(null)} className="p-1 rounded-lg hover:bg-white/50 transition-colors flex-shrink-0">
@@ -289,34 +289,34 @@ export default function FuneralsDashboardPage() {
       )}
 
       {/* ── KPI Cards ── */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm relative overflow-hidden">
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Tổng hồ sơ</p>
-            <p className="text-3xl font-black text-gray-900">{funerals.length}</p>
-            <BookOpen className="absolute -bottom-2 -right-2 w-16 h-16 text-gray-50 opacity-50" />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-4 mb-4 sm:mb-6">
+         <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-gray-100 shadow-sm relative overflow-hidden">
+            <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1 sm:mb-1.5">Tổng hồ sơ</p>
+            <p className="text-2xl sm:text-3xl font-black text-gray-900">{funerals.length}</p>
+            <BookOpen className="absolute -bottom-2 -right-2 w-12 sm:w-16 h-12 sm:h-16 text-gray-50 opacity-50" />
          </div>
-         <div className="bg-white rounded-2xl p-5 border border-indigo-100 shadow-sm relative overflow-hidden">
+         <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-indigo-100 shadow-sm relative overflow-hidden">
              <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
-            <p className="text-[11px] font-bold text-indigo-500 uppercase tracking-wider mb-1.5">Đang thực hiện</p>
-            <p className="text-3xl font-black text-indigo-700">{ongoingCount}</p>
-            <Clock className="absolute -bottom-2 -right-2 w-16 h-16 text-indigo-50 opacity-50" />
+            <p className="text-[10px] sm:text-[11px] font-bold text-indigo-500 uppercase tracking-wider mb-1 sm:mb-1.5">Đang thực hiện</p>
+            <p className="text-2xl sm:text-3xl font-black text-indigo-700">{ongoingCount}</p>
+            <Clock className="absolute -bottom-2 -right-2 w-12 sm:w-16 h-12 sm:h-16 text-indigo-50 opacity-50" />
          </div>
-         <div className="bg-white rounded-2xl p-5 border border-amber-100 shadow-sm relative overflow-hidden">
+         <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-amber-100 shadow-sm relative overflow-hidden">
              <div className="absolute top-0 left-0 w-1 h-full bg-amber-400"></div>
-            <p className="text-[11px] font-bold text-amber-500 uppercase tracking-wider mb-1.5">Chờ thực hiện</p>
-            <p className="text-3xl font-black text-amber-600">{pendingCount}</p>
-            <Calendar className="absolute -bottom-2 -right-2 w-16 h-16 text-amber-50 opacity-50" />
+            <p className="text-[10px] sm:text-[11px] font-bold text-amber-500 uppercase tracking-wider mb-1 sm:mb-1.5">Chờ thực hiện</p>
+            <p className="text-2xl sm:text-3xl font-black text-amber-600">{pendingCount}</p>
+            <Calendar className="absolute -bottom-2 -right-2 w-12 sm:w-16 h-12 sm:h-16 text-amber-50 opacity-50" />
          </div>
-         <div className="bg-white rounded-2xl p-5 border border-emerald-100 shadow-sm relative overflow-hidden">
+         <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-emerald-100 shadow-sm relative overflow-hidden">
              <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
-            <p className="text-[11px] font-bold text-emerald-500 uppercase tracking-wider mb-1.5">Hoàn thành</p>
-            <p className="text-3xl font-black text-emerald-600">{completedCount}</p>
-            <CheckCircle className="absolute -bottom-2 -right-2 w-16 h-16 text-emerald-50 opacity-50" />
+            <p className="text-[10px] sm:text-[11px] font-bold text-emerald-500 uppercase tracking-wider mb-1 sm:mb-1.5">Hoàn thành</p>
+            <p className="text-2xl sm:text-3xl font-black text-emerald-600">{completedCount}</p>
+            <CheckCircle className="absolute -bottom-2 -right-2 w-12 sm:w-16 h-12 sm:h-16 text-emerald-50 opacity-50" />
          </div>
-         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm relative overflow-hidden">
+         <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-gray-100 shadow-sm relative overflow-hidden col-span-2 sm:col-span-1">
              <div className="absolute top-0 left-0 w-1 h-full bg-gray-300"></div>
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Trên Gantt</p>
-            <p className="text-3xl font-black text-gray-600">{ganttData.length}</p>
+            <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1 sm:mb-1.5">Trên Gantt</p>
+            <p className="text-2xl sm:text-3xl font-black text-gray-600">{ganttData.length}</p>
             <p className="text-[10px] font-semibold text-gray-400 mt-1">{noDateCount > 0 ? `${noDateCount} chưa có ngày` : 'Đầy đủ'}</p>
          </div>
       </div>
@@ -333,7 +333,7 @@ export default function FuneralsDashboardPage() {
            <p className="text-xs text-gray-400">Vui lòng bấm "Sync Sheets" để đồng bộ dữ liệu mới nhất từ Google Sheet.</p>
          </div>
       ) : (
-         <div className="mb-10">
+         <div className="mb-6 sm:mb-10 -mx-3 sm:mx-0">
            <GanttChart
              title="Biểu Đồ Tiến Độ (Gantt Chart)"
              tasks={ganttData.map((d: any) => ({

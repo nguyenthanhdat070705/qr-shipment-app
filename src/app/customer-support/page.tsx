@@ -80,32 +80,32 @@ export default function CustomerSupportPage() {
   return (
     <PageLayout title="Ticket Hỗ trợ" icon={<MessageSquare size={20} className="text-orange-500" />}>
       {/* Header Actions */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-6">
-        <div className="flex items-center gap-3">
-          <div className="relative">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between items-stretch sm:items-center mb-4 sm:mb-6">
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          <div className="relative flex-1 sm:flex-none">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Tìm mã ticket, tên KH, sđt..." 
+            <input
+              type="text"
+              placeholder="Tìm mã ticket, tên KH, sđt..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 w-64 lg:w-80 shadow-sm"
+              className="w-full sm:w-64 lg:w-80 pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 shadow-sm"
             />
           </div>
-          <button className="p-2 bg-white border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-orange-600 transition-colors shadow-sm">
+          <button className="p-2.5 bg-white border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-orange-600 transition-colors shadow-sm flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center">
             <Filter size={18} />
           </button>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold text-sm rounded-xl hover:from-orange-600 hover:to-amber-600 shadow-md shadow-orange-500/20 active:scale-95 transition-all">
+        <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold text-sm rounded-xl hover:from-orange-600 hover:to-amber-600 shadow-md shadow-orange-500/20 active:scale-95 transition-all min-h-[44px]">
           <Plus size={16} />
           <span>Tạo Ticket Mới</span>
         </button>
       </div>
 
       {/* Kanban Board */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-start">
         {/* Column 1: Open */}
-        <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 min-h-[500px]">
+        <div className="bg-gray-50/50 p-3 sm:p-4 rounded-2xl border border-gray-100 md:min-h-[500px]">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-bold text-gray-700 flex items-center gap-2">
               <AlertCircle size={16} className="text-rose-500" />
@@ -122,7 +122,7 @@ export default function CustomerSupportPage() {
         </div>
 
         {/* Column 2: In Progress */}
-        <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 min-h-[500px]">
+        <div className="bg-gray-50/50 p-3 sm:p-4 rounded-2xl border border-gray-100 md:min-h-[500px]">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-bold text-gray-700 flex items-center gap-2">
               <Clock size={16} className="text-amber-500" />
@@ -139,7 +139,7 @@ export default function CustomerSupportPage() {
         </div>
 
         {/* Column 3: Resolved */}
-        <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 min-h-[500px]">
+        <div className="bg-gray-50/50 p-3 sm:p-4 rounded-2xl border border-gray-100 md:min-h-[500px]">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-bold text-gray-700 flex items-center gap-2">
               <CheckCircle2 size={16} className="text-emerald-500" />

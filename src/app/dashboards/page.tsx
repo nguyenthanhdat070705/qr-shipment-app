@@ -75,36 +75,36 @@ export default function DashboardsHubPage() {
   return (
     <PageLayout title="Trung Tâm Dashboards" icon={<LayoutDashboard size={15} className="text-indigo-500" />}>
       {/* ── Header ── */}
-      <div className="mb-10 text-center space-y-4">
-        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900">Trung Tâm Dashboard Quản Trị</h1>
-        <p className="text-gray-500 max-w-xl mx-auto">
+      <div className="mb-6 sm:mb-10 text-center space-y-3 sm:space-y-4 px-2">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-gray-900">Trung Tâm Dashboard Quản Trị</h1>
+        <p className="text-sm sm:text-base text-gray-500 max-w-xl mx-auto">
           Chọn một báo cáo bên dưới để tra cứu số liệu hoạt động, tiến độ nghiệp vụ của từng bộ phận chuyên trách.
         </p>
       </div>
 
       {/* ── Grid ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 mt-8 lg:grid-cols-2 xl:grid-cols-2 gap-6 max-w-5xl mx-auto px-4 pb-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 mt-4 sm:mt-8 gap-4 sm:gap-6 max-w-5xl mx-auto px-0 sm:px-4 pb-8 sm:pb-12">
         {dashboards.map((card) => (
           <Link
             key={card.id}
             href={card.href}
-            className={`group bg-white p-6 sm:p-8 rounded-[2rem] border border-gray-100 shadow-xl ${card.shadow} hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 relative overflow-hidden`}
+            className={`group bg-white p-5 sm:p-6 lg:p-8 rounded-[1.5rem] sm:rounded-[2rem] border border-gray-100 shadow-xl ${card.shadow} hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 relative overflow-hidden`}
           >
             {/* Background decor */}
             <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl ${card.gradient} opacity-5 rounded-bl-[100px] transform group-hover:scale-110 transition-transform duration-500`}></div>
-            
+
             <div className="relative z-10">
-              <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${card.gradient} flex items-center justify-center shadow-lg mb-6 transform group-hover:rotate-6 transition-transform duration-300`}>
+              <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br ${card.gradient} flex items-center justify-center shadow-lg mb-4 sm:mb-6 transform group-hover:rotate-6 transition-transform duration-300`}>
                 {card.icon}
               </div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">{card.title}</h2>
-              <p className="text-sm font-medium text-gray-500 leading-relaxed mb-6">
+              <h2 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 mb-1.5 sm:mb-2">{card.title}</h2>
+              <p className="text-xs sm:text-sm font-medium text-gray-500 leading-relaxed mb-4 sm:mb-6">
                 {card.desc}
               </p>
-              
-              <div className="flex items-center text-sm font-bold text-gray-400 group-hover:text-gray-700 transition-colors">
+
+              <div className="flex items-center text-xs sm:text-sm font-bold text-gray-400 group-hover:text-gray-700 transition-colors">
                 <span className="flex-1">Xem chi tiết</span>
-                <span className={`w-8 h-8 rounded-full flex items-center justify-center bg-gray-50 text-gray-400 group-hover:bg-gray-900 group-hover:text-white transition-all`}>
+                <span className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-gray-50 text-gray-400 group-hover:bg-gray-900 group-hover:text-white transition-all`}>
                   →
                 </span>
               </div>
@@ -112,7 +112,7 @@ export default function DashboardsHubPage() {
           </Link>
         ))}
         {dashboards.length === 0 && (
-          <div className="col-span-1 border border-gray-200 rounded-2xl p-8 text-center text-gray-500">
+          <div className="col-span-1 sm:col-span-2 border border-gray-200 rounded-2xl p-6 sm:p-8 text-center text-sm text-gray-500">
             Tài khoản của bạn chưa được phân quyền xem Dashboard nào.
           </div>
         )}

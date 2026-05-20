@@ -238,11 +238,11 @@ export function GoodsIssueContent() {
   return (
     <>
       {/* Header */}
-      <div className="mb-8 p-8 sm:p-10 rounded-[2rem] bg-gradient-to-br from-[#1B2A4A] via-indigo-900 to-[#1e3a8a] text-white shadow-xl shadow-indigo-900/20 max-w-4xl mx-auto relative overflow-hidden">
+      <div className="mb-6 sm:mb-8 p-5 sm:p-8 lg:p-10 rounded-2xl sm:rounded-[2rem] bg-gradient-to-br from-[#1B2A4A] via-indigo-900 to-[#1e3a8a] text-white shadow-xl shadow-indigo-900/20 max-w-4xl mx-auto relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-72 h-72 bg-blue-500/20 rounded-full blur-[60px] translate-y-1/3 -translate-x-1/4"></div>
         <div className="relative z-10">
-          <div className="flex items-center gap-3 flex-wrap mb-4">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap mb-3 sm:mb-4">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md shadow-sm">
               <Truck size={14} className="text-emerald-400" />
               <span className="text-[11px] font-bold text-white tracking-widest uppercase">Xuất Kho Nội Bộ</span>
@@ -254,8 +254,8 @@ export function GoodsIssueContent() {
               </div>
             )}
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold mb-3 tracking-tight">Xuất hàng</h1>
-          <p className="text-indigo-100 text-sm max-w-md leading-relaxed">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold mb-2 sm:mb-3 tracking-tight">Xuất hàng</h1>
+          <p className="text-indigo-100 text-xs sm:text-sm max-w-md leading-relaxed">
             {lockedWarehouse
               ? `Chỉ xuất hàng từ ${lockedWarehouse}. Nhập mã sản phẩm hoặc mã đám, xác nhận xuất kho.`
               : 'Nhập mã sản phẩm hoặc mã đám, điền thông tin người nhận, xác nhận xuất kho.'}
@@ -394,7 +394,7 @@ export function GoodsIssueContent() {
               </div>
 
               {/* Loại xuất */}
-              <div className="flex gap-4 mb-2">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-2">
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">
                   <input 
                     type="radio" 
@@ -451,7 +451,7 @@ export function GoodsIssueContent() {
                 type="button"
                 disabled={submitting}
                 onClick={handleSubmit}
-                className="w-full inline-flex items-center justify-center gap-3 rounded-xl
+                className="w-full inline-flex items-center justify-center gap-3 rounded-xl min-h-[52px]
                           bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4
                           text-base font-bold text-white shadow-xl shadow-emerald-800/20
                           hover:from-emerald-700 hover:to-teal-700 hover:scale-[1.02] active:scale-95
@@ -568,8 +568,8 @@ export function GoodsIssueContent() {
 
       {/* Drawer/Modal Chi Tiết Xuất Hàng */}
       {selectedHistoryItem && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 sm:p-6 transition-all animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-[#162240] rounded-[2rem] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-6 transition-all animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-[#162240] rounded-t-2xl sm:rounded-[2rem] w-full sm:max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[92vh] sm:max-h-[90vh] safe-bottom">
             {/* Header */}
             <div className="flex items-center justify-between px-5 sm:px-8 py-4 sm:py-5 border-b border-gray-100 dark:border-white/5 bg-gray-50/80 dark:bg-white/5 shrink-0">
               <div className="flex items-center gap-3 sm:gap-4">

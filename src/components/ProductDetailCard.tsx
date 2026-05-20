@@ -94,13 +94,13 @@ export default function ProductDetailCard({ row }: ProductDetailCardProps) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
       {/* ── Header gradient ──────────────────────────── */}
-      <div className="bg-gradient-to-r from-[#1B2A4A] to-teal-500 px-5 py-4">
+      <div className="bg-gradient-to-r from-[#1B2A4A] to-teal-500 px-4 sm:px-5 py-3 sm:py-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 pr-2">
             <p className="text-teal-200 text-[10px] font-bold uppercase tracking-widest mb-1">
               Sản phẩm
             </p>
-            <h2 className="text-white text-lg font-bold leading-tight line-clamp-2">
+            <h2 className="text-white text-base sm:text-lg font-bold leading-tight line-clamp-2">
               {productName}
             </h2>
           </div>
@@ -109,19 +109,19 @@ export default function ProductDetailCard({ row }: ProductDetailCardProps) {
       </div>
 
       {/* ── Product Image ────────────────────────────── */}
-      <div className="px-5 pt-5">
+      <div className="px-4 sm:px-5 pt-4 sm:pt-5">
         <div className="overflow-hidden rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imgUrl}
             alt={productName}
-            className="w-full max-h-56 object-contain p-2"
+            className="w-full max-h-48 sm:max-h-56 object-contain p-2"
           />
         </div>
       </div>
 
       {/* ── Key Info ──────────────────────────────────── */}
-      <div className="px-5 py-4 space-y-0">
+      <div className="px-4 sm:px-5 py-3 sm:py-4 space-y-0">
         {/* Mã sản phẩm */}
         <div className="flex items-center justify-between py-3 border-b border-gray-100">
           <span className="text-xs font-bold uppercase tracking-wide text-gray-400">Mã sản phẩm</span>
@@ -218,7 +218,7 @@ export default function ProductDetailCard({ row }: ProductDetailCardProps) {
 
       {/* ── Footer timestamps ────────────────────────── */}
       {(createdAtStr || updatedAtStr) && (
-        <div className="bg-gray-50 px-5 py-2.5 flex flex-col sm:flex-row sm:justify-between gap-0.5">
+        <div className="bg-gray-50 px-4 sm:px-5 py-2 sm:py-2.5 flex flex-col sm:flex-row sm:justify-between gap-0.5">
           {createdAtStr && createdAtStr !== '' && (
             <span className="text-[11px] text-gray-400">
               <Clock size={10} className="inline mr-1 mb-0.5" />

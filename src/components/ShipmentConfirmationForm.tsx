@@ -225,7 +225,7 @@ export default function ShipmentConfirmationForm({
 
   // ── FORM ──
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-5">
+    <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-4 sm:p-5">
       <div className="mb-4">
         <h3 className="text-base font-bold text-gray-900">Xác nhận xuất hàng</h3>
         <p className="text-sm text-gray-500 mt-0.5">
@@ -234,23 +234,23 @@ export default function ShipmentConfirmationForm({
       </div>
 
       {/* Auto-filled info */}
-      <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 mb-4 space-y-1.5">
-        <div className="flex items-center gap-2 text-xs">
-          <User size={12} className="text-gray-400" />
-          <span className="text-gray-400 w-24">Người xuất:</span>
-          <span className="font-medium text-gray-700">
+      <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 mb-4 space-y-2">
+        <div className="flex items-start sm:items-center gap-2 text-xs flex-wrap">
+          <User size={12} className="text-gray-400 flex-shrink-0 mt-0.5 sm:mt-0" />
+          <span className="text-gray-400 sm:w-24 flex-shrink-0">Người xuất:</span>
+          <span className="font-medium text-gray-700 break-words min-w-0">
             {userName ? `${userName} (${userDepartment})` : 'Đang tải...'}
           </span>
         </div>
-        <div className="flex items-center gap-2 text-xs">
-          <Clock size={12} className="text-gray-400" />
-          <span className="text-gray-400 w-24">Thời gian:</span>
-          <span className="font-mono font-bold text-indigo-700 tabular-nums">{nowStr}</span>
+        <div className="flex items-start sm:items-center gap-2 text-xs flex-wrap">
+          <Clock size={12} className="text-gray-400 flex-shrink-0 mt-0.5 sm:mt-0" />
+          <span className="text-gray-400 sm:w-24 flex-shrink-0">Thời gian:</span>
+          <span className="font-mono font-bold text-indigo-700 tabular-nums break-words min-w-0">{nowStr}</span>
         </div>
-        <div className="flex items-center gap-2 text-xs">
-          <Package size={12} className="text-gray-400" />
-          <span className="text-gray-400 w-24">Mã sản phẩm:</span>
-          <span className="font-mono font-bold text-gray-900">{qrCode}</span>
+        <div className="flex items-start sm:items-center gap-2 text-xs flex-wrap">
+          <Package size={12} className="text-gray-400 flex-shrink-0 mt-0.5 sm:mt-0" />
+          <span className="text-gray-400 sm:w-24 flex-shrink-0">Mã sản phẩm:</span>
+          <span className="font-mono font-bold text-gray-900 break-all min-w-0">{qrCode}</span>
         </div>
       </div>
 

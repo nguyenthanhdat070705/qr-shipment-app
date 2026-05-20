@@ -228,8 +228,8 @@ export default function DownloadAllQR({ products }: { products: ProductItem[] })
       disabled={isDownloading || products.length === 0}
       id="download-all-qr-btn"
       className={`
-        print:hidden inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold
-        transition-all duration-300 shadow-sm
+        print:hidden inline-flex items-center justify-center gap-2 w-full sm:w-auto px-3 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold
+        transition-all duration-300 shadow-sm min-h-[40px]
         ${isDone
           ? 'bg-emerald-500 text-white hover:bg-emerald-600'
           : isDownloading

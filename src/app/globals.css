@@ -71,3 +71,56 @@ html {
 html {
   -webkit-text-size-adjust: 100%;
 }
+
+/* ── Mobile safe-area support (iPhone notch / home bar) ─── */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);
+  }
+  .safe-top {
+    padding-top: max(env(safe-area-inset-top), 0.75rem);
+  }
+}
+
+/* ── Touch-friendly tap targets (min 44x44 per Apple HIG) ─── */
+@media (hover: none) and (pointer: coarse) {
+  button, a, [role="button"], input[type="checkbox"], input[type="radio"] {
+    min-height: 36px;
+  }
+}
+
+/* ── Horizontal scroll snap for chips / tab bars ─── */
+.snap-x-chips {
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.snap-x-chips::-webkit-scrollbar { display: none; }
+.snap-x-chips > * {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* ── Hide scrollbar but keep scrollable (mobile carousels) ─── */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* ── Mobile-friendly form input min-height (avoid iOS zoom on focus) ─── */
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="password"],
+  input[type="search"],
+  input[type="url"],
+  input[type="date"],
+  input[type="datetime-local"],
+  textarea,
+  select {
+    font-size: 16px !important; /* prevent iOS zoom on focus */
+  }
+}

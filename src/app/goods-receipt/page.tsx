@@ -16,13 +16,13 @@ function StatCard({
   icon: React.ReactNode; color: string; bg: string; border: string;
 }) {
   return (
-    <div className={`rounded-2xl bg-white border ${border} p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow`}>
-      <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${bg} flex-shrink-0`}>
+    <div className={`rounded-2xl bg-white border ${border} p-3 sm:p-5 flex items-center gap-3 sm:gap-4 shadow-sm hover:shadow-md transition-shadow`}>
+      <div className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl ${bg} flex-shrink-0`}>
         <span className={color}>{icon}</span>
       </div>
-      <div>
-        <p className="text-2xl font-extrabold text-gray-900 leading-none">{value}</p>
-        <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">{label}</p>
+      <div className="min-w-0">
+        <p className="text-xl sm:text-2xl font-extrabold text-gray-900 leading-none">{value}</p>
+        <p className="text-[10px] sm:text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide truncate">{label}</p>
       </div>
     </div>
   );
@@ -63,6 +63,7 @@ export function GoodsReceiptContent() {
       key: 'gr_code',
       label: 'Mã phiếu',
       sortable: true,
+      primaryOnMobile: true,
       render: (row: GoodsReceipt) => (
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
@@ -75,6 +76,7 @@ export function GoodsReceiptContent() {
     {
       key: 'po',
       label: 'PO liên kết',
+      hideOnMobile: true,
       render: (row: GoodsReceipt) => (
         <span className="text-purple-600 font-mono text-xs">
           {(row.purchase_order as unknown as Record<string, unknown> | undefined)?.po_code as string || '—'}
@@ -92,6 +94,7 @@ export function GoodsReceiptContent() {
       key: 'received_by',
       label: 'Người nhận',
       sortable: true,
+      hideOnMobile: true,
     },
     {
       key: 'status',
@@ -121,19 +124,21 @@ export function GoodsReceiptContent() {
       key: 'received_date',
       label: 'Ngày nhận',
       sortable: true,
+      hideOnMobile: true,
       render: (row: GoodsReceipt) =>
         new Date(row.received_date).toLocaleDateString('vi-VN'),
     },
     {
       key: 'actions',
       label: 'Hành động',
+      hideOnMobile: true,
       render: (row: GoodsReceipt) => (
         <button
           onClick={(e) => {
             e.stopPropagation();
             router.push(`/goods-receipt/${row.id}`);
           }}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-orange-100 text-gray-600 hover:text-orange-700 text-xs font-semibold transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-lg bg-gray-100 hover:bg-orange-100 text-gray-600 hover:text-orange-700 text-xs font-semibold transition-colors"
         >
           <Eye size={13} />
           Chi tiết
@@ -144,22 +149,22 @@ export function GoodsReceiptContent() {
 
   return (
     <>
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-gray-900">Danh sách phiếu nhập</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Quản lý nhập hàng (GRPO) từ các PO đã xác nhận</p>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900">Danh sách phiếu nhập</h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Quản lý nhập hàng (GRPO) từ các PO đã xác nhận</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             onClick={() => router.push('/goods-receipt/create?temporary=true')}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 text-white rounded-xl font-bold text-sm hover:bg-amber-600 shadow-lg shadow-amber-200 transition-all"
+            className="inline-flex flex-1 sm:flex-none items-center justify-center gap-2 px-3 sm:px-4 py-2.5 min-h-[44px] bg-amber-500 text-white rounded-xl font-bold text-sm hover:bg-amber-600 shadow-lg shadow-amber-200 transition-all"
           >
             <ClipboardList size={16} />
             Nhập tạm
           </button>
           <button
             onClick={() => router.push('/goods-receipt/create')}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1B2A4A] text-white rounded-xl font-bold text-sm hover:bg-[#162240] shadow-lg shadow-[#1B2A4A]/20 transition-all"
+            className="inline-flex flex-1 sm:flex-none items-center justify-center gap-2 px-3 sm:px-4 py-2.5 min-h-[44px] bg-[#1B2A4A] text-white rounded-xl font-bold text-sm hover:bg-[#162240] shadow-lg shadow-[#1B2A4A]/20 transition-all"
           >
             <Plus size={16} />
             Tạo phiếu nhập
@@ -168,7 +173,7 @@ export function GoodsReceiptContent() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
         <StatCard label="Tổng phiếu" value={total} icon={<PackageOpen size={22} />} color="text-[#1B2A4A]" bg="bg-[#eef1f7]" border="border-[#d5dbe9]" />
         <StatCard label="Hoàn tất" value={completedCount} icon={<CheckCircle size={22} />} color="text-emerald-600" bg="bg-emerald-50" border="border-emerald-200" />
         {pendingPoCount > 0 && (

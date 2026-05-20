@@ -444,7 +444,88 @@
 @media (max-width: 768px) {
   .ncc-form-grid { grid-template-columns: 1fr; }
   .ncc-detail-grid { grid-template-columns: 1fr; }
-  .ncc-header { flex-direction: column; align-items: flex-start; }
+  .ncc-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .ncc-header-actions { width: 100%; display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .ncc-header-actions > button { width: 100%; justify-content: center; }
   .ncc-excel-map-row { grid-template-columns: 1fr; }
   .ncc-excel-stats { grid-template-columns: repeat(2, 1fr); }
+
+  /* Modal full-width bottom-sheet style */
+  .ncc-form-overlay {
+    padding: 8px;
+    align-items: flex-end;
+  }
+  .ncc-form-card,
+  .ncc-excel-modal,
+  .ncc-delete-modal {
+    max-width: 100%;
+    max-height: 95vh;
+    border-radius: 18px 18px 0 0;
+  }
+  .ncc-form-header,
+  .ncc-excel-header,
+  .ncc-delete-header {
+    padding: 14px 16px;
+  }
+  .ncc-form-header h2,
+  .ncc-excel-header h2,
+  .ncc-delete-header h3 {
+    font-size: 1rem;
+  }
+  .ncc-excel-body,
+  .ncc-delete-body {
+    padding: 16px;
+  }
+  .ncc-excel-actions,
+  .ncc-form-actions,
+  .ncc-delete-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+  .ncc-excel-actions > *,
+  .ncc-form-actions > *,
+  .ncc-delete-actions > * {
+    width: 100%;
+    justify-content: center;
+  }
+  .ncc-excel-upload {
+    padding: 32px 16px;
+  }
+  /* Mapping rows stack on mobile */
+  .ncc-excel-map-table thead { display: none; }
+  .ncc-excel-map-table,
+  .ncc-excel-map-table tbody,
+  .ncc-excel-map-table tr {
+    display: block;
+    width: 100%;
+  }
+  .ncc-excel-map-table tr {
+    border-bottom: 1px solid #e2e8f0;
+    padding: 10px 12px;
+  }
+  .ncc-excel-map-table td {
+    display: block;
+    padding: 4px 0;
+    border-bottom: none;
+  }
+  .ncc-map-col-name {
+    max-width: 100%;
+    font-weight: 700;
+  }
+  .ncc-map-arrow { display: none; }
+  .ncc-map-sample {
+    max-width: 100%;
+    font-size: 0.78rem;
+  }
+  .ncc-map-sample::before {
+    content: "Mẫu: ";
+    font-style: normal;
+    color: #94a3b8;
+    font-weight: 600;
+  }
+  .ncc-excel-table-wrap { max-height: 50vh; }
+  .ncc-pagination {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
 }

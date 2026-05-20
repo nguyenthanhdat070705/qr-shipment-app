@@ -154,22 +154,22 @@ export default function SellPackagesPage() {
 
         {/* ── Step 1: Selection ───────────────────────────────── */}
         {step === 'selection' && (
-          <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500 fade-in">
-            <div className="text-center max-w-2xl mx-auto mb-10">
-              <h1 className="text-3xl font-extrabold text-gray-900 mb-3 tracking-tight">Ký kết & Bán Gói Sản Phẩm</h1>
-              <p className="text-gray-500">
+          <div className="space-y-4 sm:space-y-6 animate-in slide-in-from-bottom-4 duration-500 fade-in">
+            <div className="text-center max-w-2xl mx-auto mb-6 sm:mb-10">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2 sm:mb-3 tracking-tight">Ký kết & Bán Gói Sản Phẩm</h1>
+              <p className="text-sm sm:text-base text-gray-500">
                 Lựa chọn gói dịch vụ hoặc thẻ Hội Viên Trăm Tuổi phù hợp với nhu cầu của khách hàng.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 w-full">
               {PACKAGES.map((pkg) => (
-                <div 
+                <div
                   key={pkg.id}
                   className={`
-                    relative flex flex-col bg-white rounded-3xl p-6 md:p-8 
+                    relative flex flex-col bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 md:p-8
                     border-2 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl
-                    ${pkg.recommended ? 'border-amber-400 shadow-lg scale-105 z-10' : 'border-gray-100 hover:border-gray-300'}
+                    ${pkg.recommended ? 'border-amber-400 shadow-lg sm:scale-105 sm:z-10' : 'border-gray-100 hover:border-gray-300'}
                   `}
                 >
                   {pkg.recommended && (
@@ -181,16 +181,16 @@ export default function SellPackagesPage() {
                   )}
                   
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900">{pkg.name}</h3>
-                    <p className="text-xs text-gray-500 mt-2 mb-6 min-h-[40px]">{pkg.description}</p>
-                    
-                    <div className="mb-6">
-                      <span className="text-3xl font-black text-gray-900">{formatPrice(pkg.price)}</span>
+                    <h3 className="text-base sm:text-lg font-bold text-gray-900">{pkg.name}</h3>
+                    <p className="text-xs text-gray-500 mt-2 mb-4 sm:mb-6 sm:min-h-[40px]">{pkg.description}</p>
+
+                    <div className="mb-4 sm:mb-6">
+                      <span className="text-2xl sm:text-3xl font-black text-gray-900">{formatPrice(pkg.price)}</span>
                     </div>
 
-                    <ul className="space-y-3 mb-8">
+                    <ul className="space-y-2.5 sm:space-y-3 mb-6 sm:mb-8">
                       {pkg.features.map((feat, idx) => (
-                        <li key={idx} className="flex items-start gap-2.5 text-sm text-gray-600">
+                        <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-gray-600">
                           <div className={`mt-0.5 flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-${pkg.color}-100`}>
                             <Check size={12} className={`text-${pkg.color}-600 font-bold`} />
                           </div>
@@ -203,7 +203,7 @@ export default function SellPackagesPage() {
                   <button
                     onClick={() => handleSelectPackage(pkg)}
                     className={`
-                      w-full py-3.5 rounded-2xl font-bold text-sm text-white shadow-sm transition-all hover:shadow-md
+                      w-full py-3.5 rounded-2xl font-bold text-sm text-white shadow-sm transition-all hover:shadow-md min-h-[48px]
                       bg-gradient-to-r ${pkg.gradientFrom} ${pkg.gradientTo}
                     `}
                   >
@@ -218,31 +218,31 @@ export default function SellPackagesPage() {
         {/* ── Step 2: Customer Info ───────────────────────────────── */}
         {step === 'customer_info' && selectedPkg && (
           <div className="max-w-4xl mx-auto animate-in slide-in-from-right-4 duration-300 fade-in">
-            <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden flex flex-col md:flex-row">
-              
+            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-100 overflow-hidden flex flex-col md:flex-row">
+
               {/* Left Panel: Package Summary */}
-              <div className={`w-full md:w-2/5 p-8 bg-gradient-to-br ${selectedPkg.gradientFrom} ${selectedPkg.gradientTo} text-white flex flex-col justify-between`}>
+              <div className={`w-full md:w-2/5 p-5 sm:p-8 bg-gradient-to-br ${selectedPkg.gradientFrom} ${selectedPkg.gradientTo} text-white flex flex-col justify-between gap-4`}>
                 <div>
-                  <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-md">
-                    <Shield size={24} className="text-white" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 backdrop-blur-md">
+                    <Shield size={22} className="text-white" />
                   </div>
-                  <h2 className="text-2xl font-extrabold mb-2">{selectedPkg.name}</h2>
-                  <p className="text-white/80 text-sm mb-6">{selectedPkg.description}</p>
-                  
-                  <div className="bg-black/10 rounded-2xl p-4 backdrop-blur-sm mb-6 border border-white/10">
-                    <p className="text-xs text-white/70 font-semibold mb-1 uppercase tracking-wide">Tổng thanh toán</p>
-                    <p className="text-2xl font-black">{formatPrice(selectedPkg.price)}</p>
+                  <h2 className="text-xl sm:text-2xl font-extrabold mb-2">{selectedPkg.name}</h2>
+                  <p className="text-white/80 text-xs sm:text-sm mb-4 sm:mb-6">{selectedPkg.description}</p>
+
+                  <div className="bg-black/10 rounded-2xl p-3 sm:p-4 backdrop-blur-sm mb-4 sm:mb-6 border border-white/10">
+                    <p className="text-[10px] sm:text-xs text-white/70 font-semibold mb-1 uppercase tracking-wide">Tổng thanh toán</p>
+                    <p className="text-xl sm:text-2xl font-black">{formatPrice(selectedPkg.price)}</p>
                   </div>
                 </div>
-                
-                <div className="text-xs text-white/50 bg-black/5 p-3 rounded-xl border border-white/5">
+
+                <div className="text-[10px] sm:text-xs text-white/50 bg-black/5 p-3 rounded-xl border border-white/5">
                   Dữ liệu khách hàng sẽ được tự động đồng bộ sang Getfly CRM & gửi Zalo ZNS.
                 </div>
               </div>
 
               {/* Right Panel: Form */}
-              <div className="w-full md:w-3/5 p-8 lg:p-10">
-                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <div className="w-full md:w-3/5 p-5 sm:p-8 lg:p-10">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2">
                   <User size={20} className="text-gray-400" />
                   Thông tin khách hàng
                 </h3>
@@ -307,19 +307,19 @@ export default function SellPackagesPage() {
                     </div>
                   </div>
 
-                  <div className="pt-4 mt-2 border-t border-gray-100 flex justify-end gap-3">
-                    <button 
+                  <div className="pt-4 mt-2 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+                    <button
                       type="button"
                       onClick={() => setStep('selection')}
-                      className="px-5 py-3 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors"
+                      className="w-full sm:w-auto px-5 py-3 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors min-h-[44px]"
                     >
                       Hủy & Chọn lại gói
                     </button>
-                    <button 
+                    <button
                       type="submit"
                       disabled={isSubmitting}
                       className={`
-                        flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white shadow-md
+                        w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white shadow-md min-h-[48px]
                         bg-gradient-to-r ${selectedPkg.gradientFrom} ${selectedPkg.gradientTo}
                         hover:opacity-90 disabled:opacity-70 transition-all
                       `}
@@ -337,41 +337,42 @@ export default function SellPackagesPage() {
         {/* ── Step 3: Success ───────────────────────────────── */}
         {step === 'success' && selectedPkg && (
           <div className="max-w-2xl mx-auto text-center animate-in zoom-in-95 duration-500">
-            <div className="bg-white rounded-3xl p-10 shadow-xl border border-emerald-100">
-              <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Check size={40} className="text-emerald-500" />
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-10 shadow-xl border border-emerald-100">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                <Check size={32} className="text-emerald-500 sm:hidden" />
+                <Check size={40} className="text-emerald-500 hidden sm:block" />
               </div>
-              <h2 className="text-2xl font-black text-gray-900 mb-2">Đăng ký thành công!</h2>
-              <p className="text-gray-500 mb-6">
+              <h2 className="text-xl sm:text-2xl font-black text-gray-900 mb-2">Đăng ký thành công!</h2>
+              <p className="text-sm sm:text-base text-gray-500 mb-4 sm:mb-6">
                 Hợp đồng cho gói <span className="font-bold text-gray-900">{selectedPkg.name}</span> của khách hàng <span className="font-bold text-gray-900">{customerName}</span> đã được ghi nhận.
               </p>
-              
-              <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 text-left mb-8 space-y-3">
-                <p className="text-sm font-bold text-gray-800 border-b border-gray-200 pb-2 mb-3">Luồng tự động hóa đang chạy ngầm:</p>
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <Check size={16} className="text-emerald-500 flex-shrink-0" />
+
+              <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 sm:p-5 text-left mb-6 sm:mb-8 space-y-3">
+                <p className="text-xs sm:text-sm font-bold text-gray-800 border-b border-gray-200 pb-2 mb-3">Luồng tự động hóa đang chạy ngầm:</p>
+                <div className="flex items-start gap-3 text-xs sm:text-sm text-gray-600">
+                  <Check size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
                   <span>Dữ liệu đã truyền tới luồng <strong className="text-blue-600">n8n (New Customer)</strong></span>
                 </div>
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <Check size={16} className="text-emerald-500 flex-shrink-0" />
+                <div className="flex items-start gap-3 text-xs sm:text-sm text-gray-600">
+                  <Check size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
                   <span>Đã tạo thẻ liên hệ (Deal) trên <strong className="text-blue-600">Getfly CRM</strong></span>
                 </div>
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <Check size={16} className="text-emerald-500 flex-shrink-0" />
+                <div className="flex items-start gap-3 text-xs sm:text-sm text-gray-600">
+                  <Check size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
                   <span>Hệ thống <strong className="text-blue-600">Zalo ZNS</strong> đang chuẩn bị gửi tin nhắn lời chào</span>
                 </div>
               </div>
 
-              <div className="flex justify-center gap-4">
-                <button 
+              <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+                <button
                   onClick={() => router.push('/sales')}
-                  className="px-6 py-3 border border-gray-200 rounded-xl font-bold text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="w-full sm:w-auto px-6 py-3 border border-gray-200 rounded-xl font-bold text-sm text-gray-700 hover:bg-gray-50 transition-colors min-h-[44px]"
                 >
                   Về màn hình chính
                 </button>
-                <button 
+                <button
                   onClick={resetFlow}
-                  className="px-6 py-3 bg-[#1B2A4A] rounded-xl font-bold text-sm text-white hover:bg-blue-900 transition-colors flex items-center gap-2 shadow-md"
+                  className="w-full sm:w-auto px-6 py-3 bg-[#1B2A4A] rounded-xl font-bold text-sm text-white hover:bg-blue-900 transition-colors flex items-center justify-center gap-2 shadow-md min-h-[44px]"
                 >
                   Tạo đơn mới <ArrowRight size={16} />
                 </button>

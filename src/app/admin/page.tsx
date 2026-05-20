@@ -196,18 +196,18 @@ function KpiCard({
   const content = (
     <div
       onClick={onClick}
-      className={`relative overflow-hidden rounded-[1.25rem] sm:rounded-[1.5rem] bg-white dark:bg-[#162240] border border-gray-200/60 dark:border-white/10 p-5 sm:p-6 transition-all duration-500 group
+      className={`relative overflow-hidden rounded-[1.25rem] sm:rounded-[1.5rem] bg-white dark:bg-[#162240] border border-gray-200/60 dark:border-white/10 p-3 sm:p-5 lg:p-6 transition-all duration-500 group
         ${(clickable || href) ? 'cursor-pointer hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgb(255,255,255,0.03)] hover:border-indigo-200 dark:hover:border-white/20 hover:-translate-y-1' : 'hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:hover:shadow-none'}
       `}
     >
       <div className={`absolute -bottom-16 -right-16 w-48 h-48 rounded-full opacity-[0.04] dark:opacity-10 group-hover:scale-125 transition-transform duration-700 ${gradient}`} />
-      <div className="flex items-start justify-between relative z-10">
-        <div className="flex-1">
-          <p className="text-[10px] sm:text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2 sm:mb-3">{label}</p>
+      <div className="flex items-start justify-between relative z-10 gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] sm:text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5 sm:mb-3 truncate">{label}</p>
           <div className="flex items-baseline gap-2">
-            <p className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white tracking-tight leading-none group-hover:text-indigo-900 dark:group-hover:text-indigo-300 transition-colors">{value}</p>
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-900 dark:text-white tracking-tight leading-none group-hover:text-indigo-900 dark:group-hover:text-indigo-300 transition-colors">{value}</p>
           </div>
-          {sub && <p className="text-[11px] sm:text-xs font-medium text-gray-400 dark:text-gray-500 mt-2">{sub}</p>}
+          {sub && <p className="text-[10px] sm:text-xs font-medium text-gray-400 dark:text-gray-500 mt-1.5 sm:mt-2 line-clamp-2">{sub}</p>}
           {delta && (
             <div className={`inline-flex items-center gap-1 mt-3 px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold shadow-sm border ${
               delta.positive ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20' : 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 border-red-100 dark:border-red-500/20'
@@ -222,7 +222,7 @@ function KpiCard({
             </div>
           )}
         </div>
-        <div className={`flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl ${gradient} text-white shadow-lg shadow-indigo-500/20 dark:shadow-none flex-shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500`}>
+        <div className={`flex h-9 w-9 sm:h-12 sm:w-12 lg:h-14 lg:w-14 items-center justify-center rounded-xl sm:rounded-2xl ${gradient} text-white shadow-lg shadow-indigo-500/20 dark:shadow-none flex-shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500`}>
           {icon}
         </div>
       </div>
@@ -393,7 +393,7 @@ export default function AdminDashboard() {
       />
 
       {/* ── Header ── */}
-      <div className="mb-10 p-8 sm:p-12 rounded-[2.5rem] bg-[#0f172a] text-white shadow-2xl shadow-indigo-900/20 relative overflow-hidden group">
+      <div className="mb-6 sm:mb-10 p-5 sm:p-8 lg:p-12 rounded-[1.5rem] sm:rounded-[2.5rem] bg-[#0f172a] text-white shadow-2xl shadow-indigo-900/20 relative overflow-hidden group">
         {/* Abstract shapes & glow */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#020617] opacity-80" />
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-indigo-500/30 rounded-full blur-[100px] group-hover:bg-indigo-500/40 transition-colors duration-1000" />
@@ -403,29 +403,29 @@ export default function AdminDashboard() {
         {/* Noise overlay */}
         <div className="absolute inset-0 opacity-[0.03] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMSIvPjwvc3ZnPg==')] pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
           <div>
-            <div className="flex items-center gap-3 flex-wrap mb-5">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-xl shadow-lg">
-                <Shield size={14} className="text-indigo-300" />
-                <span className="text-[11px] font-bold text-white tracking-widest uppercase">Quản Trị Hệ Thống</span>
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap mb-3 sm:mb-5">
+              <div className="inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-xl shadow-lg">
+                <Shield size={12} className="text-indigo-300 sm:w-3.5 sm:h-3.5" />
+                <span className="text-[10px] sm:text-[11px] font-bold text-white tracking-widest uppercase">Quản Trị Hệ Thống</span>
               </div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl">
+              <div className="inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl">
                 <Activity size={12} className="text-emerald-400 animate-pulse" />
-                <span className="text-[11px] font-medium text-white/70">Cập nhật lúc {timeStr}</span>
+                <span className="text-[10px] sm:text-[11px] font-medium text-white/70">Cập nhật lúc {timeStr}</span>
               </div>
             </div>
-            <h1 className="text-4xl sm:text-5xl font-black mb-3 tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-indigo-100 to-indigo-300">
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black mb-2 sm:mb-3 tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-indigo-100 to-indigo-300">
               Admin Dashboard
             </h1>
-            <p className="text-indigo-200/80 text-sm max-w-lg font-medium leading-relaxed">
+            <p className="text-indigo-200/80 text-xs sm:text-sm max-w-lg font-medium leading-relaxed">
               Trung tâm kiểm soát toàn bộ hệ thống: thống kê tồn kho, xuất nhập hàng, và hoạt động của các bộ phận trong thời gian thực.
             </p>
           </div>
           <button
             onClick={fetchAll}
             disabled={loading}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-sm font-bold text-white transition-all duration-300 disabled:opacity-50 hover:shadow-[0_0_20px_rgb(255,255,255,0.1)] active:scale-95"
+            className="inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs sm:text-sm font-bold text-white transition-all duration-300 disabled:opacity-50 hover:shadow-[0_0_20px_rgb(255,255,255,0.1)] active:scale-95 w-full sm:w-auto"
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
             {loading ? 'Đang đồng bộ...' : 'Làm mới dữ liệu'}
@@ -453,7 +453,7 @@ export default function AdminDashboard() {
       ) : (
         <>
           {/* ── Primary KPI Cards — Inventory ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-6 sm:mb-8">
             <KpiCard
               label="Tổng loại hàng"
               value={stats?.totalProducts ?? '—'}
@@ -494,8 +494,8 @@ export default function AdminDashboard() {
 
           {/* ── Secondary Admin Stats ── */}
           {adminStats && (
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-4">
+            <div className="mb-6 sm:mb-8">
+              <div className="flex items-center gap-3 mb-3 sm:mb-4">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-500/20">
                   <TrendingUp size={16} className="text-violet-600 dark:text-violet-400" />
                 </div>
@@ -504,7 +504,7 @@ export default function AdminDashboard() {
                   <p className="text-[11px] text-gray-400 dark:text-gray-500">Số liệu tổng quan dành cho quản trị</p>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
                 <MiniStatCard
                   icon={<ShoppingCart size={18} />}
                   label="Đơn đặt hàng"
@@ -553,20 +553,20 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-10">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-10">
             {/* ── Warehouse breakdown ── */}
             <div className="xl:col-span-1">
-              <div className="rounded-[1.5rem] bg-white dark:bg-[#162240] border border-gray-200/60 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none overflow-hidden h-full flex flex-col">
-                <div className="flex items-center gap-4 p-5 sm:p-6 border-b border-gray-100 dark:border-white/5">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 dark:bg-sky-500/20 border border-sky-100 dark:border-sky-500/30 shadow-sm">
+              <div className="rounded-[1.25rem] sm:rounded-[1.5rem] bg-white dark:bg-[#162240] border border-gray-200/60 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none overflow-hidden h-full flex flex-col">
+                <div className="flex items-center gap-3 sm:gap-4 p-4 sm:p-5 lg:p-6 border-b border-gray-100 dark:border-white/5">
+                  <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-sky-50 dark:bg-sky-500/20 border border-sky-100 dark:border-sky-500/30 shadow-sm">
                     <Warehouse size={20} className="text-sky-600 dark:text-sky-400" />
                   </div>
                   <div>
-                    <h2 className="text-base font-black text-gray-900 dark:text-white tracking-tight">Tồn kho theo kho</h2>
-                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500">Phân bổ hàng hóa</p>
+                    <h2 className="text-sm sm:text-base font-black text-gray-900 dark:text-white tracking-tight">Tồn kho theo kho</h2>
+                    <p className="text-[11px] sm:text-xs font-medium text-gray-400 dark:text-gray-500">Phân bổ hàng hóa</p>
                   </div>
                 </div>
-                <div className="p-5 sm:p-6 space-y-5 flex-1 bg-gray-50/30 dark:bg-transparent">
+                <div className="p-4 sm:p-5 lg:p-6 space-y-3 sm:space-y-5 flex-1 bg-gray-50/30 dark:bg-transparent">
                   {warehouseStats.length === 0 ? (
                     <div className="h-full flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm font-medium">Đang tải...</div>
                   ) : warehouseStats.map((w, i) => {
@@ -607,19 +607,19 @@ export default function AdminDashboard() {
 
             {/* ── Recent Exports ── */}
             <div className="xl:col-span-2">
-              <div className="rounded-[1.5rem] bg-white dark:bg-[#162240] border border-gray-200/60 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none overflow-hidden h-full flex flex-col">
-                <div className="flex items-center justify-between p-5 sm:p-6 border-b border-gray-100 dark:border-white/5">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/20 border border-emerald-100 dark:border-emerald-500/30 shadow-sm">
+              <div className="rounded-[1.25rem] sm:rounded-[1.5rem] bg-white dark:bg-[#162240] border border-gray-200/60 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none overflow-hidden h-full flex flex-col">
+                <div className="flex items-center justify-between p-4 sm:p-5 lg:p-6 border-b border-gray-100 dark:border-white/5 gap-2">
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                    <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-emerald-50 dark:bg-emerald-500/20 border border-emerald-100 dark:border-emerald-500/30 shadow-sm flex-shrink-0">
                       <Truck size={20} className="text-emerald-600 dark:text-emerald-400" />
                     </div>
-                    <div>
-                      <h2 className="text-base font-black text-gray-900 dark:text-white tracking-tight">Phiếu xuất gần đây</h2>
-                      <p className="text-xs font-medium text-gray-400 dark:text-gray-500">{recentExports.length} phiếu mới nhất</p>
+                    <div className="min-w-0">
+                      <h2 className="text-sm sm:text-base font-black text-gray-900 dark:text-white tracking-tight truncate">Phiếu xuất gần đây</h2>
+                      <p className="text-[11px] sm:text-xs font-medium text-gray-400 dark:text-gray-500">{recentExports.length} phiếu mới nhất</p>
                     </div>
                   </div>
-                  <Link href="/goods-issue" className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-indigo-50/50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all active:scale-95">
-                    Xem tất cả <ArrowRight size={14} />
+                  <Link href="/goods-issue" className="text-[11px] sm:text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center gap-1.5 px-2.5 sm:px-3 lg:px-4 py-1.5 sm:py-2 rounded-xl bg-indigo-50/50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all active:scale-95 flex-shrink-0 whitespace-nowrap">
+                    <span className="hidden sm:inline">Xem tất cả</span><span className="sm:hidden">Xem</span> <ArrowRight size={14} />
                   </Link>
                 </div>
                 <div className="divide-y divide-gray-100 dark:divide-white/5 flex-1 overflow-y-auto">
@@ -673,8 +673,8 @@ export default function AdminDashboard() {
           </div>
 
           {/* ── Quick Actions ── */}
-          <div className="rounded-[1.5rem] bg-white dark:bg-[#162240] border border-gray-200/60 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none p-6 sm:p-8">
-            <div className="flex items-center gap-4 mb-5 sm:mb-6">
+          <div className="rounded-[1.25rem] sm:rounded-[1.5rem] bg-white dark:bg-[#162240] border border-gray-200/60 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none p-4 sm:p-6 lg:p-8">
+            <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
               <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-500/20 border border-indigo-100 dark:border-indigo-500/30 shadow-sm">
                 <BarChart3 size={20} className="text-indigo-600 dark:text-indigo-400" />
               </div>
@@ -683,7 +683,7 @@ export default function AdminDashboard() {
                 <p className="text-[11px] sm:text-xs font-medium text-gray-400 dark:text-gray-500">Điều hướng đến các module chính của hệ thống</p>
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
               <QuickActionCard icon={<ShoppingCart size={20} />} title="Đặt hàng" desc="Tạo & quản lý PO" href="/purchase-orders" color="text-violet-600" iconBg="bg-violet-50" />
               <QuickActionCard icon={<PackageCheck size={20} />} title="Nhập hàng" desc="Phiếu nhập GRPO" href="/goods-receipt" color="text-orange-600" iconBg="bg-orange-50" />
               <QuickActionCard icon={<PackageCheck size={20} />} title="Quản lý nhập hàng" desc="Đối chiếu PO & kho" href="/receipt-management" color="text-indigo-600" iconBg="bg-indigo-50" />

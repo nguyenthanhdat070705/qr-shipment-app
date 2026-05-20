@@ -82,39 +82,39 @@ export default function WarehouseHubPage() {
     <PageLayout title="Trung Tâm Kho Vận" icon={<Warehouse size={15} className="text-emerald-500" />}>
       <div className="pb-12">
         {/* ── Header chuẩn dùng chung theo giao diện admin ── */}
-        <div className="mb-8 sm:mb-10 text-center space-y-3 sm:space-y-4 pt-4 px-4">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white">Tính năng Kho Vận</h1>
-          <p className="text-gray-500 dark:text-gray-400 max-w-xl mx-auto text-sm sm:text-base">
+        <div className="mb-6 sm:mb-10 text-center space-y-2 sm:space-y-4 pt-4 px-3 sm:px-4">
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white">Tính năng Kho Vận</h1>
+          <p className="text-gray-500 dark:text-gray-400 max-w-xl mx-auto text-xs sm:text-base">
             Lựa chọn một nghiệp vụ bên dưới để quản lý xuất nhập, tồn kho, sản phẩm và cấu hình hệ thống kho.
           </p>
         </div>
 
         {/* ── Grid chuẩn dùng chung theo giao diện admin ── */}
-        <div className="space-y-10 max-w-7xl mx-auto px-4">
+        <div className="space-y-6 sm:space-y-10 max-w-7xl mx-auto px-3 sm:px-4">
           {cards.length > 0 && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 {cards.map((card) => (
                   <Link
                     key={card.id}
                     href={card.href}
-                    className={`group bg-white dark:bg-[#162240] p-6 rounded-[2rem] border border-gray-100 dark:border-white/5 shadow-xl ${card.shadow} dark:shadow-none hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 relative overflow-hidden flex flex-col h-full`}
+                    className={`group bg-white dark:bg-[#162240] p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-gray-100 dark:border-white/5 shadow-xl ${card.shadow} dark:shadow-none hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 relative overflow-hidden flex flex-col h-full`}
                   >
                     {/* Background decor */}
                     <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl ${card.gradient} opacity-5 dark:opacity-10 rounded-bl-[100px] transform group-hover:scale-110 transition-transform duration-500`}></div>
-                    
+
                     <div className="relative z-10 flex-1 flex flex-col">
-                      <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${card.gradient} flex items-center justify-center shadow-lg mb-5 transform group-hover:rotate-6 transition-transform duration-300`}>
+                      <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br ${card.gradient} flex items-center justify-center shadow-lg mb-3 sm:mb-5 transform group-hover:rotate-6 transition-transform duration-300`}>
                         {card.icon}
                       </div>
-                      <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2 leading-tight">{card.title}</h2>
-                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400 leading-relaxed mb-6 flex-1">
+                      <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2 leading-tight">{card.title}</h2>
+                      <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 leading-relaxed mb-4 sm:mb-6 flex-1">
                         {card.desc}
                       </p>
-                      
-                      <div className="flex items-center text-sm font-bold text-gray-400 dark:text-gray-500 group-hover:text-gray-700 dark:group-hover:text-white transition-colors mt-auto">
+
+                      <div className="flex items-center text-xs sm:text-sm font-bold text-gray-400 dark:text-gray-500 group-hover:text-gray-700 dark:group-hover:text-white transition-colors mt-auto">
                         <span className="flex-1">Chi tiết</span>
-                        <span className={`w-8 h-8 rounded-full flex items-center justify-center bg-gray-50 dark:bg-white/5 text-gray-400 dark:text-gray-500 group-hover:bg-gray-900 dark:group-hover:bg-white/20 group-hover:text-white transition-all`}>
+                        <span className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-gray-50 dark:bg-white/5 text-gray-400 dark:text-gray-500 group-hover:bg-gray-900 dark:group-hover:bg-white/20 group-hover:text-white transition-all`}>
                           →
                         </span>
                       </div>
@@ -125,7 +125,7 @@ export default function WarehouseHubPage() {
             </div>
           )}
           {cards.length === 0 && (
-            <div className="col-span-full border border-gray-200 rounded-2xl p-8 text-center text-gray-500">
+            <div className="col-span-full border border-gray-200 rounded-2xl p-6 sm:p-8 text-center text-gray-500 text-sm">
               Tài khoản của bạn chưa được phân quyền thao tác tính năng kho.
             </div>
           )}

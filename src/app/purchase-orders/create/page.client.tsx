@@ -266,21 +266,22 @@ export default function CreatePurchaseOrderPage() {
 
   return (
     <PageLayout title="Tạo đơn mua hàng" icon={<ShoppingCart size={16} className="text-purple-500" />}>
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
         <button
           onClick={() => router.push('/purchase-orders')}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-6"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-4 sm:mb-6"
         >
           <ArrowLeft size={16} />
-          Danh sách PO
+          <span className="hidden sm:inline">Danh sách PO</span>
+          <span className="sm:hidden">Quay lại</span>
         </button>
 
-        <h1 className="text-2xl font-extrabold text-gray-900 mb-6">Tạo đơn mua hàng mới</h1>
+        <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-4 sm:mb-6">Tạo đơn mua hàng mới</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
 
           {/* ── Quick Product Search — tìm hòm trước, auto set NCC ── */}
-          <div className="rounded-2xl border-2 border-dashed border-purple-200 bg-gradient-to-r from-purple-50/50 to-indigo-50/50 p-5">
+          <div className="rounded-2xl border-2 border-dashed border-purple-200 bg-gradient-to-r from-purple-50/50 to-indigo-50/50 p-4 sm:p-5">
             <div className="flex items-center gap-2 mb-3">
               <div className="p-1.5 bg-purple-100 rounded-lg">
                 <Search size={14} className="text-purple-600" />
@@ -352,8 +353,8 @@ export default function CreatePurchaseOrderPage() {
           </div>
 
           {/* General Info */}
-          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 space-y-4">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400">Thông tin chung</h2>
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-4 sm:p-6 space-y-4">
+            <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-400">Thông tin chung</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* NCC Dropdown */}
@@ -503,18 +504,18 @@ export default function CreatePurchaseOrderPage() {
           </div>
 
           {/* Items */}
-          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400">
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-4 sm:p-6 space-y-4">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-400">
                 Sản phẩm
-                <span className="ml-2 text-purple-500 normal-case tracking-normal font-medium">
+                <span className="ml-2 text-purple-500 normal-case tracking-normal font-medium hidden sm:inline">
                   ({filteredProducts.length} sản phẩm có sẵn)
                 </span>
               </h2>
               <button
                 type="button"
                 onClick={addItem}
-                className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-50 text-purple-600 rounded-lg text-xs font-semibold hover:bg-purple-100 transition-colors"
+                className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-50 text-purple-600 rounded-lg text-xs font-semibold hover:bg-purple-100 transition-colors min-h-[36px]"
               >
                 <Plus size={14} />
                 Thêm SP
@@ -613,8 +614,8 @@ export default function CreatePurchaseOrderPage() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-12 gap-2 items-start">
-                    <div className="col-span-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-12 gap-2 items-start">
+                    <div className="col-span-2 sm:col-span-2">
                       <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">Mã SP</label>
                       <input
                         type="text"
@@ -623,13 +624,13 @@ export default function CreatePurchaseOrderPage() {
                         className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm bg-gray-100 font-mono focus:outline-none"
                       />
                     </div>
-                    <div className="col-span-4">
+                    <div className="col-span-2 sm:col-span-4">
                       <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">Tên SP</label>
                       <div className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm bg-gray-100 min-h-[38px] break-words leading-snug">
                         {item.product_name || <span className="text-gray-400">Tên sản phẩm</span>}
                       </div>
                     </div>
-                    <div className="col-span-2">
+                    <div className="col-span-1 sm:col-span-2">
                       <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">SL</label>
                       <input
                         type="number"
@@ -639,7 +640,7 @@ export default function CreatePurchaseOrderPage() {
                         className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200"
                       />
                     </div>
-                    <div className="col-span-2">
+                    <div className="col-span-1 sm:col-span-2">
                       <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">Đơn giá (₫)</label>
                       <input
                         type="number"
@@ -649,7 +650,7 @@ export default function CreatePurchaseOrderPage() {
                         className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200"
                       />
                     </div>
-                    <div className="col-span-1 pt-[22px]">
+                    <div className="col-span-1 sm:col-span-1 sm:pt-[22px]">
                        <label className="flex items-center gap-1.5 cursor-pointer bg-white border border-gray-200 py-1.5 px-2 rounded-lg shadow-sm hover:border-purple-300 transition-colors h-[38px] group">
                           <input
                             type="checkbox"
@@ -660,7 +661,7 @@ export default function CreatePurchaseOrderPage() {
                           <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight group-hover:text-purple-600">Ký gửi</span>
                        </label>
                     </div>
-                    <div className="col-span-1 flex justify-center pt-[22px]">
+                    <div className="col-span-1 sm:col-span-1 flex justify-end sm:justify-center sm:pt-[22px]">
                       <button
                         type="button"
                         onClick={() => removeItem(i)}
@@ -676,10 +677,10 @@ export default function CreatePurchaseOrderPage() {
             </div>
 
             {/* Total */}
-            <div className="flex justify-end pt-2 border-t border-gray-100">
-              <div className="text-right">
+            <div className="flex justify-between sm:justify-end items-center pt-2 border-t border-gray-100">
+              <div className="text-right flex-1 sm:flex-initial">
                 <span className="text-xs text-gray-400 uppercase">Tổng cộng: </span>
-                <span className="text-xl font-extrabold text-gray-900 ml-2">
+                <span className="text-lg sm:text-xl font-extrabold text-gray-900 ml-2">
                   {total.toLocaleString('vi-VN')} ₫
                 </span>
               </div>
@@ -697,7 +698,7 @@ export default function CreatePurchaseOrderPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold text-sm hover:bg-purple-700 disabled:opacity-50 shadow-lg shadow-purple-200 transition-all"
+            className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold text-sm hover:bg-purple-700 disabled:opacity-50 shadow-lg shadow-purple-200 transition-all min-h-[48px]"
           >
             {submitting ? 'Đang xử lý...' : 'Xác nhận đơn hàng'}
           </button>

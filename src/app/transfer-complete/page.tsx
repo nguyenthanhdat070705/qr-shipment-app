@@ -25,13 +25,13 @@ function TransferCompleteContent() {
   const soLuong = params.get('so_luong') || '1';
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-[#faf7f2] via-white to-slate-50">
+    <main className="min-h-screen bg-gradient-to-br from-[#faf7f2] via-white to-slate-50 safe-bottom">
       {/* Header */}
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-md print:bg-white print:backdrop-blur-none">
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-md print:bg-white print:backdrop-blur-none safe-top">
         <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors print:hidden"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors print:hidden min-h-[40px]"
           >
             <ArrowLeft size={16} />
             Trang chủ
@@ -46,14 +46,14 @@ function TransferCompleteContent() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-lg px-4 py-6 space-y-5">
+      <div className="mx-auto max-w-lg px-4 py-4 sm:py-6 space-y-4 sm:space-y-5">
         {/* Success header */}
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 flex-shrink-0">
             <CheckCircle size={28} className="text-green-600" />
           </div>
-          <div>
-            <h1 className="text-lg font-extrabold text-gray-900">Yêu cầu chuyển hàng hoàn thành</h1>
+          <div className="min-w-0">
+            <h1 className="text-base sm:text-lg font-extrabold text-gray-900">Yêu cầu chuyển hàng hoàn thành</h1>
             <p className="text-xs text-green-600 font-medium">Đã lưu vào hệ thống — Tồn kho đã được cập nhật</p>
           </div>
         </div>
@@ -91,7 +91,7 @@ function TransferCompleteContent() {
         {/* Print button */}
         <button
           onClick={() => window.print()}
-          className="print:hidden w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#1B2A4A] text-white font-bold text-sm hover:bg-[#162240] shadow-lg shadow-[#1B2A4A]/20 transition-all active:scale-[0.98]"
+          className="print:hidden w-full flex items-center justify-center gap-2 py-3.5 min-h-[48px] rounded-xl bg-[#1B2A4A] text-white font-bold text-sm hover:bg-[#162240] shadow-lg shadow-[#1B2A4A]/20 transition-all active:scale-[0.98]"
         >
           <Printer size={16} />
           In phiếu chuyển hàng
@@ -122,10 +122,10 @@ function TransferCompleteContent() {
 
 function InfoRow({ icon, label, value, highlight, mono }: { icon: React.ReactNode; label: string; value: string; highlight?: boolean; mono?: boolean }) {
   return (
-    <div className="flex items-start gap-3 px-4 py-3">
+    <div className="flex items-start gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3">
       <span className="text-teal-500 flex-shrink-0 mt-0.5">{icon}</span>
-      <span className="text-xs text-gray-500 font-medium w-24 flex-shrink-0 pt-0.5">{label}</span>
-      <span className={`text-sm font-medium break-words flex-1 ${
+      <span className="text-xs text-gray-500 font-medium w-20 sm:w-24 flex-shrink-0 pt-0.5">{label}</span>
+      <span className={`text-sm font-medium break-words flex-1 text-right sm:text-left ${
         highlight ? 'font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded font-mono' :
         mono ? 'font-mono font-bold text-[#1B2A4A]' :
         'text-gray-800'

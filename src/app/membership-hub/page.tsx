@@ -92,33 +92,33 @@ export default function MembershipHubPage() {
   return (
     <PageLayout title="Trung tâm CSKH Membership" icon={<Crown size={15} className="text-yellow-500" />}>
       {/* ── Header ── */}
-      <div className="mb-10 text-center space-y-4">
-        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900">Trung Tâm CSKH Membership</h1>
-        <p className="text-gray-500 max-w-xl mx-auto">
+      <div className="mb-6 sm:mb-10 text-center space-y-2 sm:space-y-4 px-4">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-gray-900">Trung Tâm CSKH Membership</h1>
+        <p className="text-sm sm:text-base text-gray-500 max-w-xl mx-auto">
           Tất cả các chức năng liên quan đến chăm sóc khách hàng và quản lý tài khoản hội viên nay được gom về một nơi duy nhất để bạn dễ dàng tác nghiệp.
         </p>
       </div>
 
       {/* ── Grid ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 mt-8 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto px-4 pb-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 mt-4 sm:mt-8 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 max-w-7xl mx-auto px-3 sm:px-4 pb-8 sm:pb-12">
         {dashboards.map((card) => (
           <Link
             key={card.id}
             href={card.href}
-            className={`group bg-white p-6 rounded-[1.5rem] border border-gray-100 shadow-xl ${card.shadow} hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 relative overflow-hidden flex flex-col`}
+            className={`group bg-white p-4 sm:p-6 rounded-2xl sm:rounded-[1.5rem] border border-gray-100 shadow-lg sm:shadow-xl ${card.shadow} hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 relative overflow-hidden flex flex-col`}
           >
             {/* Background decor */}
-            <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl ${card.gradient} opacity-5 rounded-bl-[80px] transform group-hover:scale-110 transition-transform duration-500`}></div>
-            
+            <div className={`absolute top-0 right-0 w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-bl ${card.gradient} opacity-5 rounded-bl-[60px] sm:rounded-bl-[80px] transform group-hover:scale-110 transition-transform duration-500`}></div>
+
             <div className="relative z-10 flex-1 flex flex-col">
-              <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${card.gradient} flex items-center justify-center shadow-lg mb-5 transform group-hover:scale-110 transition-transform duration-300`}>
+              <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br ${card.gradient} flex items-center justify-center shadow-lg mb-3 sm:mb-5 transform group-hover:scale-110 transition-transform duration-300`}>
                 {card.icon}
               </div>
-              <h2 className="text-lg font-bold text-gray-900 mb-2">{card.title}</h2>
-              <p className="text-[13px] font-medium text-gray-500 leading-relaxed mb-6 flex-1">
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2">{card.title}</h2>
+              <p className="text-xs sm:text-[13px] font-medium text-gray-500 leading-relaxed mb-4 sm:mb-6 flex-1">
                 {card.desc}
               </p>
-              
+
               <div className="flex items-center text-xs font-bold text-gray-400 group-hover:text-gray-800 transition-colors mt-auto">
                 <span className="flex-1 uppercase tracking-wide">Truy cập</span>
                 <span className={`w-7 h-7 rounded-full flex items-center justify-center bg-gray-50 text-gray-400 group-hover:bg-gray-900 group-hover:text-white transition-all`}>

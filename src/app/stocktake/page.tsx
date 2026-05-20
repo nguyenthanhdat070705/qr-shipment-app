@@ -674,60 +674,60 @@ export default function StocktakePage() {
       />
 
       {/* ── Welcome Banner ─────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a1040] via-indigo-900 to-[#2d1b69] p-6 mb-6 shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a1040] via-indigo-900 to-[#2d1b69] p-4 sm:p-6 mb-4 sm:mb-6 shadow-xl">
         <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-indigo-400/10 blur-3xl" />
         <div className="absolute bottom-0 left-16 w-32 h-32 rounded-full bg-violet-400/10 blur-2xl" />
 
-        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-          <div>
-            <div className="inline-flex items-center gap-2 mb-3 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md">
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-5">
+          <div className="min-w-0">
+            <div className="inline-flex items-center gap-2 mb-2 sm:mb-3 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md">
               <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-              <span className="text-xs text-white/70 font-semibold tracking-wide">Kiểm kho · {warehouseLabel}</span>
+              <span className="text-xs text-white/70 font-semibold tracking-wide truncate">Kiểm kho · {warehouseLabel}</span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-1 tracking-tight">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white mb-1 tracking-tight">
               Kiểm kê hàng tồn kho 📋
             </h1>
-            <p className="text-indigo-200/70 text-sm">Đối chiếu số lượng thực tế với hệ thống, phát hiện chênh lệch và điều chỉnh.</p>
+            <p className="text-indigo-200/70 text-xs sm:text-sm">Đối chiếu số lượng thực tế với hệ thống, phát hiện chênh lệch và điều chỉnh.</p>
 
-            <div className="flex flex-wrap gap-2 mt-4">
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-xs font-semibold">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-3 sm:mt-4">
+              <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-[11px] sm:text-xs font-semibold">
                 <BarChart3 size={12} />
-                {statsCount.total} phiếu tổng
+                {statsCount.total} phiếu
               </div>
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-200 text-xs font-semibold">
+              <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-200 text-[11px] sm:text-xs font-semibold">
                 <Clock size={12} />
                 {statsCount.inProgress} đang kiểm
               </div>
               {statsCount.hasDiff > 0 && (
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 border border-red-400/30 text-red-200 text-xs font-semibold">
+                <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-red-500/20 border border-red-400/30 text-red-200 text-[11px] sm:text-xs font-semibold">
                   <AlertTriangle size={12} />
-                  {statsCount.hasDiff} có chênh lệch
+                  {statsCount.hasDiff} chênh lệch
                 </div>
               )}
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-3">
+          <div className="flex flex-row sm:flex-col items-stretch sm:items-end gap-2 sm:gap-3 w-full sm:w-auto">
             <button
               onClick={() => setCreateModalOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-sm font-bold hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-sm font-bold hover:shadow-lg hover:shadow-indigo-500/30 transition-all min-h-[44px]"
             >
-              <Plus size={16} /> Tạo phiếu kiểm kho
+              <Plus size={16} /> <span className="whitespace-nowrap">Tạo phiếu</span>
             </button>
             <button
               onClick={fetchSessions}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white/80 text-xs font-semibold hover:bg-white/20 transition-colors"
+              className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white/80 text-xs font-semibold hover:bg-white/20 transition-colors"
             >
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Làm mới
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> <span className="hidden sm:inline">Làm mới</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* ── Search + Filter ─────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <div className="relative flex-1">
+      <div className="flex flex-col gap-2 sm:gap-3 mb-4 sm:mb-6">
+        <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
@@ -737,7 +737,7 @@ export default function StocktakePage() {
             className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all font-medium bg-gray-50/50 focus:bg-white"
           />
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5 overflow-x-auto no-scrollbar snap-x-chips -mx-3 px-3 sm:mx-0 sm:px-0">
           {([
             ['all', 'Tất cả'],
             ['in_progress', 'Đang kiểm'],
@@ -747,7 +747,7 @@ export default function StocktakePage() {
             <button
               key={key}
               onClick={() => setStatusFilter(key)}
-              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
                 statusFilter === key
                   ? 'bg-indigo-500 text-white shadow-sm'
                   : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'
@@ -785,77 +785,80 @@ export default function StocktakePage() {
               key={session.id}
               className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-200 overflow-hidden group"
             >
-              <div className="flex items-center gap-4 p-5">
-                {/* Icon */}
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                  session.trang_thai === 'in_progress' ? 'bg-amber-100' :
-                  session.trang_thai === 'completed' ? 'bg-emerald-100' :
-                  session.trang_thai === 'cancelled' ? 'bg-red-100' :
-                  'bg-gray-100'
-                }`}>
-                  <ClipboardCheck size={20} className={
-                    session.trang_thai === 'in_progress' ? 'text-amber-600' :
-                    session.trang_thai === 'completed' ? 'text-emerald-600' :
-                    session.trang_thai === 'cancelled' ? 'text-red-500' :
-                    'text-gray-500'
-                  } />
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md">
-                      {session.ma_phieu_kiem}
-                    </span>
-                    <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusConf.color}`}>
-                      {statusConf.icon} {statusConf.label}
-                    </span>
-                    {session.tong_lech > 0 && (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                        <AlertTriangle size={9} /> {session.tong_lech} chênh lệch
-                      </span>
-                    )}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:p-5">
+                {/* Top row on mobile: Icon + Code badges */}
+                <div className="flex items-start gap-3 sm:contents">
+                  {/* Icon */}
+                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                    session.trang_thai === 'in_progress' ? 'bg-amber-100' :
+                    session.trang_thai === 'completed' ? 'bg-emerald-100' :
+                    session.trang_thai === 'cancelled' ? 'bg-red-100' :
+                    'bg-gray-100'
+                  }`}>
+                    <ClipboardCheck size={18} className={
+                      session.trang_thai === 'in_progress' ? 'text-amber-600' :
+                      session.trang_thai === 'completed' ? 'text-emerald-600' :
+                      session.trang_thai === 'cancelled' ? 'text-red-500' :
+                      'text-gray-500'
+                    } />
                   </div>
 
-                  <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
-                    <span className="flex items-center gap-1">
-                      <Warehouse size={11} className="text-sky-500" />
-                      <span className="font-semibold text-gray-700">{session.ten_kho}</span>
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar size={11} />
-                      {createdDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                    </span>
-                    {session.nguoi_kiem_email && (
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mb-1">
+                      <span className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md break-all">
+                        {session.ma_phieu_kiem}
+                      </span>
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusConf.color}`}>
+                        {statusConf.icon} {statusConf.label}
+                      </span>
+                      {session.tong_lech > 0 && (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                          <AlertTriangle size={9} /> {session.tong_lech} chênh lệch
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 sm:gap-3 text-xs text-gray-500 flex-wrap">
                       <span className="flex items-center gap-1">
-                        <User size={11} />
-                        {session.nguoi_kiem_email.split('@')[0]}
+                        <Warehouse size={11} className="text-sky-500" />
+                        <span className="font-semibold text-gray-700 truncate max-w-[120px] sm:max-w-none">{session.ten_kho}</span>
                       </span>
-                    )}
-                    <span className="flex items-center gap-1">
-                      <Package size={11} />
-                      {session.tong_loai_kiem}/{session.tong_loai_kiem + (session.tong_lech || 0)} đã kiểm
-                    </span>
-                  </div>
+                      <span className="flex items-center gap-1">
+                        <Calendar size={11} />
+                        {createdDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                      </span>
+                      {session.nguoi_kiem_email && (
+                        <span className="flex items-center gap-1">
+                          <User size={11} />
+                          <span className="truncate max-w-[100px]">{session.nguoi_kiem_email.split('@')[0]}</span>
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <Package size={11} />
+                        {session.tong_loai_kiem} đã kiểm
+                      </span>
+                    </div>
 
-                  {session.ghi_chu && (
-                    <p className="text-[10px] text-gray-400 mt-1 truncate">{session.ghi_chu}</p>
-                  )}
+                    {session.ghi_chu && (
+                      <p className="text-[10px] text-gray-400 mt-1 line-clamp-2">{session.ghi_chu}</p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-2 flex-shrink-0 sm:contents">
                   <button
                     onClick={() => setDetailModalId(session.id)}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-50 text-indigo-600 text-xs font-bold hover:bg-indigo-100 transition-colors"
+                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-2 rounded-xl bg-indigo-50 text-indigo-600 text-xs font-bold hover:bg-indigo-100 transition-colors min-h-[44px] sm:min-h-0"
                   >
-                    {session.trang_thai === 'in_progress' ? 'Tiếp tục kiểm' : 'Xem chi tiết'}
+                    {session.trang_thai === 'in_progress' ? 'Tiếp tục' : 'Xem chi tiết'}
                     <ChevronRight size={13} />
                   </button>
                   {session.trang_thai === 'in_progress' && (
                     <button
                       onClick={() => handleCancel(session.id)}
-                      className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      className="p-2.5 sm:p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
                       title="Hủy phiếu"
                     >
                       <XCircle size={16} />

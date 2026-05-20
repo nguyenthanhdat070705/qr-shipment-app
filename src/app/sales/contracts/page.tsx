@@ -137,24 +137,24 @@ export default function ContractsPage() {
 
   return (
     <PageLayout title="Quản lý hợp đồng bán" icon={<FileText size={18} className="text-indigo-500" />}>
-      <div className="space-y-5">
+      <div className="space-y-4 sm:space-y-5">
         {/* Header */}
-        <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-xl font-extrabold text-gray-900">Quản lý hợp đồng bán</h1>
-            <p className="text-sm text-gray-500">
+            <h1 className="text-lg sm:text-xl font-extrabold text-gray-900">Quản lý hợp đồng bán</h1>
+            <p className="text-xs sm:text-sm text-gray-500">
               Dữ liệu sync từ GetFly CRM
-              {lastSync && <span className="text-violet-500"> · Lần cuối: {new Date(lastSync).toLocaleString('vi-VN')}</span>}
+              {lastSync && <span className="text-violet-500 block sm:inline"> · Lần cuối: {new Date(lastSync).toLocaleString('vi-VN')}</span>}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button onClick={handleSync} disabled={syncing}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-60 transition-all shadow-sm">
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-indigo-700 disabled:opacity-60 transition-all shadow-sm min-h-[40px]">
               {syncing ? <RefreshCw size={14} className="animate-spin" /> : <Download size={14} />}
               {syncing ? 'Đang sync...' : 'Sync từ GetFly'}
             </button>
             <a href="https://blackstonesdvtl.getflycrm.com" target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all">
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all min-h-[40px]">
               <ExternalLink size={14} /> Mở GetFly
             </a>
           </div>
@@ -172,19 +172,19 @@ export default function ContractsPage() {
         )}
 
         {/* Info bar */}
-        <div className="flex items-center justify-between bg-indigo-50 border border-indigo-100 rounded-2xl px-5 py-3">
-          <div className="flex items-center gap-2 text-sm">
-            <Database size={16} className="text-indigo-500" />
-            <span className="font-bold text-indigo-800">{total.toLocaleString()} hợp đồng đã sync</span>
+        <div className="flex items-center justify-between gap-2 bg-indigo-50 border border-indigo-100 rounded-2xl px-3 sm:px-5 py-3">
+          <div className="flex items-center gap-2 text-xs sm:text-sm min-w-0">
+            <Database size={16} className="text-indigo-500 flex-shrink-0" />
+            <span className="font-bold text-indigo-800 truncate">{total.toLocaleString()} HĐ đã sync</span>
           </div>
-          <span className="text-xs text-indigo-400">Dữ liệu lưu trong Supabase</span>
+          <span className="text-[10px] sm:text-xs text-indigo-400 hidden sm:inline">Dữ liệu lưu trong Supabase</span>
         </div>
 
         {/* Status filter tabs */}
-        <div className="flex gap-1 overflow-x-auto pb-1">
+        <div className="flex gap-1 overflow-x-auto pb-1 no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0">
           {STATUS_TABS.map(tab => (
             <button key={tab.id} onClick={() => { setStatusFilter(tab.id); setPage(1); }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                 statusFilter === tab.id ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}>
               {tab.label}
@@ -193,14 +193,14 @@ export default function ContractsPage() {
         </div>
 
         {/* Search */}
-        <form onSubmit={handleSearch} className="flex gap-3">
+        <form onSubmit={handleSearch} className="flex gap-2 sm:gap-3">
           <div className="relative flex-1">
             <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
             <input className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-              placeholder="Tìm theo tên hợp đồng, số hợp đồng hoặc SĐT khách hàng..."
+              placeholder="Tìm tên HĐ, số HĐ hoặc SĐT..."
               value={searchInput} onChange={e => setSearchInput(e.target.value)} />
           </div>
-          <button type="submit" className="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-all">Tìm</button>
+          <button type="submit" className="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-all min-h-[44px]">Tìm</button>
         </form>
 
         {/* Table */}
@@ -213,7 +213,63 @@ export default function ContractsPage() {
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
+              {/* Mobile: Card list */}
+              <div className="lg:hidden divide-y divide-gray-50">
+                {loading ? (
+                  <div className="py-12 text-center">
+                    <RefreshCw size={24} className="mx-auto mb-2 text-gray-300 animate-spin" />
+                    <p className="text-sm text-gray-400">Đang tải...</p>
+                  </div>
+                ) : contracts.map(c => {
+                  const remain = c.remaining_days;
+                  return (
+                    <button key={c.id} onClick={() => setSelected(c)}
+                      className="w-full px-4 py-3.5 hover:bg-indigo-50/30 transition-colors text-left">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-800 text-sm truncate">{c.contract_name || '—'}</p>
+                          <p className="font-mono text-[11px] text-indigo-700 font-semibold mt-0.5">{c.contract_code || '—'}</p>
+                        </div>
+                        {remain !== null && remain !== undefined && (
+                          <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            remain < 0 ? 'bg-red-100 text-red-700' : remain < 90 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                          }`}>{remain}d</span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {c.contract_status && (
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusBadge(c.contract_status)}`}>
+                            {c.contract_status}
+                          </span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-gray-500 mb-2">
+                        <div className="truncate"><span className="text-gray-400">KH:</span> <span className="text-gray-700 font-medium">{c.customer_name || '—'}</span></div>
+                        <div className="truncate"><span className="text-gray-400">PT:</span> <span className="text-gray-700">{c.person_in_charge || '—'}</span></div>
+                        <div className="truncate"><span className="text-gray-400">SĐT:</span> <span className="font-mono text-gray-600">{c.customer_phone || '—'}</span></div>
+                        <div className="truncate"><span className="text-gray-400">Ngày tạo:</span> <span className="text-gray-600">{c.created_date || '—'}</span></div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100">
+                        <div>
+                          <p className="text-[9px] text-gray-400 uppercase">GT HĐ</p>
+                          <p className="text-xs font-bold text-indigo-600">{c.contract_value ? fmtVND(c.contract_value) : '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] text-gray-400 uppercase">Đã TT</p>
+                          <p className="text-xs font-semibold text-emerald-600">{c.paid_amount ? fmtVND(c.paid_amount) : '0'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] text-gray-400 uppercase">Công nợ</p>
+                          <p className="text-xs font-bold text-red-600">{c.debt_amount ? fmtVND(c.debt_amount) : '0'}</p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Desktop: Table */}
+              <div className="hidden lg:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-100">
@@ -385,18 +441,18 @@ function ContractDetailModal({ contract: c, onClose }: { contract: Contract; onC
   ];
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-end bg-black/40 backdrop-blur-sm"
+    <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center sm:justify-end bg-black/40 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="h-full w-full max-w-xl bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+      <div className="h-[92vh] sm:h-full w-full sm:max-w-xl bg-white shadow-2xl flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-right duration-300 rounded-t-2xl sm:rounded-none">
         {/* Header */}
-        <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-gray-100">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white text-lg font-extrabold shadow-lg">
-              <FileText size={24} />
+        <div className="flex items-start justify-between gap-2 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-gray-100">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+            <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white text-lg font-extrabold shadow-lg flex-shrink-0">
+              <FileText size={22} />
             </div>
-            <div>
-              <h2 className="text-lg font-extrabold text-gray-900">{c.contract_name || 'Hợp đồng'}</h2>
-              <p className="text-xs text-gray-500 mt-0.5">Mã: {c.contract_code || c.getfly_contract_id}</p>
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 truncate">{c.contract_name || 'Hợp đồng'}</h2>
+              <p className="text-xs text-gray-500 mt-0.5 truncate">Mã: {c.contract_code || c.getfly_contract_id}</p>
               {c.contract_status && (
                 <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${statusBadge(c.contract_status)}`}>
                   {c.contract_status}
@@ -404,13 +460,13 @@ function ContractDetailModal({ contract: c, onClose }: { contract: Contract; onC
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 transition-colors">
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 transition-colors flex-shrink-0">
             <X size={20} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-5 sm:space-y-6">
           {sections.map(section => (
             <div key={section.title}>
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">{section.title}</p>
@@ -440,9 +496,9 @@ function ContractDetailModal({ contract: c, onClose }: { contract: Contract; onC
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex gap-3">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-100 bg-gray-50 flex gap-3 safe-bottom">
           <button onClick={onClose}
-            className="flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all">
+            className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all min-h-[44px]">
             Đóng
           </button>
         </div>

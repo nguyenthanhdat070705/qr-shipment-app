@@ -86,11 +86,11 @@ function MemberCard({ member, query, onView }: {
       {/* Top accent */}
       <div className="h-1 bg-gradient-to-r from-yellow-400 via-amber-400 to-orange-400" />
 
-      <div className="p-5">
-        <div className="flex items-start gap-4">
+      <div className="p-4 sm:p-5">
+        <div className="flex items-start gap-3 sm:gap-4">
           {/* Avatar */}
           <div className="relative flex-shrink-0">
-            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-white font-black text-xl shadow-md">
+            <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-white font-black text-lg sm:text-xl shadow-md">
               {member.full_name.charAt(0).toUpperCase()}
             </div>
             <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${ss.dot}`} />
@@ -99,19 +99,19 @@ function MemberCard({ member, query, onView }: {
           {/* Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 flex-wrap">
-              <div>
-                <h3 className="font-extrabold text-gray-900 text-base group-hover:text-yellow-700 transition-colors">
+              <div className="min-w-0">
+                <h3 className="font-extrabold text-gray-900 text-sm sm:text-base group-hover:text-yellow-700 transition-colors break-words">
                   {member.matched_field === 'full_name'
                     ? highlightText(member.full_name, query)
                     : member.full_name}
                 </h3>
-                <p className="text-xs font-mono text-gray-400 mt-0.5">
+                <p className="text-[11px] sm:text-xs font-mono text-gray-400 mt-0.5">
                   {member.matched_field === 'member_code'
                     ? highlightText(member.member_code, query)
                     : member.member_code}
                 </p>
               </div>
-              <div className="flex items-center gap-1.5 flex-shrink-0">
+              <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
                 {/* Match badge */}
                 {match && (
                   <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${match.color}`}>
@@ -119,14 +119,14 @@ function MemberCard({ member, query, onView }: {
                   </span>
                 )}
                 {/* Status */}
-                <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold border ${ss.badge}`}>
+                <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold border ${ss.badge}`}>
                   {ss.icon} {member.status_label}
                 </span>
               </div>
             </div>
 
             {/* Details grid */}
-            <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1.5 text-xs text-gray-500">
+            <div className="mt-3 grid grid-cols-2 lg:grid-cols-4 gap-x-2 sm:gap-x-4 gap-y-1.5 text-[10px] sm:text-xs text-gray-500">
               <div className="flex items-center gap-1.5">
                 <Phone size={11} className="text-gray-400 flex-shrink-0" />
                 <span className={member.matched_field === 'phone' ? 'font-bold text-blue-600' : ''}>
@@ -175,15 +175,15 @@ function MemberCard({ member, query, onView }: {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-50">
-          <span className="text-[11px] px-2.5 py-1 rounded-lg bg-yellow-50 text-yellow-700 border border-yellow-200 font-semibold">
+        <div className="flex items-center justify-between mt-3 sm:mt-4 pt-3 border-t border-gray-50 gap-2">
+          <span className="text-[10px] sm:text-[11px] px-2 sm:px-2.5 py-1 rounded-lg bg-yellow-50 text-yellow-700 border border-yellow-200 font-semibold truncate">
             {member.service_package_label || '—'}
           </span>
           <button
             onClick={(e) => { e.stopPropagation(); onView(); }}
-            className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-800 px-3 py-1.5 rounded-xl hover:bg-blue-50 transition-all"
+            className="flex-shrink-0 flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-blue-600 hover:text-blue-800 px-2.5 sm:px-3 py-1.5 rounded-xl hover:bg-blue-50 transition-all"
           >
-            <Eye size={13} /> Xem chi tiết <ArrowRight size={11} />
+            <Eye size={13} /> <span className="hidden sm:inline">Xem chi tiết</span><span className="sm:hidden">Xem</span> <ArrowRight size={11} />
           </button>
         </div>
       </div>
@@ -286,23 +286,23 @@ export default function MemberLookupPage() {
 
   return (
     <PageLayout title="Tra cứu HV" icon={<Crown size={18} className="text-yellow-500" />}>
-      <div className="max-w-3xl mx-auto space-y-5">
+      <div className="max-w-3xl mx-auto space-y-4 sm:space-y-5">
 
         {/* ── Header ── */}
         <div>
-          <h1 className="text-xl font-extrabold text-gray-900">🔍 Tra Cứu Hội Viên</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-lg sm:text-xl font-extrabold text-gray-900">🔍 Tra Cứu Hội Viên</h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">
             Tìm kiếm theo <strong>bất kỳ thông tin nào</strong> — SĐT, CCCD, mã HV, họ tên, email, địa chỉ...
           </p>
         </div>
 
         {/* ── Filter tabs ── */}
-        <div className="flex gap-1.5 bg-gray-100 rounded-xl p-1.5 overflow-x-auto">
+        <div className="flex gap-1.5 bg-gray-100 rounded-xl p-1.5 overflow-x-auto no-scrollbar">
           {FILTER_TABS.map(tab => (
             <button
               key={tab.key}
               onClick={() => { setFilter(tab.key); inputRef.current?.focus(); }}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
                 filter === tab.key
                   ? 'bg-white text-gray-800 shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
@@ -314,8 +314,8 @@ export default function MemberLookupPage() {
         </div>
 
         {/* ── Search box ── */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <div className="flex gap-3">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <div className="relative flex-1">
               <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -326,7 +326,7 @@ export default function MemberLookupPage() {
                 onKeyDown={e => e.key === 'Enter' && doSearch(query)}
                 placeholder={currentTab.hint}
                 autoFocus
-                className="w-full pl-11 pr-10 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500 transition-all bg-gray-50 focus:bg-white"
+                className="w-full pl-11 pr-10 py-2.5 sm:py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500 transition-all bg-gray-50 focus:bg-white"
               />
               {query && (
                 <button
@@ -340,7 +340,7 @@ export default function MemberLookupPage() {
             <button
               onClick={() => doSearch(query)}
               disabled={loading || !query.trim() || query.trim().length < 2}
-              className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 text-white rounded-xl font-bold text-sm shadow hover:shadow-md hover:scale-[1.02] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 sm:py-3 bg-gradient-to-r from-yellow-500 to-amber-500 text-white rounded-xl font-bold text-sm shadow hover:shadow-md hover:scale-[1.02] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
             >
               {loading
                 ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -456,18 +456,19 @@ export default function MemberLookupPage() {
 
         {/* ── Idle state ── */}
         {!loading && !results && !notFound && !error && (
-          <div className="bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 rounded-2xl border border-yellow-100 p-8">
-            <div className="text-center mb-6">
-              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <Search size={28} className="text-white" />
+          <div className="bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 rounded-2xl border border-yellow-100 p-5 sm:p-8">
+            <div className="text-center mb-4 sm:mb-6">
+              <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg">
+                <Search size={24} className="text-white sm:hidden" />
+                <Search size={28} className="text-white hidden sm:block" />
               </div>
-              <h3 className="text-base font-bold text-gray-800">Tìm kiếm thông minh</h3>
-              <p className="text-sm text-gray-500 mt-1 max-w-sm mx-auto">
+              <h3 className="text-sm sm:text-base font-bold text-gray-800">Tìm kiếm thông minh</h3>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1 max-w-sm mx-auto">
                 Hệ thống tự nhận diện loại thông tin và tìm kết quả phù hợp nhất
               </p>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
               {[
                 { icon: '📱', label: 'Số điện thoại', example: '0901 234 567', color: 'bg-blue-50 border-blue-100' },
                 { icon: '🪪', label: 'CCCD / CMND', example: '079123456789', color: 'bg-purple-50 border-purple-100' },

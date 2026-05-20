@@ -475,17 +475,17 @@ export default function LegalDocumentsPage() {
       </button>
 
       {!activeCategory ? (
-        <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm relative overflow-hidden flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 shadow-sm relative overflow-hidden flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
              <div className="relative z-10 flex-1">
-               <h2 className="text-2xl font-black text-gray-900 mb-2">Kho Văn Bản Pháp Lý</h2>
-               <p className="text-sm text-gray-500 max-w-2xl">Chọn một danh mục bên dưới để tra cứu các văn bản nội bộ, quy chế bảo mật và chính sách điều hành của công ty dành cho khối bán hàng.</p>
+               <h2 className="text-xl sm:text-2xl font-black text-gray-900 mb-2">Kho Văn Bản Pháp Lý</h2>
+               <p className="text-xs sm:text-sm text-gray-500 max-w-2xl">Chọn một danh mục bên dưới để tra cứu các văn bản nội bộ, quy chế bảo mật và chính sách điều hành của công ty dành cho khối bán hàng.</p>
              </div>
-             
-             <div className="relative z-10 flex-shrink-0">
+
+             <div className="relative z-10 flex-shrink-0 w-full sm:w-auto">
                <button
                  onClick={() => setIsAddModalOpen(true)}
-                 className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all w-full sm:w-auto justify-center"
+                 className="flex items-center gap-2 px-4 sm:px-5 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all w-full sm:w-auto justify-center min-h-[44px]"
                >
                  <Plus size={18} />
                  Thêm danh mục
@@ -497,19 +497,19 @@ export default function LegalDocumentsPage() {
                 <Scale size={180} />
              </div>
           </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
             {dynamicCategories.map(cat => (
-              <button 
+              <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className="group flex flex-col items-start text-left p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-gray-200 transition-all duration-300"
+                className="group flex flex-col items-start text-left p-4 sm:p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-gray-200 transition-all duration-300"
               >
-                <div className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${cat.color} text-white shadow-lg ${cat.shadow} mb-5 group-hover:scale-110 transition-transform duration-300`}>
+                <div className={`flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${cat.color} text-white shadow-lg ${cat.shadow} mb-3 sm:mb-5 group-hover:scale-110 transition-transform duration-300`}>
                   {cat.icon}
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{cat.title}</h3>
-                <p className="text-sm text-gray-500 mb-5 flex-1 leading-relaxed">{cat.desc}</p>
+                <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{cat.title}</h3>
+                <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-5 flex-1 leading-relaxed">{cat.desc}</p>
                 <div className="w-full flex items-center justify-between border-t border-gray-50 pt-4 mt-auto">
                   <span className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 bg-gray-50 px-2.5 py-1 rounded-lg">
                     <FolderOpen size={14} className="text-gray-400" /> {cat.count} tài liệu
@@ -525,23 +525,23 @@ export default function LegalDocumentsPage() {
       ) : activeCategory && !activeDocumentId ? (
         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
           {/* Category Banner */}
-          <div className={`p-6 sm:p-8 rounded-2xl bg-gradient-to-br ${activeCategoryData?.color} text-white shadow-xl relative overflow-hidden`}>
+          <div className={`p-4 sm:p-6 lg:p-8 rounded-2xl bg-gradient-to-br ${activeCategoryData?.color} text-white shadow-xl relative overflow-hidden`}>
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
             <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur border border-white/30 text-white shadow-inner flex-shrink-0">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur border border-white/30 text-white shadow-inner flex-shrink-0">
                   {activeCategoryData?.icon}
                 </div>
                 <div>
-                  <span className="text-white/70 text-xs font-bold uppercase tracking-wider mb-1 block">Danh mục văn bản</span>
-                  <h2 className="text-2xl sm:text-3xl font-black">{activeCategoryData?.title}</h2>
-                  <p className="text-white/80 text-sm mt-2 max-w-2xl">{activeCategoryData?.desc}</p>
+                  <span className="text-white/70 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-1 block">Danh mục văn bản</span>
+                  <h2 className="text-xl sm:text-2xl lg:text-3xl font-black">{activeCategoryData?.title}</h2>
+                  <p className="text-white/80 text-xs sm:text-sm mt-1 sm:mt-2 max-w-2xl">{activeCategoryData?.desc}</p>
                 </div>
               </div>
               
               {/* Nút Upload File */}
-              <div className="mt-4 sm:mt-0 flex-shrink-0 pb-1 sm:pb-0">
-                <label className={`cursor-pointer group relative inline-flex items-center gap-2 px-5 py-3 rounded-xl ${isUploading ? 'bg-white/30 cursor-wait' : 'bg-white/10 hover:bg-white/20'} border border-white/20 transition-all backdrop-blur-md overflow-hidden shadow-sm hover:shadow-md`}>
+              <div className="mt-2 sm:mt-0 flex-shrink-0 pb-1 sm:pb-0 w-full sm:w-auto">
+                <label className={`cursor-pointer group relative w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-3 rounded-xl ${isUploading ? 'bg-white/30 cursor-wait' : 'bg-white/10 hover:bg-white/20'} border border-white/20 transition-all backdrop-blur-md overflow-hidden shadow-sm hover:shadow-md min-h-[44px]`}>
                   <div className="absolute inset-0 bg-white/20 translate-y-[100%] group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
                   {isUploading ? (
                     <UploadCloud size={18} className="text-white relative z-10 animate-bounce" />
@@ -595,10 +595,10 @@ export default function LegalDocumentsPage() {
 
           {/* List of Documents */}
           {activeCategory === 'finance' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <button 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+              <button
                 onClick={() => setActiveDocumentId('doc-finance-1')}
-                className="group p-5 bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all text-left flex flex-col h-full"
+                className="group p-4 sm:p-5 bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all text-left flex flex-col h-full"
               >
                 <div className="flex items-start gap-4 mb-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform">
@@ -632,7 +632,7 @@ export default function LegalDocumentsPage() {
       ) : activeCategory === 'finance' && activeDocumentId === 'doc-finance-1' ? (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           {/* ── Document Header ── */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] p-6 mb-6 shadow-xl">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] p-4 sm:p-6 mb-4 sm:mb-6 shadow-xl">
         {/* Decorative */}
         <div className="absolute -top-10 -right-10 w-52 h-52 rounded-full bg-amber-400/10 blur-3xl" />
         <div className="absolute bottom-0 left-20 w-36 h-36 rounded-full bg-amber-300/5 blur-2xl" />
@@ -646,7 +646,7 @@ export default function LegalDocumentsPage() {
             <span className="text-xs text-white/70 font-semibold tracking-wide">Văn bản nội bộ — Tuyệt mật</span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-1">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight mb-1">
             {LEGAL_DOCUMENT.title}
           </h1>
           <p className="text-amber-200/80 text-sm font-semibold mb-1">
@@ -679,7 +679,7 @@ export default function LegalDocumentsPage() {
       </div>
 
       {/* ── Toolbar ── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4 sm:mb-6">
         {/* Search */}
         <div className="relative flex-1 w-full sm:max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -687,28 +687,28 @@ export default function LegalDocumentsPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm trong văn bản... (ví dụ: Điều 7, phí hội viên)"
+            placeholder="Tìm trong văn bản... (ví dụ: Điều 7)"
             className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400 transition-all shadow-sm"
           />
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
           <button
             onClick={expandAll}
-            className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm"
+            className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm whitespace-nowrap min-h-[40px]"
           >
             Mở tất cả
           </button>
           <button
             onClick={collapseAll}
-            className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm"
+            className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm whitespace-nowrap min-h-[40px]"
           >
             Thu gọn
           </button>
           <button
             onClick={() => window.print()}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#1B2A4A] text-white text-xs font-bold hover:bg-[#243656] transition-colors shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#1B2A4A] text-white text-xs font-bold hover:bg-[#243656] transition-colors shadow-sm whitespace-nowrap min-h-[40px]"
           >
             <Printer size={13} /> In
           </button>
@@ -716,7 +716,7 @@ export default function LegalDocumentsPage() {
       </div>
 
       {/* ── Quick Navigation ── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4 mb-4 sm:mb-6">
         <div className="flex items-center gap-2 mb-3">
           <ExternalLink size={14} className="text-gray-400" />
           <h3 className="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Mục lục nhanh</h3>
@@ -798,7 +798,7 @@ export default function LegalDocumentsPage() {
       </div>
 
       {/* ── Footer ── */}
-      <div className="mt-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200 p-5">
+      <div className="mt-6 sm:mt-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200 p-4 sm:p-5">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-200 flex-shrink-0">
             <Building2 size={18} className="text-gray-500" />
@@ -829,16 +829,16 @@ export default function LegalDocumentsPage() {
 
       {/* ── Modal Thêm Danh Mục Mới ── */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4">
           <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={() => !isCreatingCategory && setIsAddModalOpen(false)} />
-          <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="relative w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-3xl shadow-2xl border border-gray-100 overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-50 bg-gray-50/50">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-50 bg-gray-50/50">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
                   <FolderOpen size={18} />
                 </div>
-                <h3 className="text-lg font-black text-gray-900">Thêm Danh Mục Mới</h3>
+                <h3 className="text-base sm:text-lg font-black text-gray-900">Thêm Danh Mục Mới</h3>
               </div>
               <button disabled={isCreatingCategory} onClick={() => setIsAddModalOpen(false)} className="p-2 rounded-full hover:bg-gray-200/50 text-gray-400 hover:text-gray-600 transition-colors">
                 <X size={18} />
@@ -846,7 +846,7 @@ export default function LegalDocumentsPage() {
             </div>
 
             {/* Body */}
-            <div className="p-6 space-y-5">
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Tên danh mục <span className="text-red-500">*</span></label>
                 <input 
@@ -873,15 +873,15 @@ export default function LegalDocumentsPage() {
             </div>
 
             {/* Footer */}
-            <div className="p-6 border-t border-gray-50 flex items-center justify-end gap-3 bg-gray-50/30">
-              <button 
+            <div className="p-4 sm:p-6 border-t border-gray-50 flex flex-col-reverse sm:flex-row items-stretch sm:items-center sm:justify-end gap-2 sm:gap-3 bg-gray-50/30 safe-bottom">
+              <button
                 onClick={() => setIsAddModalOpen(false)}
                 disabled={isCreatingCategory}
-                className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100 transition-colors"
+                className="w-full sm:w-auto px-5 py-3 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100 transition-colors min-h-[44px]"
               >
                 Hủy bỏ
               </button>
-              <button 
+              <button
                 onClick={async () => {
                   if (!newCatTitle.trim() || isCreatingCategory) return;
                   
@@ -921,7 +921,7 @@ export default function LegalDocumentsPage() {
                   }
                 }}
                 disabled={!newCatTitle.trim() || isCreatingCategory}
-                className={`px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold shadow-md hover:shadow-lg transition-all ${(!newCatTitle.trim() || isCreatingCategory) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
+                className={`w-full sm:w-auto px-6 py-3 rounded-xl bg-blue-600 text-white text-sm font-bold shadow-md hover:shadow-lg transition-all min-h-[44px] ${(!newCatTitle.trim() || isCreatingCategory) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
               >
                 {isCreatingCategory ? 'Đang tạo...' : 'Lưu danh mục'}
               </button>

@@ -45,16 +45,16 @@ export default function MembershipDashboard() {
 
   return (
     <PageLayout title="Hội viên" icon={<Crown size={18} className="text-yellow-500" />}>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-extrabold text-gray-900">Hội Viên Trăm Tuổi</h1>
-            <p className="text-sm text-gray-500 mt-1">Quản lý chương trình hội viên — Phí 2,000,000đ / 10 năm</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900">Hội Viên Trăm Tuổi</h1>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">Quản lý chương trình hội viên — Phí 2,000,000đ / 10 năm</p>
           </div>
           <Link
             href="/membership/register"
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all"
+            className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all w-full sm:w-auto min-h-[44px]"
           >
             <UserPlus size={16} />
             Đăng ký HV mới
@@ -62,24 +62,24 @@ export default function MembershipDashboard() {
         </div>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
           {statCards.map((card) => (
-            <div key={card.label} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${card.iconBg} text-gray-600`}>
+            <div key={card.label} className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-5 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <div className={`flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl ${card.iconBg} text-gray-600`}>
                   {card.icon}
                 </div>
               </div>
-              <p className="text-3xl font-extrabold text-gray-900">
+              <p className="text-xl sm:text-3xl font-extrabold text-gray-900">
                 {loading ? '—' : card.value}
               </p>
-              <p className="text-xs font-semibold text-gray-500 mt-1">{card.label}</p>
+              <p className="text-[11px] sm:text-xs font-semibold text-gray-500 mt-1 truncate">{card.label}</p>
             </div>
           ))}
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <Link href="/membership/register" className="group bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md hover:border-yellow-200 transition-all">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-100 text-yellow-600 group-hover:scale-110 transition-transform">
@@ -120,9 +120,9 @@ export default function MembershipDashboard() {
 
         {/* Recent Members */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <h2 className="font-bold text-gray-800">Hội viên gần đây</h2>
-            <Link href="/membership/list" className="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100">
+            <h2 className="font-bold text-gray-800 text-sm sm:text-base">Hội viên gần đây</h2>
+            <Link href="/membership/list" className="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors whitespace-nowrap">
               Xem tất cả →
             </Link>
           </div>
@@ -136,18 +136,18 @@ export default function MembershipDashboard() {
               </div>
             ) : (
               recentMembers.map((m) => (
-                <div key={m.id} className="flex items-center gap-4 px-6 py-3.5 hover:bg-gray-50 transition-colors">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 text-white font-bold text-sm flex-shrink-0">
+                <div key={m.id} className="flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-3 sm:py-3.5 hover:bg-gray-50 transition-colors">
+                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 text-white font-bold text-sm flex-shrink-0">
                     {m.full_name.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-gray-800 truncate">{m.full_name}</p>
-                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                    <div className="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs text-gray-500 flex-wrap">
                       <span className="flex items-center gap-1"><Phone size={10} />{m.phone || m.member_code}</span>
-                      <span>{new Date(m.registered_date).toLocaleDateString('vi-VN')}</span>
+                      <span className="hidden sm:inline">{new Date(m.registered_date).toLocaleDateString('vi-VN')}</span>
                     </div>
                   </div>
-                  <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                  <span className={`px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-semibold whitespace-nowrap flex-shrink-0 ${
                     m.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
                     m.status === 'pending' ? 'bg-amber-100 text-amber-700' :
                     'bg-red-100 text-red-700'

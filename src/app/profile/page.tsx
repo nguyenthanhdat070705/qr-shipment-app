@@ -216,16 +216,16 @@ export default function ProfilePage() {
         </div>
       </header>
 
-      <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* ── Profile Card ────────────────────────────── */}
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="rounded-xl sm:rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
           {/* Profile header with avatar */}
-          <div className="bg-gradient-to-r from-[#1B2A4A] to-teal-500 px-6 py-8">
-            <div className="flex items-center gap-4">
+          <div className="bg-gradient-to-r from-[#1B2A4A] to-teal-500 px-4 sm:px-6 py-5 sm:py-8">
+            <div className="flex items-center gap-3 sm:gap-4">
               {/* Avatar with upload */}
-              <div className="relative group">
+              <div className="relative group flex-shrink-0">
                 {avatarUrl ? (
-                  <div className="h-20 w-20 rounded-2xl overflow-hidden border-2 border-white/30 shadow-lg">
+                  <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-white/30 shadow-lg">
                     <img
                       src={avatarUrl}
                       alt="Avatar"
@@ -233,7 +233,7 @@ export default function ProfilePage() {
                     />
                   </div>
                 ) : (
-                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm text-white text-3xl font-extrabold border-2 border-white/30 shadow-lg">
+                  <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-xl sm:rounded-2xl bg-white/20 backdrop-blur-sm text-white text-2xl sm:text-3xl font-extrabold border-2 border-white/30 shadow-lg">
                     {initials}
                   </div>
                 )}
@@ -242,7 +242,7 @@ export default function ProfilePage() {
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingAvatar}
-                  className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  className="absolute inset-0 flex items-center justify-center rounded-xl sm:rounded-2xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                 >
                   {uploadingAvatar ? (
                     <Loader2 size={20} className="text-white animate-spin" />
@@ -258,17 +258,17 @@ export default function ProfilePage() {
                   className="hidden"
                 />
                 {/* Upload hint badge */}
-                <div className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-md border border-gray-100">
-                  <Camera size={13} className="text-gray-500" />
+                <div className="absolute -bottom-1 -right-1 flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-white shadow-md border border-gray-100">
+                  <Camera size={11} className="text-gray-500 sm:w-[13px] sm:h-[13px]" />
                 </div>
               </div>
 
-              <div>
-                <h1 className="text-xl font-extrabold text-white">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-xl font-extrabold text-white truncate">
                   {profile.ho_ten || profile.email.split('@')[0]}
                 </h1>
-                <p className="text-sm text-white/70">{profile.email}</p>
-                <div className="flex items-center gap-2 mt-1">
+                <p className="text-xs sm:text-sm text-white/70 truncate">{profile.email}</p>
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-[11px] font-semibold text-white">
                     <Package size={11} />
                     {totalExports} đơn đã xuất
@@ -279,9 +279,9 @@ export default function ProfilePage() {
           </div>
 
           {/* Profile fields */}
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-base font-bold text-gray-900">Thông tin cá nhân</h2>
+          <div className="p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-4 sm:mb-5 gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-gray-900">Thông tin cá nhân</h2>
               {!editing ? (
                 <button
                   onClick={() => setEditing(true)}
@@ -457,19 +457,19 @@ export default function ProfilePage() {
         </div>
 
         {/* ── Export History ───────────────────────────── */}
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-          <div className="px-6 py-5 border-b border-gray-100">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50">
-                  <Truck size={20} className="text-emerald-500" />
+        <div className="rounded-xl sm:rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-emerald-50 flex-shrink-0">
+                  <Truck size={18} className="text-emerald-500 sm:w-5 sm:h-5" />
                 </div>
-                <div>
-                  <h2 className="text-base font-bold text-gray-900">Lịch sử xuất hàng</h2>
-                  <p className="text-xs text-gray-400">Tổng cộng {totalExports} đơn hàng đã xuất</p>
+                <div className="min-w-0">
+                  <h2 className="text-sm sm:text-base font-bold text-gray-900 truncate">Lịch sử xuất hàng</h2>
+                  <p className="text-[11px] sm:text-xs text-gray-400">Tổng cộng {totalExports} đơn hàng đã xuất</p>
                 </div>
               </div>
-              <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-sm font-bold">
+              <span className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl bg-emerald-50 text-emerald-700 text-xs sm:text-sm font-bold flex-shrink-0">
                 <Package size={14} />
                 {totalExports}
               </span>
@@ -484,7 +484,7 @@ export default function ProfilePage() {
           ) : (
             <div className="divide-y divide-gray-50">
               {exports.map((exp, i) => (
-                <div key={exp.stt || i} className="px-6 py-4 hover:bg-gray-50 transition-colors">
+                <div key={exp.stt || i} className="px-4 sm:px-6 py-3 sm:py-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
                       <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#eef1f7] text-[#2d4a7a] flex-shrink-0 mt-0.5">

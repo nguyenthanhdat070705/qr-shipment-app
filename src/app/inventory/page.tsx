@@ -199,10 +199,10 @@ export async function InventoryContent() {
 
   return (
     <>
-      <div className="mb-6 flex items-center justify-between px-2 sm:px-0">
+      <div className="mb-4 sm:mb-6 flex items-center justify-between px-2 sm:px-0">
         <div>
-          <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Kho hàng</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Xem tồn kho, loại hàng, tình trạng sản phẩm.</p>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white">Kho hàng</h1>
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">Xem tồn kho, loại hàng, tình trạng sản phẩm.</p>
         </div>
       </div>
 

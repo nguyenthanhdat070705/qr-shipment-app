@@ -228,10 +228,10 @@ export default async function InventoryDetailPage({ params }: PageProps) {
   return (
     <PageLayout title="Chi tiết sản phẩm" icon={<Package size={15} className="text-sky-500" />}>
       {/* Back button */}
-      <div className="mb-5">
+      <div className="mb-4 sm:mb-5">
         <Link
           href="/inventory"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors min-h-[40px]"
         >
           <ArrowLeft size={16} />
           Quay lại kho hàng
@@ -239,19 +239,19 @@ export default async function InventoryDetailPage({ params }: PageProps) {
       </div>
 
       {/* ── Hero Card ──────────────────────────────────── */}
-      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden mb-6">
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden mb-4 sm:mb-6">
         {/* Header gradient */}
-        <div className="bg-gradient-to-r from-[#1B2A4A] to-[#2d5a8a] px-6 py-5">
-          <div className="flex items-start justify-between gap-4">
+        <div className="bg-gradient-to-r from-[#1B2A4A] to-[#2d5a8a] px-4 sm:px-6 py-4 sm:py-5">
+          <div className="flex items-start justify-between gap-3 sm:gap-4">
             <div className="min-w-0">
               <p className="text-blue-200 text-[10px] font-bold uppercase tracking-widest mb-1">
                 Sản phẩm
               </p>
-              <h1 className="text-white text-xl font-bold leading-tight">
+              <h1 className="text-white text-lg sm:text-xl font-bold leading-tight break-words">
                 {hom.ten_hom}
               </h1>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="font-mono text-xs font-bold text-white/90 bg-white/20 px-2.5 py-1 rounded-lg">
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <span className="font-mono text-xs font-bold text-white/90 bg-white/20 px-2.5 py-1 rounded-lg break-all">
                   {hom.ma_hom}
                 </span>
                 <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full
@@ -269,19 +269,19 @@ export default async function InventoryDetailPage({ params }: PageProps) {
         </div>
 
         {/* Product Image */}
-        <div className="px-6 py-5 border-b border-gray-100">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100">
           <div className="overflow-hidden rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-center max-w-md mx-auto">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imageUrl}
               alt={hom.ten_hom}
-              className="w-full max-h-64 object-contain p-4"
+              className="w-full max-h-48 sm:max-h-64 object-contain p-4"
             />
           </div>
         </div>
 
         {/* Quick stats row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-gray-100">
+        <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-gray-100">
           <QuickStat
             icon={<Box size={16} />}
             label="Tổng tồn kho"
@@ -314,7 +314,7 @@ export default async function InventoryDetailPage({ params }: PageProps) {
       </div>
 
       {/* ── Detail Sections Grid ───────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
 
         {/* ── Thông tin kho ─────────────────────────── */}
         <SectionCard
@@ -373,7 +373,7 @@ export default async function InventoryDetailPage({ params }: PageProps) {
         </SectionCard>
 
         {/* ── Thông tin giá & Lợi nhuận ────────────── */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <SectionCard
             icon={<DollarSign size={16} />}
             title="Thông tin giá"
@@ -442,7 +442,7 @@ export default async function InventoryDetailPage({ params }: PageProps) {
       </div>
 
       {/* ── Transaction History grouped by Warehouse ── */}
-      <div className="mt-6">
+      <div className="mt-4 sm:mt-6">
         <SectionCard
           icon={<History size={16} />}
           title="Lịch sử nhập / xuất"
@@ -538,11 +538,11 @@ function QuickStat({
   icon: React.ReactNode; label: string; value: string; color: string; bg: string;
 }) {
   return (
-    <div className="px-5 py-4 text-center">
+    <div className="px-3 sm:px-5 py-3 sm:py-4 text-center">
       <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${bg} mx-auto mb-2`}>
         <span className={color}>{icon}</span>
       </div>
-      <p className="text-lg font-extrabold text-gray-900">{value}</p>
+      <p className="text-base sm:text-lg font-extrabold text-gray-900 break-words">{value}</p>
       <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mt-0.5">{label}</p>
     </div>
   );
@@ -555,13 +555,13 @@ function SectionCard({
 }) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-      <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2.5">
-        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${bg}`}>
+      <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 flex items-center gap-2.5">
+        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${bg} flex-shrink-0`}>
           <span className={color}>{icon}</span>
         </div>
         <h2 className="text-sm font-bold text-gray-800">{title}</h2>
       </div>
-      <div className="px-5 py-4">
+      <div className="px-4 sm:px-5 py-4">
         {children}
       </div>
     </div>

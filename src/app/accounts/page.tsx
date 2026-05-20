@@ -247,10 +247,10 @@ function ChangePasswordModal({
   const IconComp = account.icon;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 backdrop-blur-sm">
+      <div className="w-full max-w-md bg-white rounded-xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[95vh] overflow-y-auto">
         {/* Modal header */}
-        <div className={`bg-gradient-to-r ${account.gradientFrom} ${account.gradientTo} p-5`}>
+        <div className={`bg-gradient-to-r ${account.gradientFrom} ${account.gradientTo} p-4 sm:p-5`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
@@ -553,19 +553,19 @@ export default function AccountsPage() {
 
   return (
     <PageLayout title="Quản lý tài khoản" icon={<Users size={16} className="text-blue-500" />}>
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
 
         {/* ── Header ── */}
-        <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
           <div>
-            <h1 className="text-xl font-extrabold text-gray-900">Quản lý tài khoản hệ thống</h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <h1 className="text-lg sm:text-xl font-extrabold text-gray-900">Quản lý tài khoản hệ thống</h1>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">
               Xem thông tin và quản lý mật khẩu của {visibleAccounts.length} tài khoản trong hệ thống
             </p>
           </div>
           <button
             onClick={handleResetAllPasswords}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-orange-200 bg-orange-50 text-orange-700 text-sm font-semibold hover:bg-orange-100 transition-colors"
+            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-orange-200 bg-orange-50 text-orange-700 text-xs sm:text-sm font-semibold hover:bg-orange-100 transition-colors w-full sm:w-auto"
           >
             <RefreshCw size={14} />
             Reset mật khẩu mặc định
@@ -580,24 +580,24 @@ export default function AccountsPage() {
         )}
 
         {/* ── Stats row ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
           {stats.map((s, i) => (
-            <div key={i} className={`${s.bg} rounded-2xl p-4 border border-white`}>
-              <p className={`text-2xl font-extrabold ${s.color}`}>{s.value}</p>
-              <p className="text-xs text-gray-500 mt-0.5 font-medium">{s.label}</p>
+            <div key={i} className={`${s.bg} rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-white`}>
+              <p className={`text-xl sm:text-2xl font-extrabold ${s.color}`}>{s.value}</p>
+              <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5 font-medium">{s.label}</p>
             </div>
           ))}
         </div>
 
         {/* ── Default credentials info ── */}
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+        <div className="rounded-xl sm:rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5">
           <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 flex-shrink-0">
-              <Shield size={18} className="text-amber-600" />
+            <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-amber-100 flex-shrink-0">
+              <Shield size={16} className="text-amber-600 sm:w-[18px] sm:h-[18px]" />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <h3 className="text-sm font-bold text-amber-800 mb-2">Thông tin đăng nhập mặc định</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1.5 text-xs font-mono">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 sm:gap-x-8 gap-y-1.5 text-[11px] sm:text-xs font-mono break-words">
                 {/* VIP credentials — only visible to VIP admin */}
                 {isVIP && (
                   <div className="flex items-center gap-2 text-amber-700">
@@ -665,7 +665,7 @@ export default function AccountsPage() {
         </div>
 
         {/* ── Account grid ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-5">
           {visibleAccounts.map((account) => (
             <AccountCard
               key={account.id}

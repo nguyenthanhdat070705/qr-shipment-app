@@ -312,24 +312,24 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
     : [];
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200/60 shadow-xl shadow-slate-200/40 overflow-hidden">
+    <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/60 shadow-xl shadow-slate-200/40 overflow-hidden">
       {/* ═══ Toolbar ═══ */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white">
-        <div className="flex items-center gap-4">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-100 border border-orange-200/50 shadow-inner">
-            <Calendar size={22} className="text-orange-600" />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-3 sm:px-6 py-3 sm:py-4 border-b border-slate-100 bg-white gap-3">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+          <div className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-2xl bg-orange-100 border border-orange-200/50 shadow-inner flex-shrink-0">
+            <Calendar size={18} className="text-orange-600 sm:w-[22px] sm:h-[22px]" />
           </div>
-          <div>
-            <h3 className="text-base font-extrabold text-slate-800 tracking-tight">
+          <div className="min-w-0">
+            <h3 className="text-sm sm:text-base font-extrabold text-slate-800 tracking-tight truncate">
               {title || 'Biểu đồ Gantt'}
             </h3>
-            <p className="text-[12px] font-medium text-slate-400 mt-0.5">
+            <p className="text-[11px] sm:text-[12px] font-medium text-slate-400 mt-0.5">
               {filteredTasks.length} nhiệm vụ hiển thị trong tháng
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Thanh tìm kiếm */}
           <div className="relative group mr-2 hidden sm:block">
             <input
@@ -344,7 +344,7 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
 
           {/* Month filter */}
           {availableMonths.length > 0 && (
-            <div className="relative">
+            <div className="relative flex-1 sm:flex-initial min-w-0">
               <select
                 value={filterMonthStr}
                 onChange={(e) => {
@@ -355,13 +355,13 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
                   const nextEnd = new Date(year, month + 1, 0);
                   setMarkerDate(nextStart <= today && today <= nextEnd ? today : nextStart);
                 }}
-                className="appearance-none pl-11 pr-5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-extrabold text-slate-700 cursor-pointer hover:border-slate-300 hover:bg-slate-50 transition-all focus:outline-none focus:ring-2 focus:ring-orange-200 shadow-sm"
+                className="appearance-none w-full pl-10 sm:pl-11 pr-4 sm:pr-5 py-2 sm:py-2.5 rounded-xl border border-slate-200 bg-white text-[11px] sm:text-xs font-extrabold text-slate-700 cursor-pointer hover:border-slate-300 hover:bg-slate-50 transition-all focus:outline-none focus:ring-2 focus:ring-orange-200 shadow-sm"
               >
                 {availableMonths.map(m => (
                   <option key={m.value} value={m.value}>{m.label}</option>
                 ))}
               </select>
-              <Calendar size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-orange-500 pointer-events-none" />
+              <Calendar size={14} className="absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 text-orange-500 pointer-events-none sm:w-4 sm:h-4" />
             </div>
           )}
 
@@ -402,9 +402,9 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
           {/* Go to today */}
           <button
             onClick={scrollToToday}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-all shadow-md active:scale-95"
+            className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-slate-900 text-white text-[11px] sm:text-xs font-bold hover:bg-slate-800 transition-all shadow-md active:scale-95 flex-shrink-0"
           >
-            <Maximize2 size={14} />
+            <Maximize2 size={12} className="sm:w-3.5 sm:h-3.5" />
             Hôm nay
           </button>
         </div>
@@ -438,7 +438,7 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
       )}
 
       {/* ═══ Chart Area ═══ */}
-      <div className="flex" style={{ height: Math.max(400, filteredTasks.length * ROW_HEIGHT + 120) }}>
+      <div className="flex overflow-x-auto sm:overflow-x-visible" style={{ height: Math.max(400, filteredTasks.length * ROW_HEIGHT + 120) }}>
         {/* ── Left: Task Labels ── */}
         <div
           className="flex-shrink-0 border-r border-slate-200 bg-white z-20 shadow-[4px_0_24px_rgba(0,0,0,0.02)]"
@@ -760,29 +760,29 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
       {/* ═══ Detail Modal ═══ */}
       {selectedTask && (
         <div
-          className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-950/35 px-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-950/35 px-3 sm:px-4 backdrop-blur-sm"
           onClick={() => setSelectedTask(null)}
         >
           <div
-            className="w-full max-w-3xl max-h-[86vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-slate-200"
+            className="w-full max-w-3xl max-h-[92vh] sm:max-h-[86vh] overflow-hidden rounded-xl sm:rounded-2xl bg-white shadow-2xl border border-slate-200"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
+            <div className="flex items-start justify-between gap-3 sm:gap-4 border-b border-slate-100 px-4 sm:px-6 py-4 sm:py-5">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <span
                     className="h-3 w-3 rounded-[4px] flex-shrink-0"
                     style={{ backgroundColor: selectedTask.color }}
                   />
-                  <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400">
+                  <p className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest text-slate-400">
                     Chi tiết đám
                   </p>
                 </div>
-                <h4 className="mt-2 text-xl font-black text-slate-900 leading-tight truncate">
+                <h4 className="mt-2 text-base sm:text-xl font-black text-slate-900 leading-tight truncate">
                   {selectedTask.name}
                 </h4>
                 {selectedTask.subLabel && (
-                  <p className="mt-1 text-sm font-semibold text-slate-500 truncate">
+                  <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-500 truncate">
                     {selectedTask.subLabel}
                   </p>
                 )}
@@ -790,15 +790,15 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
               <button
                 type="button"
                 onClick={() => setSelectedTask(null)}
-                className="h-10 w-10 rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors flex items-center justify-center"
+                className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors flex items-center justify-center flex-shrink-0"
                 aria-label="Đóng chi tiết"
               >
-                <X size={18} />
+                <X size={16} className="sm:w-[18px] sm:h-[18px]" />
               </button>
             </div>
 
-            <div className="max-h-[64vh] overflow-y-auto px-6 py-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="max-h-[70vh] sm:max-h-[64vh] overflow-y-auto px-4 sm:px-6 py-4 sm:py-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
                 {detailEntries.map(([label, value]) => (
                   <div
                     key={label}
@@ -829,13 +829,13 @@ export default function GanttChart({ tasks, title, categories }: GanttChartProps
       )}
 
       {/* ═══ Footer ═══ */}
-      <div className="flex items-center justify-between px-5 py-2.5 border-t border-gray-100 bg-gray-50/60">
-        <div className="flex items-center gap-3 text-[10px] text-gray-400">
+      <div className="flex items-center justify-between px-3 sm:px-5 py-2 sm:py-2.5 border-t border-gray-100 bg-gray-50/60 gap-2 flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-3 text-[10px] text-gray-400 flex-wrap">
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-orange-500" />
-            Ngày đánh dấu: {markerDate.toLocaleDateString('vi-VN')}
+            <span className="hidden sm:inline">Ngày đánh dấu: </span>{markerDate.toLocaleDateString('vi-VN')}
           </span>
-          <span>·</span>
+          <span className="hidden sm:inline">·</span>
           <span>{filteredTasks.length} công việc</span>
         </div>
         <div className="flex items-center gap-1 text-[10px] text-gray-400">

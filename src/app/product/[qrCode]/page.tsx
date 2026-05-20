@@ -227,27 +227,28 @@ export default async function ProductPage({ params }: ProductPageProps) {
   return (
     <main className="min-h-screen bg-gradient-to-br from-[#faf7f2] via-white to-slate-50">
       {/* ── Thanh tiêu đề cố định ─────────────────── */}
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-md safe-top">
+        <div className="mx-auto flex max-w-lg items-center justify-between gap-2 px-3 sm:px-4 py-3">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors flex-shrink-0"
           >
             <ArrowLeft size={16} />
-            Quay lại
+            <span className="hidden xs:inline sm:inline">Quay lại</span>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Image
               src="/blackstones-logo.webp"
               alt="Blackstones"
               width={100}
               height={22}
+              className="hidden sm:block"
               style={{ height: 'auto', filter: 'invert(1) brightness(0.2)' }}
             />
-            <div className="w-px h-5 bg-gray-200" />
-            <div className="flex items-center gap-1.5">
-              <QrCode size={14} className="text-[#2d4a7a]" />
-              <span className="text-sm font-mono text-gray-600 max-w-[140px] truncate">
+            <div className="hidden sm:block w-px h-5 bg-gray-200" />
+            <div className="flex items-center gap-1.5 min-w-0">
+              <QrCode size={14} className="text-[#2d4a7a] flex-shrink-0" />
+              <span className="text-xs sm:text-sm font-mono text-gray-600 max-w-[120px] sm:max-w-[140px] truncate">
                 {productCode}
               </span>
             </div>
@@ -256,10 +257,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
       </header>
 
       {/* ── Nội dung chính ────────────────────────── */}
-      <div className="mx-auto max-w-lg px-4 py-6 space-y-5">
+      <div className="mx-auto max-w-lg px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-5">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Thông tin sản phẩm</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-lg sm:text-xl font-bold text-gray-900">Thông tin sản phẩm</h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
             Kiểm tra thông tin sản phẩm bên dưới và xác nhận xuất kho khi sẵn sàng.
           </p>
         </div>

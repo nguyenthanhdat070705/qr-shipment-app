@@ -288,20 +288,20 @@ export default function MemberImportModal({ isOpen, onClose, onImportDone }: Mem
   const mappedRows = step === 'preview' ? getMappedRows() : [];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={handleClose}>
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={handleClose}>
       <div
-        className="w-full max-w-3xl mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+        className="w-full sm:max-w-3xl sm:mx-4 bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[95vh] sm:max-h-[90vh] flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-amber-500 to-yellow-600 text-white">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
+        <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 bg-gradient-to-r from-amber-500 to-yellow-600 text-white">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm flex-shrink-0">
               <FileSpreadsheet size={20} />
             </div>
-            <div>
-              <h2 className="font-extrabold text-lg">Import Hội Viên từ Excel</h2>
-              <p className="text-white/80 text-xs">
+            <div className="min-w-0">
+              <h2 className="font-extrabold text-base sm:text-lg truncate">Import Hội Viên từ Excel</h2>
+              <p className="text-white/80 text-[11px] sm:text-xs line-clamp-1">
                 {step === 'upload' && 'Chọn file Excel hoặc CSV để import danh sách hội viên'}
                 {step === 'mapping' && `Ghép cột Excel → Database (${fileName})`}
                 {step === 'preview' && `Xem trước dữ liệu (${mappedRows.length} hội viên)`}
@@ -316,7 +316,7 @@ export default function MemberImportModal({ isOpen, onClose, onImportDone }: Mem
         </div>
 
         {/* Steps */}
-        <div className="flex items-center justify-center gap-1 py-3 px-6 border-b border-gray-100 bg-gray-50">
+        <div className="flex items-center justify-center gap-1 py-2.5 sm:py-3 px-3 sm:px-6 border-b border-gray-100 bg-gray-50 overflow-x-auto no-scrollbar">
           {[
             { id: 'upload', label: 'Tải file' },
             { id: 'mapping', label: 'Ghép cột' },
@@ -350,7 +350,7 @@ export default function MemberImportModal({ isOpen, onClose, onImportDone }: Mem
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           {error && (
             <div className="flex items-center gap-2 p-3 mb-4 rounded-xl bg-red-50 border border-red-100 text-red-700 text-xs font-semibold">
               <AlertCircle size={14} /> {error}
@@ -422,8 +422,8 @@ export default function MemberImportModal({ isOpen, onClose, onImportDone }: Mem
               </div>
 
               <div className="border border-gray-100 rounded-xl overflow-hidden">
-                {/* Header row */}
-                <div className="grid grid-cols-[1fr_32px_1fr_1fr] gap-2 px-4 py-2 bg-gray-50 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                {/* Header row — desktop only */}
+                <div className="hidden sm:grid grid-cols-[1fr_32px_1fr_1fr] gap-2 px-4 py-2 bg-gray-50 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                   <div>Cột Excel</div>
                   <div></div>
                   <div>Cột Database</div>
@@ -431,23 +431,26 @@ export default function MemberImportModal({ isOpen, onClose, onImportDone }: Mem
                 </div>
 
                 {/* Column rows */}
-                <div className="divide-y divide-gray-50 max-h-[280px] overflow-y-auto">
+                <div className="divide-y divide-gray-50 max-h-[55vh] sm:max-h-[280px] overflow-y-auto">
                   {excelHeaders.map(header => {
                     const mapped = columnMapping[header] || '';
                     const sample = excelData[0]?.[header];
                     return (
-                      <div key={header} className={`grid grid-cols-[1fr_32px_1fr_1fr] gap-2 items-center px-4 py-2.5 ${mapped ? 'bg-emerald-50/30' : ''}`}>
-                        <div className="text-xs font-semibold text-gray-800 truncate" title={header}>
-                          {header}
+                      <div key={header} className={`flex flex-col gap-2 sm:grid sm:grid-cols-[1fr_32px_1fr_1fr] sm:items-center px-3 sm:px-4 py-3 sm:py-2.5 ${mapped ? 'bg-emerald-50/30' : ''}`}>
+                        <div className="flex items-center gap-2 sm:block">
+                          <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400 sm:hidden">Excel:</span>
+                          <div className="text-xs font-semibold text-gray-800 truncate flex-1" title={header}>
+                            {header}
+                          </div>
                         </div>
-                        <div className="flex justify-center">
+                        <div className="hidden sm:flex justify-center">
                           <ArrowRight size={12} className={mapped ? 'text-emerald-500' : 'text-gray-200'} />
                         </div>
                         <div className="relative">
                           <select
                             value={mapped}
                             onChange={e => handleMappingChange(header, e.target.value)}
-                            className={`w-full text-xs px-2.5 py-1.5 rounded-lg border appearance-none pr-7 ${
+                            className={`w-full text-xs px-2.5 py-2 sm:py-1.5 rounded-lg border appearance-none pr-7 ${
                               mapped
                                 ? 'border-emerald-300 bg-emerald-50 text-emerald-800 font-semibold'
                                 : 'border-gray-200 bg-white text-gray-500'
@@ -465,8 +468,11 @@ export default function MemberImportModal({ isOpen, onClose, onImportDone }: Mem
                           </select>
                           <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                         </div>
-                        <div className="text-[11px] text-gray-400 truncate" title={String(sample || '')}>
-                          {String(sample || '—').slice(0, 30)}
+                        <div className="flex items-center gap-2 sm:block">
+                          <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400 sm:hidden">Mẫu:</span>
+                          <div className="text-[11px] text-gray-400 truncate flex-1" title={String(sample || '')}>
+                            {String(sample || '—').slice(0, 30)}
+                          </div>
                         </div>
                       </div>
                     );
@@ -570,7 +576,7 @@ export default function MemberImportModal({ isOpen, onClose, onImportDone }: Mem
               </div>
               <h3 className="font-extrabold text-gray-800 text-lg">Import hoàn tất!</h3>
 
-              <div className="grid grid-cols-4 gap-4 w-full max-w-md">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 w-full max-w-md">
                 {[
                   { label: 'Tổng dòng', value: importResult.total, color: 'text-gray-700' },
                   { label: 'Thêm mới', value: importResult.inserted, color: 'text-emerald-600' },

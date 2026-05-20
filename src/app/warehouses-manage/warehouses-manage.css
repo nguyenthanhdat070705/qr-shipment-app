@@ -162,6 +162,89 @@
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
+  .wh-container { padding: 12px; }
   .wh-form-grid { grid-template-columns: 1fr; }
-  .wh-header { flex-direction: column; align-items: flex-start; }
+  .wh-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .wh-btn-create { width: 100%; justify-content: center; }
+  .wh-title { font-size: 1.25rem; }
+
+  /* Modal bottom-sheet on mobile */
+  .wh-overlay {
+    padding: 8px;
+    align-items: flex-end;
+  }
+  .wh-form-card,
+  .wh-delete-modal {
+    max-width: 100%;
+    max-height: 95vh;
+    border-radius: 18px 18px 0 0;
+  }
+  .wh-form-header,
+  .wh-delete-header {
+    padding: 14px 16px;
+  }
+  .wh-form-header h2,
+  .wh-delete-header h3 {
+    font-size: 1rem;
+  }
+  .wh-form,
+  .wh-delete-body {
+    padding: 16px;
+  }
+  .wh-form-actions,
+  .wh-delete-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+  .wh-form-actions > *,
+  .wh-delete-actions > * {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Table → card layout on mobile */
+  .wh-table-wrap {
+    border: none;
+    background: transparent;
+    overflow: visible;
+  }
+  .wh-table {
+    border-collapse: separate;
+    border-spacing: 0 8px;
+  }
+  .wh-table thead { display: none; }
+  .wh-table,
+  .wh-table tbody,
+  .wh-table tr {
+    display: block;
+    width: 100%;
+  }
+  .wh-table tr {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .wh-table td {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: none;
+  }
+  .wh-table td[data-label]::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+  }
+  .wh-td-actions {
+    justify-content: flex-end;
+  }
+  .wh-td-center {
+    justify-content: center;
+  }
 }

@@ -25,15 +25,15 @@ function StatCard({
   trend?: { value: number; label: string };
 }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-white border border-gray-100 p-5 shadow-sm hover:shadow-lg transition-all duration-300 group">
+    <div className="relative overflow-hidden rounded-2xl bg-white border border-gray-100 p-3 sm:p-5 shadow-sm hover:shadow-lg transition-all duration-300 group">
       {/* Gradient accent */}
       <div className={`absolute top-0 right-0 w-32 h-32 rounded-full opacity-5 -translate-y-8 translate-x-8 ${gradient}`} />
 
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{label}</p>
-          <p className="text-3xl font-extrabold text-gray-900 leading-none">{value}</p>
-          {sub && <p className="text-xs text-gray-400 mt-1.5">{sub}</p>}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 sm:mb-2 truncate">{label}</p>
+          <p className="text-xl sm:text-3xl font-extrabold text-gray-900 leading-none">{value}</p>
+          {sub && <p className="text-[10px] sm:text-xs text-gray-400 mt-1 sm:mt-1.5 line-clamp-2">{sub}</p>}
           {trend && (
             <div className={`inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full text-[11px] font-semibold
               ${trend.value >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
@@ -42,7 +42,7 @@ function StatCard({
             </div>
           )}
         </div>
-        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${gradient} text-white shadow-lg flex-shrink-0`}>
+        <div className={`flex h-9 w-9 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl ${gradient} text-white shadow-lg flex-shrink-0`}>
           {icon}
         </div>
       </div>
@@ -160,35 +160,35 @@ export default function ProcurementDashboard() {
       icon={<ShoppingCart size={16} className="text-violet-500" />}
     >
       {/* ── Welcome Banner ────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1B2A4A] via-[#2d4a7a] to-[#3b5fa8] p-6 mb-6 shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1B2A4A] via-[#2d4a7a] to-[#3b5fa8] p-4 sm:p-6 mb-4 sm:mb-6 shadow-xl">
         {/* Decorative orbs */}
         <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-white/5 blur-2xl" />
         <div className="absolute bottom-0 left-20 w-24 h-24 rounded-full bg-violet-400/10 blur-xl" />
 
-        <div className="relative flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
               <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs text-white/60 font-medium">Bộ phận Thu mua · Đang hoạt động</span>
+              <span className="text-[11px] sm:text-xs text-white/60 font-medium">Bộ phận Thu mua · Đang hoạt động</span>
             </div>
-            <h1 className="text-2xl font-extrabold text-white mb-1">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-white mb-1">
               Chào, {userName} 👋
             </h1>
-            <p className="text-white/60 text-sm">
+            <p className="text-white/60 text-xs sm:text-sm">
               Hôm nay {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}
             </p>
           </div>
-          <div className="hidden sm:flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={loadData}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white/80 text-xs font-semibold hover:bg-white/20 transition-colors"
+              className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white/80 text-xs font-semibold hover:bg-white/20 transition-colors min-h-[40px]"
             >
               <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-              Làm mới
+              <span className="hidden sm:inline">Làm mới</span>
             </button>
             <button
               onClick={() => router.push('/purchase-orders/create')}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white text-[#1B2A4A] text-sm font-extrabold hover:bg-white/90 shadow-lg transition-all"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-xl bg-white text-[#1B2A4A] text-sm font-extrabold hover:bg-white/90 shadow-lg transition-all min-h-[40px]"
             >
               <Plus size={15} />
               Tạo đơn mới
@@ -198,9 +198,9 @@ export default function ProcurementDashboard() {
 
         {/* Alert if pending */}
         {(confirmedPO > 0 || needApproval > 0) && (
-          <div className="mt-4 flex items-center gap-2 bg-amber-400/20 border border-amber-400/30 rounded-xl px-4 py-2.5">
-            <AlertCircle size={15} className="text-amber-300 flex-shrink-0" />
-            <p className="text-xs text-amber-200 font-medium">
+          <div className="mt-4 flex items-start gap-2 bg-amber-400/20 border border-amber-400/30 rounded-xl px-3 sm:px-4 py-2.5">
+            <AlertCircle size={15} className="text-amber-300 flex-shrink-0 mt-0.5" />
+            <p className="text-[11px] sm:text-xs text-amber-200 font-medium">
               Có <strong className="text-amber-100">{confirmedPO} đơn hàng</strong> đã xác nhận, chờ nhận hàng
               {needApproval > 0 && <> và <strong className="text-amber-100">{needApproval} phiếu nhập</strong> cần duyệt</>}.
             </p>
@@ -209,7 +209,7 @@ export default function ProcurementDashboard() {
       </div>
 
       {/* ── KPI Stats ─────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
         <StatCard
           label="Tổng đơn mua"
           value={totalPO}
@@ -241,7 +241,7 @@ export default function ProcurementDashboard() {
       </div>
 
       {/* ── Main grid ─────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
 
         {/* ── Left: Recent POs ── */}
         <div className="lg:col-span-2 space-y-4">
@@ -277,57 +277,62 @@ export default function ProcurementDashboard() {
             </div>
           ) : (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-50 bg-gray-50/50">
-                    <th className="text-left px-5 py-3 text-xs text-gray-400 font-semibold uppercase tracking-wide">Mã đơn</th>
-                    <th className="text-left px-4 py-3 text-xs text-gray-400 font-semibold uppercase tracking-wide hidden md:table-cell">Nhà CC</th>
-                    <th className="text-left px-4 py-3 text-xs text-gray-400 font-semibold uppercase tracking-wide">Trạng thái</th>
-                    <th className="text-right px-5 py-3 text-xs text-gray-400 font-semibold uppercase tracking-wide hidden sm:table-cell">Giá trị</th>
-                    <th className="px-4 py-3" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {recentPOs.map((po) => (
-                    <tr
-                      key={po.id}
-                      className="hover:bg-gray-50/50 transition-colors cursor-pointer group"
-                      onClick={() => router.push(`/purchase-orders/${po.id}`)}
-                    >
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0">
-                            <FileText size={12} className="text-violet-600" />
-                          </div>
-                          <span className="font-mono font-bold text-violet-700 text-xs">{po.po_code}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3.5 hidden md:table-cell">
-                        <p className="text-xs font-semibold text-gray-700 truncate max-w-[140px]">{po.supplier?.name || '—'}</p>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <StatusPill status={po.status} />
-                      </td>
-                      <td className="px-5 py-3.5 text-right hidden sm:table-cell">
-                        <span className="text-sm font-bold text-gray-900">
-                          {(() => {
-                            const amt = Number(po.total_amount || 0);
-                            if (amt === 0) return '0₫';
-                            if (amt >= 1_000_000_000) return `${(amt / 1_000_000_000).toFixed(2)} Tỷ`;
-                            if (amt >= 1_000_000) return `${(amt / 1_000_000).toFixed(1)}M₫`;
-                            return amt.toLocaleString('vi-VN') + '₫';
-                          })()}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Eye size={14} className="text-gray-400" />
-                        </div>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-50 bg-gray-50/50">
+                      <th className="text-left px-3 sm:px-5 py-3 text-xs text-gray-400 font-semibold uppercase tracking-wide">Mã đơn</th>
+                      <th className="text-left px-4 py-3 text-xs text-gray-400 font-semibold uppercase tracking-wide hidden md:table-cell">Nhà CC</th>
+                      <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-semibold uppercase tracking-wide">Trạng thái</th>
+                      <th className="text-right px-3 sm:px-5 py-3 text-xs text-gray-400 font-semibold uppercase tracking-wide hidden sm:table-cell">Giá trị</th>
+                      <th className="px-4 py-3 hidden sm:table-cell" />
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {recentPOs.map((po) => (
+                      <tr
+                        key={po.id}
+                        className="hover:bg-gray-50/50 transition-colors cursor-pointer group"
+                        onClick={() => router.push(`/purchase-orders/${po.id}`)}
+                      >
+                        <td className="px-3 sm:px-5 py-3.5">
+                          <div className="flex items-center gap-2 sm:gap-2.5">
+                            <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0">
+                              <FileText size={12} className="text-violet-600" />
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-mono font-bold text-violet-700 text-xs truncate">{po.po_code}</span>
+                              <span className="md:hidden text-[10px] text-gray-400 truncate max-w-[120px]">{po.supplier?.name || '—'}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5 hidden md:table-cell">
+                          <p className="text-xs font-semibold text-gray-700 truncate max-w-[140px]">{po.supplier?.name || '—'}</p>
+                        </td>
+                        <td className="px-3 sm:px-4 py-3.5">
+                          <StatusPill status={po.status} />
+                        </td>
+                        <td className="px-3 sm:px-5 py-3.5 text-right hidden sm:table-cell">
+                          <span className="text-sm font-bold text-gray-900">
+                            {(() => {
+                              const amt = Number(po.total_amount || 0);
+                              if (amt === 0) return '0₫';
+                              if (amt >= 1_000_000_000) return `${(amt / 1_000_000_000).toFixed(2)} Tỷ`;
+                              if (amt >= 1_000_000) return `${(amt / 1_000_000).toFixed(1)}M₫`;
+                              return amt.toLocaleString('vi-VN') + '₫';
+                            })()}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 hidden sm:table-cell">
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Eye size={14} className="text-gray-400" />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
@@ -365,17 +370,17 @@ export default function ProcurementDashboard() {
                 <div
                   key={r.id}
                   onClick={() => router.push(`/receipt-management/${r.id}`)}
-                  className="bg-white rounded-xl border border-amber-100 p-4 flex items-center gap-3 cursor-pointer hover:bg-amber-50/50 hover:border-amber-200 transition-all group"
+                  className="bg-white rounded-xl border border-amber-100 p-3 sm:p-4 flex items-center gap-2 sm:gap-3 cursor-pointer hover:bg-amber-50/50 hover:border-amber-200 transition-all group"
                 >
                   <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
                     <PackageCheck size={16} className="text-amber-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-gray-900">{r.gr_code}</p>
+                    <p className="text-sm font-bold text-gray-900 truncate">{r.gr_code}</p>
                     <p className="text-xs text-gray-400 truncate">Kho: {r.warehouse?.name || '—'} · {new Date(r.received_date).toLocaleDateString('vi-VN')}</p>
                   </div>
                   <StatusPill status={r.status} />
-                  <ArrowRight size={14} className="text-gray-300 group-hover:text-gray-500 group-hover:translate-x-1 transition-all flex-shrink-0" />
+                  <ArrowRight size={14} className="text-gray-300 group-hover:text-gray-500 group-hover:translate-x-1 transition-all flex-shrink-0 hidden sm:block" />
                 </div>
               ))}
             </div>
@@ -436,7 +441,7 @@ export default function ProcurementDashboard() {
           </div>
 
           {/* PO Progress Summary */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
             <div className="flex items-center gap-2 mb-4">
               <BarChart3 size={16} className="text-violet-500" />
               <h3 className="font-extrabold text-gray-900 text-sm">Tiến độ đơn hàng</h3>

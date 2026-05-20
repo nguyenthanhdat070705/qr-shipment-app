@@ -152,11 +152,11 @@ export default function GoodsReceiptDetailPage({ params }: { params: Promise<{ i
 
   return (
     <PageLayout title="Chi tiết phiếu nhập" icon={<PackageCheck size={16} className="text-orange-500" />}>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div className="max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
 
         {/* Toast */}
         {toast && (
-          <div className={`fixed top-4 right-4 z-50 px-5 py-3 rounded-2xl shadow-xl font-semibold text-sm flex items-center gap-2 transition-all
+          <div className={`fixed top-4 right-4 left-4 sm:left-auto z-50 px-4 sm:px-5 py-3 rounded-2xl shadow-xl font-semibold text-sm flex items-center gap-2 transition-all
             ${toast.type === 'ok' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'}`}>
             {toast.type === 'ok' ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
             {toast.msg}
@@ -164,17 +164,18 @@ export default function GoodsReceiptDetailPage({ params }: { params: Promise<{ i
         )}
 
         {/* Topbar */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <button
             onClick={() => router.push('/goods-receipt')}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors min-h-[40px]"
           >
             <ArrowLeft size={16} />
-            Danh sách phiếu nhập
+            <span className="hidden sm:inline">Danh sách phiếu nhập</span>
+            <span className="sm:hidden">Quay lại</span>
           </button>
           <button
             onClick={() => window.open(`/goods-receipt/${resolvedParams.id}/print`, '_blank')}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-orange-100 text-orange-700 hover:bg-orange-200 rounded-xl font-bold text-sm transition-colors shadow-sm"
+            className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 min-h-[40px] bg-orange-100 text-orange-700 hover:bg-orange-200 rounded-xl font-bold text-sm transition-colors shadow-sm"
           >
             <Printer size={16} />
             In phiếu
@@ -182,20 +183,22 @@ export default function GoodsReceiptDetailPage({ params }: { params: Promise<{ i
         </div>
 
         {/* Header card */}
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-extrabold text-gray-900">
-                <span className="font-mono text-orange-600">{gr.gr_code}</span>
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900">
+                <span className="font-mono text-orange-600 break-all">{gr.gr_code}</span>
               </h1>
               <div className="mt-3">
                 <StatusTimeline steps={GR_STEPS} current={gr.status} />
               </div>
             </div>
-            <QRCodeGenerator type="grpo" id={gr.id} code={gr.gr_code} size={100} />
+            <div className="flex-shrink-0 self-start">
+              <QRCodeGenerator type="grpo" id={gr.id} code={gr.gr_code} size={100} />
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-100">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-100">
             <div className="flex items-start gap-2">
               <WarehouseIcon size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
               <div>
@@ -249,10 +252,39 @@ export default function GoodsReceiptDetailPage({ params }: { params: Promise<{ i
 
         {/* Items table — read-only */}
         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100">
             <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400">Hàng hóa</h2>
           </div>
-          <div className="overflow-x-auto">
+          {/* Mobile: card list */}
+          <div className="sm:hidden divide-y divide-gray-100">
+            {items.map((item) => {
+              const match = item.received_qty >= item.expected_qty;
+              return (
+                <div key={item.id} className="p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-mono font-bold text-orange-600 text-xs break-all">{item.product_code}</p>
+                      <p className="text-sm text-gray-800 mt-0.5 break-words">{item.product_name}</p>
+                    </div>
+                    <span className={`flex-shrink-0 inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      match ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                    }`}>
+                      {match ? '✓ Đủ' : '⚠ Thiếu'}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex justify-between text-xs text-gray-500">
+                    <span>Yêu cầu: <span className="font-semibold text-gray-700">{item.expected_qty}</span></span>
+                    <span>Thực nhận: <span className="font-semibold text-gray-900">{item.received_qty}</span></span>
+                  </div>
+                </div>
+              );
+            })}
+            {items.length === 0 && (
+              <p className="px-4 py-6 text-center text-gray-400 text-sm">Chưa có hàng hóa trong phiếu này.</p>
+            )}
+          </div>
+          {/* Desktop: table */}
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50/50 border-b border-gray-100">
@@ -296,24 +328,24 @@ export default function GoodsReceiptDetailPage({ params }: { params: Promise<{ i
 
         {/* Purchase/Admin: Approve Temporary GRPO */}
         {gr.status === 'pending_po' && (
-          <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-blue-100 rounded-xl">
+          <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-4 sm:p-6 shadow-sm">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="p-2 bg-blue-100 rounded-xl flex-shrink-0">
                 <Link size={20} className="text-blue-600" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h3 className="text-sm font-extrabold text-blue-900">Duyệt phiếu nhập tạm (Dành cho Thu mua)</h3>
                 <p className="text-xs text-blue-700 mt-0.5">Liên kết với PO thực tế để hệ thống tự động đối chiếu và cộng tồn kho.</p>
               </div>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1">
                 <select
                   value={selectedPoId}
                   onChange={(e) => setSelectedPoId(e.target.value)}
                   disabled={loadingPos || isLinking}
-                  className="w-full h-11 px-4 rounded-xl border border-blue-200 bg-white text-sm font-medium text-gray-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all disabled:opacity-60"
+                  className="w-full h-11 min-h-[44px] px-4 rounded-xl border border-blue-200 bg-white text-sm font-medium text-gray-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all disabled:opacity-60"
                 >
                   <option value="">-- Chọn Đơn mua hàng (PO) --</option>
                   {pos.map(po => (
@@ -327,7 +359,7 @@ export default function GoodsReceiptDetailPage({ params }: { params: Promise<{ i
               <button
                 onClick={handleApproveGR}
                 disabled={isLinking || !selectedPoId}
-                className="h-11 px-6 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-all disabled:opacity-50 disabled:hover:bg-blue-600 shadow-md shadow-blue-200 inline-flex items-center justify-center gap-2 whitespace-nowrap"
+                className="h-11 min-h-[44px] w-full sm:w-auto px-6 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-all disabled:opacity-50 disabled:hover:bg-blue-600 shadow-md shadow-blue-200 inline-flex items-center justify-center gap-2 whitespace-nowrap"
               >
                 {isLinking ? (
                   <><Loader2 size={16} className="animate-spin" /> Đang xử lý…</>
@@ -341,18 +373,18 @@ export default function GoodsReceiptDetailPage({ params }: { params: Promise<{ i
 
         {/* Admin-only: Cancel GRPO */}
         {isAdmin && gr.status !== 'cancelled' && (
-          <div className="rounded-2xl border border-red-200 bg-red-50/50 p-5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <ShieldAlert size={20} className="text-red-500" />
-                <div>
+          <div className="rounded-2xl border border-red-200 bg-red-50/50 p-4 sm:p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0">
+                <ShieldAlert size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
+                <div className="min-w-0">
                   <p className="text-sm font-bold text-red-800">Hủy phiếu nhập hàng</p>
                   <p className="text-xs text-red-600">Tồn kho sẽ tự động trừ theo số lượng đã nhận. Chỉ Admin mới thấy chức năng này.</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowCancelConfirm(true)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-xl font-bold text-sm transition-colors shadow-sm"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 min-h-[44px] w-full sm:w-auto bg-red-600 text-white hover:bg-red-700 rounded-xl font-bold text-sm transition-colors shadow-sm"
               >
                 <XCircle size={16} />
                 Hủy phiếu
@@ -375,22 +407,22 @@ export default function GoodsReceiptDetailPage({ params }: { params: Promise<{ i
 
         {/* Cancel Confirmation Modal */}
         {showCancelConfirm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
-              <div className="bg-red-50 p-5 border-b border-red-100">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md sm:mx-4 overflow-hidden safe-bottom">
+              <div className="bg-red-50 p-4 sm:p-5 border-b border-red-100">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-red-100 rounded-xl">
+                  <div className="p-2 bg-red-100 rounded-xl flex-shrink-0">
                     <AlertTriangle size={24} className="text-red-600" />
                   </div>
-                  <div>
-                    <h3 className="font-bold text-red-900 text-lg">Xác nhận hủy phiếu</h3>
-                    <p className="text-sm text-red-600 mt-0.5">Hành động này không thể hoàn tác</p>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-red-900 text-base sm:text-lg">Xác nhận hủy phiếu</h3>
+                    <p className="text-xs sm:text-sm text-red-600 mt-0.5">Hành động này không thể hoàn tác</p>
                   </div>
                 </div>
               </div>
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <p className="text-sm text-gray-700">
-                  Bạn có chắc muốn hủy phiếu nhập <strong className="text-orange-600 font-mono">{gr.gr_code}</strong>?
+                  Bạn có chắc muốn hủy phiếu nhập <strong className="text-orange-600 font-mono break-all">{gr.gr_code}</strong>?
                 </p>
                 <div className="mt-3 p-3 bg-amber-50 rounded-xl border border-amber-200">
                   <p className="text-xs text-amber-800 font-semibold">⚠️ Lưu ý:</p>
@@ -400,18 +432,18 @@ export default function GoodsReceiptDetailPage({ params }: { params: Promise<{ i
                   </ul>
                 </div>
               </div>
-              <div className="flex gap-3 p-5 pt-0">
+              <div className="flex gap-2 sm:gap-3 p-4 sm:p-5 pt-0">
                 <button
                   onClick={() => setShowCancelConfirm(false)}
                   disabled={cancelling}
-                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                  className="flex-1 py-2.5 min-h-[44px] rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
                 >
                   Quay lại
                 </button>
                 <button
                   onClick={handleCancelGR}
                   disabled={cancelling}
-                  className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-60"
+                  className="flex-1 py-2.5 min-h-[44px] rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-60"
                 >
                   {cancelling ? (
                     <><Loader2 size={16} className="animate-spin" /> Đang hủy…</>

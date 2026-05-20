@@ -128,47 +128,47 @@ export function VoidedReceiptsContent() {
   return (
     <>
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Quản lý Phiếu Huỷ</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Huỷ phiếu nhập / xuất và tra cứu lịch sử huỷ. Tồn kho sẽ được tự động hoàn trả.</p>
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white">Quản lý Phiếu Huỷ</h1>
+        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">Huỷ phiếu nhập / xuất và tra cứu lịch sử huỷ. Tồn kho sẽ được tự động hoàn trả.</p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="rounded-2xl bg-white dark:bg-[#162240] border border-gray-100 dark:border-white/10 p-5 flex items-center gap-4 shadow-sm">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex-shrink-0">
-            <PackageCheck size={22} className="text-emerald-600 dark:text-emerald-400" />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
+        <div className="rounded-2xl bg-white dark:bg-[#162240] border border-gray-100 dark:border-white/10 p-3 sm:p-5 flex items-center gap-3 sm:gap-4 shadow-sm">
+          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex-shrink-0">
+            <PackageCheck size={20} className="text-emerald-600 dark:text-emerald-400 sm:w-[22px] sm:h-[22px]" />
           </div>
-          <div>
-            <p className="text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{activeImports.length}</p>
-            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide">Phiếu nhập</p>
-          </div>
-        </div>
-        <div className="rounded-2xl bg-white dark:bg-[#162240] border border-gray-100 dark:border-white/10 p-5 flex items-center gap-4 shadow-sm">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-500/10 flex-shrink-0">
-            <Truck size={22} className="text-amber-600 dark:text-amber-400" />
-          </div>
-          <div>
-            <p className="text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{activeExports.length}</p>
-            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide">Phiếu xuất</p>
+          <div className="min-w-0">
+            <p className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{activeImports.length}</p>
+            <p className="text-[10px] sm:text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide truncate">Phiếu nhập</p>
           </div>
         </div>
-        <div className="rounded-2xl bg-white dark:bg-[#162240] border border-red-100 dark:border-red-500/20 p-5 flex items-center gap-4 shadow-sm">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 dark:bg-red-500/10 flex-shrink-0">
-            <Ban size={22} className="text-red-600 dark:text-red-400" />
+        <div className="rounded-2xl bg-white dark:bg-[#162240] border border-gray-100 dark:border-white/10 p-3 sm:p-5 flex items-center gap-3 sm:gap-4 shadow-sm">
+          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-500/10 flex-shrink-0">
+            <Truck size={20} className="text-amber-600 dark:text-amber-400 sm:w-[22px] sm:h-[22px]" />
           </div>
-          <div>
-            <p className="text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{statImportVoided + statExportVoided}</p>
-            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide">Đã huỷ</p>
+          <div className="min-w-0">
+            <p className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{activeExports.length}</p>
+            <p className="text-[10px] sm:text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide truncate">Phiếu xuất</p>
           </div>
         </div>
-        <div className="rounded-2xl bg-white dark:bg-[#162240] border border-gray-100 dark:border-white/10 p-5 flex items-center gap-4 shadow-sm">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex-shrink-0">
-            <Clock size={22} className="text-indigo-600 dark:text-indigo-400" />
+        <div className="rounded-2xl bg-white dark:bg-[#162240] border border-red-100 dark:border-red-500/20 p-3 sm:p-5 flex items-center gap-3 sm:gap-4 shadow-sm">
+          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-red-50 dark:bg-red-500/10 flex-shrink-0">
+            <Ban size={20} className="text-red-600 dark:text-red-400 sm:w-[22px] sm:h-[22px]" />
           </div>
-          <div>
-            <p className="text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{imports.length + exports.length}</p>
-            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide">Tổng cộng</p>
+          <div className="min-w-0">
+            <p className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{statImportVoided + statExportVoided}</p>
+            <p className="text-[10px] sm:text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide truncate">Đã huỷ</p>
+          </div>
+        </div>
+        <div className="rounded-2xl bg-white dark:bg-[#162240] border border-gray-100 dark:border-white/10 p-3 sm:p-5 flex items-center gap-3 sm:gap-4 shadow-sm">
+          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex-shrink-0">
+            <Clock size={20} className="text-indigo-600 dark:text-indigo-400 sm:w-[22px] sm:h-[22px]" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{imports.length + exports.length}</p>
+            <p className="text-[10px] sm:text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide truncate">Tổng cộng</p>
           </div>
         </div>
       </div>
@@ -181,12 +181,12 @@ export function VoidedReceiptsContent() {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 border-b border-gray-100 dark:border-white/10 pb-1">
+      <div className="flex gap-2 mb-4 sm:mb-6 border-b border-gray-100 dark:border-white/10 pb-1 overflow-x-auto no-scrollbar snap-x-chips -mx-3 px-3 sm:mx-0 sm:px-0">
         {TAB_CONFIG.map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+            className={`inline-flex items-center gap-2 px-3 sm:px-5 py-2.5 min-h-[44px] rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
               tab === t.key
                 ? 'bg-[#1B2A4A] text-white shadow-lg shadow-[#1B2A4A]/20'
                 : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'
@@ -217,7 +217,51 @@ export function VoidedReceiptsContent() {
         </div>
       ) : (
         <div className="rounded-2xl border border-gray-100 dark:border-white/10 bg-white dark:bg-[#162240] shadow-xl overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Mobile: card list */}
+          <div className="sm:hidden divide-y divide-gray-100 dark:divide-white/5">
+            {displayData.map(item => (
+              <div key={`m-${item.type}-${item.id}`} className="p-3">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="min-w-0">
+                    <span className={`font-mono font-bold text-xs break-all ${item.type === 'import' ? 'text-indigo-700 dark:text-indigo-400' : 'text-amber-700 dark:text-amber-400'}`}>
+                      {item.code}
+                    </span>
+                    <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border ${
+                        item.type === 'import'
+                          ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/20'
+                          : 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20'
+                      }`}>
+                        {item.type === 'import' ? <PackageCheck size={10} /> : <Truck size={10} />}
+                        {item.type === 'import' ? 'Nhập' : 'Xuất'}
+                      </span>
+                      <span className={`inline-flex px-1.5 py-0.5 rounded-full text-[10px] font-bold border ${STATUS_COLORS[item.status] || 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-white/10 dark:text-gray-300 dark:border-white/20'}`}>
+                        {STATUS_LABELS[item.status] || item.status}
+                      </span>
+                    </div>
+                  </div>
+                  {tab !== 'voided' && userRole !== 'warehouse' && item.status !== 'cancelled' && (
+                    <button
+                      onClick={() => { setCancelTarget(item); setCancelReason(''); }}
+                      className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 min-h-[36px] rounded-lg bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 text-[11px] font-bold transition-colors active:scale-95"
+                    >
+                      <Trash2 size={12} />
+                      Huỷ
+                    </button>
+                  )}
+                </div>
+                <div className="text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
+                  <p><span className="text-gray-400">Kho:</span> <span className="font-medium text-gray-700 dark:text-gray-300">{item.warehouse}</span></p>
+                  {item.items.length > 0 && (
+                    <p className="truncate"><span className="text-gray-400">SP:</span> {item.items.map(i => `${i.name} (x${i.qty})`).join(', ')}</p>
+                  )}
+                  <p className="text-[11px] text-gray-400">{new Date(item.date).toLocaleDateString('vi-VN')}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Desktop: table */}
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50/80 dark:bg-white/5 border-b border-gray-100 dark:border-white/10">
@@ -295,24 +339,24 @@ export function VoidedReceiptsContent() {
 
       {/* Cancel Confirmation Modal */}
       {cancelTarget && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-[#162240] rounded-[2rem] w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="px-6 py-5 border-b border-gray-100 dark:border-white/5 bg-red-50/50 dark:bg-red-500/5 flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-[#162240] rounded-t-2xl sm:rounded-[2rem] w-full sm:max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 safe-bottom max-h-[92vh] flex flex-col">
+            <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100 dark:border-white/5 bg-red-50/50 dark:bg-red-500/5 flex items-center gap-3 sm:gap-4 flex-shrink-0">
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 flex-shrink-0">
                 <AlertTriangle size={24} />
               </div>
-              <div className="flex-1">
-                <h2 className="text-lg font-black text-gray-900 dark:text-white">Xác nhận huỷ phiếu</h2>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">Xác nhận huỷ phiếu</h2>
                 <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">
                   {cancelTarget.type === 'import' ? 'Tồn kho sẽ bị TRỪ' : 'Tồn kho sẽ được CỘNG LẠI'}
                 </p>
               </div>
-              <button onClick={() => setCancelTarget(null)} className="p-2 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-full transition-colors">
+              <button onClick={() => setCancelTarget(null)} className="p-2 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-full transition-colors flex-shrink-0">
                 <X size={18} className="text-gray-400 dark:text-gray-500" />
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto">
               <div className="bg-gray-50 dark:bg-white/5 rounded-2xl p-4 border border-gray-100 dark:border-white/10">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">Mã phiếu</span>
@@ -359,18 +403,18 @@ export function VoidedReceiptsContent() {
               </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/5 flex gap-3 justify-end">
+            <div className="px-4 sm:px-6 py-4 border-t border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/5 flex gap-2 sm:gap-3 justify-end flex-shrink-0">
               <button
                 onClick={() => setCancelTarget(null)}
                 disabled={cancelling}
-                className="px-5 py-2.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm transition-colors"
+                className="flex-1 sm:flex-none px-5 py-2.5 min-h-[44px] bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm transition-colors"
               >
                 Đóng
               </button>
               <button
                 onClick={handleCancel}
                 disabled={cancelling}
-                className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-red-200 dark:shadow-red-500/20 transition-all disabled:opacity-50 inline-flex items-center gap-2"
+                className="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 min-h-[44px] bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-red-200 dark:shadow-red-500/20 transition-all disabled:opacity-50 inline-flex items-center justify-center gap-2"
               >
                 {cancelling ? (
                   <><Loader2 size={14} className="animate-spin" /> Đang huỷ...</>

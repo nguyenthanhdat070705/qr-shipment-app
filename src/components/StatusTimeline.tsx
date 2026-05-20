@@ -23,7 +23,7 @@ export default function StatusTimeline({ steps, current, stepOverrides }: Status
         const isDone = i < currentIndex;
         const isActive = i === currentIndex;
         const isFuture = i > currentIndex || currentIndex === -1; // If status not found, consider all future
-        
+
         const currentStep = stepOverrides && stepOverrides[step.key]
           ? { ...step, ...stepOverrides[step.key] }
           : step;
@@ -32,21 +32,21 @@ export default function StatusTimeline({ steps, current, stepOverrides }: Status
           <div key={currentStep.key} className="flex items-center gap-1">
             <div
               className={`
-                inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold
+                inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold
                 transition-all duration-200
                 ${isDone ? 'bg-emerald-100 text-emerald-700' : ''}
                 ${isActive ? `${currentStep.color} ring-2 ring-offset-1 ring-current` : ''}
                 ${isFuture ? (currentStep.key === 'completed' && currentStep.label === 'Thiếu hàng' ? currentStep.color : 'bg-gray-100 text-gray-400') : ''}
-                ${['Thiếu hàng', 'Đầy đủ', 'Hoàn tất'].includes(currentStep.label) ? 'w-[115px] justify-center whitespace-nowrap' : ''}
+                ${['Thiếu hàng', 'Đầy đủ', 'Hoàn tất'].includes(currentStep.label) ? 'min-w-[90px] sm:w-[115px] justify-center whitespace-nowrap' : ''}
               `}
             >
-              {isDone ? <CheckCircle size={12} /> : <Circle size={12} />}
+              {isDone ? <CheckCircle size={11} className="sm:w-3 sm:h-3" /> : <Circle size={11} className="sm:w-3 sm:h-3" />}
               {currentStep.label}
             </div>
             {i < steps.length - 1 && (
               <ArrowRight
-                size={12}
-                className={isDone ? 'text-emerald-400' : 'text-gray-300'}
+                size={11}
+                className={`${isDone ? 'text-emerald-400' : 'text-gray-300'} sm:w-3 sm:h-3`}
               />
             )}
           </div>

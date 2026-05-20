@@ -278,25 +278,25 @@ export default function MemberPrintForm({ data, onClose }: Props) {
   const todayVN = new Date().toLocaleDateString('vi-VN');
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-start justify-center bg-black/60 backdrop-blur-sm overflow-y-auto py-8">
+    <div className="fixed inset-0 z-[200] flex items-start justify-center bg-black/60 backdrop-blur-sm overflow-y-auto overflow-x-auto py-4 sm:py-8 safe-top">
       {/* Toolbar */}
-      <div className="fixed top-4 right-4 z-[210] flex items-center gap-2">
+      <div className="fixed top-2 sm:top-4 right-2 sm:right-4 z-[210] flex items-center gap-2">
         <button
           onClick={handlePrint}
-          className="flex items-center gap-2 px-5 py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 transition-all shadow-xl"
+          className="flex items-center gap-2 px-3 sm:px-5 py-2.5 sm:py-3 bg-emerald-600 text-white rounded-xl font-bold text-xs sm:text-sm hover:bg-emerald-700 transition-all shadow-xl"
         >
-          <Printer size={16} /> In Phiếu
+          <Printer size={16} /> <span className="hidden sm:inline">In Phiếu</span><span className="sm:hidden">In</span>
         </button>
         <button
           onClick={onClose}
-          className="p-3 bg-white/90 text-gray-700 rounded-xl hover:bg-white transition-all shadow-xl"
+          className="p-2.5 sm:p-3 bg-white/90 text-gray-700 rounded-xl hover:bg-white transition-all shadow-xl"
         >
           <X size={18} />
         </button>
       </div>
 
-      {/* Print Content (A4 preview) */}
-      <div className="bg-white shadow-2xl rounded-lg mx-4" style={{ width: '210mm', minHeight: '297mm' }}>
+      {/* Print Content (A4 preview) — Allow horizontal scroll on small screens, A4 size is fixed for print fidelity */}
+      <div className="bg-white shadow-2xl rounded-lg mx-2 sm:mx-4" style={{ width: '210mm', minHeight: '297mm' }}>
         <div ref={printRef}>
           {/* ════════ PAGE 1 ════════ */}
           <div className="page" style={{ padding: '15mm 20mm 20mm 20mm', fontFamily: "'Times New Roman', Times, serif", fontSize: '13px', lineHeight: '1.6', color: '#000' }}>

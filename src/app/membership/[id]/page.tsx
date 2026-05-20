@@ -146,57 +146,57 @@ export default function MemberDetailPage() {
 
   return (
     <PageLayout title={member.full_name} icon={<Crown size={18} className="text-yellow-500" />}>
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <button onClick={() => router.push('/membership/list')} className="p-2 rounded-xl hover:bg-gray-100 text-gray-500 transition-colors">
+        <div className="flex items-start sm:items-center gap-2 sm:gap-3 flex-wrap">
+          <button onClick={() => router.push('/membership/list')} className="p-2 rounded-xl hover:bg-gray-100 text-gray-500 transition-colors flex-shrink-0">
             <ArrowLeft size={20} />
           </button>
-          <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl font-extrabold text-gray-900">{member.full_name}</h1>
-              <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${st.cls}`}>{st.label}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+              <h1 className="text-lg sm:text-xl font-extrabold text-gray-900 break-words">{member.full_name}</h1>
+              <span className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-semibold ${st.cls}`}>{st.label}</span>
             </div>
-            <p className="text-sm text-gray-500 font-mono">{member.member_code}</p>
+            <p className="text-xs sm:text-sm text-gray-500 font-mono truncate">{member.member_code}</p>
           </div>
           {!editing ? (
-            <button onClick={() => setEditing(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all">
+            <button onClick={() => setEditing(true)} className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl border border-gray-200 text-xs sm:text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all flex-shrink-0">
               <Edit size={14} /> Sửa
             </button>
           ) : (
-            <div className="flex gap-2">
-              <button onClick={() => setEditing(false)} className="flex items-center gap-1 px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-500 hover:bg-gray-50"><X size={14} /> Hủy</button>
-              <button onClick={handleSave} className="flex items-center gap-1 px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700"><Save size={14} /> Lưu</button>
+            <div className="flex gap-2 flex-shrink-0">
+              <button onClick={() => setEditing(false)} className="flex items-center gap-1 px-2.5 sm:px-3 py-2 rounded-xl border border-gray-200 text-xs sm:text-sm text-gray-500 hover:bg-gray-50"><X size={14} /> Hủy</button>
+              <button onClick={handleSave} className="flex items-center gap-1 px-3 sm:px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs sm:text-sm font-semibold hover:bg-emerald-700"><Save size={14} /> Lưu</button>
             </div>
           )}
         </div>
 
         {/* Info Cards Row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-            <p className="text-[11px] font-semibold text-gray-500 uppercase">Mã Hội Viên</p>
-            <p className="text-lg font-extrabold text-gray-900 mt-1 font-mono">{member.member_code}</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+          <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4 shadow-sm">
+            <p className="text-[10px] sm:text-[11px] font-semibold text-gray-500 uppercase">Mã Hội Viên</p>
+            <p className="text-sm sm:text-lg font-extrabold text-gray-900 mt-1 font-mono break-all">{member.member_code}</p>
           </div>
-          <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-            <p className="text-[11px] font-semibold text-gray-500 uppercase">Ngày tham gia</p>
-            <p className="text-lg font-extrabold text-gray-900 mt-1">{new Date(member.registered_date).toLocaleDateString('vi-VN')}</p>
+          <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4 shadow-sm">
+            <p className="text-[10px] sm:text-[11px] font-semibold text-gray-500 uppercase">Ngày tham gia</p>
+            <p className="text-sm sm:text-lg font-extrabold text-gray-900 mt-1">{new Date(member.registered_date).toLocaleDateString('vi-VN')}</p>
           </div>
-          <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-            <p className="text-[11px] font-semibold text-gray-500 uppercase">Hết hạn</p>
-            <p className="text-lg font-extrabold text-gray-900 mt-1">{member.expiry_date ? new Date(member.expiry_date).toLocaleDateString('vi-VN') : '—'}</p>
+          <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4 shadow-sm">
+            <p className="text-[10px] sm:text-[11px] font-semibold text-gray-500 uppercase">Hết hạn</p>
+            <p className="text-sm sm:text-lg font-extrabold text-gray-900 mt-1">{member.expiry_date ? new Date(member.expiry_date).toLocaleDateString('vi-VN') : '—'}</p>
           </div>
-          <div className="bg-gradient-to-br from-yellow-400 to-amber-500 rounded-2xl p-4 text-white">
-            <p className="text-[11px] font-semibold text-white/70 uppercase">Chiết khấu hiện tại</p>
-            <p className="text-2xl font-extrabold mt-1">{discountPct}%</p>
+          <div className="bg-gradient-to-br from-yellow-400 to-amber-500 rounded-2xl p-3 sm:p-4 text-white">
+            <p className="text-[10px] sm:text-[11px] font-semibold text-white/70 uppercase">Chiết khấu hiện tại</p>
+            <p className="text-xl sm:text-2xl font-extrabold mt-1">{discountPct}%</p>
             <p className="text-[10px] text-white/60">{daysActive} ngày hoạt động</p>
           </div>
         </div>
 
         {/* Contract Details */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-            <h2 className="font-bold text-gray-800">📋 Thông tin hợp đồng</h2>
-            <div className="flex gap-2">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <h2 className="font-bold text-gray-800 text-sm sm:text-base">📋 Thông tin hợp đồng</h2>
+            <div className="flex gap-2 flex-wrap">
               {/* Nếu đã có Drive folder ID → mở folder riêng của HV */}
               {member.contract_number && member.contract_number.length > 20 ? (
                 <a
@@ -248,7 +248,7 @@ export default function MemberDetailPage() {
               </button>
             </div>
           </div>
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/15 text-violet-500 flex-shrink-0"><Package size={18} /></div>
               <div>
@@ -303,10 +303,10 @@ export default function MemberDetailPage() {
             </div>
           </div>
           {member.notes && (
-            <div className="px-6 pb-5">
-              <div className="p-4 bg-gray-50 rounded-xl">
+            <div className="px-4 sm:px-6 pb-4 sm:pb-5">
+              <div className="p-3 sm:p-4 bg-gray-50 rounded-xl">
                 <p className="text-xs font-semibold text-gray-500 mb-1">Ghi chú</p>
-                <p className="text-sm text-gray-700">{member.notes}</p>
+                <p className="text-sm text-gray-700 break-words">{member.notes}</p>
               </div>
             </div>
           )}
@@ -314,10 +314,10 @@ export default function MemberDetailPage() {
 
         {/* Personal Info */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-            <h2 className="font-bold text-gray-800">👤 Thông tin cá nhân</h2>
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 bg-gray-50/50">
+            <h2 className="font-bold text-gray-800 text-sm sm:text-base">👤 Thông tin cá nhân</h2>
           </div>
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {editing ? (
               <>
                 <div>
@@ -336,7 +336,7 @@ export default function MemberDetailPage() {
                   <label className="block text-xs font-semibold text-gray-700 mb-1.5">CCCD</label>
                   <input className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm" value={editForm.id_number || ''} onChange={e => setEditForm({ ...editForm, id_number: e.target.value })} />
                 </div>
-                <div className="md:col-span-2">
+                <div className="sm:col-span-2">
                   <label className="block text-xs font-semibold text-gray-700 mb-1.5">Địa chỉ</label>
                   <input className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm" value={editForm.address || ''} onChange={e => setEditForm({ ...editForm, address: e.target.value })} />
                 </div>
@@ -365,19 +365,19 @@ export default function MemberDetailPage() {
 
         {/* Beneficiaries */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-            <h2 className="font-bold text-gray-800">👨‍👩‍👧 Người thụ hưởng</h2>
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 bg-gray-50/50">
+            <h2 className="font-bold text-gray-800 text-sm sm:text-base">👨‍👩‍👧 Người thụ hưởng</h2>
           </div>
           <div className="divide-y divide-gray-50">
             {beneficiaries.length === 0 ? (
-              <div className="py-8 text-center text-sm text-gray-400">Chưa có người thụ hưởng</div>
+              <div className="py-6 sm:py-8 text-center text-sm text-gray-400">Chưa có người thụ hưởng</div>
             ) : (
               beneficiaries.map(b => (
-                <div key={b.id} className="px-6 py-4 flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold text-sm flex-shrink-0">{b.full_name.charAt(0)}</div>
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-gray-800">{b.full_name}</p>
-                    <div className="text-xs text-gray-500 flex gap-3">
+                <div key={b.id} className="px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sm:gap-4">
+                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold text-sm flex-shrink-0">{b.full_name.charAt(0)}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-gray-800 truncate">{b.full_name}</p>
+                    <div className="text-[11px] sm:text-xs text-gray-500 flex flex-wrap gap-x-3 gap-y-0.5">
                       {b.relationship && <span>Quan hệ: {b.relationship}</span>}
                       {b.id_number && <span>CCCD: {b.id_number}</span>}
                     </div>
@@ -390,8 +390,8 @@ export default function MemberDetailPage() {
 
         {/* Care Logs */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-            <h2 className="font-bold text-gray-800">📞 Lịch sử chăm sóc</h2>
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+            <h2 className="font-bold text-gray-800 text-sm sm:text-base">📞 Lịch sử chăm sóc</h2>
             <button onClick={() => setShowCareForm(!showCareForm)}
               className="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition-colors">
               + Thêm
@@ -399,8 +399,8 @@ export default function MemberDetailPage() {
           </div>
 
           {showCareForm && (
-            <div className="px-6 py-4 bg-blue-50/30 border-b border-blue-100">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 bg-blue-50/30 border-b border-blue-100">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
                 <select className="px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white"
                   value={careForm.contact_type} onChange={e => setCareForm({ ...careForm, contact_type: e.target.value })}>
                   <option value="call">📞 Gọi điện</option>
@@ -415,7 +415,7 @@ export default function MemberDetailPage() {
                   value={careForm.notes} onChange={e => setCareForm({ ...careForm, notes: e.target.value })} />
               </div>
               <button onClick={handleAddCareLog} disabled={careSubmitting}
-                className="mt-3 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50">
+                className="mt-3 w-full sm:w-auto px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50">
                 {careSubmitting ? 'Đang lưu...' : 'Lưu lịch sử'}
               </button>
             </div>
@@ -423,16 +423,16 @@ export default function MemberDetailPage() {
 
           <div className="divide-y divide-gray-50">
             {careLogs.length === 0 ? (
-              <div className="py-8 text-center text-sm text-gray-400">Chưa có lịch sử chăm sóc</div>
+              <div className="py-6 sm:py-8 text-center text-sm text-gray-400">Chưa có lịch sử chăm sóc</div>
             ) : (
               careLogs.map(log => {
                 const typeIcons: Record<string, string> = { call: '📞', zalo: '💬', sms: '📱', email: '📧', visit: '🏠' };
                 return (
-                  <div key={log.id} className="px-6 py-3.5 flex items-start gap-3">
-                    <span className="text-lg">{typeIcons[log.contact_type] || '📋'}</span>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-800">{log.notes || 'Không có ghi chú'}</p>
-                      <div className="flex gap-3 text-xs text-gray-500 mt-1">
+                  <div key={log.id} className="px-4 sm:px-6 py-3 sm:py-3.5 flex items-start gap-3">
+                    <span className="text-lg flex-shrink-0">{typeIcons[log.contact_type] || '📋'}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-800 break-words">{log.notes || 'Không có ghi chú'}</p>
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] sm:text-xs text-gray-500 mt-1">
                         <span><Calendar size={10} className="inline mr-0.5" />{new Date(log.contact_date).toLocaleDateString('vi-VN')}</span>
                         {log.staff_name && <span>NV: {log.staff_name}</span>}
                       </div>

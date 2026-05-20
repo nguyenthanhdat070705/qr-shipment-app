@@ -62,21 +62,21 @@ function StatCard({
   return (
     <div
       onClick={onClick}
-      className={`relative overflow-hidden rounded-2xl bg-white border border-gray-100 p-5 shadow-sm transition-all duration-300 group
+      className={`relative overflow-hidden rounded-2xl bg-white border border-gray-100 p-3 sm:p-5 shadow-sm transition-all duration-300 group
         ${onClick ? 'cursor-pointer hover:shadow-xl hover:-translate-y-0.5 hover:border-gray-200' : 'hover:shadow-lg'}
       `}
     >
       <div className={`absolute top-0 right-0 w-32 h-32 rounded-full opacity-[0.06] -translate-y-8 translate-x-8 ${gradient}`} />
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{label}</p>
-          <p className="text-3xl font-extrabold text-gray-900 leading-none">{value}</p>
-          {sub && <p className="text-xs text-gray-400 mt-1.5">{sub}</p>}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 sm:mb-2 line-clamp-1">{label}</p>
+          <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-none">{value}</p>
+          {sub && <p className="text-[10px] sm:text-xs text-gray-400 mt-1 sm:mt-1.5 line-clamp-2">{sub}</p>}
           {onClick && (
-            <p className="text-[11px] text-gray-300 group-hover:text-gray-500 mt-1.5 transition-colors">Nhấn để xem →</p>
+            <p className="hidden sm:block text-[11px] text-gray-300 group-hover:text-gray-500 mt-1.5 transition-colors">Nhấn để xem →</p>
           )}
         </div>
-        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${gradient} text-white shadow-lg flex-shrink-0 group-hover:scale-110 transition-transform`}>
+        <div className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl ${gradient} text-white shadow-lg flex-shrink-0 group-hover:scale-110 transition-transform`}>
           {icon}
         </div>
       </div>
@@ -409,7 +409,7 @@ export default function SalesDashboard() {
       />
 
       {/* ── Welcome Banner ─────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0c1b3a] via-[#1B2A4A] to-[#1a3a6a] p-6 mb-6 shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0c1b3a] via-[#1B2A4A] to-[#1a3a6a] p-4 sm:p-6 mb-4 sm:mb-6 shadow-xl">
         {/* Decorative elements */}
         <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-blue-400/10 blur-3xl" />
         <div className="absolute bottom-0 left-16 w-32 h-32 rounded-full bg-sky-400/10 blur-2xl" />
@@ -420,7 +420,7 @@ export default function SalesDashboard() {
         <div className="absolute top-16 right-40 w-1 h-1 rounded-full bg-sky-300 animate-pulse delay-300" />
         <div className="absolute bottom-8 right-32 w-1.5 h-1.5 rounded-full bg-indigo-300 animate-pulse delay-700" />
 
-        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-5">
           <div>
             {/* Role badge */}
             <div className="inline-flex items-center gap-2 mb-3 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md">
@@ -428,10 +428,10 @@ export default function SalesDashboard() {
               <span className="text-xs text-white/70 font-semibold tracking-wide">Nhân viên Bán hàng · Đang hoạt động</span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-1 tracking-tight">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white mb-1 tracking-tight">
               {greeting}, {userName} 👋
             </h1>
-            <p className="text-blue-200/70 text-sm">{nowStr}</p>
+            <p className="text-blue-200/70 text-xs sm:text-sm">{nowStr}</p>
 
             {/* Quick stats chips */}
             <div className="flex flex-wrap gap-2 mt-4">
@@ -455,10 +455,10 @@ export default function SalesDashboard() {
           </div>
 
           {/* Refresh button */}
-          <div className="flex flex-col items-end gap-3">
+          <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 sm:gap-3">
             <button
               onClick={handleRefresh}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white/80 text-xs font-semibold hover:bg-white/20 transition-colors"
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white/80 text-xs font-semibold hover:bg-white/20 transition-colors"
             >
               <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
               Làm mới
@@ -471,7 +471,7 @@ export default function SalesDashboard() {
       </div>
 
       {/* ── KPI Cards ────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
         <StatCard
           label="Sản phẩm sẵn"
           value={statsLoading ? '...' : stats.available}
@@ -507,7 +507,7 @@ export default function SalesDashboard() {
       </div>
 
       {/* ── Main Grid ────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
 
         {/* ── Left: Funerals (2/3 width) ── */}
         <div className="lg:col-span-2 space-y-4">

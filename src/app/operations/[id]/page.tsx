@@ -85,30 +85,33 @@ export default function OperationDetailPage({ params }: { params: Promise<{ id: 
 
   return (
     <PageLayout title="Chi tiết đơn giao" icon={<Truck size={16} className="text-amber-500" />}>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div className="max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
         <button
           onClick={() => router.push('/operations')}
           className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
         >
           <ArrowLeft size={16} />
-          Danh sách đơn giao
+          <span className="hidden sm:inline">Danh sách đơn giao</span>
+          <span className="sm:hidden">Quay lại</span>
         </button>
 
         {/* Header */}
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-extrabold text-gray-900">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 break-all">
                 <span className="font-mono text-amber-600">{order.do_code}</span>
               </h1>
-              <div className="mt-3">
+              <div className="mt-3 overflow-x-auto no-scrollbar">
                 <StatusTimeline steps={DELIVERY_STEPS} current={order.status} />
               </div>
             </div>
-            <QRCodeGenerator type="delivery" id={order.id} code={order.do_code} size={100} />
+            <div className="mx-auto sm:mx-0 flex-shrink-0">
+              <QRCodeGenerator type="delivery" id={order.id} code={order.do_code} size={100} />
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-100">
             <div className="flex items-start gap-2">
               <User size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
               <div>
@@ -158,10 +161,23 @@ export default function OperationDetailPage({ params }: { params: Promise<{ id: 
 
         {/* Items */}
         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400">Sản phẩm giao</h2>
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100">
+            <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-400">Sản phẩm giao</h2>
           </div>
-          <div className="overflow-x-auto">
+          {/* Mobile cards */}
+          <div className="sm:hidden divide-y divide-gray-100">
+            {(order.items || []).map((item) => (
+              <div key={item.id} className="p-3 flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-mono text-xs font-semibold text-amber-600">{item.product_code}</p>
+                  <p className="text-sm text-gray-800 break-words">{item.product_name}</p>
+                </div>
+                <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">SL: {item.quantity}</span>
+              </div>
+            ))}
+          </div>
+          {/* Desktop table */}
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50/50 border-b border-gray-100">
@@ -185,13 +201,13 @@ export default function OperationDetailPage({ params }: { params: Promise<{ id: 
 
         {/* Actions */}
         {actions.length > 0 && (
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 safe-bottom">
             {actions.map((action) => (
               <button
                 key={action.next}
                 onClick={() => handleStatusChange(action.next)}
                 disabled={updating}
-                className={`flex-1 py-3 rounded-xl font-bold text-sm text-white shadow-lg disabled:opacity-50 transition-all ${action.color}`}
+                className={`flex-1 py-3 rounded-xl font-bold text-sm text-white shadow-lg disabled:opacity-50 transition-all min-h-[48px] ${action.color}`}
               >
                 {updating ? 'Đang xử lý...' : action.label}
               </button>

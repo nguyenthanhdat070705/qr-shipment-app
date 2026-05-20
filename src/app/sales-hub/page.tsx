@@ -57,36 +57,36 @@ export default function SalesHubPage() {
   return (
     <PageLayout title="Trung Tâm Bán Hàng" icon={<Presentation size={15} className="text-amber-500" />}>
       {/* ── Header ── */}
-      <div className="mb-10 text-center space-y-4">
-        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900">Trung Tâm Bán Hàng</h1>
-        <p className="text-gray-500 max-w-xl mx-auto">
+      <div className="mb-6 sm:mb-10 text-center space-y-2 sm:space-y-4 px-4">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-gray-900">Trung Tâm Bán Hàng</h1>
+        <p className="text-sm sm:text-base text-gray-500 max-w-xl mx-auto">
           Tập hợp các nghiệp vụ bán hàng, tạo đơn hàng vật tư, kinh doanh gói thành viên và tài liệu quy định nội bộ do bộ phận quản lý.
         </p>
       </div>
 
       {/* ── Grid ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto px-4 pb-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto px-3 sm:px-4 pb-8 sm:pb-12">
         {cards.map((card) => (
           <Link
             key={card.id}
             href={card.href}
-            className={`group bg-white p-6 rounded-[2rem] border border-gray-100 shadow-xl ${card.shadow} hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 relative overflow-hidden flex flex-col h-full`}
+            className={`group bg-white p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-gray-100 shadow-xl ${card.shadow} hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 relative overflow-hidden flex flex-col h-full`}
           >
             {/* Background decor */}
             <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl ${card.gradient} opacity-5 rounded-bl-[100px] transform group-hover:scale-110 transition-transform duration-500`}></div>
             
             <div className="relative z-10 flex-1 flex flex-col">
-              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${card.gradient} flex items-center justify-center shadow-lg mb-5 transform group-hover:rotate-6 transition-transform duration-300`}>
+              <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br ${card.gradient} flex items-center justify-center shadow-lg mb-3 sm:mb-5 transform group-hover:rotate-6 transition-transform duration-300`}>
                 {card.icon}
               </div>
-              <h2 className="text-lg font-bold text-gray-900 mb-2 leading-tight">{card.title}</h2>
-              <p className="text-sm font-medium text-gray-500 leading-relaxed mb-6 flex-1">
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-1.5 sm:mb-2 leading-tight">{card.title}</h2>
+              <p className="text-xs sm:text-sm font-medium text-gray-500 leading-relaxed mb-4 sm:mb-6 flex-1">
                 {card.desc}
               </p>
-              
-              <div className="flex items-center text-sm font-bold text-gray-400 group-hover:text-gray-700 transition-colors mt-auto">
+
+              <div className="flex items-center text-xs sm:text-sm font-bold text-gray-400 group-hover:text-gray-700 transition-colors mt-auto">
                 <span className="flex-1">Chi tiết</span>
-                <span className={`w-8 h-8 rounded-full flex items-center justify-center bg-gray-50 text-gray-400 group-hover:bg-gray-900 group-hover:text-white transition-all`}>
+                <span className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-gray-50 text-gray-400 group-hover:bg-gray-900 group-hover:text-white transition-all`}>
                   →
                 </span>
               </div>
@@ -94,7 +94,7 @@ export default function SalesHubPage() {
           </Link>
         ))}
         {cards.length === 0 && (
-          <div className="col-span-full border border-gray-200 rounded-2xl p-8 text-center text-gray-500">
+          <div className="col-span-full border border-gray-200 rounded-2xl p-6 sm:p-8 text-center text-gray-500 text-sm sm:text-base">
             Tài khoản của bạn chưa được phân quyền thao tác tính năng bán hàng.
           </div>
         )}

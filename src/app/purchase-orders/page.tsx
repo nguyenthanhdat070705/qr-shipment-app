@@ -20,13 +20,13 @@ function StatCard({
   icon: React.ReactNode; color: string; bg: string; border: string;
 }) {
   return (
-    <div className={`rounded-2xl bg-white border ${border} p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow`}>
-      <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${bg} flex-shrink-0`}>
+    <div className={`rounded-2xl bg-white border ${border} p-3 sm:p-5 flex items-center gap-2 sm:gap-4 shadow-sm hover:shadow-md transition-shadow`}>
+      <div className={`flex h-9 w-9 sm:h-12 sm:w-12 items-center justify-center rounded-xl ${bg} flex-shrink-0`}>
         <span className={color}>{icon}</span>
       </div>
-      <div>
-        <p className="text-2xl font-extrabold text-gray-900 leading-none">{value}</p>
-        <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide">{label}</p>
+      <div className="min-w-0">
+        <p className="text-lg sm:text-2xl font-extrabold text-gray-900 leading-none">{value}</p>
+        <p className="text-[10px] sm:text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wide truncate">{label}</p>
       </div>
     </div>
   );
@@ -91,6 +91,7 @@ export default function PurchaseOrdersPage() {
       key: 'po_code',
       label: 'Số đơn hàng',
       sortable: true,
+      primaryOnMobile: true,
       render: (row: PurchaseOrder) => (
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0">
@@ -115,6 +116,7 @@ export default function PurchaseOrdersPage() {
     {
       key: 'warehouse',
       label: 'Kho nhận',
+      hideOnMobile: true,
       render: (row: PurchaseOrder) => (
         <span className="text-sm text-gray-700">{row.warehouse?.name || '—'}</span>
       ),
@@ -123,6 +125,7 @@ export default function PurchaseOrdersPage() {
       key: 'created_by',
       label: 'Người đặt',
       sortable: true,
+      hideOnMobile: true,
       render: (row: PurchaseOrder) => (
         <span className="text-sm text-gray-700">{row.created_by || '—'}</span>
       ),
@@ -169,19 +172,19 @@ export default function PurchaseOrdersPage() {
       key: 'actions',
       label: 'Hành động',
       render: (row: PurchaseOrder) => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={(e) => { e.stopPropagation(); router.push(`/purchase-orders/${row.id}`); }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-violet-100 text-gray-600 hover:text-violet-700 text-xs font-semibold transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-violet-100 text-gray-600 hover:text-violet-700 text-xs font-semibold transition-colors min-h-[36px]"
           >
             <Eye size={13} />
             Chi tiết
           </button>
-          
+
           {(row.status === 'confirmed') && (
             <button
               onClick={(e) => { e.stopPropagation(); handleCancelOrder(row.id, row.po_code); }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 text-xs font-semibold transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 text-xs font-semibold transition-colors min-h-[36px]"
             >
               <XCircle size={13} />
               Hủy
@@ -196,16 +199,16 @@ export default function PurchaseOrdersPage() {
     <PageLayout title="Đặt hàng" icon={<ShoppingCart size={15} className="text-violet-500" />}>
 
       {/* ── Header ─────────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-gray-900">Quản lý Đơn hàng</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900">Quản lý Đơn hàng</h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
             Quản lý {total} đơn đặt hàng từ nhà cung cấp.
           </p>
         </div>
         <button
           onClick={() => router.push('/purchase-orders/create')}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1B2A4A] text-white rounded-xl font-bold text-sm hover:bg-[#162240] shadow-lg shadow-[#1B2A4A]/20 transition-all"
+          className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 bg-[#1B2A4A] text-white rounded-xl font-bold text-sm hover:bg-[#162240] shadow-lg shadow-[#1B2A4A]/20 transition-all min-h-[44px]"
         >
           <Plus size={16} />
           Tạo đơn hàng
@@ -213,7 +216,7 @@ export default function PurchaseOrdersPage() {
       </div>
 
       {/* ── Stat cards ─────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
         <StatCard label="Tổng đơn hàng"  value={total}          icon={<ShoppingCart size={22} />} color="text-[#1B2A4A]" bg="bg-[#eef1f7]"    border="border-[#d5dbe9]" />
         <StatCard label="Đã xác nhận"    value={confirmedCount} icon={<CheckCircle size={22} />}  color="text-purple-600" bg="bg-purple-50"    border="border-purple-200" />
         <StatCard label="Đã nhận hàng"   value={receivedCount}  icon={<PackageCheck size={22} />} color="text-emerald-600" bg="bg-emerald-50"  border="border-emerald-200" />
