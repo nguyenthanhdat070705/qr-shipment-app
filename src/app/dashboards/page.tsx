@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, BarChart3, Warehouse, ShoppingCart, BookOpen, Truck } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Warehouse, ShoppingCart, BookOpen, Truck, Crown } from 'lucide-react';
 import Link from 'next/link';
 import PageLayout from '@/components/PageLayout';
 import { getUserRole, UserRole } from '@/config/roles.config';
@@ -55,6 +55,16 @@ export default function DashboardsHubPage() {
       color: 'bg-blue-500',
       shadow: 'shadow-blue-500/20',
       gradient: 'from-blue-400 to-indigo-600',
+    }] : []),
+    ...(userRole === 'admin' || userRole === 'sales' ? [{
+      id: 'membership',
+      title: 'Dashboard Membership',
+      icon: <Crown size={28} className="text-white" />,
+      desc: 'Phân tích hội viên, hợp đồng GetFly, doanh thu, công nợ, thời hạn và hồ sơ thụ hưởng.',
+      href: '/dashboards/membership',
+      color: 'bg-yellow-500',
+      shadow: 'shadow-yellow-500/20',
+      gradient: 'from-yellow-400 to-cyan-600',
     }] : []),
     ...(userRole === 'admin' || userRole === 'sales' || userRole === 'operations' ? [{
       id: 'funerals',
