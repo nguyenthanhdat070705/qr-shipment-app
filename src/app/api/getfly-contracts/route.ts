@@ -9,14 +9,11 @@ export async function GET(req: NextRequest) {
     const search = req.nextUrl.searchParams.get('search') || '';
     const status = req.nextUrl.searchParams.get('status') || '';
 
-    const from = (page - 1) * perPage;
-    const to = from + perPage - 1;
-
     let query = supabase
       .from('getfly_contracts')
       .select('*', { count: 'exact' })
-      .order('synced_at', { ascending: false })
-      .range(from, to);
+      .not('raw_data->>contract_id', 'is', null)
+      .order('synced_at', { ascending: false });
 
     // Search filter
     if (search) {
@@ -35,15 +32,27 @@ export async function GET(req: NextRequest) {
       query = query.eq('contract_status', status);
     }
 
-    const { data, error, count } = await query;
+    const { data, error } = await query;
 
     if (error) {
       console.error('getfly-contracts error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    const sortedData = [...(data || [])].sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
+      const aRaw = (a.raw_data || {}) as Record<string, unknown>;
+      const bRaw = (b.raw_data || {}) as Record<string, unknown>;
+      const aContractId = Number(aRaw.contract_id || 0);
+      const bContractId = Number(bRaw.contract_id || 0);
+      if (aContractId !== bContractId) return bContractId - aContractId;
+      return String(b.synced_at || '').localeCompare(String(a.synced_at || ''));
+    });
+
+    const from = (page - 1) * perPage;
+    const pagedData = sortedData.slice(from, from + perPage);
+
     // Fetch GDrive tracking data for these contracts
-    const contractIds = (data || []).map((c: Record<string, unknown>) => c.getfly_contract_id).filter(Boolean);
+    const contractIds = pagedData.map((c: Record<string, unknown>) => c.getfly_contract_id).filter(Boolean);
     let driveMap = new Map<string, Record<string, unknown>>();
 
     if (contractIds.length > 0) {
@@ -60,7 +69,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Merge GDrive info into contract records
-    const enrichedRecords = (data || []).map((contract: Record<string, unknown>) => {
+    const enrichedRecords = pagedData.map((contract: Record<string, unknown>) => {
       const driveInfo = driveMap.get(contract.getfly_contract_id as string);
       return {
         ...contract,
@@ -78,7 +87,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       records: enrichedRecords,
-      total: count || 0,
+      total: sortedData.length,
       page,
       per_page: perPage,
     });

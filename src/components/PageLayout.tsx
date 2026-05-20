@@ -5,7 +5,7 @@ import {
   Menu, X, ChevronRight, Shield, LogOut,
   Truck, Warehouse, LayoutGrid, User,
   ShoppingCart, PackageCheck, ClipboardCheck, TruckIcon,
-  Bell, Search, BarChart3, Settings, BookOpen, Users,
+  Bell, Search, BarChart3, Settings, Users,
   Package, Clock, ExternalLink, CheckCheck, Receipt,
   Crown, UserPlus, List, Scale, DollarSign, Building, HardDrive,
   MessageSquare, Building2, MessageCircle, Moon, Sun, Smartphone, Monitor
@@ -102,17 +102,6 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
       iconBg: 'bg-amber-500/15',
       section: 'Bán Hàng',
     } as MenuItem] : []),
-    ...(userRole === 'sales' || userRole === 'admin' ? [{
-      icon: <BookOpen size={18} />,
-      label: 'Catalog Hòm Sản phẩm',
-      desc: 'Bộ sưu tập hòm theo gỗ, màu, tôn giáo',
-      href: '/sales/catalog',
-      color: 'text-stone-300',
-      iconBg: 'bg-stone-500/20',
-      section: 'Bán Hàng',
-    } as MenuItem] : []),
-
-
     /* ── Membership & CSKH (chỉ sales + admin) ── */
     ...(userRole === 'admin' ? [{
       icon: <Crown size={18} />,

@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 import { findOrCreateFolder, findOrCreateSubFolder, uploadUrlToDriveIfMissing } from '@/lib/gdrive';
 
-const GETFLY_API_KEY = process.env.GETFLY_API_KEY || '';
+function cleanEnv(value: string | undefined): string {
+  return value?.trim() || '';
+}
+
+const GETFLY_API_KEY = cleanEnv(process.env.GETFLY_API_KEY);
 const GETFLY_BASE = 'https://blackstonesdvtl.getflycrm.com/api/v3';
 const GETFLY_WEB_BASE = 'https://blackstonesdvtl.getflycrm.com';
 
@@ -25,7 +29,7 @@ type GetflyWebCredentials = {
 
 // ── Helpers: web-session auth for the exact "Quản lý hợp đồng bán" screen ──
 function getWebCredentials(): GetflyWebCredentials | null {
-  const encoded = process.env.GETFLY_WEB_BASIC_AUTH?.trim();
+  const encoded = cleanEnv(process.env.GETFLY_WEB_BASIC_AUTH);
   if (encoded) {
     try {
       const decoded = Buffer.from(encoded, 'base64').toString('utf8');
@@ -41,8 +45,8 @@ function getWebCredentials(): GetflyWebCredentials | null {
     }
   }
 
-  const username = process.env.GETFLY_WEB_USERNAME?.trim();
-  const password = process.env.GETFLY_WEB_PASSWORD?.trim();
+  const username = cleanEnv(process.env.GETFLY_WEB_USERNAME);
+  const password = cleanEnv(process.env.GETFLY_WEB_PASSWORD);
   if (!username || !password) return null;
   return { username, password };
 }
@@ -454,12 +458,13 @@ function mapApiContract(c: Record<string, unknown>) {
   };
 }
 
-function getApiContractId(c: Record<string, unknown>) {
-  return str(c.order_id || c.contract_id || c.id);
-}
-
 function getApiContractCode(c: Record<string, unknown>) {
   return str(c.order_code || c.contract_code || c.code);
+}
+
+function isMembershipLikeApiContract(c: Record<string, unknown>) {
+  const code = normalizeContractCode(getApiContractCode(c));
+  return !!code && code.startsWith('MBS');
 }
 
 function normalizeContractCode(value: unknown) {
@@ -470,35 +475,56 @@ function buildContractRows(
   apiContracts: Record<string, unknown>[],
   webContracts: Record<string, unknown>[],
 ) {
-  const webByCode = new Map(
-    webContracts
-      .map((contract) => [normalizeContractCode(contract.contract_code), contract] as const)
+  const apiByCode = new Map(
+    apiContracts
+      .map((contract) => [normalizeContractCode(getApiContractCode(contract)), contract] as const)
       .filter(([code]) => !!code),
   );
 
-  const rows = apiContracts.map((contract) => {
-    const id = getApiContractId(contract);
-    const code = getApiContractCode(contract);
-    const webContract = code ? webByCode.get(normalizeContractCode(code) || '') : undefined;
+  if (webContracts.length > 0) {
+    return webContracts
+      .map((contract) => {
+        const webRow = mapWebContract(contract);
+        const apiContract = apiByCode.get(normalizeContractCode(contract.contract_code) || '');
+        if (!apiContract) return webRow;
 
-    if (!webContract) return mapApiContract(contract);
+        const apiRow = mapApiContract(apiContract);
 
-    return {
-      ...mapWebContract(webContract),
-      getfly_contract_id: id,
-    };
-  });
-
-  const apiIds = new Set(apiContracts.map(getApiContractId).filter(Boolean));
-  const apiCodes = new Set(apiContracts.map(getApiContractCode).map(normalizeContractCode).filter(Boolean));
-
-  for (const contract of webContracts) {
-    const id = str(contract.contract_id);
-    const code = normalizeContractCode(contract.contract_code);
-    if (id && !apiIds.has(id) && (!code || !apiCodes.has(code))) rows.push(mapWebContract(contract));
+        return {
+          ...webRow,
+          getfly_contract_id: apiRow.getfly_contract_id || webRow.getfly_contract_id,
+          customer_phone: webRow.customer_phone || apiRow.customer_phone,
+          person_in_charge: webRow.person_in_charge || apiRow.person_in_charge,
+          contract_value: webRow.contract_value || apiRow.contract_value,
+          actual_value: webRow.actual_value || apiRow.actual_value,
+          executed_amount: webRow.executed_amount || apiRow.executed_amount,
+          paid_amount: webRow.paid_amount || apiRow.paid_amount,
+          debt_amount: webRow.debt_amount || apiRow.debt_amount,
+          account_id: webRow.account_id || apiRow.account_id,
+          account_phone: webRow.account_phone || apiRow.account_phone,
+          raw_data: {
+            ...contract,
+            api_order: apiContract,
+          },
+        };
+      })
+      .filter((row) => row.getfly_contract_id);
   }
 
-  return rows.filter((row) => row.getfly_contract_id);
+  return apiContracts
+    .filter(isMembershipLikeApiContract)
+    .map((contract) => {
+      const row = mapApiContract(contract);
+      return {
+        ...row,
+        raw_data: {
+          ...contract,
+          contract_id: row.getfly_contract_id,
+          _sync_source: 'api_mbs_fallback',
+        },
+      };
+    })
+    .filter((row) => row.getfly_contract_id);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -621,11 +647,10 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Use the official API for full coverage, then overlay richer exact-screen
-    // payloads when they are available for the same contract IDs.
-    const rows = apiContracts.length > 0
-      ? buildContractRows(apiContracts, webContracts)
-      : webContracts.map(mapWebContract).filter((row) => row.getfly_contract_id);
+    // The GetFly "Quản lý hợp đồng bán" screen is the source of truth for
+    // membership contracts. The broad orders API is only used to enrich matching
+    // rows, never to flood this table with non-membership orders.
+    const rows = buildContractRows(apiContracts, webContracts);
     const driveStats: DriveSyncStats = {
       foldersCreated: 0,
       contractFoldersCreated: 0,
@@ -650,8 +675,8 @@ export async function POST(req: NextRequest) {
       if (error) {
         console.error('[Sync Contracts] RPC error at chunk', i, error);
         // Fallback: try direct REST
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+        const supabaseUrl = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL);
+        const serviceKey = cleanEnv(process.env.SUPABASE_SERVICE_ROLE_KEY);
 
         const restRes = await fetch(`${supabaseUrl}/rest/v1/getfly_contracts?on_conflict=getfly_contract_id`, {
           method: 'POST',
@@ -782,6 +807,7 @@ export async function GET() {
     const { data, error, count } = await supabase
       .from('getfly_contracts')
       .select('*', { count: 'exact' })
+      .not('raw_data->>contract_id', 'is', null)
       .order('synced_at', { ascending: false })
       .limit(1);
 

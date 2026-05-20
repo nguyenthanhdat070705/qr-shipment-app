@@ -10,9 +10,13 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
  */
 let _client: SupabaseClient | null = null;
 
+function cleanEnv(value: string | undefined): string | undefined {
+  return value?.trim() || undefined;
+}
+
 export function getSupabase(): SupabaseClient {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseUrl = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const supabaseAnonKey = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
   // If real env vars are available, create and cache the real client
   if (supabaseUrl && supabaseAnonKey) {
@@ -29,5 +33,4 @@ export function getSupabase(): SupabaseClient {
   );
   return createClient('https://placeholder.supabase.co', 'placeholder-key');
 }
-
 

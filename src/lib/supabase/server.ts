@@ -12,9 +12,13 @@ let _adminClient: SupabaseClient | null = null;
 let _cachedUrl: string | undefined;
 let _cachedKey: string | undefined;
 
+function cleanEnv(value: string | undefined): string | undefined {
+  return value?.trim() || undefined;
+}
+
 export function getSupabaseAdmin(): SupabaseClient {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const serviceRoleKey = cleanEnv(process.env.SUPABASE_SERVICE_ROLE_KEY);
 
   // If real env vars are available, create/cache the real client.
   // Re-create if env vars changed (e.g., runtime vs build-time).
