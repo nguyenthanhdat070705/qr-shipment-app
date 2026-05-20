@@ -102,6 +102,15 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
       iconBg: 'bg-amber-500/15',
       section: 'Bán Hàng',
     } as MenuItem] : []),
+    ...(userRole === 'sales' || userRole === 'admin' ? [{
+      icon: <BookOpen size={18} />,
+      label: 'Catalog Hòm Sản phẩm',
+      desc: 'Bộ sưu tập hòm theo gỗ, màu, tôn giáo',
+      href: '/sales/catalog',
+      color: 'text-stone-300',
+      iconBg: 'bg-stone-500/20',
+      section: 'Bán Hàng',
+    } as MenuItem] : []),
 
 
     /* ── Membership & CSKH (chỉ sales + admin) ── */
