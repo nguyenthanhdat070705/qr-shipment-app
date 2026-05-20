@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import PageLayout from '@/components/PageLayout';
 import {
   Activity, BarChart3, CalendarDays, Crown, Database, FileCheck2, Filter,
-  LineChart, PieChart, RefreshCw, Search, ShieldCheck, Sparkles, TrendingUp,
+  Eye, LineChart, PieChart, RefreshCw, Search, ShieldCheck, Sparkles, TrendingUp,
   Users, WalletCards
 } from 'lucide-react';
 
@@ -38,9 +38,11 @@ type DashboardRecord = {
   beneficiary_name_1: string | null;
   beneficiary_vneid_1: string | null;
   beneficiary_phone_1: string | null;
+  beneficiary_address_1: string | null;
   beneficiary_name_2: string | null;
   beneficiary_vneid_2: string | null;
   beneficiary_phone_2: string | null;
+  beneficiary_address_2: string | null;
   buyer_email: string | null;
   docs: {
     vneid_front: boolean;
@@ -324,6 +326,7 @@ export default function MembershipAdminDashboardPage() {
     date_to: '',
   });
   const [searchInput, setSearchInput] = useState('');
+  const [selectedRecord, setSelectedRecord] = useState<DashboardRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -375,7 +378,13 @@ export default function MembershipAdminDashboardPage() {
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    const next = { ...filters, search: searchInput };
+    const hasTextSearch = searchInput.trim().length > 0;
+    const next = {
+      ...filters,
+      search: searchInput,
+      date_from: hasTextSearch ? '' : filters.date_from,
+      date_to: hasTextSearch ? '' : filters.date_to,
+    };
     setFilters(next);
     loadDashboard(next);
   }
@@ -467,6 +476,13 @@ export default function MembershipAdminDashboardPage() {
               <button type="button" onClick={resetFilters} className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-black text-slate-600 transition hover:bg-slate-50">Xóa</button>
             </div>
           </form>
+          {(filters.search || filters.date_from || filters.date_to) && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
+              {filters.search && <span className="rounded-full bg-indigo-50 px-3 py-1 text-indigo-700">Từ khóa: {filters.search}</span>}
+              {filters.date_from && <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">Từ ngày: {new Date(filters.date_from).toLocaleDateString('vi-VN')}</span>}
+              {filters.date_to && <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">Đến ngày: {new Date(filters.date_to).toLocaleDateString('vi-VN')}</span>}
+            </div>
+          )}
         </div>
 
         {error && (
@@ -571,7 +587,7 @@ export default function MembershipAdminDashboardPage() {
           <div className="flex flex-col gap-2 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-sm font-black uppercase tracking-wide text-slate-800">Bảng dữ liệu membership</h2>
-              <p className="text-xs font-semibold text-slate-400">Hiển thị 50 hợp đồng mới nhất theo bộ lọc hiện tại</p>
+              <p className="text-xs font-semibold text-slate-400">Hiển thị 50 hợp đồng mới nhất theo bộ lọc hiện tại, bấm vào một dòng để xem chi tiết</p>
             </div>
             <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1.5 text-xs font-black text-indigo-700">
               <Database size={14} /> {fmtNumber(data.summary.total_contracts)} HĐ
@@ -604,22 +620,25 @@ export default function MembershipAdminDashboardPage() {
                   <th className="px-3 py-3 font-black">VnEID TH 2</th>
                   <th className="px-3 py-3 font-black">Email người mua</th>
                   <th className="px-3 py-3 font-black">Hồ sơ</th>
+                  <th className="px-3 py-3 text-center font-black">Chi tiết</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {loading ? (
                   <tr>
-                    <td colSpan={22} className="py-14 text-center text-sm font-bold text-slate-400">
+                    <td colSpan={23} className="py-14 text-center text-sm font-bold text-slate-400">
                       <RefreshCw size={24} className="mx-auto mb-2 animate-spin text-slate-300" />
                       Đang tải dữ liệu...
                     </td>
                   </tr>
                 ) : data.records.length === 0 ? (
                   <tr>
-                    <td colSpan={22} className="py-14 text-center text-sm font-bold text-slate-400">Không có hợp đồng phù hợp</td>
+                    <td colSpan={23} className="py-14 text-center text-sm font-bold text-slate-400">
+                      Không có hợp đồng phù hợp. Nếu đang tìm mã như MBS, hãy bấm Xóa rồi tìm lại để bỏ các bộ lọc phụ.
+                    </td>
                   </tr>
                 ) : data.records.map((row) => (
-                  <tr key={row.id} className="transition hover:bg-indigo-50/40">
+                  <tr key={row.id} onClick={() => setSelectedRecord(row)} className="cursor-pointer transition hover:bg-indigo-50/40">
                     <td className="px-3 py-3">
                       <span className={`inline-flex min-w-10 justify-center rounded-full px-2 py-1 text-[10px] font-black ${remainClass(row.remaining_days)}`}>
                         {row.remaining_days ?? '-'}
@@ -664,13 +683,121 @@ export default function MembershipAdminDashboardPage() {
                         ))}
                       </div>
                     </td>
+                    <td className="px-3 py-3 text-center">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedRecord(row);
+                        }}
+                        className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2.5 py-1.5 text-[10px] font-black text-indigo-700 transition hover:bg-indigo-100"
+                      >
+                        <Eye size={12} /> Xem
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
+        {selectedRecord && (
+          <ContractDetailPanel record={selectedRecord} onClose={() => setSelectedRecord(null)} />
+        )}
       </div>
     </PageLayout>
+  );
+}
+
+function DetailItem({ label, value, tone }: { label: string; value: React.ReactNode; tone?: string }) {
+  return (
+    <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+      <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">{label}</p>
+      <div className={`mt-1 text-sm font-bold ${tone || 'text-slate-800'}`}>{value || <span className="text-slate-300">Chưa có</span>}</div>
+    </div>
+  );
+}
+
+function ContractDetailPanel({ record, onClose }: { record: DashboardRecord; onClose: () => void }) {
+  const docs = [
+    ['VnEID mặt trước', record.docs.vneid_front],
+    ['VnEID mặt sau', record.docs.vneid_back],
+    ['Scan hợp đồng', record.docs.contract_scan],
+    ['Phiếu hội viên', record.docs.membership_form],
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[300] flex items-end justify-center bg-black/40 backdrop-blur-sm lg:items-center lg:justify-end" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl lg:h-full lg:max-h-none lg:max-w-2xl lg:rounded-none">
+        <div className="border-b border-slate-100 px-5 py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-black uppercase tracking-wide text-indigo-500">Chi tiết hợp đồng</p>
+              <h3 className="mt-1 truncate text-xl font-black text-slate-950">{record.contract_name || record.source_contract_code || record.contract_code || 'Hợp đồng'}</h3>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span className={`rounded-full border px-2.5 py-1 text-[11px] font-black ${statusBadge(record.contract_status)}`}>{record.contract_status || 'Chưa rõ trạng thái'}</span>
+                <span className={`rounded-full px-2.5 py-1 text-[11px] font-black ${remainClass(record.remaining_days)}`}>{record.remaining_days ?? '-'} ngày</span>
+              </div>
+            </div>
+            <button onClick={onClose} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-black text-slate-600 transition hover:bg-slate-50">Đóng</button>
+          </div>
+        </div>
+
+        <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5">
+          <section>
+            <h4 className="mb-3 text-xs font-black uppercase tracking-wide text-slate-500">Thông tin hợp đồng</h4>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <DetailItem label="Tên hợp đồng" value={record.contract_name} />
+              <DetailItem label="Số hợp đồng" value={record.contract_code} />
+              <DetailItem label="Mã GetFly / MBS" value={record.source_contract_code || record.getfly_contract_id} tone="text-indigo-700" />
+              <DetailItem label="Kiểu hợp đồng" value={record.contract_type} />
+              <DetailItem label="Ngày tạo" value={record.created_date} />
+              <DetailItem label="Hiệu lực" value={record.effective_date} />
+              <DetailItem label="Hết hiệu lực" value={record.expiry_date} />
+              <DetailItem label="Phụ trách" value={record.person_in_charge} />
+            </div>
+          </section>
+
+          <section>
+            <h4 className="mb-3 text-xs font-black uppercase tracking-wide text-slate-500">Khách hàng & tài chính</h4>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <DetailItem label="Khách hàng" value={record.customer_name} />
+              <DetailItem label="SĐT khách hàng" value={record.customer_phone} />
+              <DetailItem label="Giá trị hợp đồng" value={record.contract_value ? fmtNumber(record.contract_value) : '-'} tone="text-indigo-700" />
+              <DetailItem label="Giá trị thực" value={record.actual_value ? fmtNumber(record.actual_value) : '-'} tone="text-emerald-700" />
+              <DetailItem label="Đã thực hiện" value={fmtNumber(record.executed_amount)} />
+              <DetailItem label="Đã thanh toán" value={fmtNumber(record.paid_amount)} tone="text-emerald-700" />
+              <DetailItem label="Công nợ" value={fmtNumber(record.debt_amount)} tone="text-red-600" />
+              <DetailItem label="Email người mua" value={record.buyer_email} />
+            </div>
+          </section>
+
+          <section>
+            <h4 className="mb-3 text-xs font-black uppercase tracking-wide text-slate-500">Người thụ hưởng</h4>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <DetailItem label="Người TH 1" value={record.beneficiary_name_1} />
+              <DetailItem label="VnEID TH 1" value={record.beneficiary_vneid_1} />
+              <DetailItem label="SĐT TH 1" value={record.beneficiary_phone_1} />
+              <DetailItem label="Địa chỉ TH 1" value={record.beneficiary_address_1} />
+              <DetailItem label="Người TH 2" value={record.beneficiary_name_2} />
+              <DetailItem label="VnEID TH 2" value={record.beneficiary_vneid_2} />
+              <DetailItem label="SĐT TH 2" value={record.beneficiary_phone_2} />
+              <DetailItem label="Địa chỉ TH 2" value={record.beneficiary_address_2} />
+            </div>
+          </section>
+
+          <section>
+            <h4 className="mb-3 text-xs font-black uppercase tracking-wide text-slate-500">Hồ sơ</h4>
+            <div className="grid grid-cols-2 gap-2">
+              {docs.map(([label, ok]) => (
+                <div key={String(label)} className={`rounded-xl px-3 py-3 text-sm font-black ${ok ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>
+                  {ok ? 'Đã có' : 'Chưa có'} · {label}
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
   );
 }

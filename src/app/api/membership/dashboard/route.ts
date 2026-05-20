@@ -84,17 +84,12 @@ function topItems(map: Map<string, { count: number; value: number }>, limit = 8)
     .slice(0, limit);
 }
 
-export async function GET(req: NextRequest) {
-  try {
-    const supabase = getSupabaseAdmin();
-    const search = str(req.nextUrl.searchParams.get('search')).toLowerCase();
-    const status = str(req.nextUrl.searchParams.get('status'));
-    const type = str(req.nextUrl.searchParams.get('type'));
-    const owner = str(req.nextUrl.searchParams.get('owner'));
-    const remaining = str(req.nextUrl.searchParams.get('remaining'));
-    const dateFrom = str(req.nextUrl.searchParams.get('date_from'));
-    const dateTo = str(req.nextUrl.searchParams.get('date_to'));
+async function fetchAllContracts(supabase: ReturnType<typeof getSupabaseAdmin>) {
+  const rows: ContractRow[] = [];
+  const batchSize = 1000;
+  let from = 0;
 
+  while (true) {
     const { data, error } = await supabase
       .from('getfly_contracts')
       .select(`
@@ -107,27 +102,53 @@ export async function GET(req: NextRequest) {
         buyer_email, synced_at
       `)
       .order('synced_at', { ascending: false })
-      .limit(5000);
+      .range(from, from + batchSize - 1);
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+    if (error) throw error;
 
-    const contracts = (data || []) as ContractRow[];
+    const batch = (data || []) as ContractRow[];
+    rows.push(...batch);
+    if (batch.length < batchSize) break;
+    from += batchSize;
+  }
+
+  return rows;
+}
+
+async function fetchDriveMap(supabase: ReturnType<typeof getSupabaseAdmin>, contractIds: string[]) {
+  const driveMap = new Map<string, DriveRow>();
+  const batchSize = 500;
+
+  for (let i = 0; i < contractIds.length; i += batchSize) {
+    const ids = contractIds.slice(i, i + batchSize);
+    const { data: driveRows } = await supabase
+      .from('membership_gdrive_attachments')
+      .select('getfly_contract_id, vneid_front_file_id, vneid_back_file_id, contract_scan_file_id, membership_form_file_id, last_sync_at')
+      .in('getfly_contract_id', ids);
+
+    (driveRows || []).forEach((row) => {
+      const drive = row as DriveRow;
+      driveMap.set(drive.getfly_contract_id, drive);
+    });
+  }
+
+  return driveMap;
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const supabase = getSupabaseAdmin();
+    const search = str(req.nextUrl.searchParams.get('search')).toLowerCase();
+    const status = str(req.nextUrl.searchParams.get('status'));
+    const type = str(req.nextUrl.searchParams.get('type'));
+    const owner = str(req.nextUrl.searchParams.get('owner'));
+    const remaining = str(req.nextUrl.searchParams.get('remaining'));
+    const dateFrom = str(req.nextUrl.searchParams.get('date_from'));
+    const dateTo = str(req.nextUrl.searchParams.get('date_to'));
+
+    const contracts = await fetchAllContracts(supabase);
     const contractIds = contracts.map((c) => c.getfly_contract_id).filter(Boolean);
-    const driveMap = new Map<string, DriveRow>();
-
-    if (contractIds.length > 0) {
-      const { data: driveRows } = await supabase
-        .from('membership_gdrive_attachments')
-        .select('getfly_contract_id, vneid_front_file_id, vneid_back_file_id, contract_scan_file_id, membership_form_file_id, last_sync_at')
-        .in('getfly_contract_id', contractIds);
-
-      (driveRows || []).forEach((row) => {
-        const drive = row as DriveRow;
-        driveMap.set(drive.getfly_contract_id, drive);
-      });
-    }
+    const driveMap = contractIds.length > 0 ? await fetchDriveMap(supabase, contractIds) : new Map<string, DriveRow>();
 
     const options = {
       statuses: Array.from(new Set(contracts.map((c) => str(c.contract_status)).filter(Boolean))).sort(),
