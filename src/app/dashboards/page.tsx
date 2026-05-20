@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { LayoutDashboard, BarChart3, Warehouse, ShoppingCart, BookOpen, Truck, Crown, Package } from 'lucide-react';
 import Link from 'next/link';
 import PageLayout from '@/components/PageLayout';
-import { getUserRole, UserRole } from '@/config/roles.config';
+import { getUserRole, isMarketDevelopmentUser, UserRole } from '@/config/roles.config';
 
 export default function DashboardsHubPage() {
   const [userRole, setUserRole] = useState<UserRole>('sales');
+  const [userEmail, setUserEmail] = useState('');
+  const [roleReady, setRoleReady] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -15,9 +17,13 @@ export default function DashboardsHubPage() {
         const raw = localStorage.getItem('auth_user');
         if (raw) {
           const u = JSON.parse(raw);
-          setUserRole(getUserRole(u.email || ''));
+          const email = u.email || '';
+          setUserEmail(email);
+          setUserRole(getUserRole(email));
         }
       } catch { /* ignore */ }
+
+      setRoleReady(true);
     }, 0);
 
     return () => {
@@ -25,7 +31,9 @@ export default function DashboardsHubPage() {
     };
   }, []);
 
-  const dashboards = [
+  const isMarketDevelopment = isMarketDevelopmentUser(userEmail);
+
+  const dashboards = roleReady ? [
     ...(userRole === 'admin' || userRole === 'warehouse' ? [{
       id: 'warehouse',
       title: 'Dashboard Kho',
@@ -36,7 +44,7 @@ export default function DashboardsHubPage() {
       shadow: 'shadow-emerald-500/20',
       gradient: 'from-emerald-400 to-teal-600',
     }] : []),
-    ...(userRole === 'admin' || userRole === 'sales' ? [{
+    ...(userRole === 'admin' || (userRole === 'sales' && !isMarketDevelopment) ? [{
       id: 'membership',
       title: 'Dashboard Membership',
       icon: <Crown size={28} className="text-white" />,
@@ -66,7 +74,7 @@ export default function DashboardsHubPage() {
       shadow: 'shadow-red-500/20',
       gradient: 'from-red-400 to-rose-600',
     }] : []),
-    ...(userRole === 'admin' || userRole === 'sales' ? [{
+    ...(userRole === 'admin' || (userRole === 'sales' && !isMarketDevelopment) ? [{
       id: 'sales',
       title: 'Dashboard Bán Hàng',
       icon: <ShoppingCart size={28} className="text-white" />,
@@ -96,7 +104,7 @@ export default function DashboardsHubPage() {
       shadow: "shadow-yellow-500/20",
       gradient: "from-yellow-400 to-amber-600",
     }] : [])
-  ];
+  ] : [];
 
   return (
     <PageLayout title="Trung Tâm Dashboards" icon={<LayoutDashboard size={15} className="text-indigo-500" />}>
@@ -137,7 +145,7 @@ export default function DashboardsHubPage() {
             </div>
           </Link>
         ))}
-        {dashboards.length === 0 && (
+        {roleReady && dashboards.length === 0 && (
           <div className="col-span-1 sm:col-span-2 border border-gray-200 rounded-2xl p-6 sm:p-8 text-center text-sm text-gray-500">
             Tài khoản của bạn chưa được phân quyền xem Dashboard nào.
           </div>

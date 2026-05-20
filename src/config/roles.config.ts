@@ -177,6 +177,12 @@ export function getUserRole(email: string): UserRole {
   return 'sales';
 }
 
+/** Bộ phận phát triển thị trường dùng quyền sales nhưng cần ẩn một số báo cáo nội bộ. */
+export function isMarketDevelopmentUser(email: string): boolean {
+  const username = (email || '').toLowerCase().trim().split('@')[0];
+  return username === 'bophanpttt' || username === 'pttt';
+}
+
 /**
  * Get full role config from email.
  */
