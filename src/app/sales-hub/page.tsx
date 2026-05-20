@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  ShoppingCart, Receipt, Scale, Presentation
+import {
+  ShoppingCart, Receipt, Scale, Presentation, BookOpen
 } from "lucide-react";
 import Link from "next/link";
 import PageLayout from "@/components/PageLayout";
@@ -22,6 +22,16 @@ export default function SalesHubPage() {
   }, []);
 
   const cards = [
+    ...(userRole === "sales" || userRole === "admin" ? [{
+      id: "catalog",
+      title: "Catalog Hòm Sản phẩm",
+      icon: <BookOpen size={32} className="text-white" />,
+      desc: "Bộ sưu tập hòm phân theo loại gỗ, màu sắc, tôn giáo — phục vụ tư vấn trực tiếp khách hàng.",
+      href: "/sales/catalog",
+      color: "bg-stone-700",
+      shadow: "shadow-stone-700/30",
+      gradient: "from-stone-700 to-amber-900",
+    }] : []),
     ...(userRole === "sales" || userRole === "admin" ? [{
       id: "orders",
       title: "Tạo đơn hàng mới",
@@ -60,7 +70,7 @@ export default function SalesHubPage() {
       <div className="mb-6 sm:mb-10 text-center space-y-2 sm:space-y-4 px-4">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-gray-900">Trung Tâm Bán Hàng</h1>
         <p className="text-sm sm:text-base text-gray-500 max-w-xl mx-auto">
-          Tập hợp các nghiệp vụ bán hàng, tạo đơn hàng vật tư, kinh doanh gói thành viên và tài liệu quy định nội bộ do bộ phận quản lý.
+          Tập hợp các nghiệp vụ bán hàng — catalog hòm, tạo đơn hàng vật tư, kinh doanh gói thành viên và tài liệu quy định nội bộ do bộ phận quản lý.
         </p>
       </div>
 
