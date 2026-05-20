@@ -458,26 +458,44 @@ function getApiContractId(c: Record<string, unknown>) {
   return str(c.order_id || c.contract_id || c.id);
 }
 
+function getApiContractCode(c: Record<string, unknown>) {
+  return str(c.order_code || c.contract_code || c.code);
+}
+
+function normalizeContractCode(value: unknown) {
+  return str(value)?.toUpperCase() || null;
+}
+
 function buildContractRows(
   apiContracts: Record<string, unknown>[],
   webContracts: Record<string, unknown>[],
 ) {
-  const webById = new Map(
+  const webByCode = new Map(
     webContracts
-      .map((contract) => [str(contract.contract_id), contract] as const)
-      .filter(([id]) => !!id),
+      .map((contract) => [normalizeContractCode(contract.contract_code), contract] as const)
+      .filter(([code]) => !!code),
   );
 
   const rows = apiContracts.map((contract) => {
     const id = getApiContractId(contract);
-    const webContract = id ? webById.get(id) : undefined;
-    return webContract ? mapWebContract(webContract) : mapApiContract(contract);
+    const code = getApiContractCode(contract);
+    const webContract = code ? webByCode.get(normalizeContractCode(code) || '') : undefined;
+
+    if (!webContract) return mapApiContract(contract);
+
+    return {
+      ...mapWebContract(webContract),
+      getfly_contract_id: id,
+    };
   });
 
   const apiIds = new Set(apiContracts.map(getApiContractId).filter(Boolean));
+  const apiCodes = new Set(apiContracts.map(getApiContractCode).map(normalizeContractCode).filter(Boolean));
+
   for (const contract of webContracts) {
     const id = str(contract.contract_id);
-    if (id && !apiIds.has(id)) rows.push(mapWebContract(contract));
+    const code = normalizeContractCode(contract.contract_code);
+    if (id && !apiIds.has(id) && (!code || !apiCodes.has(code))) rows.push(mapWebContract(contract));
   }
 
   return rows.filter((row) => row.getfly_contract_id);

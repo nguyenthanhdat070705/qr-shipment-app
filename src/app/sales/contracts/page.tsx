@@ -3,8 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import PageLayout from '@/components/PageLayout';
 import {
   FileText, Search, ChevronLeft, ChevronRight, RefreshCw, Download,
-  CheckCircle, Database, Phone, Mail, MapPin, User, Calendar,
-  DollarSign, Eye, X, Clock, ExternalLink, Filter
+  CheckCircle, Database, Eye, X, ExternalLink
 } from 'lucide-react';
 
 interface Contract {
@@ -76,6 +75,7 @@ export default function ContractsPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [syncedCount, setSyncedCount] = useState(0);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -106,17 +106,17 @@ export default function ContractsPage() {
       const res = await fetch('/api/sync-getfly-contracts');
       const d = await res.json();
       setLastSync(d.last_sync || null);
-      if (!total) setTotal(d.synced_count || 0);
+      setSyncedCount(d.synced_count || 0);
     } catch {}
   }, []);
 
-  useEffect(() => { loadSyncInfo(); }, []);
+  useEffect(() => { loadSyncInfo(); }, [loadSyncInfo]);
   useEffect(() => { loadContracts(); }, [loadContracts]);
 
   async function handleSync() {
     setSyncing(true); setSyncResult(null);
     try {
-      const res = await fetch('/api/sync-getfly-contracts', { method: 'POST' });
+      const res = await fetch('/api/sync-getfly-contracts?sync_drive=false', { method: 'POST' });
       const data = await res.json();
       setSyncResult(data);
       if (data.success) { loadContracts(); loadSyncInfo(); }
@@ -175,7 +175,7 @@ export default function ContractsPage() {
         <div className="flex items-center justify-between bg-indigo-50 border border-indigo-100 rounded-2xl px-5 py-3">
           <div className="flex items-center gap-2 text-sm">
             <Database size={16} className="text-indigo-500" />
-            <span className="font-bold text-indigo-800">{total.toLocaleString()} hợp đồng đã sync</span>
+            <span className="font-bold text-indigo-800">{syncedCount.toLocaleString()} hợp đồng đã sync</span>
           </div>
           <span className="text-xs text-indigo-400">Dữ liệu lưu trong Supabase</span>
         </div>
@@ -209,7 +209,7 @@ export default function ContractsPage() {
             <div className="py-16 text-center">
               <FileText size={32} className="mx-auto mb-3 text-gray-300" />
               <p className="font-semibold text-gray-500">Chưa có dữ liệu hợp đồng</p>
-              <p className="text-sm text-gray-400 mt-1">Nhấn nút <strong>"Sync từ GetFly"</strong> để tải dữ liệu về</p>
+              <p className="text-sm text-gray-400 mt-1">Nhấn nút <strong>Sync từ GetFly</strong> để tải dữ liệu về</p>
             </div>
           ) : (
             <>
