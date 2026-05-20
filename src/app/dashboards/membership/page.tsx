@@ -263,56 +263,80 @@ function DonutChart({ data }: { data: ChartItem[] }) {
   );
 }
 
+function formatMonthLabel(label: string) {
+  const match = /^(\d{4})-(\d{2})$/.exec(label);
+  if (!match) return label;
+  return `T${match[2]}/${match[1].slice(2)}`;
+}
+
 function ComboChart({ data }: { data: ChartItem[] }) {
+  if (data.length === 0) {
+    return (
+      <div className="flex h-[260px] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-sm font-semibold text-slate-400">
+        Chưa có hợp đồng nào có ngày tạo / ngày hiệu lực để vẽ xu hướng
+      </div>
+    );
+  }
+
+  const maxCount = Math.max(1, ...data.map((item) => item.count));
   const maxValue = Math.max(1, ...data.map((item) => item.value));
-  const maxPaid = Math.max(1, ...data.map((item) => item.paid || 0));
   const width = 720;
-  const height = 260;
-  const pad = 34;
+  const height = 280;
+  const pad = 40;
   const innerW = width - pad * 2;
   const innerH = height - pad * 2;
-  const step = data.length ? innerW / data.length : innerW;
-  const barW = Math.max(18, Math.min(34, step * 0.42));
+  const step = innerW / data.length;
+  const barW = Math.max(18, Math.min(40, step * 0.5));
   const points = data.map((item, index) => {
     const x = pad + step * index + step / 2;
-    const y = pad + innerH - ((item.paid || 0) / maxPaid) * innerH;
+    const y = pad + innerH - (item.value / maxValue) * innerH;
     return `${x},${y}`;
   }).join(' ');
 
   return (
     <div className="overflow-hidden rounded-2xl bg-slate-950 p-3 text-white">
-      <svg viewBox={`0 0 ${width} ${height}`} className="h-[250px] w-full">
+      <svg viewBox={`0 0 ${width} ${height}`} className="h-[260px] w-full">
         {[0, 1, 2, 3].map((i) => {
           const y = pad + (innerH / 3) * i;
-          return <line key={i} x1={pad} x2={width - pad} y1={y} y2={y} stroke="#334155" strokeWidth="1" />;
+          const countLabel = Math.round((maxCount * (3 - i)) / 3);
+          return (
+            <g key={i}>
+              <line x1={pad} x2={width - pad} y1={y} y2={y} stroke="#334155" strokeWidth="1" />
+              <text x={pad - 6} y={y + 4} textAnchor="end" fill="#64748b" fontSize="10" fontWeight="700">{countLabel}</text>
+            </g>
+          );
         })}
         {data.map((item, index) => {
           const x = pad + step * index + step / 2 - barW / 2;
-          const barH = (item.value / maxValue) * innerH;
+          const barH = (item.count / maxCount) * innerH;
           const y = pad + innerH - barH;
           return (
             <g key={item.label}>
-              <rect x={x} y={y} width={barW} height={barH} rx="7" fill="#22d3ee" opacity="0.82" />
-              <text x={x + barW / 2} y={height - 9} textAnchor="middle" fill="#94a3b8" fontSize="11" fontWeight="700">
-                {item.label === 'Chưa rõ' ? 'N/A' : item.label.slice(5)}
+              <rect x={x} y={y} width={barW} height={barH} rx="7" fill="#22d3ee" opacity="0.85">
+                <title>{`${formatMonthLabel(item.label)}\nSố HĐ: ${item.count}\nDoanh thu: ${fmtMoney(item.value)}\nĐã thanh toán: ${fmtMoney(item.paid || 0)}`}</title>
+              </rect>
+              <text x={x + barW / 2} y={y - 6} textAnchor="middle" fill="#e2e8f0" fontSize="11" fontWeight="800">{item.count}</text>
+              <text x={x + barW / 2} y={height - 12} textAnchor="middle" fill="#94a3b8" fontSize="11" fontWeight="700">
+                {formatMonthLabel(item.label)}
               </text>
             </g>
           );
         })}
-        {data.length > 0 && (
-          <>
-            <polyline points={points} fill="none" stroke="#facc15" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-            {data.map((item, index) => {
-              const x = pad + step * index + step / 2;
-              const y = pad + innerH - ((item.paid || 0) / maxPaid) * innerH;
-              return <circle key={`${item.label}-paid`} cx={x} cy={y} r="5" fill="#facc15" stroke="#0f172a" strokeWidth="3" />;
-            })}
-          </>
-        )}
+        <polyline points={points} fill="none" stroke="#facc15" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        {data.map((item, index) => {
+          const x = pad + step * index + step / 2;
+          const y = pad + innerH - (item.value / maxValue) * innerH;
+          return (
+            <g key={`${item.label}-value`}>
+              <circle cx={x} cy={y} r="5" fill="#facc15" stroke="#0f172a" strokeWidth="3" />
+              <text x={x} y={y - 10} textAnchor="middle" fill="#facc15" fontSize="10" fontWeight="800">{fmtMoney(item.value)}</text>
+            </g>
+          );
+        })}
       </svg>
       <div className="flex flex-wrap items-center gap-4 px-2 pb-1 text-xs font-semibold text-slate-300">
-        <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-cyan-300" />Giá trị HĐ</span>
-        <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-yellow-300" />Đã thanh toán</span>
+        <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-cyan-300" />Số HĐ</span>
+        <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-yellow-300" />Doanh thu</span>
       </div>
     </div>
   );
