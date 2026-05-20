@@ -26,16 +26,6 @@ export default function DashboardsHubPage() {
   }, []);
 
   const dashboards = [
-    ...(userRole === 'admin' ? [{
-      id: 'admin',
-      title: 'Admin Dashboard',
-      icon: <BarChart3 size={32} className="text-white" />,
-      desc: 'Tổng quan toàn hệ thống kinh doanh, kho vận, tài chính...',
-      href: '/admin',
-      color: 'bg-red-500',
-      shadow: 'shadow-red-500/20',
-      gradient: 'from-red-400 to-rose-600',
-    }] : []),
     ...(userRole === 'admin' || userRole === 'warehouse' ? [{
       id: 'warehouse',
       title: 'Dashboard Kho',
@@ -45,16 +35,6 @@ export default function DashboardsHubPage() {
       color: 'bg-emerald-500',
       shadow: 'shadow-emerald-500/20',
       gradient: 'from-emerald-400 to-teal-600',
-    }] : []),
-    ...(userRole === 'admin' || userRole === 'sales' ? [{
-      id: 'sales',
-      title: 'Dashboard Bán Hàng',
-      icon: <ShoppingCart size={28} className="text-white" />,
-      desc: 'Hiệu suất bán hàng, đơn giá trị, trạng thái vận chuyển...',
-      href: '/sales',
-      color: 'bg-blue-500',
-      shadow: 'shadow-blue-500/20',
-      gradient: 'from-blue-400 to-indigo-600',
     }] : []),
     ...(userRole === 'admin' || userRole === 'sales' ? [{
       id: 'membership',
@@ -75,6 +55,26 @@ export default function DashboardsHubPage() {
       color: 'bg-pink-500',
       shadow: 'shadow-pink-500/20',
       gradient: 'from-pink-400 to-fuchsia-600',
+    }] : []),
+    ...(userRole === 'admin' ? [{
+      id: 'admin',
+      title: 'Admin Dashboard',
+      icon: <BarChart3 size={32} className="text-white" />,
+      desc: 'Tổng quan toàn hệ thống kinh doanh, kho vận, tài chính...',
+      href: '/admin',
+      color: 'bg-red-500',
+      shadow: 'shadow-red-500/20',
+      gradient: 'from-red-400 to-rose-600',
+    }] : []),
+    ...(userRole === 'admin' || userRole === 'sales' ? [{
+      id: 'sales',
+      title: 'Dashboard Bán Hàng',
+      icon: <ShoppingCart size={28} className="text-white" />,
+      desc: 'Hiệu suất bán hàng, đơn giá trị, trạng thái vận chuyển...',
+      href: '/sales',
+      color: 'bg-blue-500',
+      shadow: 'shadow-blue-500/20',
+      gradient: 'from-blue-400 to-indigo-600',
     }] : []),
     ...(userRole === "admin" || userRole === "operations" ? [{
       id: "operations",
