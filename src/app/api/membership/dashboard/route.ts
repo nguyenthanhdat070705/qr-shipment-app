@@ -250,6 +250,7 @@ export async function GET(req: NextRequest) {
     });
 
     const monthly = Array.from(monthlyMap.entries())
+      .filter(([label]) => label !== 'Chưa rõ')
       .map(([label, item]) => ({ label, ...item }))
       .sort((a, b) => a.label.localeCompare(b.label))
       .slice(-12);
