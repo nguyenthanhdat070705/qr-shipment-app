@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Minus, Search, Package, Edit2, X, Check, ChevronDown, ChevronUp, Upload, Image as ImageIcon, Loader2, Trash2, ArrowLeft, AlertTriangle, Warehouse } from 'lucide-react';
+import { Plus, Minus, Search, Package, Edit2, X, Check, ChevronDown, ChevronUp, Upload, Image as ImageIcon, Loader2, Trash2, ArrowLeft, AlertTriangle, Warehouse, SlidersHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import ExcelImportModal from '@/components/ExcelImportModal';
 import { isVIPAdmin, getUserRole, UserRole } from '@/config/roles.config';
@@ -90,6 +90,9 @@ export default function ProductsManagePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [quantityFilter, setQuantityFilter] = useState('all');
+  const [quantityMin, setQuantityMin] = useState('');
+  const [quantityMax, setQuantityMax] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -460,12 +463,38 @@ export default function ProductsManagePage() {
 
   const filtered = products.filter(p => {
     const q = search.toLowerCase();
-    return (
+    const quantity = Number(p.so_luong || 0);
+    const parsedMin = quantityMin === '' ? null : Number(quantityMin);
+    const parsedMax = quantityMax === '' ? null : Number(quantityMax);
+    const min = parsedMin !== null && Number.isFinite(parsedMin) ? parsedMin : null;
+    const max = parsedMax !== null && Number.isFinite(parsedMax) ? parsedMax : null;
+    const matchesSearch = (
       p.ma_hom.toLowerCase().includes(q) ||
       p.ten_hom.toLowerCase().includes(q) || (p.Nguon_goc || '').toLowerCase().includes(q) ||
       (p.loai_hom || '').toLowerCase().includes(q)
     );
+
+    const matchesPreset =
+      quantityFilter === 'all' ||
+      (quantityFilter === 'in_stock' && quantity > 0) ||
+      (quantityFilter === 'out_of_stock' && quantity === 0) ||
+      (quantityFilter === 'low_stock' && quantity > 0 && quantity <= 5);
+
+    const matchesRange =
+      (min === null || quantity >= min) &&
+      (max === null || quantity <= max);
+
+    return matchesSearch && matchesPreset && matchesRange;
   });
+
+  const hasQuantityFilter = quantityFilter !== 'all' || quantityMin !== '' || quantityMax !== '';
+
+  const clearQuantityFilter = () => {
+    setQuantityFilter('all');
+    setQuantityMin('');
+    setQuantityMax('');
+    setCurrentPage(1);
+  };
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const currentProducts = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -878,20 +907,60 @@ export default function ProductsManagePage() {
         </div>
       )}
 
-      {/* Search */}
-      <div className="pm-search-bar">
-        <Search size={18} />
-        <input
-          type="text"
-          placeholder="Tìm theo mã hòm, tên, NCC, loại..."
-          value={search}
-          onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
-        />
-        {search && (
-          <button className="pm-search-clear" onClick={() => setSearch('')}>
-            <X size={16} />
-          </button>
-        )}
+      {/* Search & Filters */}
+      <div className="pm-filter-row">
+        <div className="pm-search-bar">
+          <Search size={18} />
+          <input
+            type="text"
+            placeholder="Tìm theo mã hòm, tên, NCC, loại..."
+            value={search}
+            onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
+          />
+          {search && (
+            <button className="pm-search-clear" onClick={() => setSearch('')}>
+              <X size={16} />
+            </button>
+          )}
+        </div>
+
+        <div className="pm-qty-filter">
+          <SlidersHorizontal size={18} />
+          <select
+            aria-label="Lọc số lượng hòm"
+            value={quantityFilter}
+            onChange={e => { setQuantityFilter(e.target.value); setCurrentPage(1); }}
+          >
+            <option value="all">Tất cả SL</option>
+            <option value="in_stock">Còn hàng</option>
+            <option value="out_of_stock">Hết hàng</option>
+            <option value="low_stock">Sắp hết (1-5)</option>
+          </select>
+          <input
+            type="number"
+            min="0"
+            inputMode="numeric"
+            placeholder="Từ"
+            value={quantityMin}
+            onChange={e => { setQuantityMin(e.target.value); setCurrentPage(1); }}
+            aria-label="Số lượng tối thiểu"
+          />
+          <span className="pm-qty-filter-separator">-</span>
+          <input
+            type="number"
+            min="0"
+            inputMode="numeric"
+            placeholder="Đến"
+            value={quantityMax}
+            onChange={e => { setQuantityMax(e.target.value); setCurrentPage(1); }}
+            aria-label="Số lượng tối đa"
+          />
+          {hasQuantityFilter && (
+            <button className="pm-search-clear" onClick={clearQuantityFilter} title="Xóa lọc số lượng">
+              <X size={16} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Table */}

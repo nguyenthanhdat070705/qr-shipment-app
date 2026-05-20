@@ -53,3 +53,4 @@ Membership/*.docx
 .env.preview
 scripts/cred_minified.txt
 .env*.local
+.claude/

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useSyncExternalStore } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Search, Package, ChevronDown, MapPin, Warehouse, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { Search, Package, ChevronDown, MapPin, Warehouse, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { getWarehouseFilter } from '@/config/roles.config';
 
@@ -41,6 +41,19 @@ interface InventoryItem {
 type FilterType = 'all' | 'available' | 'exported' | 'out_of_stock';
 type SortType = 'name' | 'price_asc' | 'price_desc' | 'code';
 
+function getLockedWarehouseFromStorage() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = localStorage.getItem('auth_user');
+    if (!stored) return null;
+    const user = JSON.parse(stored);
+    return user.email ? getWarehouseFilter(user.email) : null;
+  } catch (e) {
+    console.error('Error reading auth_user', e);
+    return null;
+  }
+}
+
 export default function InventorySearch({ items, showStats = false }: { items: InventoryItem[]; showStats?: boolean }) {
   const searchParams = useSearchParams();
   const initialFilter = (searchParams.get('filter') as FilterType) || 'all';
@@ -48,29 +61,14 @@ export default function InventorySearch({ items, showStats = false }: { items: I
   const [filter, setFilter] = useState<FilterType>(initialFilter);
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | 'Đã mua' | 'Ký gửi'>('all');
-  const [sort, setSort] = useState<SortType>('name');
+  const sort: SortType = 'name';
   const [warehouseFilter, setWarehouseFilter] = useState<string>('all');
-  const [lockedWarehouse, setLockedWarehouse] = useState<string | null>(null);
+  const lockedWarehouse = useSyncExternalStore(
+    () => () => {},
+    getLockedWarehouseFromStorage,
+    () => null
+  );
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('auth_user');
-      if (stored) {
-        const user = JSON.parse(stored);
-        if (user.email) {
-          const filterValue = getWarehouseFilter(user.email);
-          if (filterValue) {
-            setLockedWarehouse(filterValue);
-            // Không set warehouseFilter ngay — chờ uniqueWarehouses tính xong
-            // sẽ được set trong useEffect bên dưới theo uniqueWarehouses thực tế
-          }
-        }
-      }
-    } catch (e) {
-      console.error('Error reading auth_user', e);
-    }
-  }, []);
 
   const uniqueWarehouses = useMemo(() => {
     const ws = new Set<string>();
@@ -82,28 +80,21 @@ export default function InventorySearch({ items, showStats = false }: { items: I
     return Array.from(ws).sort();
   }, [items]);
 
-  // Sau khi uniqueWarehouses có dữ liệu, tìm tên kho thực tế match với lockedWarehouse
-  useEffect(() => {
-    if (!lockedWarehouse || uniqueWarehouses.length === 0) return;
-    // Tìm tên kho trong DB chứa chuỗi lockedWarehouse (case-insensitive)
+  const effectiveWarehouseFilter = useMemo(() => {
+    if (!lockedWarehouse || uniqueWarehouses.length === 0) return warehouseFilter;
     const matched = uniqueWarehouses.find(
       w => w.toLowerCase().includes(lockedWarehouse.toLowerCase()) ||
            lockedWarehouse.toLowerCase().includes(w.toLowerCase())
     );
-    if (matched) {
-      setWarehouseFilter(matched);
-    } else {
-      // Nếu không tìm thấy tên khớp, giữ lockedWarehouse để filter
-      setWarehouseFilter(lockedWarehouse);
-    }
-  }, [lockedWarehouse, uniqueWarehouses]);
+    return matched || lockedWarehouse;
+  }, [lockedWarehouse, uniqueWarehouses, warehouseFilter]);
 
   const filtered = useMemo(() => {
     let result: InventoryItem[];
 
     // Warehouse Filter: nếu có filter kho, re-map items theo tồn kho riêng của kho đó
-    if (warehouseFilter !== 'all') {
-      const filterLower = warehouseFilter.toLowerCase().trim();
+    if (effectiveWarehouseFilter !== 'all') {
+      const filterLower = effectiveWarehouseFilter.toLowerCase().trim();
 
       result = items
         .map(item => {
@@ -193,16 +184,16 @@ export default function InventorySearch({ items, showStats = false }: { items: I
     }
 
     return result;
-  }, [items, query, filter, sort, warehouseFilter, activeFilter, typeFilter]);
+  }, [items, query, filter, sort, effectiveWarehouseFilter, activeFilter, typeFilter]);
 
 
   // Stats tính từ dữ liệu kho — dùng bd.qty/avail trực tiếp để nhất quán
   const warehouseStats = useMemo(() => {
-    const baseItems = warehouseFilter === 'all'
+    const baseItems = effectiveWarehouseFilter === 'all'
       ? items
       : items
           .map(item => {
-            const filterLower = warehouseFilter.toLowerCase().trim();
+            const filterLower = effectiveWarehouseFilter.toLowerCase().trim();
             const bd = item.warehouseBreakdown?.find(w =>
               w.name.toLowerCase().includes(filterLower) ||
               filterLower.includes(w.name.toLowerCase())
@@ -220,51 +211,51 @@ export default function InventorySearch({ items, showStats = false }: { items: I
       totalStock: baseItems.reduce((sum, i) => sum + Number(i.khaDung || '0'), 0),
       warehouseName: lockedWarehouse || 'Tất cả kho',
     };
-  }, [items, warehouseFilter, lockedWarehouse]);
+  }, [items, effectiveWarehouseFilter, lockedWarehouse]);
 
   return (
-    <div className="space-y-4 px-2 sm:px-0 w-max max-w-full">
+    <div className="space-y-4 px-2 sm:px-0 w-full max-w-full">
       {/* Stat cards — hiển thị khi showStats=true hoặc khi có lockedWarehouse */}
       {(showStats || lockedWarehouse) && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-2 w-full">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 w-full">
           {/* Card 1: Tổng SP */}
-          <div className="rounded-[1.25rem] sm:rounded-2xl bg-white dark:bg-[#162240] border border-[#d5dbe9] dark:border-white/10 p-4 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-[#eef1f7] dark:bg-white/5 flex-shrink-0">
-              <Warehouse size={20} className="text-[#1B2A4A] dark:text-gray-300 sm:w-[22px] sm:h-[22px]" />
+          <div className="rounded-2xl bg-white dark:bg-[#162240] border border-[#d5dbe9] dark:border-white/10 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eef1f7] dark:bg-white/5 flex-shrink-0">
+              <Warehouse size={22} className="text-[#1B2A4A] dark:text-gray-300" />
             </div>
             <div>
-              <p className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{warehouseStats.total}</p>
-              <p className="text-[10px] sm:text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide">LOẠI HÒM</p>
+              <p className="text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{warehouseStats.total}</p>
+              <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide">LOẠI HÒM</p>
             </div>
           </div>
           {/* Card 2: SP Đang bán */}
-          <div className="rounded-[1.25rem] sm:rounded-2xl bg-white dark:bg-[#162240] border border-blue-200 dark:border-blue-500/30 p-4 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-500/10 flex-shrink-0">
-              <CheckCircle size={20} className="text-blue-600 dark:text-blue-400 sm:w-[22px] sm:h-[22px]" />
+          <div className="rounded-2xl bg-white dark:bg-[#162240] border border-blue-200 dark:border-blue-500/30 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-500/10 flex-shrink-0">
+              <CheckCircle size={22} className="text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{warehouseStats.active}</p>
-              <p className="text-[10px] sm:text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide">SP Đang bán</p>
+              <p className="text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{warehouseStats.active}</p>
+              <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide">SP Đang bán</p>
             </div>
           </div>
           {/* Card 3: SP Ngừng bán */}
-          <div className="rounded-[1.25rem] sm:rounded-2xl bg-white dark:bg-[#162240] border border-red-200 dark:border-red-500/30 p-4 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-red-50 dark:bg-red-500/10 flex-shrink-0">
-              <XCircle size={20} className="text-red-600 dark:text-red-400 sm:w-[22px] sm:h-[22px]" />
+          <div className="rounded-2xl bg-white dark:bg-[#162240] border border-red-200 dark:border-red-500/30 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 dark:bg-red-500/10 flex-shrink-0">
+              <XCircle size={22} className="text-red-600 dark:text-red-400" />
             </div>
             <div>
-              <p className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{warehouseStats.inactive}</p>
-              <p className="text-[10px] sm:text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide">SP Ngừng bán</p>
+              <p className="text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{warehouseStats.inactive}</p>
+              <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide">SP Ngừng bán</p>
             </div>
           </div>
           {/* Card 4: Tổng tồn kho */}
-          <div className="rounded-[1.25rem] sm:rounded-2xl bg-white dark:bg-[#162240] border border-emerald-200 dark:border-emerald-500/30 p-4 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex-shrink-0">
-              <Package size={20} className="text-emerald-600 dark:text-emerald-400 sm:w-[22px] sm:h-[22px]" />
+          <div className="rounded-2xl bg-white dark:bg-[#162240] border border-emerald-200 dark:border-emerald-500/30 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex-shrink-0">
+              <Package size={22} className="text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <p className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{warehouseStats.totalStock}</p>
-              <p className="text-[10px] sm:text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide">Tổng tồn kho</p>
+              <p className="text-2xl font-extrabold text-gray-900 dark:text-white leading-none">{warehouseStats.totalStock}</p>
+              <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide">Tổng tồn kho</p>
             </div>
           </div>
         </div>
@@ -308,7 +299,7 @@ export default function InventorySearch({ items, showStats = false }: { items: I
           {/* Warehouse Dropdown */}
           {uniqueWarehouses.length > 0 && (
             <select
-              value={warehouseFilter}
+              value={effectiveWarehouseFilter}
               onChange={(e) => setWarehouseFilter(e.target.value)}
               disabled={lockedWarehouse !== null}
               className={`px-3 py-2 rounded-xl text-xs font-semibold border border-gray-200 dark:border-white/10 bg-white dark:bg-[#162240] text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-[#2d4a7a] dark:focus:ring-indigo-500/30 ${lockedWarehouse ? 'opacity-70 cursor-not-allowed bg-gray-50 dark:bg-white/5' : ''}`}
@@ -365,7 +356,7 @@ export default function InventorySearch({ items, showStats = false }: { items: I
         <div className="bg-white dark:bg-[#162240] rounded-2xl border border-gray-200 dark:border-white/10 overflow-hidden shadow-sm mx-2 sm:mx-0 w-full">
           {/* Desktop table */}
           <div className="hidden md:block overflow-x-auto">
-            <table className="text-sm whitespace-nowrap">
+            <table className="w-full min-w-[1040px] text-sm whitespace-nowrap">
               <thead>
                 <tr className="bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10">
                   <th className="text-left py-3 px-5 font-semibold text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Sản phẩm</th>

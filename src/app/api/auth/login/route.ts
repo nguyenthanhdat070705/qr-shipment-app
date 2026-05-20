@@ -2,6 +2,48 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 import { getUserRole, ROLE_CONFIGS } from '@/config/roles.config';
 
+const LOCAL_DEFAULT_ACCOUNTS: Record<string, { password: string; name: string; department: string }> = {
+  'quantri@blackstone.com.vn': { password: '123456@', name: 'Quản trị viên VIP', department: 'Quản trị' },
+  'admin@blackstone.com.vn': { password: 'admin123', name: 'Quản trị viên', department: 'Quản trị' },
+  'kho1@blackstone.com.vn': { password: '123456@', name: 'Kho 1', department: 'Kho' },
+  'kho2@blackstone.com.vn': { password: '123456@', name: 'Kho 2', department: 'Kho' },
+  'kho3@blackstone.com.vn': { password: '123456@', name: 'Kho 3', department: 'Kho' },
+  'bophanthumua@blackstone.com.vn': { password: '123456@', name: 'Bộ phận Thu mua', department: 'Thu mua' },
+  'bophanvanhanh@blackstone.com.vn': { password: '123456@', name: 'Bộ phận Vận hành', department: 'Vận hành' },
+  'bophanbanhang@blackstone.com.vn': { password: '123456A', name: 'Bộ phận Bán hàng', department: 'Bán hàng' },
+  'bophanpttt@blackstone.com.vn': { password: '123456@', name: 'Bộ phận PTTT', department: 'Bán hàng' },
+};
+
+function canUseLocalAuth() {
+  return process.env.NODE_ENV !== 'production'
+    && (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
+function localLogin(email: string, password: string) {
+  const normalizedEmail = email.toLowerCase().trim();
+  const account = LOCAL_DEFAULT_ACCOUNTS[normalizedEmail];
+
+  if (!account || account.password !== password) {
+    return NextResponse.json({ error: 'Email hoặc mật khẩu không đúng.' }, { status: 401 });
+  }
+
+  const role = getUserRole(normalizedEmail);
+  const roleConfig = ROLE_CONFIGS[role];
+
+  return NextResponse.json({
+    token: `local-dev-token:${normalizedEmail}`,
+    user: {
+      id: `local:${normalizedEmail}`,
+      email: normalizedEmail,
+      role,
+      roleLabel: roleConfig.label,
+      permissions: roleConfig.permissions,
+      ho_ten: account.name,
+      phong_ban: account.department,
+    },
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
@@ -11,6 +53,10 @@ export async function POST(request: NextRequest) {
         { error: 'Email và mật khẩu là bắt buộc.' },
         { status: 400 }
       );
+    }
+
+    if (canUseLocalAuth()) {
+      return localLogin(email, password);
     }
 
     const supabase = getSupabaseAdmin();
