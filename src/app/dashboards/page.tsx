@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, BarChart3, Warehouse, ShoppingCart, BookOpen, Truck, Crown } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Warehouse, ShoppingCart, BookOpen, Truck, Crown, Package } from 'lucide-react';
 import Link from 'next/link';
 import PageLayout from '@/components/PageLayout';
 import { getUserRole, UserRole } from '@/config/roles.config';
@@ -75,6 +75,16 @@ export default function DashboardsHubPage() {
       color: 'bg-blue-500',
       shadow: 'shadow-blue-500/20',
       gradient: 'from-blue-400 to-indigo-600',
+    }] : []),
+    ...(userRole === 'admin' || userRole === 'sales' ? [{
+      id: 'catalog',
+      title: 'Catalog Hòm Sản phẩm',
+      icon: <Package size={28} className="text-white" />,
+      desc: 'Bộ sưu tập hòm theo gỗ, màu sắc, tôn giáo — phục vụ tư vấn khách hàng.',
+      href: '/sales/catalog',
+      color: 'bg-stone-700',
+      shadow: 'shadow-stone-700/20',
+      gradient: 'from-stone-600 to-amber-800',
     }] : []),
     ...(userRole === "admin" || userRole === "operations" ? [{
       id: "operations",
