@@ -98,22 +98,25 @@ function KpiCard({
   value,
   sub,
   tone,
+  bgGradient,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
   sub: string;
   tone: string;
+  bgGradient: string;
 }) {
   return (
-    <div className="rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#162240]">
-      <div className="flex items-start justify-between gap-4">
+    <div className={`relative overflow-hidden rounded-2xl border border-gray-200/70 bg-gradient-to-br ${bgGradient} p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg dark:border-white/10`}>
+      <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/40 blur-2xl dark:bg-white/5" />
+      <div className="relative flex items-start justify-between gap-4">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">{label}</p>
           <p className="mt-3 text-3xl font-black leading-none tracking-tight text-gray-950 dark:text-white">{value}</p>
           <p className="mt-2 text-xs font-medium text-gray-500 dark:text-gray-400">{sub}</p>
         </div>
-        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${tone}`}>
+        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl shadow-sm ${tone}`}>
           {icon}
         </div>
       </div>
@@ -228,19 +231,31 @@ export default function AdminDashboard() {
 
   return (
     <PageLayout title="Admin Dashboard" icon={<Shield size={15} className="text-red-500" />}>
-      <div className="space-y-6 pb-8">
-        <section className="rounded-2xl border border-gray-200/70 bg-white px-6 py-7 shadow-sm dark:border-white/10 dark:bg-[#162240] sm:px-8">
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+      <div className="relative space-y-6 pb-8">
+        {/* Decorative background orbs */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-[460px] overflow-hidden">
+          <div className="absolute -left-32 top-0 h-80 w-80 rounded-full bg-rose-300/30 blur-3xl dark:bg-rose-500/10" />
+          <div className="absolute right-0 top-20 h-72 w-72 rounded-full bg-amber-200/30 blur-3xl dark:bg-amber-500/10" />
+          <div className="absolute left-1/3 top-40 h-72 w-72 rounded-full bg-violet-200/25 blur-3xl dark:bg-violet-500/10" />
+        </div>
+
+        <section className="relative overflow-hidden rounded-3xl border border-rose-100 bg-gradient-to-br from-rose-50 via-white to-amber-50 px-6 py-7 shadow-sm dark:border-white/10 dark:from-[#1b1a3a] dark:via-[#162240] dark:to-[#1a2b4e] sm:px-8">
+          {/* Pattern overlay */}
+          <div className="pointer-events-none absolute inset-0 opacity-[0.04] dark:opacity-[0.08]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, #dc2626 1px, transparent 0)', backgroundSize: '24px 24px' }} />
+          <div className="pointer-events-none absolute -top-24 right-10 h-56 w-56 rounded-full bg-gradient-to-br from-rose-400/30 to-amber-300/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-gradient-to-tr from-amber-300/20 to-rose-400/10 blur-3xl" />
+
+          <div className="relative flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full border border-red-100 bg-red-50 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-red-600 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300">
+              <div className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-red-600 shadow-sm backdrop-blur dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
                 <Shield size={13} />
                 Quản trị hòm
               </div>
               <div>
-                <h1 className="text-3xl font-black tracking-tight text-gray-950 dark:text-white sm:text-4xl">
+                <h1 className="bg-gradient-to-br from-gray-950 via-rose-900 to-amber-800 bg-clip-text text-3xl font-black tracking-tight text-transparent dark:from-white dark:via-rose-200 dark:to-amber-200 sm:text-4xl">
                   Admin Dashboard
                 </h1>
-                <p className="mt-2 max-w-3xl text-sm font-medium leading-6 text-gray-500 dark:text-gray-400">
+                <p className="mt-2 max-w-3xl text-sm font-medium leading-6 text-gray-600 dark:text-gray-400">
                   Tổng nhập, tổng xuất, giá trị và phân loại từng mã hòm theo dữ liệu Dim Hòm.
                 </p>
               </div>
@@ -249,7 +264,7 @@ export default function AdminDashboard() {
               type="button"
               onClick={fetchDashboard}
               disabled={loading}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-gray-950 px-4 text-sm font-bold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white dark:text-gray-950"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-gray-800 bg-gray-950 px-4 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-gray-800 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white dark:text-gray-950"
             >
               <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
               Làm mới
@@ -271,40 +286,45 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="relative grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <KpiCard
             icon={<Boxes size={22} />}
             label="Loại hòm"
             value={loading ? '...' : formatNumber(filteredTotals.productTypes)}
             sub={`${formatNumber(data?.totals.productTypes || 0)} mã trong Dim Hòm`}
-            tone="bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-white"
+            tone="bg-slate-200 text-slate-800 dark:bg-white/10 dark:text-white"
+            bgGradient="from-slate-50 via-white to-violet-50/50 dark:from-[#1a2244] dark:via-[#162240] dark:to-[#211e44]"
           />
           <KpiCard
             icon={<ArrowDownToLine size={22} />}
             label="Tổng nhập"
             value={loading ? '...' : formatNumber(filteredTotals.totalImport)}
             sub={`${formatCurrency(filteredTotals.importValue)}₫ giá trị nhập`}
-            tone="bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+            tone="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+            bgGradient="from-emerald-50 via-white to-teal-50 dark:from-[#0e2a26] dark:via-[#162240] dark:to-[#0f2e2e]"
           />
           <KpiCard
             icon={<ArrowUpFromLine size={22} />}
             label="Tổng xuất"
             value={loading ? '...' : formatNumber(filteredTotals.totalExport)}
             sub={`${formatCurrency(filteredTotals.exportValue)}₫ giá trị xuất`}
-            tone="bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
+            tone="bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
+            bgGradient="from-rose-50 via-white to-pink-50 dark:from-[#2d1729] dark:via-[#162240] dark:to-[#2c1a2a]"
           />
           <KpiCard
             icon={<Wallet size={22} />}
             label="Giá trị tồn"
             value={loading ? '...' : `${formatCurrency(filteredTotals.stockValue)}₫`}
             sub={`${formatNumber(filteredTotals.stockQty)} hòm đang tồn`}
-            tone="bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
+            tone="bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
+            bgGradient="from-amber-50 via-white to-orange-50 dark:from-[#2d2715] dark:via-[#162240] dark:to-[#2e2517]"
           />
         </section>
 
-        <section className="rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#162240]">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-200">
+        <section className="relative overflow-hidden rounded-2xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50/30 to-violet-50/40 p-5 shadow-sm dark:border-white/10 dark:from-[#162240] dark:via-[#162240] dark:to-[#1a1e3f]">
+          <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-violet-200/40 blur-3xl dark:bg-violet-500/10" />
+          <div className="relative mb-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md">
               <Filter size={18} />
             </div>
             <div>
@@ -362,10 +382,10 @@ export default function AdminDashboard() {
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-sm dark:border-white/10 dark:bg-[#162240]">
-          <div className="flex items-center justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-white/10">
+        <section className="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-sm dark:border-white/10 dark:bg-[#162240]">
+          <div className="flex items-center justify-between gap-4 border-b border-gray-100 bg-gradient-to-r from-rose-50/60 via-white to-amber-50/60 px-5 py-4 dark:border-white/10 dark:from-rose-500/5 dark:via-transparent dark:to-amber-500/5">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-300">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-md">
                 <LayoutGrid size={18} />
               </div>
               <div>
@@ -377,7 +397,7 @@ export default function AdminDashboard() {
 
           <div className="overflow-x-auto">
             <table className="min-w-[1180px] w-full text-left">
-              <thead className="bg-gray-50 text-[11px] uppercase tracking-widest text-gray-500 dark:bg-white/5 dark:text-gray-400">
+              <thead className="bg-gradient-to-r from-gray-50 via-rose-50/30 to-amber-50/30 text-[11px] uppercase tracking-widest text-gray-500 dark:bg-white/5 dark:text-gray-400">
                 <tr>
                   <th className="px-5 py-3 font-black">Hòm</th>
                   <th className="px-4 py-3 font-black">Phân loại</th>

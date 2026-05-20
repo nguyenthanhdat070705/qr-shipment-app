@@ -186,26 +186,28 @@ function KpiCard({ label, value, sub, icon, tone }: {
   tone: 'indigo' | 'emerald' | 'amber' | 'rose' | 'cyan' | 'slate';
 }) {
   const tones = {
-    indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100',
-    emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-    amber: 'bg-amber-50 text-amber-600 border-amber-100',
-    rose: 'bg-rose-50 text-rose-600 border-rose-100',
-    cyan: 'bg-cyan-50 text-cyan-600 border-cyan-100',
-    slate: 'bg-slate-50 text-slate-600 border-slate-100',
+    indigo: { iconBg: 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white border-indigo-200 shadow-indigo-500/30', cardBg: 'from-indigo-50 via-white to-violet-50/40 border-indigo-100', orb: 'bg-indigo-300/30' },
+    emerald: { iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-emerald-200 shadow-emerald-500/30', cardBg: 'from-emerald-50 via-white to-teal-50/40 border-emerald-100', orb: 'bg-emerald-300/30' },
+    amber: { iconBg: 'bg-gradient-to-br from-amber-400 to-orange-500 text-white border-amber-200 shadow-amber-500/30', cardBg: 'from-amber-50 via-white to-orange-50/40 border-amber-100', orb: 'bg-amber-300/30' },
+    rose: { iconBg: 'bg-gradient-to-br from-rose-500 to-pink-600 text-white border-rose-200 shadow-rose-500/30', cardBg: 'from-rose-50 via-white to-pink-50/40 border-rose-100', orb: 'bg-rose-300/30' },
+    cyan: { iconBg: 'bg-gradient-to-br from-cyan-500 to-sky-600 text-white border-cyan-200 shadow-cyan-500/30', cardBg: 'from-cyan-50 via-white to-sky-50/40 border-cyan-100', orb: 'bg-cyan-300/30' },
+    slate: { iconBg: 'bg-gradient-to-br from-slate-500 to-slate-700 text-white border-slate-200 shadow-slate-500/30', cardBg: 'from-slate-50 via-white to-gray-50/40 border-slate-100', orb: 'bg-slate-300/30' },
   };
+  const t = tones[tone];
 
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
+    <div className={`relative overflow-hidden rounded-2xl border bg-gradient-to-br ${t.cardBg} p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg`}>
+      <div className={`pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full ${t.orb} blur-2xl`} />
+      <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</p>
           <p className="mt-2 text-2xl font-black tracking-tight text-slate-950">{value}</p>
         </div>
-        <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border ${tones[tone]}`}>
+        <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border shadow-md ${t.iconBg}`}>
           {icon}
         </div>
       </div>
-      <p className="mt-3 text-xs font-semibold text-slate-500">{sub}</p>
+      <p className="relative mt-3 text-xs font-semibold text-slate-500">{sub}</p>
     </div>
   );
 }
@@ -398,27 +400,38 @@ export default function MembershipAdminDashboardPage() {
 
   return (
     <PageLayout title="Dashboard Membership" icon={<Crown size={16} className="text-yellow-500" />}>
-      <div className="space-y-5 pb-8">
-        <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+      <div className="relative space-y-5 pb-8">
+        {/* Decorative background orbs */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-[420px] overflow-hidden">
+          <div className="absolute -left-20 top-0 h-72 w-72 rounded-full bg-indigo-300/30 blur-3xl" />
+          <div className="absolute right-10 top-10 h-64 w-64 rounded-full bg-amber-200/30 blur-3xl" />
+          <div className="absolute left-1/2 top-40 h-72 w-72 rounded-full bg-violet-200/25 blur-3xl" />
+        </div>
+
+        <div className="relative overflow-hidden rounded-[2rem] border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-amber-50/60 p-5 shadow-sm">
+          <div className="pointer-events-none absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, #6366f1 1px, transparent 0)', backgroundSize: '24px 24px' }} />
+          <div className="pointer-events-none absolute -top-20 right-10 h-56 w-56 rounded-full bg-gradient-to-br from-indigo-400/30 to-violet-300/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-gradient-to-tr from-amber-300/20 to-rose-300/10 blur-3xl" />
+
+          <div className="relative flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="min-w-0">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-yellow-200 bg-yellow-50 px-3 py-1 text-[11px] font-black uppercase tracking-wide text-yellow-700">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-yellow-200 bg-white/80 px-3 py-1 text-[11px] font-black uppercase tracking-wide text-yellow-700 shadow-sm backdrop-blur">
                 <Sparkles size={13} /> Membership Intelligence
               </div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">Dashboard Membership</h1>
+              <h1 className="bg-gradient-to-br from-slate-950 via-indigo-900 to-amber-800 bg-clip-text text-2xl font-black tracking-tight text-transparent sm:text-3xl">Dashboard Membership</h1>
               <p className="mt-1 text-sm font-medium text-slate-500">
                 Dữ liệu từ GetFly Contracts{data.summary.last_sync ? ` · Sync cuối ${new Date(data.summary.last_sync).toLocaleString('vi-VN')}` : ''}
               </p>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
-              <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
-                <p className="text-[11px] font-bold uppercase text-slate-400">Nguồn dữ liệu</p>
+              <div className="rounded-2xl border border-indigo-100 bg-white/80 px-4 py-3 shadow-sm backdrop-blur">
+                <p className="text-[11px] font-bold uppercase text-indigo-400">Nguồn dữ liệu</p>
                 <p className="mt-1 text-sm font-black text-slate-800">{fmtNumber(data.total_available)} bản ghi</p>
               </div>
               <button
                 onClick={() => loadDashboard(filters)}
                 disabled={loading}
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-60"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 px-4 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-60"
               >
                 <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
                 Tải lại
@@ -427,9 +440,13 @@ export default function MembershipAdminDashboardPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-          <div className="mb-4 flex items-center gap-2 text-sm font-black text-slate-800">
-            <Filter size={16} className="text-indigo-500" /> Bộ lọc dashboard
+        <div className="relative overflow-hidden rounded-2xl border border-violet-100 bg-gradient-to-br from-white via-violet-50/30 to-indigo-50/30 p-4 shadow-sm">
+          <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-violet-200/40 blur-3xl" />
+          <div className="relative mb-4 flex items-center gap-2 text-sm font-black text-slate-800">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md">
+              <Filter size={15} />
+            </span>
+            Bộ lọc dashboard
           </div>
           <form onSubmit={handleSearch} className="grid grid-cols-1 gap-3 lg:grid-cols-[1.5fr_0.9fr_0.9fr_1fr_0.8fr_0.75fr_0.75fr_auto]">
             <label className="min-w-0">
@@ -489,7 +506,7 @@ export default function MembershipAdminDashboardPage() {
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</div>
         )}
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
+        <div className="relative grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
           <KpiCard label="Tổng HĐ" value={loading ? '...' : fmtNumber(data.summary.total_contracts)} sub={`${fmtNumber(data.summary.beneficiaries)} người thụ hưởng`} icon={<Crown size={20} />} tone="indigo" />
           <KpiCard label="Giá trị HĐ" value={loading ? '...' : fmtMoney(data.summary.total_value)} sub={`TB ${fmtMoney(data.summary.average_value)} / HĐ`} icon={<WalletCards size={20} />} tone="cyan" />
           <KpiCard label="Giá trị thực" value={loading ? '...' : fmtMoney(data.summary.actual_value)} sub={`Đã TH ${fmtMoney(data.summary.executed_amount)}`} icon={<TrendingUp size={20} />} tone="emerald" />
@@ -499,7 +516,7 @@ export default function MembershipAdminDashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm xl:col-span-2">
+          <div className="relative overflow-hidden rounded-2xl border border-cyan-100 bg-gradient-to-br from-white via-cyan-50/20 to-sky-50/30 p-4 shadow-sm xl:col-span-2"><div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-cyan-200/30 blur-3xl" />
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-sm font-black uppercase tracking-wide text-slate-800">Xu hướng hợp đồng theo tháng</h2>
@@ -510,57 +527,61 @@ export default function MembershipAdminDashboardPage() {
             <ComboChart data={data.charts.monthly} />
           </div>
 
-          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-            <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="relative overflow-hidden rounded-2xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50/20 to-violet-50/30 p-4 shadow-sm">
+            <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-indigo-200/30 blur-3xl" />
+            <div className="relative mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-sm font-black uppercase tracking-wide text-slate-800">Cơ cấu trạng thái</h2>
                 <p className="text-xs font-semibold text-slate-400">Theo số lượng hợp đồng</p>
               </div>
               <PieChart size={19} className="text-indigo-500" />
             </div>
-            <DonutChart data={data.charts.status} />
+            <div className="relative"><DonutChart data={data.charts.status} /></div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
+          <div className="relative overflow-hidden rounded-2xl border border-violet-100 bg-gradient-to-br from-white via-violet-50/20 to-purple-50/30 p-4 shadow-sm">
+            <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-violet-200/30 blur-3xl" />
+            <div className="relative mb-4 flex items-center justify-between">
               <h2 className="text-sm font-black uppercase tracking-wide text-slate-800">Top phụ trách</h2>
               <Users size={18} className="text-violet-500" />
             </div>
-            <div className="space-y-4">
+            <div className="relative space-y-4">
               {data.charts.owners.map((item) => <BarRow key={item.label} item={item} max={ownerMax} color="bg-violet-500" />)}
               {data.charts.owners.length === 0 && <p className="py-8 text-center text-sm font-semibold text-slate-400">Chưa có dữ liệu</p>}
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
+          <div className="relative overflow-hidden rounded-2xl border border-emerald-100 bg-gradient-to-br from-white via-emerald-50/20 to-teal-50/30 p-4 shadow-sm">
+            <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-emerald-200/30 blur-3xl" />
+            <div className="relative mb-4 flex items-center justify-between">
               <h2 className="text-sm font-black uppercase tracking-wide text-slate-800">Kiểu hợp đồng</h2>
               <BarChart3 size={18} className="text-emerald-500" />
             </div>
-            <div className="space-y-4">
+            <div className="relative space-y-4">
               {data.charts.types.map((item) => <BarRow key={item.label} item={item} max={typeMax} color="bg-emerald-500" />)}
               {data.charts.types.length === 0 && <p className="py-8 text-center text-sm font-semibold text-slate-400">Chưa có dữ liệu</p>}
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
+          <div className="relative overflow-hidden rounded-2xl border border-amber-100 bg-gradient-to-br from-white via-amber-50/20 to-orange-50/30 p-4 shadow-sm">
+            <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-amber-200/30 blur-3xl" />
+            <div className="relative mb-4 flex items-center justify-between">
               <h2 className="text-sm font-black uppercase tracking-wide text-slate-800">Hồ sơ & thời hạn</h2>
               <FileCheck2 size={18} className="text-amber-500" />
             </div>
-            <div className="space-y-4">
+            <div className="relative space-y-4">
               <div className="grid grid-cols-3 gap-2">
-                <div className="rounded-xl bg-indigo-50 p-3 text-center">
+                <div className="rounded-xl bg-gradient-to-br from-indigo-100 to-indigo-50 p-3 text-center shadow-sm">
                   <p className="text-xl font-black text-indigo-700">{data.summary.doc_complete_rate}%</p>
                   <p className="text-[10px] font-bold uppercase text-indigo-400">Đủ hồ sơ</p>
                 </div>
-                <div className="rounded-xl bg-cyan-50 p-3 text-center">
+                <div className="rounded-xl bg-gradient-to-br from-cyan-100 to-cyan-50 p-3 text-center shadow-sm">
                   <p className="text-xl font-black text-cyan-700">{data.summary.contract_scan_rate}%</p>
                   <p className="text-[10px] font-bold uppercase text-cyan-400">Scan HĐ</p>
                 </div>
-                <div className="rounded-xl bg-amber-50 p-3 text-center">
+                <div className="rounded-xl bg-gradient-to-br from-amber-100 to-amber-50 p-3 text-center shadow-sm">
                   <p className="text-xl font-black text-amber-700">{data.summary.beneficiary_vneid_rate}%</p>
                   <p className="text-[10px] font-bold uppercase text-amber-500">VnEID TH</p>
                 </div>
