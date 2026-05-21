@@ -69,6 +69,14 @@ function remainingBucket(days: number | null): BucketKey {
   return 'safe';
 }
 
+function isMembershipContract(contract: ContractRow) {
+  return [
+    contract.source_contract_code,
+    contract.contract_code,
+    contract.contract_name,
+  ].some((value) => str(value).toUpperCase().startsWith('MBS'));
+}
+
 function addToMap<T extends { count: number; value: number }>(map: Map<string, T>, key: string, value: number, seed: () => T) {
   const label = key || 'Chưa rõ';
   const item = map.get(label) || seed();
@@ -146,7 +154,7 @@ export async function GET(req: NextRequest) {
     const dateFrom = str(req.nextUrl.searchParams.get('date_from'));
     const dateTo = str(req.nextUrl.searchParams.get('date_to'));
 
-    const contracts = await fetchAllContracts(supabase);
+    const contracts = (await fetchAllContracts(supabase)).filter(isMembershipContract);
     const contractIds = contracts.map((c) => c.getfly_contract_id).filter(Boolean);
     const driveMap = contractIds.length > 0 ? await fetchDriveMap(supabase, contractIds) : new Map<string, DriveRow>();
 
@@ -303,6 +311,11 @@ export async function GET(req: NextRequest) {
     });
   } catch (err) {
     console.error('membership dashboard error:', err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    const message = err instanceof Error
+      ? err.message
+      : typeof err === 'object' && err && 'message' in err
+        ? String((err as { message?: unknown }).message)
+        : String(err);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

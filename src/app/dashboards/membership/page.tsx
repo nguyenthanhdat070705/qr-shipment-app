@@ -273,13 +273,13 @@ function ComboChart({ data }: { data: ChartItem[] }) {
   if (data.length === 0) {
     return (
       <div className="flex h-[260px] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-sm font-semibold text-slate-400">
-        Chưa có hợp đồng nào có ngày tạo / ngày hiệu lực để vẽ xu hướng
+        Chưa có hội viên MBS nào có ngày tạo / ngày hiệu lực để vẽ tăng trưởng
       </div>
     );
   }
 
   const maxCount = Math.max(1, ...data.map((item) => item.count));
-  const maxValue = Math.max(1, ...data.map((item) => item.value));
+  const maxPaid = Math.max(1, ...data.map((item) => item.paid || 0));
   const width = 720;
   const height = 280;
   const pad = 40;
@@ -289,7 +289,7 @@ function ComboChart({ data }: { data: ChartItem[] }) {
   const barW = Math.max(18, Math.min(40, step * 0.5));
   const points = data.map((item, index) => {
     const x = pad + step * index + step / 2;
-    const y = pad + innerH - (item.value / maxValue) * innerH;
+    const y = pad + innerH - ((item.paid || 0) / maxPaid) * innerH;
     return `${x},${y}`;
   }).join(' ');
 
@@ -313,7 +313,7 @@ function ComboChart({ data }: { data: ChartItem[] }) {
           return (
             <g key={item.label}>
               <rect x={x} y={y} width={barW} height={barH} rx="7" fill="#22d3ee" opacity="0.85">
-                <title>{`${formatMonthLabel(item.label)}\nSố HĐ: ${item.count}\nDoanh thu: ${fmtMoney(item.value)}\nĐã thanh toán: ${fmtMoney(item.paid || 0)}`}</title>
+                <title>{`${formatMonthLabel(item.label)}\nHội viên đăng ký: ${item.count}\nGiá trị HĐ: ${fmtMoney(item.value)}\nTiền đã thu: ${fmtMoney(item.paid || 0)}`}</title>
               </rect>
               <text x={x + barW / 2} y={y - 6} textAnchor="middle" fill="#e2e8f0" fontSize="11" fontWeight="800">{item.count}</text>
               <text x={x + barW / 2} y={height - 12} textAnchor="middle" fill="#94a3b8" fontSize="11" fontWeight="700">
@@ -325,18 +325,18 @@ function ComboChart({ data }: { data: ChartItem[] }) {
         <polyline points={points} fill="none" stroke="#facc15" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
         {data.map((item, index) => {
           const x = pad + step * index + step / 2;
-          const y = pad + innerH - (item.value / maxValue) * innerH;
+          const y = pad + innerH - ((item.paid || 0) / maxPaid) * innerH;
           return (
             <g key={`${item.label}-value`}>
               <circle cx={x} cy={y} r="5" fill="#facc15" stroke="#0f172a" strokeWidth="3" />
-              <text x={x} y={y - 10} textAnchor="middle" fill="#facc15" fontSize="10" fontWeight="800">{fmtMoney(item.value)}</text>
+              <text x={x} y={y - 10} textAnchor="middle" fill="#facc15" fontSize="10" fontWeight="800">{fmtMoney(item.paid || 0)}</text>
             </g>
           );
         })}
       </svg>
       <div className="flex flex-wrap items-center gap-4 px-2 pb-1 text-xs font-semibold text-slate-300">
-        <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-cyan-300" />Số HĐ</span>
-        <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-yellow-300" />Doanh thu</span>
+        <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-cyan-300" />Hội viên đăng ký</span>
+        <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-yellow-300" />Tiền đã thu</span>
       </div>
     </div>
   );
@@ -452,12 +452,12 @@ export default function MembershipAdminDashboardPage() {
               </div>
               <h1 className="bg-gradient-to-br from-slate-950 via-indigo-900 to-amber-800 bg-clip-text text-2xl font-black tracking-tight text-transparent sm:text-3xl">Dashboard Membership</h1>
               <p className="mt-1 text-sm font-medium text-slate-500">
-                Dữ liệu từ GetFly Contracts{data.summary.last_sync ? ` · Sync cuối ${new Date(data.summary.last_sync).toLocaleString('vi-VN')}` : ''}
+                Dữ liệu từ GetFly Membership Contracts (MBS){data.summary.last_sync ? ` · Sync cuối ${new Date(data.summary.last_sync).toLocaleString('vi-VN')}` : ''}
               </p>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
               <div className="rounded-2xl border border-indigo-100 bg-white/80 px-4 py-3 shadow-sm backdrop-blur">
-                <p className="text-[11px] font-bold uppercase text-indigo-400">Nguồn dữ liệu</p>
+                <p className="text-[11px] font-bold uppercase text-indigo-400">Nguồn MBS</p>
                 <p className="mt-1 text-sm font-black text-slate-800">{fmtNumber(data.total_available)} bản ghi</p>
               </div>
               <button
@@ -488,7 +488,7 @@ export default function MembershipAdminDashboardPage() {
                 <input
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="Tên HĐ, số HĐ, SĐT, KH, VnEID..."
+                  placeholder="Mã MBS, tên HĐ, SĐT, KH, VnEID..."
                   className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-xs font-semibold text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
                 />
               </div>
@@ -553,8 +553,8 @@ export default function MembershipAdminDashboardPage() {
           <div className="relative overflow-hidden rounded-2xl border border-cyan-100 bg-gradient-to-br from-white via-cyan-50/20 to-sky-50/30 p-4 shadow-sm xl:col-span-2"><div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-cyan-200/30 blur-3xl" />
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-sm font-black uppercase tracking-wide text-slate-800">Xu hướng hợp đồng theo tháng</h2>
-                <p className="text-xs font-semibold text-slate-400">Giá trị hợp đồng và dòng tiền đã thanh toán</p>
+                <h2 className="text-sm font-black uppercase tracking-wide text-slate-800">Tăng trưởng hội viên theo tháng</h2>
+                <p className="text-xs font-semibold text-slate-400">Số hội viên đăng ký và số tiền đã thu</p>
               </div>
               <LineChart size={19} className="text-cyan-500" />
             </div>
