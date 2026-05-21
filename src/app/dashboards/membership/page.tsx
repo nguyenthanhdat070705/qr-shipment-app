@@ -13,6 +13,10 @@ type ChartItem = {
   count: number;
   value: number;
   paid?: number;
+  tax_amount?: number;
+  gross_revenue?: number;
+  gross_commission?: number;
+  net_commission?: number;
 };
 
 type DashboardRecord = {
@@ -65,6 +69,10 @@ type DashboardData = {
     executed_amount: number;
     paid_amount: number;
     debt_amount: number;
+    tax_amount: number;
+    gross_revenue: number;
+    gross_commission: number;
+    net_commission: number;
     average_value: number;
     collection_rate: number;
     debt_rate: number;
@@ -82,7 +90,7 @@ type DashboardData = {
     status: ChartItem[];
     types: ChartItem[];
     owners: ChartItem[];
-    monthly: ChartItem[];
+    daily: ChartItem[];
     remaining: ChartItem[];
   };
   records: DashboardRecord[];
@@ -97,6 +105,8 @@ type Filters = {
   remaining: string;
   date_from: string;
   date_to: string;
+  view: 'day' | 'month' | 'range';
+  month: string;
 };
 
 const emptyData: DashboardData = {
@@ -108,6 +118,10 @@ const emptyData: DashboardData = {
     executed_amount: 0,
     paid_amount: 0,
     debt_amount: 0,
+    tax_amount: 0,
+    gross_revenue: 0,
+    gross_commission: 0,
+    net_commission: 0,
     average_value: 0,
     collection_rate: 0,
     debt_rate: 0,
@@ -121,7 +135,7 @@ const emptyData: DashboardData = {
     expired: 0,
     last_sync: null,
   },
-  charts: { status: [], types: [], owners: [], monthly: [], remaining: [] },
+  charts: { status: [], types: [], owners: [], daily: [], remaining: [] },
   records: [],
   total_available: 0,
 };
@@ -137,6 +151,30 @@ function fmtMoney(n: number | null | undefined) {
   if (Math.abs(value) >= 1_000_000_000) return `${(value / 1_000_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} tỷ`;
   if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} tr`;
   return fmtNumber(value);
+}
+
+function formatViDate(iso: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!match) return iso;
+  return `${match[3]}/${match[2]}/${match[1]}`;
+}
+
+function formatViMonth(month: string) {
+  const match = /^(\d{4})-(\d{2})$/.exec(month);
+  if (!match) return month;
+  return `Tháng ${match[2]}/${match[1]}`;
+}
+
+function getMonthBounds(month: string) {
+  const match = /^(\d{4})-(\d{2})$/.exec(month);
+  if (!match) return { from: '', to: '' };
+  const year = Number(match[1]);
+  const monthNumber = Number(match[2]);
+  const lastDay = new Date(year, monthNumber, 0).getDate();
+  return {
+    from: `${match[1]}-${match[2]}-01`,
+    to: `${match[1]}-${match[2]}-${String(lastDay).padStart(2, '0')}`,
+  };
 }
 
 function statusBadge(status: string | null) {
@@ -263,35 +301,32 @@ function DonutChart({ data }: { data: ChartItem[] }) {
   );
 }
 
-function formatMonthLabel(label: string) {
-  const match = /^(\d{4})-(\d{2})$/.exec(label);
+function formatDateLabel(label: string) {
+  const monthMatch = /^(\d{4})-(\d{2})$/.exec(label);
+  if (monthMatch) return `T${monthMatch[2]}/${monthMatch[1].slice(2)}`;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(label);
   if (!match) return label;
-  return `T${match[2]}/${match[1].slice(2)}`;
+  return `${match[3]}/${match[2]}`;
 }
 
-function ComboChart({ data }: { data: ChartItem[] }) {
+function GrowthBarChart({ data, unitLabel }: { data: ChartItem[]; unitLabel: string }) {
   if (data.length === 0) {
     return (
       <div className="flex h-[260px] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-sm font-semibold text-slate-400">
-        Chưa có hội viên MBS nào có ngày tạo / ngày hiệu lực để vẽ tăng trưởng
+        Không có hội viên MBS theo {unitLabel} tạo trong bộ lọc hiện tại
       </div>
     );
   }
 
   const maxCount = Math.max(1, ...data.map((item) => item.count));
-  const maxPaid = Math.max(1, ...data.map((item) => item.paid || 0));
   const width = 720;
   const height = 280;
   const pad = 40;
   const innerW = width - pad * 2;
   const innerH = height - pad * 2;
   const step = innerW / data.length;
-  const barW = Math.max(18, Math.min(40, step * 0.5));
-  const points = data.map((item, index) => {
-    const x = pad + step * index + step / 2;
-    const y = pad + innerH - ((item.paid || 0) / maxPaid) * innerH;
-    return `${x},${y}`;
-  }).join(' ');
+  const barW = Math.max(14, Math.min(38, step * 0.58));
+  const labelEvery = data.length > 10 ? Math.ceil(data.length / 8) : 1;
 
   return (
     <div className="overflow-hidden rounded-2xl bg-slate-950 p-3 text-white">
@@ -313,30 +348,95 @@ function ComboChart({ data }: { data: ChartItem[] }) {
           return (
             <g key={item.label}>
               <rect x={x} y={y} width={barW} height={barH} rx="7" fill="#22d3ee" opacity="0.85">
-                <title>{`${formatMonthLabel(item.label)}\nHội viên đăng ký: ${item.count}\nGiá trị HĐ: ${fmtMoney(item.value)}\nTiền đã thu: ${fmtMoney(item.paid || 0)}`}</title>
+                <title>{`${item.label}\nHội viên đăng ký: ${item.count}`}</title>
               </rect>
               <text x={x + barW / 2} y={y - 6} textAnchor="middle" fill="#e2e8f0" fontSize="11" fontWeight="800">{item.count}</text>
-              <text x={x + barW / 2} y={height - 12} textAnchor="middle" fill="#94a3b8" fontSize="11" fontWeight="700">
-                {formatMonthLabel(item.label)}
-              </text>
-            </g>
-          );
-        })}
-        <polyline points={points} fill="none" stroke="#facc15" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-        {data.map((item, index) => {
-          const x = pad + step * index + step / 2;
-          const y = pad + innerH - ((item.paid || 0) / maxPaid) * innerH;
-          return (
-            <g key={`${item.label}-value`}>
-              <circle cx={x} cy={y} r="5" fill="#facc15" stroke="#0f172a" strokeWidth="3" />
-              <text x={x} y={y - 10} textAnchor="middle" fill="#facc15" fontSize="10" fontWeight="800">{fmtMoney(item.paid || 0)}</text>
+              {(index % labelEvery === 0 || index === data.length - 1) && (
+                <text x={x + barW / 2} y={height - 12} textAnchor="middle" fill="#94a3b8" fontSize="11" fontWeight="700">
+                  {formatDateLabel(item.label)}
+                </text>
+              )}
             </g>
           );
         })}
       </svg>
       <div className="flex flex-wrap items-center gap-4 px-2 pb-1 text-xs font-semibold text-slate-300">
         <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-cyan-300" />Hội viên đăng ký</span>
-        <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-yellow-300" />Tiền đã thu</span>
+      </div>
+    </div>
+  );
+}
+
+function FinancialTrendChart({ data, unitLabel }: { data: ChartItem[]; unitLabel: string }) {
+  if (data.length === 0) {
+    return (
+      <div className="flex h-[260px] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-sm font-semibold text-slate-400">
+        Không có doanh thu hoặc hoa hồng theo {unitLabel} trong bộ lọc hiện tại
+      </div>
+    );
+  }
+
+  const maxMetric = Math.max(1, ...data.flatMap((item) => [item.gross_revenue || 0, item.net_commission || 0]));
+  const width = 720;
+  const height = 280;
+  const pad = 44;
+  const innerW = width - pad * 2;
+  const innerH = height - pad * 2;
+  const step = data.length > 1 ? innerW / (data.length - 1) : innerW;
+  const labelEvery = data.length > 10 ? Math.ceil(data.length / 8) : 1;
+
+  const getPoint = (item: ChartItem, index: number, key: 'gross_revenue' | 'net_commission') => {
+    const x = data.length > 1 ? pad + step * index : width / 2;
+    const y = pad + innerH - ((item[key] || 0) / maxMetric) * innerH;
+    return { x, y };
+  };
+  const revenuePoints = data.map((item, index) => {
+    const point = getPoint(item, index, 'gross_revenue');
+    return `${point.x},${point.y}`;
+  }).join(' ');
+  const commissionPoints = data.map((item, index) => {
+    const point = getPoint(item, index, 'net_commission');
+    return `${point.x},${point.y}`;
+  }).join(' ');
+
+  return (
+    <div className="overflow-hidden rounded-2xl bg-slate-950 p-3 text-white">
+      <svg viewBox={`0 0 ${width} ${height}`} className="h-[260px] w-full">
+        {[0, 1, 2, 3].map((i) => {
+          const y = pad + (innerH / 3) * i;
+          const metricLabel = (maxMetric * (3 - i)) / 3;
+          return (
+            <g key={i}>
+              <line x1={pad} x2={width - pad} y1={y} y2={y} stroke="#334155" strokeWidth="1" />
+              <text x={pad - 6} y={y + 4} textAnchor="end" fill="#64748b" fontSize="10" fontWeight="700">{fmtMoney(metricLabel)}</text>
+            </g>
+          );
+        })}
+        <polyline points={revenuePoints} fill="none" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <polyline points={commissionPoints} fill="none" stroke="#2dd4bf" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        {data.map((item, index) => {
+          const revenue = getPoint(item, index, 'gross_revenue');
+          const commission = getPoint(item, index, 'net_commission');
+          return (
+            <g key={`${item.label}-value`}>
+              <circle cx={revenue.x} cy={revenue.y} r="5" fill="#38bdf8" stroke="#0f172a" strokeWidth="3">
+                <title>{`${item.label}\nDoanh thu thực: ${fmtMoney(item.gross_revenue || 0)}\nĐã thanh toán: ${fmtMoney(item.paid || 0)}`}</title>
+              </circle>
+              <circle cx={commission.x} cy={commission.y} r="5" fill="#2dd4bf" stroke="#0f172a" strokeWidth="3">
+                <title>{`${item.label}\nHoa hồng CTV: ${fmtMoney(item.net_commission || 0)}`}</title>
+              </circle>
+              {(index % labelEvery === 0 || index === data.length - 1) && (
+                <text x={revenue.x} y={height - 12} textAnchor="middle" fill="#94a3b8" fontSize="11" fontWeight="700">
+                  {formatDateLabel(item.label)}
+                </text>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+      <div className="flex flex-wrap items-center gap-4 px-2 pb-1 text-xs font-semibold text-slate-300">
+        <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-sky-400" />Doanh thu thực</span>
+        <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-teal-400" />Hoa hồng CTV</span>
       </div>
     </div>
   );
@@ -352,6 +452,8 @@ export default function MembershipAdminDashboardPage() {
     remaining: 'all',
     date_from: '',
     date_to: '',
+    view: 'day',
+    month: '',
   });
   const [searchInput, setSearchInput] = useState('');
   const [selectedRecord, setSelectedRecord] = useState<DashboardRecord | null>(null);
@@ -363,9 +465,26 @@ export default function MembershipAdminDashboardPage() {
     setError('');
     try {
       const params = new URLSearchParams();
-      Object.entries(nextFilters).forEach(([key, value]) => {
-        if (value && value !== 'all') params.set(key, value);
-      });
+      if (nextFilters.search) params.set('search', nextFilters.search);
+      if (nextFilters.status && nextFilters.status !== 'all') params.set('status', nextFilters.status);
+      if (nextFilters.type && nextFilters.type !== 'all') params.set('type', nextFilters.type);
+      if (nextFilters.owner && nextFilters.owner !== 'all') params.set('owner', nextFilters.owner);
+      if (nextFilters.remaining && nextFilters.remaining !== 'all') params.set('remaining', nextFilters.remaining);
+
+      if (nextFilters.view === 'month') {
+        params.set('period', 'month');
+        if (nextFilters.month) {
+          const range = getMonthBounds(nextFilters.month);
+          params.set('month', nextFilters.month);
+          params.set('date_from', range.from);
+          params.set('date_to', range.to);
+        }
+      } else {
+        params.set('period', 'day');
+        if (nextFilters.date_from) params.set('date_from', nextFilters.date_from);
+        if (nextFilters.date_to) params.set('date_to', nextFilters.date_to);
+      }
+
       const res = await fetch(`/api/membership/dashboard?${params.toString()}`);
       const json = await res.json().catch(() => ({ error: 'Không đọc được phản hồi từ máy chủ' }));
       if (!res.ok) {
@@ -400,31 +519,56 @@ export default function MembershipAdminDashboardPage() {
     loadDashboard(next);
   };
 
+  const updateView = (view: Filters['view']) => {
+    const next = { ...filters, view };
+    if (view === 'day' && filters.date_from && filters.date_from !== filters.date_to) {
+      next.date_to = filters.date_from;
+    }
+    setFilters(next);
+    loadDashboard(next);
+  };
+
+  const updateSingleDay = (value: string) => {
+    const next = { ...filters, date_from: value, date_to: value };
+    setFilters(next);
+    loadDashboard(next);
+  };
+
+  const updateMonth = (value: string) => {
+    const range = getMonthBounds(value);
+    const next = { ...filters, month: value, date_from: range.from, date_to: range.to };
+    setFilters(next);
+    loadDashboard(next);
+  };
+
   const ownerMax = useMemo(() => Math.max(1, ...data.charts.owners.map((item) => item.value)), [data.charts.owners]);
   const typeMax = useMemo(() => Math.max(1, ...data.charts.types.map((item) => item.value)), [data.charts.types]);
   const remainingMax = useMemo(() => Math.max(1, ...data.charts.remaining.map((item) => item.count)), [data.charts.remaining]);
 
-  const paidAmount = data.summary.paid_amount;
-  const taxAmount = paidAmount * 8 / 108;
-  const grossRevenue = paidAmount - taxAmount;
-  const grossCommission = grossRevenue * 0.10;
-  const netCommission = grossCommission * 0.90;
+  const unitLabel = filters.view === 'month' ? 'tháng' : 'ngày';
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    const hasTextSearch = searchInput.trim().length > 0;
     const next = {
       ...filters,
       search: searchInput,
-      date_from: hasTextSearch ? '' : filters.date_from,
-      date_to: hasTextSearch ? '' : filters.date_to,
     };
     setFilters(next);
     loadDashboard(next);
   }
 
   function resetFilters() {
-    const next = { search: '', status: 'all', type: 'all', owner: 'all', remaining: 'all', date_from: '', date_to: '' };
+    const next: Filters = {
+      search: '',
+      status: 'all',
+      type: 'all',
+      owner: 'all',
+      remaining: 'all',
+      date_from: '',
+      date_to: '',
+      view: 'day',
+      month: '',
+    };
     setSearchInput('');
     setFilters(next);
     loadDashboard(next);
@@ -480,7 +624,7 @@ export default function MembershipAdminDashboardPage() {
             </span>
             Bộ lọc dashboard
           </div>
-          <form onSubmit={handleSearch} className="grid grid-cols-1 gap-3 lg:grid-cols-[1.5fr_0.9fr_0.9fr_1fr_0.8fr_0.75fr_0.75fr_auto]">
+          <form onSubmit={handleSearch} className="grid grid-cols-1 gap-3 lg:grid-cols-[1.4fr_0.8fr_0.8fr_0.95fr_0.75fr_0.75fr_0.8fr_auto]">
             <label className="min-w-0">
               <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-400">Tìm kiếm</span>
               <div className="relative">
@@ -512,24 +656,48 @@ export default function MembershipAdminDashboardPage() {
               <option value="safe">&gt; 90 ngày</option>
               <option value="unknown">Chưa rõ</option>
             </SelectField>
-            <label>
-              <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-400">Từ ngày</span>
-              <input type="date" value={filters.date_from} onChange={(e) => updateFilter('date_from', e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
-            </label>
-            <label>
-              <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-400">Đến ngày</span>
-              <input type="date" value={filters.date_to} onChange={(e) => updateFilter('date_to', e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
-            </label>
+            <SelectField label="Kỳ xem" value={filters.view} onChange={(value) => updateView(value as Filters['view'])}>
+              <option value="day">Ngày</option>
+              <option value="month">Tháng</option>
+              <option value="range">Khoảng</option>
+            </SelectField>
+            {filters.view === 'month' ? (
+              <label className="lg:col-span-2">
+                <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-400">Chọn tháng</span>
+                <input type="month" value={filters.month} onChange={(e) => updateMonth(e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
+              </label>
+            ) : filters.view === 'range' ? (
+              <>
+                <label>
+                  <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-400">Từ ngày</span>
+                  <input type="date" value={filters.date_from} onChange={(e) => updateFilter('date_from', e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
+                </label>
+                <label>
+                  <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-400">Đến ngày</span>
+                  <input type="date" value={filters.date_to} onChange={(e) => updateFilter('date_to', e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
+                </label>
+              </>
+            ) : (
+              <label className="lg:col-span-2">
+                <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-400">Chọn ngày</span>
+                <input type="date" value={filters.date_from} onChange={(e) => updateSingleDay(e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
+              </label>
+            )}
             <div className="flex items-end gap-2">
               <button type="submit" className="h-10 rounded-xl bg-indigo-600 px-4 text-xs font-black text-white transition hover:bg-indigo-700">Lọc</button>
               <button type="button" onClick={resetFilters} className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-black text-slate-600 transition hover:bg-slate-50">Xóa</button>
             </div>
           </form>
-          {(filters.search || filters.date_from || filters.date_to) && (
+          {(filters.search || filters.owner !== 'all' || filters.status !== 'all' || filters.type !== 'all' || filters.date_from || filters.date_to || filters.month) && (
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
               {filters.search && <span className="rounded-full bg-indigo-50 px-3 py-1 text-indigo-700">Từ khóa: {filters.search}</span>}
-              {filters.date_from && <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">Từ ngày: {new Date(filters.date_from).toLocaleDateString('vi-VN')}</span>}
-              {filters.date_to && <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">Đến ngày: {new Date(filters.date_to).toLocaleDateString('vi-VN')}</span>}
+              {filters.owner !== 'all' && <span className="rounded-full bg-violet-50 px-3 py-1 text-violet-700">Phụ trách: {filters.owner}</span>}
+              {filters.status !== 'all' && <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">Trạng thái: {filters.status}</span>}
+              {filters.type !== 'all' && <span className="rounded-full bg-sky-50 px-3 py-1 text-sky-700">Kiểu HĐ: {filters.type}</span>}
+              {filters.view === 'month' && filters.month && <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">{formatViMonth(filters.month)}</span>}
+              {filters.view === 'day' && filters.date_from && <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">Ngày: {formatViDate(filters.date_from)}</span>}
+              {filters.view === 'range' && filters.date_from && <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">Từ ngày: {formatViDate(filters.date_from)}</span>}
+              {filters.view === 'range' && filters.date_to && <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">Đến ngày: {formatViDate(filters.date_to)}</span>}
             </div>
           )}
         </div>
@@ -543,22 +711,37 @@ export default function MembershipAdminDashboardPage() {
           <KpiCard label="Giá trị HĐ" value={loading ? '...' : fmtMoney(data.summary.total_value)} sub={`TB ${fmtMoney(data.summary.average_value)} / HĐ`} icon={<WalletCards size={20} />} tone="cyan" />
           <KpiCard label="Giá trị thực" value={loading ? '...' : fmtMoney(data.summary.actual_value)} sub={`Đã TH ${fmtMoney(data.summary.executed_amount)}`} icon={<TrendingUp size={20} />} tone="emerald" />
           <KpiCard label="Đã thanh toán" value={loading ? '...' : fmtMoney(data.summary.paid_amount)} sub={`Tỷ lệ thu ${data.summary.collection_rate}%`} icon={<ShieldCheck size={20} />} tone="emerald" />
-          <KpiCard label="Tiền thuế" value={loading ? '...' : fmtMoney(taxAmount)} sub={`VAT 8% · DT thực ${fmtMoney(grossRevenue)}`} icon={<Receipt size={20} />} tone="violet" />
-          <KpiCard label="Hoa hồng CTV" value={loading ? '...' : fmtMoney(netCommission)} sub={`Gộp ${fmtMoney(grossCommission)} − thuế TNCN 10%`} icon={<HandCoins size={20} />} tone="teal" />
+          <KpiCard label="Tiền thuế" value={loading ? '...' : fmtMoney(data.summary.tax_amount)} sub={`VAT 8% · DT thực ${fmtMoney(data.summary.gross_revenue)}`} icon={<Receipt size={20} />} tone="violet" />
+          <KpiCard label="Hoa hồng CTV" value={loading ? '...' : fmtMoney(data.summary.net_commission)} sub={`Gộp ${fmtMoney(data.summary.gross_commission)} − thuế TNCN 10%`} icon={<HandCoins size={20} />} tone="teal" />
           <KpiCard label="Công nợ" value={loading ? '...' : fmtMoney(data.summary.debt_amount)} sub={`Tỷ lệ nợ ${data.summary.debt_rate}%`} icon={<Activity size={20} />} tone="rose" />
           <KpiCard label="Sắp hết hạn" value={loading ? '...' : fmtNumber(data.summary.expiring_soon)} sub={`${fmtNumber(data.summary.expired)} HĐ đã quá hạn`} icon={<CalendarDays size={20} />} tone="amber" />
         </div>
 
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-          <div className="relative overflow-hidden rounded-2xl border border-cyan-100 bg-gradient-to-br from-white via-cyan-50/20 to-sky-50/30 p-4 shadow-sm xl:col-span-2"><div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-cyan-200/30 blur-3xl" />
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-sm font-black uppercase tracking-wide text-slate-800">Tăng trưởng hội viên theo tháng</h2>
-                <p className="text-xs font-semibold text-slate-400">Số hội viên đăng ký và số tiền đã thu</p>
+          <div className="grid grid-cols-1 gap-5 xl:col-span-2 2xl:grid-cols-2">
+            <div className="relative overflow-hidden rounded-2xl border border-cyan-100 bg-gradient-to-br from-white via-cyan-50/20 to-sky-50/30 p-4 shadow-sm">
+              <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-cyan-200/30 blur-3xl" />
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-black uppercase tracking-wide text-slate-800">Hội viên đăng ký theo {unitLabel}</h2>
+                  <p className="text-xs font-semibold text-slate-400">Cột theo {unitLabel} tạo hợp đồng MBS</p>
+                </div>
+                <BarChart3 size={19} className="text-cyan-500" />
               </div>
-              <LineChart size={19} className="text-cyan-500" />
+              <GrowthBarChart data={data.charts.daily} unitLabel={unitLabel} />
             </div>
-            <ComboChart data={data.charts.monthly} />
+
+            <div className="relative overflow-hidden rounded-2xl border border-yellow-100 bg-gradient-to-br from-white via-yellow-50/20 to-amber-50/30 p-4 shadow-sm">
+              <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-yellow-200/30 blur-3xl" />
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-black uppercase tracking-wide text-slate-800">Doanh thu & hoa hồng theo {unitLabel}</h2>
+                  <p className="text-xs font-semibold text-slate-400">Đường theo {unitLabel} tạo hợp đồng MBS</p>
+                </div>
+                <LineChart size={19} className="text-amber-500" />
+              </div>
+              <FinancialTrendChart data={data.charts.daily} unitLabel={unitLabel} />
+            </div>
           </div>
 
           <div className="relative overflow-hidden rounded-2xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50/20 to-violet-50/30 p-4 shadow-sm">

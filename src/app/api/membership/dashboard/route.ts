@@ -43,6 +43,7 @@ type DriveRow = {
 };
 
 type BucketKey = 'expired' | 'expiring' | 'safe' | 'unknown';
+type Period = 'day' | 'month';
 
 function str(v: unknown): string {
   return String(v ?? '').trim();
@@ -53,13 +54,46 @@ function num(v: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-function dateKey(v: string | null): string {
-  return str(v).slice(0, 10);
+function pad2(v: string | number): string {
+  return String(v).padStart(2, '0');
 }
 
-function monthKey(v: string | null): string {
-  const key = dateKey(v).slice(0, 7);
-  return /^\d{4}-\d{2}$/.test(key) ? key : 'Chưa rõ';
+function dateKey(v: string | null): string {
+  const value = str(v);
+  if (!value) return '';
+
+  const iso = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/.exec(value);
+  if (iso) return `${iso[1]}-${pad2(iso[2])}-${pad2(iso[3])}`;
+
+  const vi = /^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/.exec(value);
+  if (vi) return `${vi[3]}-${pad2(vi[2])}-${pad2(vi[1])}`;
+
+  return value.slice(0, 10);
+}
+
+function monthEnd(monthKey: string): string {
+  const [year, month] = monthKey.split('-').map(Number);
+  if (!year || !month) return '';
+  const lastDay = new Date(year, month, 0).getDate();
+  return `${year}-${pad2(month)}-${pad2(lastDay)}`;
+}
+
+function periodKey(date: string, period: Period): string {
+  return period === 'month' ? date.slice(0, 7) : date;
+}
+
+function financialMetrics(paidAmount: number) {
+  const taxAmount = paidAmount * 8 / 108;
+  const grossRevenue = paidAmount - taxAmount;
+  const grossCommission = grossRevenue * 0.10;
+  const netCommission = grossCommission * 0.90;
+
+  return {
+    tax_amount: taxAmount,
+    gross_revenue: grossRevenue,
+    gross_commission: grossCommission,
+    net_commission: netCommission,
+  };
 }
 
 function remainingBucket(days: number | null): BucketKey {
@@ -151,8 +185,15 @@ export async function GET(req: NextRequest) {
     const type = str(req.nextUrl.searchParams.get('type'));
     const owner = str(req.nextUrl.searchParams.get('owner'));
     const remaining = str(req.nextUrl.searchParams.get('remaining'));
-    const dateFrom = str(req.nextUrl.searchParams.get('date_from'));
-    const dateTo = str(req.nextUrl.searchParams.get('date_to'));
+    const period: Period = str(req.nextUrl.searchParams.get('period')) === 'month' ? 'month' : 'day';
+    const month = str(req.nextUrl.searchParams.get('month'));
+    let dateFrom = str(req.nextUrl.searchParams.get('date_from'));
+    let dateTo = str(req.nextUrl.searchParams.get('date_to'));
+
+    if (period === 'month' && /^\d{4}-\d{2}$/.test(month)) {
+      dateFrom = `${month}-01`;
+      dateTo = monthEnd(month);
+    }
 
     const contracts = (await fetchAllContracts(supabase)).filter(isMembershipContract);
     const contractIds = contracts.map((c) => c.getfly_contract_id).filter(Boolean);
@@ -179,15 +220,23 @@ export async function GET(req: NextRequest) {
       if (type && type !== 'all' && str(c.contract_type) !== type) return false;
       if (owner && owner !== 'all' && str(c.person_in_charge) !== owner) return false;
       if (remaining && remaining !== 'all' && bucket !== remaining) return false;
-      if (dateFrom && created && created < dateFrom) return false;
-      if (dateTo && created && created > dateTo) return false;
+      if (dateFrom && (!created || created < dateFrom)) return false;
+      if (dateTo && (!created || created > dateTo)) return false;
       return true;
     });
 
     const statusMap = new Map<string, { count: number; value: number }>();
     const typeMap = new Map<string, { count: number; value: number }>();
     const ownerMap = new Map<string, { count: number; value: number }>();
-    const monthlyMap = new Map<string, { count: number; value: number; paid: number }>();
+    const periodMap = new Map<string, {
+      count: number;
+      value: number;
+      paid: number;
+      tax_amount: number;
+      gross_revenue: number;
+      gross_commission: number;
+      net_commission: number;
+    }>();
     const remainingMap = new Map<string, { count: number; value: number }>([
       ['Đã quá hạn', { count: 0, value: 0 }],
       ['≤ 90 ngày', { count: 0, value: 0 }],
@@ -221,12 +270,28 @@ export async function GET(req: NextRequest) {
       addToMap(typeMap, str(c.contract_type), value, () => ({ count: 0, value: 0 }));
       addToMap(ownerMap, str(c.person_in_charge), value, () => ({ count: 0, value: 0 }));
 
-      const month = monthKey(c.created_date || c.effective_date);
-      const monthItem = monthlyMap.get(month) || { count: 0, value: 0, paid: 0 };
-      monthItem.count += 1;
-      monthItem.value += value;
-      monthItem.paid += paid;
-      monthlyMap.set(month, monthItem);
+      const created = dateKey(c.created_date);
+      if (created) {
+        const key = periodKey(created, period);
+        const metrics = financialMetrics(paid);
+        const periodItem = periodMap.get(key) || {
+          count: 0,
+          value: 0,
+          paid: 0,
+          tax_amount: 0,
+          gross_revenue: 0,
+          gross_commission: 0,
+          net_commission: 0,
+        };
+        periodItem.count += 1;
+        periodItem.value += value;
+        periodItem.paid += paid;
+        periodItem.tax_amount += metrics.tax_amount;
+        periodItem.gross_revenue += metrics.gross_revenue;
+        periodItem.gross_commission += metrics.gross_commission;
+        periodItem.net_commission += metrics.net_commission;
+        periodMap.set(key, periodItem);
+      }
 
       const bucketLabel = remainingBucket(c.remaining_days) === 'expired'
         ? 'Đã quá hạn'
@@ -257,11 +322,10 @@ export async function GET(req: NextRequest) {
       if (syncTime && syncTime > newestSync) newestSync = syncTime;
     });
 
-    const monthly = Array.from(monthlyMap.entries())
-      .filter(([label]) => label !== 'Chưa rõ')
+    const daily = Array.from(periodMap.entries())
       .map(([label, item]) => ({ label, ...item }))
-      .sort((a, b) => a.label.localeCompare(b.label))
-      .slice(-12);
+      .sort((a, b) => a.label.localeCompare(b.label));
+    const summaryMetrics = financialMetrics(paidAmount);
 
     const records = filtered.slice(0, 50).map((c) => {
       const drive = driveMap.get(c.getfly_contract_id);
@@ -286,6 +350,7 @@ export async function GET(req: NextRequest) {
         executed_amount: executedAmount,
         paid_amount: paidAmount,
         debt_amount: debtAmount,
+        ...summaryMetrics,
         average_value: filtered.length ? totalValue / filtered.length : 0,
         collection_rate: totalValue ? Math.round((paidAmount / totalValue) * 1000) / 10 : 0,
         debt_rate: totalValue ? Math.round((debtAmount / totalValue) * 1000) / 10 : 0,
@@ -303,7 +368,7 @@ export async function GET(req: NextRequest) {
         status: topItems(statusMap, 9),
         types: topItems(typeMap, 6),
         owners: topItems(ownerMap, 8),
-        monthly,
+        daily,
         remaining: Array.from(remainingMap.entries()).map(([label, item]) => ({ label, ...item })),
       },
       records,
