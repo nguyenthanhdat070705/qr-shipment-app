@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 
+function getCoffinImage(productCode: string): string {
+  if (productCode === '2AQ0106' || productCode === '2AQ0129') return '/coffin-3.png';
+  let hash = 0;
+  for (let i = 0; i < productCode.length; i++) {
+    hash = ((hash << 5) - hash + productCode.charCodeAt(i)) | 0;
+  }
+  return `/coffin-${(Math.abs(hash) % 5) + 1}.png`;
+}
+
+function resolveImage(hinhAnh: string | null | undefined, productCode: string): string {
+  const raw = (hinhAnh || '').trim();
+  return raw.startsWith('http') ? raw : getCoffinImage(productCode || '');
+}
+
 /**
  * fact_inventory schema (actual column names):
  *   "Mã"            → record ID
@@ -103,7 +117,7 @@ export async function GET(req: NextRequest) {
       let foundHom: any = null;
       const { data: exactHom } = await supabase
         .from('dim_hom')
-        .select('id, ma_hom, ten_hom')
+        .select('id, ma_hom, ten_hom, hinh_anh')
         .eq('ma_hom', maHomCode)
         .maybeSingle();
       
@@ -112,7 +126,7 @@ export async function GET(req: NextRequest) {
       } else {
         const { data: fuzzyHoms } = await supabase
           .from('dim_hom')
-          .select('id, ma_hom, ten_hom')
+          .select('id, ma_hom, ten_hom, hinh_anh')
           .ilike('ma_hom', `%${maHomCode}%`)
           .limit(1);
         if (fuzzyHoms && fuzzyHoms.length > 0) foundHom = fuzzyHoms[0];
@@ -133,7 +147,7 @@ export async function GET(req: NextRequest) {
       let foundHom: any = null;
       const { data: exactHom } = await supabase
         .from('dim_hom')
-        .select('id, ma_hom, ten_hom')
+        .select('id, ma_hom, ten_hom, hinh_anh')
         .eq('ma_hom', searchCode)
         .maybeSingle();
       
@@ -143,7 +157,7 @@ export async function GET(req: NextRequest) {
         // Try case-insensitive / fuzzy match
         const { data: fuzzyHoms } = await supabase
           .from('dim_hom')
-          .select('id, ma_hom, ten_hom')
+          .select('id, ma_hom, ten_hom, hinh_anh')
           .ilike('ma_hom', `%${searchCode}%`)
           .limit(5);
         if (fuzzyHoms && fuzzyHoms.length > 0) foundHom = fuzzyHoms[0];
@@ -161,7 +175,7 @@ export async function GET(req: NextRequest) {
     if (matchingRows.length === 0 && !damData) {
       const { data: nameHoms } = await supabase
         .from('dim_hom')
-        .select('id, ma_hom, ten_hom')
+        .select('id, ma_hom, ten_hom, hinh_anh')
         .ilike('ten_hom', `%${searchCode}%`)
         .limit(5);
       
@@ -219,7 +233,7 @@ export async function GET(req: NextRequest) {
     } else if (homIds.length > 0) {
       const { data: homData } = await supabase
         .from('dim_hom')
-        .select('id, ma_hom, ten_hom')
+        .select('id, ma_hom, ten_hom, hinh_anh')
         .in('id', homIds);
       (homData || []).forEach((h: any) => homMap.set(h.id, h));
     }
@@ -238,6 +252,7 @@ export async function GET(req: NextRequest) {
         warehouse_name: k?.ten_kho,
         quantity_available: Number(item['Ghi chú'] || 0),
         quantity_total: Number(item['Số lượng'] || 0),
+        image_url: resolveImage(h?.hinh_anh, h?.ma_hom || ''),
       };
     });
 

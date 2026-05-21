@@ -14,6 +14,7 @@ interface InventoryItemData {
   warehouse_id: string;
   warehouse_name: string;
   quantity_available: number;
+  image_url?: string;
 }
 
 export function GoodsIssueContent() {
@@ -350,9 +351,10 @@ export function GoodsIssueContent() {
               <div className="bg-slate-50 dark:bg-white/5 border-x border-indigo-100 dark:border-transparent px-5 sm:px-6 py-4 sm:py-5 flex items-center justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={getCoffinImage(selectedItem.product_code)}
+                  src={selectedItem.image_url || getCoffinImage(selectedItem.product_code)}
                   alt="Sản phẩm"
                   className="max-h-32 sm:max-h-44 w-full object-contain drop-shadow-md"
+                  onError={(e) => { (e.target as HTMLImageElement).src = getCoffinImage(selectedItem.product_code); }}
                 />
               </div>
 
