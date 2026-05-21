@@ -37,24 +37,14 @@ interface DimKho {
   ten_kho: string;
 }
 
-interface DimNcc {
-  id: string;
-  ma_ncc: string;
-  ten_ncc: string;
-  nguoi_lien_he: string | null;
-  sdt: string | null;
-  dia_chi: string | null;
-}
-
 export async function GET() {
   const supabase = getSupabaseAdmin();
 
-  // Fetch all 4 tables in parallel
-  const [inventoryRes, homRes, khoRes, nccRes] = await Promise.all([
+  // Fetch stock, product, and warehouse data. Supplier data is intentionally excluded from this API.
+  const [inventoryRes, homRes, khoRes] = await Promise.all([
     supabase.from('fact_inventory').select('*'),
     supabase.from('dim_hom').select('id, ma_hom, ten_hom, ten_hom_the_hien, gia_ban, gia_ban_1, hinh_anh, is_active'),
     supabase.from('dim_kho').select('id, ma_kho, ten_kho'),
-    supabase.from('dim_ncc').select('id, ma_ncc, ten_ncc, nguoi_lien_he, sdt, dia_chi'),
   ]);
 
   if (inventoryRes.error) {
@@ -70,11 +60,6 @@ export async function GET() {
   const khoMap = new Map<string, DimKho>();
   for (const k of (khoRes.data || []) as DimKho[]) {
     khoMap.set(k.id, k);
-  }
-
-  const nccMap = new Map<string, DimNcc>();
-  for (const n of (nccRes.data || []) as DimNcc[]) {
-    nccMap.set(n.id, n);
   }
 
   const inventory = (inventoryRes.data || []) as FactInventoryRow[];
@@ -135,7 +120,6 @@ export async function GET() {
   // Transform grouped data to InventoryItem format expected by InventorySearch
   const items = Array.from(productGroupMap.values()).map((group) => {
     const hom = homMap.get(group.homId);
-    const ncc = null as any;
 
     const code = hom?.ma_hom || '—';
     const name = hom?.ten_hom_the_hien || hom?.ten_hom || 'Chưa có tên';
@@ -174,10 +158,6 @@ export async function GET() {
       lots: [] as string[],
       warehouseBreakdown: group.warehouseBreakdown,
       typeBreakdown: Object.fromEntries(group.loaiBreakdown),
-      supplierName: ncc?.ten_ncc || '',
-      supplierContact: ncc?.nguoi_lien_he || '',
-      supplierPhone: ncc?.sdt || '',
-      supplierAddress: ncc?.dia_chi || '',
     };
   });
 

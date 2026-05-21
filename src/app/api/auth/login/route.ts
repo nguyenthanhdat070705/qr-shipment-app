@@ -10,7 +10,7 @@ const LOCAL_DEFAULT_ACCOUNTS: Record<string, { password: string; name: string; d
   'kho3@blackstone.com.vn': { password: '123456@', name: 'Kho 3', department: 'Kho' },
   'bophanthumua@blackstone.com.vn': { password: '123456@', name: 'Bộ phận Thu mua', department: 'Thu mua' },
   'bophanvanhanh@blackstone.com.vn': { password: '123456@', name: 'Bộ phận Vận hành', department: 'Vận hành' },
-  'bophanbanhang@blackstone.com.vn': { password: '123456A', name: 'Bộ phận Bán hàng', department: 'Bán hàng' },
+  'bophanbanhang@blackstone.com.vn': { password: '123456@', name: 'Bộ phận Bán hàng', department: 'Bán hàng' },
   'bophanpttt@blackstone.com.vn': { password: '123456@', name: 'Bộ phận PTTT', department: 'Bán hàng' },
 };
 

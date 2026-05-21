@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { getUserRole } from '@/config/roles.config';
 
 /**
  * GET    /api/purchase-orders/[id]   → Detail with items
@@ -8,11 +9,14 @@ import { getSupabaseAdmin } from '@/lib/supabase/server';
  */
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   const supabase = getSupabaseAdmin();
+  const email = req.nextUrl.searchParams.get('email') || '';
+  const role = getUserRole(email);
+  const canViewSupplier = email && ['admin', 'procurement', 'warehouse'].includes(role);
 
   // Fetch PO from fact_don_hang
   const { data: po, error } = await supabase
@@ -27,7 +31,7 @@ export async function GET(
 
   // Fetch related data
   const [nccRes, khoRes, createdByRes, itemsRes] = await Promise.all([
-    po.ncc_id ? supabase.from('dim_ncc').select('*').eq('id', po.ncc_id).single() : { data: null },
+    canViewSupplier && po.ncc_id ? supabase.from('dim_ncc').select('*').eq('id', po.ncc_id).single() : { data: null },
     po.kho_id ? supabase.from('dim_kho').select('*').eq('id', po.kho_id).single() : { data: null },
     po.nguoi_tao_id ? supabase.from('dim_account').select('*').eq('id', po.nguoi_tao_id).single() : { data: null },
     supabase.from('fact_don_hang_items').select('*').eq('don_hang_id', id),
@@ -39,7 +43,7 @@ export async function GET(
   const transformed = {
     id: po.id,
     po_code: po.ma_don_hang,
-    supplier_id: po.ncc_id,
+    supplier_id: canViewSupplier ? po.ncc_id : null,
     warehouse_id: po.kho_id,
     status: po.trang_thai || 'confirmed',
     total_amount: po.tong_tien || 0,
@@ -50,7 +54,7 @@ export async function GET(
     expected_date: po.ngay_du_kien,
     created_at: po.created_at,
     updated_at: po.updated_at,
-    supplier: nccRes.data ? {
+    supplier: canViewSupplier && nccRes.data ? {
       id: nccRes.data.id,
       code: nccRes.data.ma_ncc,
       name: nccRes.data.ten_ncc,

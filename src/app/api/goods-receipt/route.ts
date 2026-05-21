@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 import { randomUUID } from 'crypto';
+import { getUserRole } from '@/config/roles.config';
 
 /**
  * GET  /api/goods-receipt     → List all GRPOs from fact_nhap_hang
  * POST /api/goods-receipt     → Create new GRPO in fact_nhap_hang
  */
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const supabase = getSupabaseAdmin();
+  const email = req.nextUrl.searchParams.get('email') || '';
+  const role = getUserRole(email);
+  const canViewSupplier = email && ['admin', 'procurement', 'warehouse'].includes(role);
 
   try {
     const { data, error } = await supabase
@@ -42,7 +46,7 @@ export async function GET() {
       (khoData || []).forEach((k: any) => khoMap.set(k.id, k));
     }
 
-    // Fetch POs + suppliers
+    // Fetch POs. Supplier details are included only for roles that may view supplier data.
     const poMap = new Map<string, any>();
     if (donHangIds.length > 0) {
       const { data: poData } = await supabase
@@ -53,7 +57,7 @@ export async function GET() {
       if (poData && poData.length > 0) {
         const nccIds = [...new Set(poData.map(p => p.ncc_id).filter(Boolean))];
         const nccMap = new Map<string, any>();
-        if (nccIds.length > 0) {
+        if (canViewSupplier && nccIds.length > 0) {
           const { data: nccData } = await supabase
             .from('dim_ncc')
             .select('id, ten_ncc')
@@ -64,8 +68,8 @@ export async function GET() {
           const supplier = po.ncc_id ? nccMap.get(po.ncc_id) : null;
           poMap.set(po.id, {
             po_code: po.ma_don_hang,
-            supplier_id: po.ncc_id,
-            suppliers: supplier ? { name: supplier.ten_ncc } : null,
+            supplier_id: canViewSupplier ? po.ncc_id : null,
+            suppliers: canViewSupplier && supplier ? { name: supplier.ten_ncc } : null,
           });
         });
       }

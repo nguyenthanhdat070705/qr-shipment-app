@@ -34,10 +34,14 @@ export async function GET() {
   }
 
   // Merge: override so_luong with the real aggregated quantity
-  const data = (productsRes.data || []).map((product: Record<string, unknown>) => ({
-    ...product,
-    so_luong: qtyMap.get(product.id as string) || 0,
-  }));
+  const data = (productsRes.data || []).map((product: Record<string, unknown>) => {
+    const { NCC: _ncc, ...safeProduct } = product;
+    void _ncc;
+    return {
+      ...safeProduct,
+      so_luong: qtyMap.get(product.id as string) || 0,
+    };
+  });
 
   return NextResponse.json({ data });
 }

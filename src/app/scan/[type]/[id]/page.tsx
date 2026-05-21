@@ -3,8 +3,8 @@ import { getSupabaseAdmin } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import {
-  ArrowLeft, ShoppingCart, PackageCheck, Truck, Package,
-  Calendar, User, Building, MapPin, Phone, ChevronRight,
+  ArrowLeft, ShoppingCart, PackageCheck,
+  Calendar, ChevronRight,
   ClipboardList, CheckCircle, Warehouse
 } from 'lucide-react';
 
@@ -46,13 +46,6 @@ async function POScanPage({ id }: { id: string }) {
     .from('fact_don_hang_items')
     .select('*')
     .eq('don_hang_id', id);
-
-  // Fetch tên NCC
-  let nccName = '—';
-  if (po.ncc_id) {
-    const { data: ncc } = await supabase.from('dim_ncc').select('ten_ncc').eq('id', po.ncc_id).single();
-    if (ncc) nccName = ncc.ten_ncc;
-  }
 
   // Fetch tên kho
   let khoName = '—';
@@ -107,7 +100,6 @@ async function POScanPage({ id }: { id: string }) {
             <p className="text-xs font-bold uppercase tracking-wider text-purple-600">Thông tin đơn hàng</p>
           </div>
           <div className="divide-y divide-gray-50">
-            <InfoRow icon={<Building size={15} />} label="Nhà cung cấp" value={nccName} />
             <InfoRow icon={<Warehouse size={15} />} label="Kho nhận" value={khoName} />
             <InfoRow icon={<Calendar size={15} />} label="Ngày đặt" value={formatDate(po.ngay_dat)} />
             <InfoRow icon={<Calendar size={15} />} label="Dự kiến nhận" value={formatDate(po.ngay_du_kien)} highlight />

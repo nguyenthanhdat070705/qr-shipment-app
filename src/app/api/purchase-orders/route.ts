@@ -1,21 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { getUserRole } from '@/config/roles.config';
 
 /**
  * GET  /api/purchase-orders   → List all POs from fact_don_hang
  * POST /api/purchase-orders   → Create new PO in fact_don_hang
  */
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const supabase = getSupabaseAdmin();
+  const email = req.nextUrl.searchParams.get('email') || '';
+  const role = getUserRole(email);
+  const canViewSupplier = email && ['admin', 'procurement', 'warehouse'].includes(role);
+  const selectQuery = canViewSupplier
+    ? '*, ncc:dim_ncc!ncc_id(id, ma_ncc, ten_ncc, nguoi_lien_he, sdt), kho:dim_kho!kho_id(id, ma_kho, ten_kho)'
+    : '*, kho:dim_kho!kho_id(id, ma_kho, ten_kho)';
 
   const { data, error } = await supabase
     .from('fact_don_hang')
-    .select(`
-      *,
-      ncc:dim_ncc!ncc_id(id, ma_ncc, ten_ncc, nguoi_lien_he, sdt),
-      kho:dim_kho!kho_id(id, ma_kho, ten_kho)
-    `)
+    .select(selectQuery)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -23,7 +26,8 @@ export async function GET() {
   }
 
   // Get unique user IDs to fetch names
-  const userIds = [...new Set((data || []).map(po => po.nguoi_tao_id).filter(Boolean))];
+  const rows = (data || []) as unknown as Record<string, unknown>[];
+  const userIds = [...new Set(rows.map(po => po.nguoi_tao_id).filter(Boolean))];
   let usersMap: Record<string, string> = {};
   
   if (userIds.length > 0) {
@@ -41,10 +45,10 @@ export async function GET() {
   }
 
   // Transform to match expected frontend format
-  const transformed = (data || []).map((po: Record<string, unknown>) => ({
+  const transformed = rows.map((po: Record<string, unknown>) => ({
     id: po.id,
     po_code: po.ma_don_hang,
-    supplier_id: po.ncc_id,
+    supplier_id: canViewSupplier ? po.ncc_id : null,
     warehouse_id: po.kho_id,
     status: po.trang_thai || 'confirmed',
     total_amount: po.tong_tien || 0,
@@ -56,7 +60,7 @@ export async function GET() {
     created_at: po.created_at,
     updated_at: po.updated_at,
     // Joined
-    supplier: po.ncc ? {
+    supplier: canViewSupplier && po.ncc ? {
       id: (po.ncc as Record<string, unknown>).id,
       code: (po.ncc as Record<string, unknown>).ma_ncc,
       name: (po.ncc as Record<string, unknown>).ten_ncc,

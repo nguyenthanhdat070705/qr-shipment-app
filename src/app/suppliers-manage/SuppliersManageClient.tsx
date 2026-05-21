@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Search, X, Check, Edit2, ChevronDown, ChevronUp, Truck, Phone, FileText, MapPin, Trash2, Upload, FileSpreadsheet, ArrowRight, RefreshCw, AlertCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { getUserRole, type UserRole } from '@/config/roles.config';
 import './suppliers-manage.css';
 
 interface Supplier {
@@ -89,6 +90,8 @@ export default function SuppliersManageClient() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [userEmail, setUserEmail] = useState('');
+  const [userRole, setUserRole] = useState<UserRole>('sales');
+  const [authReady, setAuthReady] = useState(false);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   // Delete state
@@ -110,21 +113,41 @@ export default function SuppliersManageClient() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem('auth_user');
-      if (raw) setUserEmail(JSON.parse(raw).email || '');
+      if (raw) {
+        const email = JSON.parse(raw).email || '';
+        setUserEmail(email);
+        setUserRole(getUserRole(email));
+      }
     } catch { /* ignore */ }
+    setAuthReady(true);
   }, []);
 
+  const canViewSuppliers = userRole === 'admin' || userRole === 'procurement';
+
   const fetchSuppliers = useCallback(async () => {
+    if (!canViewSuppliers || !userEmail) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
-      const res = await fetch('/api/suppliers?t=' + Date.now(), { cache: 'no-store' });
+      const params = new URLSearchParams({ email: userEmail, t: String(Date.now()) });
+      const res = await fetch(`/api/suppliers?${params.toString()}`, { cache: 'no-store' });
       const json = await res.json();
+      if (!res.ok) {
+        setMessage({ type: 'error', text: json.error || 'Không có quyền xem danh sách NCC.' });
+        setSuppliers([]);
+        return;
+      }
       setSuppliers(json.data || []);
     } catch { console.error('Fetch error'); }
     finally { setLoading(false); }
-  }, []);
+  }, [canViewSuppliers, userEmail]);
 
-  useEffect(() => { fetchSuppliers(); }, [fetchSuppliers]);
+  useEffect(() => {
+    if (authReady) fetchSuppliers();
+  }, [authReady, fetchSuppliers]);
 
   const handleChange = (field: string, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -265,6 +288,18 @@ export default function SuppliersManageClient() {
   });
 
   const mappedRows = excelStep === 'preview' ? getMappedRows() : [];
+
+  if (authReady && !canViewSuppliers) {
+    return (
+      <div className="ncc-container">
+        <div className="ncc-empty">
+          <AlertTriangle size={48} />
+          <h3>Không có quyền xem nhà cung cấp</h3>
+          <p>Thông tin NCC chỉ hiển thị cho tài khoản Quản trị hoặc Thu mua.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="ncc-container">

@@ -185,14 +185,6 @@ export default function ProductDetailCard({ row }: ProductDetailCardProps) {
           );
         })()}
 
-        {/* Nhà cung cấp */}
-        {String(row['nhà cung cấp'] ?? '').trim() !== '' && (
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
-            <span className="text-xs font-bold uppercase tracking-wide text-gray-400">Nhà cung cấp</span>
-            <span className="text-sm font-semibold text-gray-700">{String(row['nhà cung cấp'])}</span>
-          </div>
-        )}
-
         {/* Loại hàng */}
         {String(row['loại hàng'] ?? '').trim() !== '' && (
           <div className="flex items-center justify-between py-3 border-b border-gray-100">

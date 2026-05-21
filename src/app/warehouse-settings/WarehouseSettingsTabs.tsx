@@ -25,7 +25,7 @@ export default function WarehouseSettingsTabs({ currentTab }: { currentTab: stri
       label: "Toàn bộ sản phẩm",
       icon: <LayoutGrid size={18} />,
     }] : []),
-    ...(userRole === "admin" || userRole === "procurement" || userRole === "sales" ? [{
+    ...(userRole === "admin" || userRole === "procurement" ? [{
       id: "boxes",
       label: "Quản lý hòm",
       icon: <Package size={18} />,

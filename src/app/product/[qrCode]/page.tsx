@@ -7,7 +7,7 @@ import { extractProductCode } from '@/lib/utils';
 import ProductDetailCard from '@/components/ProductDetailCard';
 import ProductNotFound from '@/components/ProductNotFound';
 import ShipmentConfirmationFormWrapper from '@/components/ShipmentConfirmationFormWrapper';
-import { ArrowLeft, QrCode, Printer } from 'lucide-react';
+import { ArrowLeft, QrCode } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import PrintButton from '@/components/PrintButton';
@@ -25,22 +25,12 @@ interface DimHom {
   gia_ban: number | null;
   gia_ban_1: number | null;
   hinh_anh: string | null;
-  NCC: string | null;
 }
 
 interface DimKho {
   id: string;
   ma_kho: string;
   ten_kho: string;
-}
-
-interface DimNcc {
-  id: string;
-  ma_ncc: string;
-  ten_ncc: string;
-  nguoi_lien_he: string | null;
-  sdt: string | null;
-  dia_chi: string | null;
 }
 
 interface FactInventoryRow {
@@ -53,7 +43,7 @@ interface FactInventoryRow {
 }
 
 /**
- * Find product by ma_hom (product code) using fact_inventory + dim_hom + dim_kho + dim_ncc.
+ * Find product by ma_hom (product code) using fact_inventory + dim_hom + dim_kho.
  * Falls back to legacy products table lookup.
  */
 async function getProductByCode(productCode: string): Promise<DynamicProductRow | null> {
@@ -113,19 +103,7 @@ async function getProductByCode(productCode: string): Promise<DynamicProductRow 
   }
   const warehouse = allWarehouses[0] || null;
 
-  // 4) Get supplier info
-  let supplier: DimNcc | null = null;
-  if (hom.NCC) {
-    const { data: nccData } = await supabase
-      .from('dim_ncc')
-      .select('*')
-      .eq('id', hom.NCC)
-      .single();
-    supplier = (nccData as DimNcc) || null;
-  }
-
   // Quantities
-  const totalQty = inventoryRows.reduce((sum, r) => sum + (r['Số lượng'] || 0), 0);
   const totalAvail = inventoryRows.reduce((sum, r) => sum + (r['Ghi chú'] || 0), 0);
 
   // Build a unified DynamicProductRow with all info
@@ -152,12 +130,6 @@ async function getProductByCode(productCode: string): Promise<DynamicProductRow 
     // Còn hàng = available > 0
     'tình trạng': totalAvail > 0 ? 'in_stock' : 'unavailable',
     is_active: totalAvail > 0 ? 'in_stock' : 'unavailable',
-    // Supplier info
-    'nhà cung cấp': supplier?.ten_ncc || '',
-    'mã ncc': supplier?.ma_ncc || '',
-    'liên hệ ncc': supplier?.nguoi_lien_he || '',
-    'sdt ncc': supplier?.sdt || '',
-    'địa chỉ ncc': supplier?.dia_chi || '',
     // Warehouse listing — per-warehouse inventory
     'danh sách kho': JSON.stringify(inventoryRows.map((r) => {
       const kho = allWarehouses.find(w => w.id === r['Kho']);

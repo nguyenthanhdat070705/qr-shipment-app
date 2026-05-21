@@ -913,7 +913,7 @@ export default function ProductsManagePage() {
           <Search size={18} />
           <input
             type="text"
-            placeholder="Tìm theo mã hòm, tên, NCC, loại..."
+            placeholder="Tìm theo mã hòm, tên, loại..."
             value={search}
             onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
           />

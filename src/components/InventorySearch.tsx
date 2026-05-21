@@ -32,9 +32,6 @@ interface InventoryItem {
   isActive: boolean;
   lots?: string[];
   warehouseBreakdown?: WarehouseBreakdown[];
-  supplierContact?: string;
-  supplierPhone?: string;
-  supplierAddress?: string;
   typeBreakdown?: Record<string, number>;
 }
 

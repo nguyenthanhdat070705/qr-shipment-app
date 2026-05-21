@@ -168,10 +168,9 @@ export async function GET(req: Request) {
     }
 
     /* ── Additional admin stats ── */
-    const [poRes, grRes, nccRes, accountRes, damRes, cancelledGRRes, cancelledGIRes] = await Promise.all([
+    const [poRes, grRes, accountRes, damRes, cancelledGRRes, cancelledGIRes] = await Promise.all([
       supabase.from('fact_don_hang').select('id, trang_thai, tong_tien', { count: 'exact' }),
       supabase.from('fact_nhap_hang').select('id, trang_thai', { count: 'exact' }),
-      supabase.from('dim_ncc').select('id', { count: 'exact' }),
       supabase.from('dim_account').select('id', { count: 'exact' }),
       supabase.from('dim_dam').select('id', { count: 'exact' }).then(r => r, () => ({ data: null, count: 0 })),
       supabase.from('fact_nhap_hang').select('id, created_at', { count: 'exact' }).eq('trang_thai', 'cancelled'),
@@ -190,9 +189,6 @@ export async function GET(req: Request) {
     // GR stats
     const totalGR = grRes.count || grData.length;
     const pendingGR = grData.filter((g: any) => ['pending', 'inspecting'].includes(g.trang_thai)).length;
-
-    // NCC stats
-    const totalNCC = nccRes.count || (nccRes.data || []).length;
 
     // Account stats
     const totalAccounts = accountRes.count || accountData.length;
@@ -235,7 +231,6 @@ export async function GET(req: Request) {
         totalPOValue,
         totalGR,
         pendingGR,
-        totalNCC,
         totalAccounts,
         totalInventoryValue,
         totalDam,

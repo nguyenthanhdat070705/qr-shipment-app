@@ -5,7 +5,7 @@ import PageLayout from '@/components/PageLayout';
 import Link from 'next/link';
 import {
   ArrowLeft, Warehouse, Box, DollarSign, TrendingUp,
-  User, Phone, MapPin, ClipboardList, Package,
+  ClipboardList, Package,
   ArrowDownCircle, ArrowUpCircle, History, Info,
 } from 'lucide-react';
 
@@ -65,10 +65,6 @@ interface DimHom {
   is_active: boolean;
 }
 interface DimKho { id: string; ma_kho: string; ten_kho: string; }
-interface DimNcc {
-  id: string; ma_ncc: string; ten_ncc: string;
-  nguoi_lien_he: string | null; sdt: string | null; dia_chi: string | null;
-}
 interface FactInventoryRow {
   'Mã': string;
   'Tên hàng hóa': string;
@@ -177,55 +173,25 @@ export default async function InventoryDetailPage({ params }: PageProps) {
     .order('created_at', { ascending: false })
     .limit(30);
 
-  // Enrich GRPO items with GR code, warehouse, and supplier (via don_hang_id → dim_ncc)
-  const grpoHistory: { code: string; qty: number; date: string; warehouse: string; supplierName: string }[] = [];
-  let ncc: DimNcc | null = null;
+  // Enrich GRPO items with GR code and warehouse. Supplier details are intentionally hidden from sales-facing inventory.
+  const grpoHistory: { code: string; qty: number; date: string; warehouse: string }[] = [];
   if (grpoItems && grpoItems.length > 0) {
     const grIds = [...new Set(grpoItems.map((i: any) => i.nhap_hang_id).filter(Boolean))];
     const { data: grData } = await supabase
       .from('fact_nhap_hang')
-      .select('id, ma_phieu_nhap, kho_id, ngay_nhan, don_hang_id')
+      .select('id, ma_phieu_nhap, kho_id, ngay_nhan')
       .in('id', grIds);
     const grMap = new Map<string, any>();
     for (const gr of (grData || [])) grMap.set(gr.id, gr);
 
-    // Look up suppliers via fact_don_hang.ncc_id
-    const donIds = [...new Set((grData || []).map((g: any) => g.don_hang_id).filter(Boolean))];
-    const donMap = new Map<string, string>(); // don_hang_id -> ncc_id
-    if (donIds.length > 0) {
-      const { data: donData } = await supabase
-        .from('fact_don_hang')
-        .select('id, ncc_id')
-        .in('id', donIds);
-      for (const d of (donData || []) as any[]) donMap.set(d.id, d.ncc_id);
-    }
-    const nccIds = [...new Set(Array.from(donMap.values()).filter(Boolean))];
-    const nccMap = new Map<string, DimNcc>();
-    if (nccIds.length > 0) {
-      const { data: nccData } = await supabase
-        .from('dim_ncc')
-        .select('id, ma_ncc, ten_ncc, nguoi_lien_he, sdt, dia_chi')
-        .in('id', nccIds);
-      for (const n of (nccData || []) as DimNcc[]) nccMap.set(n.id, n);
-      // Pick the most recent supplier as the "primary" supplier for the product
-      const primaryGr = (grData || []).find((g: any) => g.don_hang_id && donMap.get(g.don_hang_id));
-      if (primaryGr) {
-        const nccId = donMap.get((primaryGr as any).don_hang_id);
-        if (nccId) ncc = nccMap.get(nccId) || null;
-      }
-    }
-
     for (const item of grpoItems as any[]) {
       const gr = grMap.get(item.nhap_hang_id);
       const kho = gr?.kho_id ? khoMap.get(gr.kho_id) : null;
-      const nccId = gr?.don_hang_id ? donMap.get(gr.don_hang_id) : null;
-      const grNcc = nccId ? nccMap.get(nccId) : null;
       grpoHistory.push({
         code: gr?.ma_phieu_nhap || '—',
         qty: item.so_luong_thuc_nhan || 0,
         date: gr?.ngay_nhan || item.created_at || '',
         warehouse: kho?.ten_kho || '—',
-        supplierName: grNcc?.ten_ncc || '',
       });
     }
   }
@@ -509,43 +475,6 @@ export default async function InventoryDetailPage({ params }: PageProps) {
           </div>
         </SectionCard>
 
-        {/* ── Nhà cung cấp ─────────────────────────── */}
-        <SectionCard
-          icon={<User size={16} />}
-          title="Nhà cung cấp"
-          color="text-purple-600 dark:text-purple-400"
-          bg="bg-purple-50 dark:bg-purple-500/10"
-        >
-          {ncc ? (
-            <div className="space-y-0">
-              <InfoRow label="Tên NCC" value={ncc.ten_ncc} bold />
-              <InfoRow label="Mã NCC" value={ncc.ma_ncc} mono />
-              {ncc.nguoi_lien_he && <InfoRow label="Người liên hệ" value={ncc.nguoi_lien_he} />}
-              {ncc.sdt && (
-                <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-white/10 last:border-b-0">
-                  <div className="flex items-center gap-2">
-                    <Phone size={13} className="text-gray-400 dark:text-gray-500" />
-                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">SĐT</span>
-                  </div>
-                  <a href={`tel:${ncc.sdt}`} className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">
-                    {ncc.sdt}
-                  </a>
-                </div>
-              )}
-              {ncc.dia_chi && (
-                <div className="flex items-start justify-between py-3 border-b border-gray-100 dark:border-white/10 last:border-b-0 gap-4">
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <MapPin size={13} className="text-gray-400 dark:text-gray-500" />
-                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Địa chỉ</span>
-                  </div>
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 text-right">{ncc.dia_chi}</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-400 dark:text-gray-500 italic py-4 text-center">Chưa có thông tin NCC</p>
-          )}
-        </SectionCard>
       </div>
 
       {/* ── Transaction History grouped by Warehouse ── */}
@@ -560,7 +489,7 @@ export default async function InventoryDetailPage({ params }: PageProps) {
             <p className="text-sm text-gray-400 dark:text-gray-500 italic py-4 text-center">Chưa có lịch sử nhập xuất</p>
           ) : (() => {
             // Combine and group by warehouse
-            type TxEntry = { type: 'grpo' | 'it'; code: string; qty: number; date: string; warehouse: string; note?: string; supplierName?: string };
+            type TxEntry = { type: 'grpo' | 'it'; code: string; qty: number; date: string; warehouse: string; note?: string };
             const allTx: TxEntry[] = [
               ...grpoHistory.map(e => ({ ...e, type: 'grpo' as const })),
               ...itHistory.map(e => ({ ...e, type: 'it' as const })),
@@ -614,9 +543,6 @@ export default async function InventoryDetailPage({ params }: PageProps) {
                                   {tx.type === 'grpo' ? 'Nhập' : 'Xuất'}
                                 </span>
                               </div>
-                              {tx.type === 'grpo' && tx.supplierName && (
-                                <p className="text-[11px] text-purple-600 dark:text-purple-400 mt-0.5 truncate">NCC: {tx.supplierName}</p>
-                              )}
                               {tx.type === 'it' && tx.note && (
                                 <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 truncate">{tx.note}</p>
                               )}

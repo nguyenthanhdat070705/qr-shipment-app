@@ -10,7 +10,16 @@ import { getUserRole } from '@/config/roles.config';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const email = req.nextUrl.searchParams.get('email') || '';
+  const role = getUserRole(email);
+  if (role !== 'admin' && role !== 'procurement') {
+    return NextResponse.json(
+      { error: 'Bạn không có quyền xem danh sách NCC.' },
+      { status: 403 }
+    );
+  }
+
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from('dim_ncc')
