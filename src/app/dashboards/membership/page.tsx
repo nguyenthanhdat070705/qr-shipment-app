@@ -105,8 +105,9 @@ type Filters = {
   remaining: string;
   date_from: string;
   date_to: string;
-  view: 'day' | 'month' | 'range';
-  month: string;
+  view: 'day' | 'month';
+  month_from: string;
+  month_to: string;
 };
 
 const emptyData: DashboardData = {
@@ -175,6 +176,28 @@ function getMonthBounds(month: string) {
     from: `${match[1]}-${match[2]}-01`,
     to: `${match[1]}-${match[2]}-${String(lastDay).padStart(2, '0')}`,
   };
+}
+
+function getMonthRangeBounds(monthFrom: string, monthTo: string): { from: string; to: string; monthFrom: string; monthTo: string } {
+  if (!monthFrom && !monthTo) return { from: '', to: '', monthFrom: '', monthTo: '' };
+  const startMonth = monthFrom || monthTo;
+  const endMonth = monthTo || monthFrom;
+  if (!startMonth || !endMonth) return { from: '', to: '', monthFrom: '', monthTo: '' };
+  const [fromMonth, toMonth] = startMonth > endMonth ? [endMonth, startMonth] : [startMonth, endMonth];
+  return {
+    from: getMonthBounds(fromMonth).from,
+    to: getMonthBounds(toMonth).to,
+    monthFrom: fromMonth,
+    monthTo: toMonth,
+  };
+}
+
+function getDayRange(dateFrom: string, dateTo: string) {
+  if (!dateFrom && !dateTo) return { from: '', to: '' };
+  const startDay = dateFrom || dateTo;
+  const endDay = dateTo || dateFrom;
+  const [from, to] = startDay > endDay ? [endDay, startDay] : [startDay, endDay];
+  return { from, to };
 }
 
 function statusBadge(status: string | null) {
@@ -325,7 +348,7 @@ function GrowthBarChart({ data, unitLabel }: { data: ChartItem[]; unitLabel: str
   const innerW = width - pad * 2;
   const innerH = height - pad * 2;
   const step = innerW / data.length;
-  const barW = Math.max(14, Math.min(38, step * 0.58));
+  const barW = Math.max(3, Math.min(38, step * 0.58));
   const labelEvery = data.length > 10 ? Math.ceil(data.length / 8) : 1;
 
   return (
@@ -453,7 +476,8 @@ export default function MembershipAdminDashboardPage() {
     date_from: '',
     date_to: '',
     view: 'day',
-    month: '',
+    month_from: '',
+    month_to: '',
   });
   const [searchInput, setSearchInput] = useState('');
   const [selectedRecord, setSelectedRecord] = useState<DashboardRecord | null>(null);
@@ -473,16 +497,18 @@ export default function MembershipAdminDashboardPage() {
 
       if (nextFilters.view === 'month') {
         params.set('period', 'month');
-        if (nextFilters.month) {
-          const range = getMonthBounds(nextFilters.month);
-          params.set('month', nextFilters.month);
+        const range = getMonthRangeBounds(nextFilters.month_from, nextFilters.month_to);
+        if (range.from && range.to) {
+          params.set('month_from', range.monthFrom);
+          params.set('month_to', range.monthTo);
           params.set('date_from', range.from);
           params.set('date_to', range.to);
         }
       } else {
         params.set('period', 'day');
-        if (nextFilters.date_from) params.set('date_from', nextFilters.date_from);
-        if (nextFilters.date_to) params.set('date_to', nextFilters.date_to);
+        const range = getDayRange(nextFilters.date_from, nextFilters.date_to);
+        if (range.from) params.set('date_from', range.from);
+        if (range.to) params.set('date_to', range.to);
       }
 
       const res = await fetch(`/api/membership/dashboard?${params.toString()}`);
@@ -521,22 +547,34 @@ export default function MembershipAdminDashboardPage() {
 
   const updateView = (view: Filters['view']) => {
     const next = { ...filters, view };
-    if (view === 'day' && filters.date_from && filters.date_from !== filters.date_to) {
-      next.date_to = filters.date_from;
-    }
     setFilters(next);
     loadDashboard(next);
   };
 
-  const updateSingleDay = (value: string) => {
-    const next = { ...filters, date_from: value, date_to: value };
+  const updateDateFrom = (value: string) => {
+    const next = { ...filters, date_from: value };
+    if (value && (!filters.date_to || filters.date_to < value)) next.date_to = value;
     setFilters(next);
     loadDashboard(next);
   };
 
-  const updateMonth = (value: string) => {
-    const range = getMonthBounds(value);
-    const next = { ...filters, month: value, date_from: range.from, date_to: range.to };
+  const updateDateTo = (value: string) => {
+    const next = { ...filters, date_to: value };
+    if (value && (!filters.date_from || filters.date_from > value)) next.date_from = value;
+    setFilters(next);
+    loadDashboard(next);
+  };
+
+  const updateMonthFrom = (value: string) => {
+    const next = { ...filters, month_from: value };
+    if (value && (!filters.month_to || filters.month_to < value)) next.month_to = value;
+    setFilters(next);
+    loadDashboard(next);
+  };
+
+  const updateMonthTo = (value: string) => {
+    const next = { ...filters, month_to: value };
+    if (value && (!filters.month_from || filters.month_from > value)) next.month_from = value;
     setFilters(next);
     loadDashboard(next);
   };
@@ -567,7 +605,8 @@ export default function MembershipAdminDashboardPage() {
       date_from: '',
       date_to: '',
       view: 'day',
-      month: '',
+      month_from: '',
+      month_to: '',
     };
     setSearchInput('');
     setFilters(next);
@@ -624,7 +663,7 @@ export default function MembershipAdminDashboardPage() {
             </span>
             Bộ lọc dashboard
           </div>
-          <form onSubmit={handleSearch} className="grid grid-cols-1 gap-3 lg:grid-cols-[1.4fr_0.8fr_0.8fr_0.95fr_0.75fr_0.75fr_0.8fr_auto]">
+          <form onSubmit={handleSearch} className="grid grid-cols-1 gap-3 lg:grid-cols-[1.35fr_0.75fr_0.75fr_0.9fr_0.75fr_0.7fr_0.75fr_0.75fr_auto]">
             <label className="min-w-0">
               <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-400">Tìm kiếm</span>
               <div className="relative">
@@ -657,47 +696,47 @@ export default function MembershipAdminDashboardPage() {
               <option value="unknown">Chưa rõ</option>
             </SelectField>
             <SelectField label="Kỳ xem" value={filters.view} onChange={(value) => updateView(value as Filters['view'])}>
-              <option value="day">Ngày</option>
-              <option value="month">Tháng</option>
-              <option value="range">Khoảng</option>
+              <option value="day">Theo ngày</option>
+              <option value="month">Theo tháng</option>
             </SelectField>
             {filters.view === 'month' ? (
-              <label className="lg:col-span-2">
-                <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-400">Chọn tháng</span>
-                <input type="month" value={filters.month} onChange={(e) => updateMonth(e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
-              </label>
-            ) : filters.view === 'range' ? (
               <>
                 <label>
-                  <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-400">Từ ngày</span>
-                  <input type="date" value={filters.date_from} onChange={(e) => updateFilter('date_from', e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
+                  <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-400">Từ tháng</span>
+                  <input type="month" value={filters.month_from} onChange={(e) => updateMonthFrom(e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
                 </label>
                 <label>
-                  <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-400">Đến ngày</span>
-                  <input type="date" value={filters.date_to} onChange={(e) => updateFilter('date_to', e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
+                  <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-400">Đến tháng</span>
+                  <input type="month" value={filters.month_to} onChange={(e) => updateMonthTo(e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
                 </label>
               </>
             ) : (
-              <label className="lg:col-span-2">
-                <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-400">Chọn ngày</span>
-                <input type="date" value={filters.date_from} onChange={(e) => updateSingleDay(e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
-              </label>
+              <>
+                <label>
+                  <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-400">Từ ngày</span>
+                  <input type="date" value={filters.date_from} onChange={(e) => updateDateFrom(e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
+                </label>
+                <label>
+                  <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-400">Đến ngày</span>
+                  <input type="date" value={filters.date_to} onChange={(e) => updateDateTo(e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
+                </label>
+              </>
             )}
             <div className="flex items-end gap-2">
               <button type="submit" className="h-10 rounded-xl bg-indigo-600 px-4 text-xs font-black text-white transition hover:bg-indigo-700">Lọc</button>
               <button type="button" onClick={resetFilters} className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-black text-slate-600 transition hover:bg-slate-50">Xóa</button>
             </div>
           </form>
-          {(filters.search || filters.owner !== 'all' || filters.status !== 'all' || filters.type !== 'all' || filters.date_from || filters.date_to || filters.month) && (
+          {(filters.search || filters.owner !== 'all' || filters.status !== 'all' || filters.type !== 'all' || filters.date_from || filters.date_to || filters.month_from || filters.month_to) && (
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
               {filters.search && <span className="rounded-full bg-indigo-50 px-3 py-1 text-indigo-700">Từ khóa: {filters.search}</span>}
               {filters.owner !== 'all' && <span className="rounded-full bg-violet-50 px-3 py-1 text-violet-700">Phụ trách: {filters.owner}</span>}
               {filters.status !== 'all' && <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">Trạng thái: {filters.status}</span>}
               {filters.type !== 'all' && <span className="rounded-full bg-sky-50 px-3 py-1 text-sky-700">Kiểu HĐ: {filters.type}</span>}
-              {filters.view === 'month' && filters.month && <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">{formatViMonth(filters.month)}</span>}
-              {filters.view === 'day' && filters.date_from && <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">Ngày: {formatViDate(filters.date_from)}</span>}
-              {filters.view === 'range' && filters.date_from && <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">Từ ngày: {formatViDate(filters.date_from)}</span>}
-              {filters.view === 'range' && filters.date_to && <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">Đến ngày: {formatViDate(filters.date_to)}</span>}
+              {filters.view === 'month' && filters.month_from && <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">Từ tháng: {formatViMonth(filters.month_from)}</span>}
+              {filters.view === 'month' && filters.month_to && <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">Đến tháng: {formatViMonth(filters.month_to)}</span>}
+              {filters.view === 'day' && filters.date_from && <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">Từ ngày: {formatViDate(filters.date_from)}</span>}
+              {filters.view === 'day' && filters.date_to && <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">Đến ngày: {formatViDate(filters.date_to)}</span>}
             </div>
           )}
         </div>

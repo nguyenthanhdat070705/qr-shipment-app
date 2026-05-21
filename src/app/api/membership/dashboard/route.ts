@@ -44,6 +44,15 @@ type DriveRow = {
 
 type BucketKey = 'expired' | 'expiring' | 'safe' | 'unknown';
 type Period = 'day' | 'month';
+type PeriodBucket = {
+  count: number;
+  value: number;
+  paid: number;
+  tax_amount: number;
+  gross_revenue: number;
+  gross_commission: number;
+  net_commission: number;
+};
 
 function str(v: unknown): string {
   return String(v ?? '').trim();
@@ -78,8 +87,74 @@ function monthEnd(monthKey: string): string {
   return `${year}-${pad2(month)}-${pad2(lastDay)}`;
 }
 
+function isIsoDay(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function isIsoMonth(value: string): boolean {
+  return /^\d{4}-\d{2}$/.test(value);
+}
+
+function dateFromKey(value: string): Date | null {
+  if (!isIsoDay(value)) return null;
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function dayKeyFromDate(date: Date): string {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+}
+
 function periodKey(date: string, period: Period): string {
   return period === 'month' ? date.slice(0, 7) : date;
+}
+
+function emptyPeriodBucket(): PeriodBucket {
+  return {
+    count: 0,
+    value: 0,
+    paid: 0,
+    tax_amount: 0,
+    gross_revenue: 0,
+    gross_commission: 0,
+    net_commission: 0,
+  };
+}
+
+function periodLabels(period: Period, dateFrom: string, dateTo: string): string[] {
+  if (!dateFrom || !dateTo) return [];
+
+  if (period === 'month') {
+    const fromMonth = dateFrom.slice(0, 7);
+    const toMonth = dateTo.slice(0, 7);
+    if (!isIsoMonth(fromMonth) || !isIsoMonth(toMonth)) return [];
+
+    const labels: string[] = [];
+    const [fromYear, fromMonthNumber] = fromMonth.split('-').map(Number);
+    const [toYear, toMonthNumber] = toMonth.split('-').map(Number);
+    const cursor = new Date(fromYear, fromMonthNumber - 1, 1);
+    const end = new Date(toYear, toMonthNumber - 1, 1);
+
+    while (cursor <= end && labels.length < 240) {
+      labels.push(`${cursor.getFullYear()}-${pad2(cursor.getMonth() + 1)}`);
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+
+    return labels;
+  }
+
+  const start = dateFromKey(dateFrom);
+  const end = dateFromKey(dateTo);
+  if (!start || !end) return [];
+
+  const labels: string[] = [];
+  const cursor = new Date(start);
+  while (cursor <= end && labels.length < 800) {
+    labels.push(dayKeyFromDate(cursor));
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return labels;
 }
 
 function financialMetrics(paidAmount: number) {
@@ -186,13 +261,23 @@ export async function GET(req: NextRequest) {
     const owner = str(req.nextUrl.searchParams.get('owner'));
     const remaining = str(req.nextUrl.searchParams.get('remaining'));
     const period: Period = str(req.nextUrl.searchParams.get('period')) === 'month' ? 'month' : 'day';
-    const month = str(req.nextUrl.searchParams.get('month'));
     let dateFrom = str(req.nextUrl.searchParams.get('date_from'));
     let dateTo = str(req.nextUrl.searchParams.get('date_to'));
 
-    if (period === 'month' && /^\d{4}-\d{2}$/.test(month)) {
-      dateFrom = `${month}-01`;
-      dateTo = monthEnd(month);
+    if (period === 'month') {
+      let monthFrom = str(req.nextUrl.searchParams.get('month_from'));
+      let monthTo = str(req.nextUrl.searchParams.get('month_to')) || monthFrom;
+
+      if (monthFrom && monthTo && monthFrom > monthTo) {
+        [monthFrom, monthTo] = [monthTo, monthFrom];
+      }
+
+      if (isIsoMonth(monthFrom)) dateFrom = `${monthFrom}-01`;
+      if (isIsoMonth(monthTo)) dateTo = monthEnd(monthTo);
+    }
+
+    if (dateFrom && dateTo && dateFrom > dateTo) {
+      [dateFrom, dateTo] = [dateTo, dateFrom];
     }
 
     const contracts = (await fetchAllContracts(supabase)).filter(isMembershipContract);
@@ -228,15 +313,7 @@ export async function GET(req: NextRequest) {
     const statusMap = new Map<string, { count: number; value: number }>();
     const typeMap = new Map<string, { count: number; value: number }>();
     const ownerMap = new Map<string, { count: number; value: number }>();
-    const periodMap = new Map<string, {
-      count: number;
-      value: number;
-      paid: number;
-      tax_amount: number;
-      gross_revenue: number;
-      gross_commission: number;
-      net_commission: number;
-    }>();
+    const periodMap = new Map<string, PeriodBucket>();
     const remainingMap = new Map<string, { count: number; value: number }>([
       ['Đã quá hạn', { count: 0, value: 0 }],
       ['≤ 90 ngày', { count: 0, value: 0 }],
@@ -274,15 +351,7 @@ export async function GET(req: NextRequest) {
       if (created) {
         const key = periodKey(created, period);
         const metrics = financialMetrics(paid);
-        const periodItem = periodMap.get(key) || {
-          count: 0,
-          value: 0,
-          paid: 0,
-          tax_amount: 0,
-          gross_revenue: 0,
-          gross_commission: 0,
-          net_commission: 0,
-        };
+        const periodItem = periodMap.get(key) || emptyPeriodBucket();
         periodItem.count += 1;
         periodItem.value += value;
         periodItem.paid += paid;
@@ -322,9 +391,9 @@ export async function GET(req: NextRequest) {
       if (syncTime && syncTime > newestSync) newestSync = syncTime;
     });
 
-    const daily = Array.from(periodMap.entries())
-      .map(([label, item]) => ({ label, ...item }))
-      .sort((a, b) => a.label.localeCompare(b.label));
+    const labels = periodLabels(period, dateFrom, dateTo);
+    const daily = (labels.length ? labels : Array.from(periodMap.keys()).sort())
+      .map((label) => ({ label, ...(periodMap.get(label) || emptyPeriodBucket()) }));
     const summaryMetrics = financialMetrics(paidAmount);
 
     const records = filtered.slice(0, 50).map((c) => {
@@ -341,7 +410,7 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({
-      filters: { search, status, type, owner, remaining, date_from: dateFrom, date_to: dateTo },
+      filters: { search, status, type, owner, remaining, period, date_from: dateFrom, date_to: dateTo },
       options,
       summary: {
         total_contracts: filtered.length,
