@@ -771,9 +771,10 @@
 
       .bs-card-title {
         gap: 6px;
-        font-size: 15px;
+        font-size: 14px;
         line-height: 1.35;
         letter-spacing: 0;
+        white-space: nowrap;
       }
 
       .bs-card-title-icon {
@@ -787,43 +788,44 @@
       }
 
       .bs-card-header + div {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
       }
 
       .bs-field-row {
-        display: block;
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
         min-width: 0;
         margin-bottom: 0;
-        padding: 8px;
+        padding: 7px 8px;
         border: 1px solid var(--bs-gray-100);
         border-radius: 10px;
         background: #fbfcfd;
       }
 
-      .bs-card-header + div > .bs-field-row:nth-child(5) {
-        grid-column: 1 / -1;
-      }
-
       .bs-field-label {
-        display: block;
+        display: inline;
+        flex: 0 0 auto;
         color: var(--bs-gray-500);
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 700;
         line-height: 1.25;
-        white-space: normal;
+        white-space: nowrap;
       }
 
       .bs-field-value-wrap {
         display: block;
+        flex: 1 1 auto;
+        min-width: 0;
         margin-left: 0;
         overflow: visible;
       }
 
       .bs-field-value {
-        display: block;
-        padding: 2px 0 0;
+        display: inline;
+        padding: 0;
         background: transparent;
         font-size: 13px;
         line-height: 1.3;
@@ -876,9 +878,10 @@
       .bs-card { padding: 15px 12px 13px; }
       .bs-title { font-size: 19px; }
       .bs-radio-label { font-size: 11px; }
-      .bs-field-row { padding: 7px; }
+      .bs-card-title { font-size: 13px; }
+      .bs-field-row { padding: 6px 7px; gap: 5px; }
       .bs-field-label { font-size: 11px; }
-      .bs-field-value { font-size: 12px; padding: 2px 0 0; }
+      .bs-field-value { font-size: 12px; padding: 0; }
     }
   </style>
 </head>
