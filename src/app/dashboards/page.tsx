@@ -32,6 +32,7 @@ export default function DashboardsHubPage() {
   }, []);
 
   const isMarketDevelopment = isMarketDevelopmentUser(userEmail);
+  const canViewMembershipDashboard = userEmail.toLowerCase().trim() === 'admin@blackstone.com.vn';
 
   const dashboards = roleReady ? [
     ...(userRole === 'admin' || userRole === 'warehouse' ? [{
@@ -44,7 +45,7 @@ export default function DashboardsHubPage() {
       shadow: 'shadow-emerald-500/20',
       gradient: 'from-emerald-400 to-teal-600',
     }] : []),
-    ...(userRole === 'admin' || (userRole === 'sales' && !isMarketDevelopment) ? [{
+    ...(canViewMembershipDashboard ? [{
       id: 'membership',
       title: 'Dashboard Membership',
       icon: <Crown size={28} className="text-white" />,

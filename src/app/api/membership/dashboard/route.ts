@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { isMembershipContract, dedupeMembershipsByCode } from '@/lib/membership';
+import * as XLSX from 'xlsx';
 
 type ContractRow = {
   id: string;
@@ -178,14 +180,6 @@ function remainingBucket(days: number | null): BucketKey {
   return 'safe';
 }
 
-function isMembershipContract(contract: ContractRow) {
-  return [
-    contract.source_contract_code,
-    contract.contract_code,
-    contract.contract_name,
-  ].some((value) => str(value).toUpperCase().startsWith('MBS'));
-}
-
 function addToMap<T extends { count: number; value: number }>(map: Map<string, T>, key: string, value: number, seed: () => T) {
   const label = key || 'Chưa rõ';
   const item = map.get(label) || seed();
@@ -199,6 +193,27 @@ function topItems(map: Map<string, { count: number; value: number }>, limit = 8)
     .map(([label, data]) => ({ label, ...data }))
     .sort((a, b) => b.value - a.value || b.count - a.count)
     .slice(0, limit);
+}
+
+function yesNo(value: boolean): string {
+  return value ? 'Có' : 'Không';
+}
+
+function fitColumns(rows: unknown[][], min = 10, max = 36) {
+  const columnCount = rows.reduce((count, row) => Math.max(count, row.length), 0);
+  return Array.from({ length: columnCount }, (_, index) => {
+    const width = rows.reduce((longest, row) => {
+      const text = String(row[index] ?? '');
+      return Math.max(longest, text.length);
+    }, min);
+    return { wch: Math.min(max, Math.max(min, width + 2)) };
+  });
+}
+
+function appendSheet(workbook: XLSX.WorkBook, name: string, rows: unknown[][]) {
+  const sheet = XLSX.utils.aoa_to_sheet(rows);
+  sheet['!cols'] = fitColumns(rows);
+  XLSX.utils.book_append_sheet(workbook, sheet, name);
 }
 
 async function fetchAllContracts(supabase: ReturnType<typeof getSupabaseAdmin>) {
@@ -280,7 +295,9 @@ export async function GET(req: NextRequest) {
       [dateFrom, dateTo] = [dateTo, dateFrom];
     }
 
-    const contracts = (await fetchAllContracts(supabase)).filter(isMembershipContract);
+    const contracts = dedupeMembershipsByCode(
+      (await fetchAllContracts(supabase)).filter(isMembershipContract),
+    );
     const contractIds = contracts.map((c) => c.getfly_contract_id).filter(Boolean);
     const driveMap = contractIds.length > 0 ? await fetchDriveMap(supabase, contractIds) : new Map<string, DriveRow>();
 
@@ -396,7 +413,7 @@ export async function GET(req: NextRequest) {
       .map((label) => ({ label, ...(periodMap.get(label) || emptyPeriodBucket()) }));
     const summaryMetrics = financialMetrics(paidAmount);
 
-    const records = filtered.slice(0, 50).map((c) => {
+    const records = filtered.map((c) => {
       const drive = driveMap.get(c.getfly_contract_id);
       return {
         ...c,
@@ -408,6 +425,141 @@ export async function GET(req: NextRequest) {
         },
       };
     });
+
+    if (str(req.nextUrl.searchParams.get('export')) === 'excel') {
+      const workbook = XLSX.utils.book_new();
+      const generatedAt = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+
+      appendSheet(workbook, 'Tong quan', [
+        ['Dashboard Membership', ''],
+        ['Xuất lúc', generatedAt],
+        ['Từ khóa', search || 'Tất cả'],
+        ['Trạng thái', status || 'Tất cả'],
+        ['Kiểu hợp đồng', type || 'Tất cả'],
+        ['Phụ trách', owner || 'Tất cả'],
+        ['Thời hạn', remaining || 'Tất cả'],
+        ['Kỳ xem', period === 'month' ? 'Theo tháng' : 'Theo ngày'],
+        ['Từ ngày', dateFrom || 'Tất cả'],
+        ['Đến ngày', dateTo || 'Tất cả'],
+        [],
+        ['Chỉ số', 'Giá trị'],
+        ['Tổng hợp đồng', filtered.length],
+        ['Tổng giá trị HĐ', totalValue],
+        ['Giá trị thực', actualValue],
+        ['Đã thực hiện', executedAmount],
+        ['Đã thanh toán', paidAmount],
+        ['Công nợ', debtAmount],
+        ['Tiền thuế', summaryMetrics.tax_amount],
+        ['Doanh thu thực', summaryMetrics.gross_revenue],
+        ['Hoa hồng CTV gộp', summaryMetrics.gross_commission],
+        ['Hoa hồng CTV sau thuế', summaryMetrics.net_commission],
+        ['Giá trị trung bình / HĐ', filtered.length ? totalValue / filtered.length : 0],
+        ['Tỷ lệ thu (%)', totalValue ? Math.round((paidAmount / totalValue) * 1000) / 10 : 0],
+        ['Tỷ lệ nợ (%)', totalValue ? Math.round((debtAmount / totalValue) * 1000) / 10 : 0],
+        ['Người thụ hưởng', beneficiaries],
+        ['Tỷ lệ VnEID người thụ hưởng (%)', beneficiaries ? Math.round((beneficiaryWithVneid / beneficiaries) * 1000) / 10 : 0],
+        ['Tỷ lệ SĐT người thụ hưởng (%)', beneficiaries ? Math.round((beneficiaryWithPhone / beneficiaries) * 1000) / 10 : 0],
+        ['Tỷ lệ đủ hồ sơ (%)', filtered.length ? Math.round((docComplete / filtered.length) * 1000) / 10 : 0],
+        ['Tỷ lệ scan HĐ (%)', filtered.length ? Math.round((contractScan / filtered.length) * 1000) / 10 : 0],
+        ['Tỷ lệ phiếu hội viên (%)', filtered.length ? Math.round((membershipForm / filtered.length) * 1000) / 10 : 0],
+        ['Sắp hết hạn', filtered.filter((c) => remainingBucket(c.remaining_days) === 'expiring').length],
+        ['Đã quá hạn', filtered.filter((c) => remainingBucket(c.remaining_days) === 'expired').length],
+        ['Sync cuối', newestSync || ''],
+      ]);
+
+      appendSheet(workbook, 'Memberships', [
+        [
+          'Ngày còn lại', 'Tên hợp đồng', 'Số HĐ', 'Mã nguồn MBS', 'Mã GetFly',
+          'Trạng thái', 'Kiểu HĐ', 'Ngày tạo', 'Hiệu lực', 'Hết hiệu lực',
+          'Khách hàng', 'SĐT KH', 'Phụ trách', 'Giá trị HĐ', 'Giá trị thực',
+          'Đã thực hiện', 'Đã thanh toán', 'Công nợ',
+          'Người TH 1', 'VnEID TH 1', 'SĐT TH 1', 'Địa chỉ TH 1',
+          'Người TH 2', 'VnEID TH 2', 'SĐT TH 2', 'Địa chỉ TH 2',
+          'Email người mua', 'VnEID trước', 'VnEID sau', 'Scan HĐ', 'Phiếu hội viên',
+        ],
+        ...records.map((row) => [
+          row.remaining_days ?? '',
+          row.contract_name || '',
+          row.contract_code || '',
+          row.source_contract_code || '',
+          row.getfly_contract_id || '',
+          row.contract_status || '',
+          row.contract_type || '',
+          row.created_date || '',
+          row.effective_date || '',
+          row.expiry_date || '',
+          row.customer_name || '',
+          row.customer_phone || '',
+          row.person_in_charge || '',
+          num(row.contract_value),
+          num(row.actual_value),
+          num(row.executed_amount),
+          num(row.paid_amount),
+          num(row.debt_amount),
+          row.beneficiary_name_1 || '',
+          row.beneficiary_vneid_1 || '',
+          row.beneficiary_phone_1 || '',
+          row.beneficiary_address_1 || '',
+          row.beneficiary_name_2 || '',
+          row.beneficiary_vneid_2 || '',
+          row.beneficiary_phone_2 || '',
+          row.beneficiary_address_2 || '',
+          row.buyer_email || '',
+          yesNo(row.docs.vneid_front),
+          yesNo(row.docs.vneid_back),
+          yesNo(row.docs.contract_scan),
+          yesNo(row.docs.membership_form),
+        ]),
+      ]);
+
+      appendSheet(workbook, 'Theo ky', [
+        ['Kỳ', 'Số HĐ', 'Giá trị HĐ', 'Đã thanh toán', 'Tiền thuế', 'Doanh thu thực', 'Hoa hồng gộp', 'Hoa hồng sau thuế'],
+        ...daily.map((item) => [
+          item.label,
+          item.count,
+          item.value,
+          item.paid,
+          item.tax_amount,
+          item.gross_revenue,
+          item.gross_commission,
+          item.net_commission,
+        ]),
+      ]);
+
+      appendSheet(workbook, 'Trang thai', [
+        ['Trạng thái', 'Số HĐ', 'Giá trị HĐ'],
+        ...topItems(statusMap, 1000).map((item) => [item.label, item.count, item.value]),
+      ]);
+
+      appendSheet(workbook, 'Kieu HD', [
+        ['Kiểu HĐ', 'Số HĐ', 'Giá trị HĐ'],
+        ...topItems(typeMap, 1000).map((item) => [item.label, item.count, item.value]),
+      ]);
+
+      appendSheet(workbook, 'Phu trach', [
+        ['Phụ trách', 'Số HĐ', 'Giá trị HĐ'],
+        ...topItems(ownerMap, 1000).map((item) => [item.label, item.count, item.value]),
+      ]);
+
+      appendSheet(workbook, 'Thoi han', [
+        ['Thời hạn', 'Số HĐ', 'Giá trị HĐ'],
+        ...Array.from(remainingMap.entries()).map(([label, item]) => [label, item.count, item.value]),
+      ]);
+
+      const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' }) as Buffer;
+      const blob = new Blob([new Uint8Array(buffer)], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const stamp = new Date().toISOString().slice(0, 10);
+
+      return new NextResponse(blob, {
+        headers: {
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'Content-Disposition': `attachment; filename="Membership_Dashboard_${stamp}.xlsx"`,
+          'Cache-Control': 'no-store',
+        },
+      });
+    }
 
     return NextResponse.json({
       filters: { search, status, type, owner, remaining, period, date_from: dateFrom, date_to: dateTo },
@@ -440,7 +592,7 @@ export async function GET(req: NextRequest) {
         daily,
         remaining: Array.from(remainingMap.entries()).map(([label, item]) => ({ label, ...item })),
       },
-      records,
+      records: records.slice(0, 50),
       total_available: contracts.length,
     });
   } catch (err) {

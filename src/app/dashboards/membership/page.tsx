@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import PageLayout from '@/components/PageLayout';
+import { getUserRole } from '@/config/roles.config';
 import {
   Activity, BarChart3, CalendarDays, Crown, Database, FileCheck2, Filter,
-  Eye, HandCoins, LineChart, PieChart, Receipt, RefreshCw, Search, ShieldCheck, Sparkles, TrendingUp,
+  Download, Eye, HandCoins, LineChart, PieChart, Receipt, RefreshCw, Search, ShieldCheck, Sparkles, TrendingUp,
   Users, WalletCards
 } from 'lucide-react';
 
@@ -198,6 +199,33 @@ function getDayRange(dateFrom: string, dateTo: string) {
   const endDay = dateTo || dateFrom;
   const [from, to] = startDay > endDay ? [endDay, startDay] : [startDay, endDay];
   return { from, to };
+}
+
+function buildDashboardParams(nextFilters: Filters) {
+  const params = new URLSearchParams();
+  if (nextFilters.search) params.set('search', nextFilters.search);
+  if (nextFilters.status && nextFilters.status !== 'all') params.set('status', nextFilters.status);
+  if (nextFilters.type && nextFilters.type !== 'all') params.set('type', nextFilters.type);
+  if (nextFilters.owner && nextFilters.owner !== 'all') params.set('owner', nextFilters.owner);
+  if (nextFilters.remaining && nextFilters.remaining !== 'all') params.set('remaining', nextFilters.remaining);
+
+  if (nextFilters.view === 'month') {
+    params.set('period', 'month');
+    const range = getMonthRangeBounds(nextFilters.month_from, nextFilters.month_to);
+    if (range.from && range.to) {
+      params.set('month_from', range.monthFrom);
+      params.set('month_to', range.monthTo);
+      params.set('date_from', range.from);
+      params.set('date_to', range.to);
+    }
+  } else {
+    params.set('period', 'day');
+    const range = getDayRange(nextFilters.date_from, nextFilters.date_to);
+    if (range.from) params.set('date_from', range.from);
+    if (range.to) params.set('date_to', range.to);
+  }
+
+  return params;
 }
 
 function statusBadge(status: string | null) {
@@ -482,35 +510,28 @@ export default function MembershipAdminDashboardPage() {
   const [searchInput, setSearchInput] = useState('');
   const [selectedRecord, setSelectedRecord] = useState<DashboardRecord | null>(null);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState('');
+  const [access, setAccess] = useState<'checking' | 'allowed' | 'denied'>('checking');
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('auth_user');
+      const email = raw ? JSON.parse(raw).email || '' : '';
+      const normalizedEmail = email.toLowerCase().trim();
+      setAccess(getUserRole(email) === 'admin' && normalizedEmail === 'admin@blackstone.com.vn' ? 'allowed' : 'denied');
+    } catch {
+      setAccess('denied');
+    }
+  }, []);
 
   const loadDashboard = useCallback(async (nextFilters: Filters) => {
+    if (access !== 'allowed') return;
+
     setLoading(true);
     setError('');
     try {
-      const params = new URLSearchParams();
-      if (nextFilters.search) params.set('search', nextFilters.search);
-      if (nextFilters.status && nextFilters.status !== 'all') params.set('status', nextFilters.status);
-      if (nextFilters.type && nextFilters.type !== 'all') params.set('type', nextFilters.type);
-      if (nextFilters.owner && nextFilters.owner !== 'all') params.set('owner', nextFilters.owner);
-      if (nextFilters.remaining && nextFilters.remaining !== 'all') params.set('remaining', nextFilters.remaining);
-
-      if (nextFilters.view === 'month') {
-        params.set('period', 'month');
-        const range = getMonthRangeBounds(nextFilters.month_from, nextFilters.month_to);
-        if (range.from && range.to) {
-          params.set('month_from', range.monthFrom);
-          params.set('month_to', range.monthTo);
-          params.set('date_from', range.from);
-          params.set('date_to', range.to);
-        }
-      } else {
-        params.set('period', 'day');
-        const range = getDayRange(nextFilters.date_from, nextFilters.date_to);
-        if (range.from) params.set('date_from', range.from);
-        if (range.to) params.set('date_to', range.to);
-      }
-
+      const params = buildDashboardParams(nextFilters);
       const res = await fetch(`/api/membership/dashboard?${params.toString()}`);
       const json = await res.json().catch(() => ({ error: 'Không đọc được phản hồi từ máy chủ' }));
       if (!res.ok) {
@@ -532,12 +553,16 @@ export default function MembershipAdminDashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [access]);
 
   useEffect(() => {
-    loadDashboard(filters);
+    if (access === 'allowed') {
+      loadDashboard(filters);
+    } else if (access === 'denied') {
+      setLoading(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadDashboard]);
+  }, [access, loadDashboard]);
 
   const updateFilter = (key: keyof Filters, value: string) => {
     const next = { ...filters, [key]: value };
@@ -595,6 +620,39 @@ export default function MembershipAdminDashboardPage() {
     loadDashboard(next);
   }
 
+  async function handleExportExcel() {
+    if (access !== 'allowed' || exporting) return;
+
+    setExporting(true);
+    setError('');
+    try {
+      const params = buildDashboardParams(filters);
+      params.set('export', 'excel');
+
+      const res = await fetch(`/api/membership/dashboard?${params.toString()}`);
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({ error: 'Không xuất được file Excel' }));
+        throw new Error(String(json.error || 'Không xuất được file Excel'));
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const filename = `Membership_Dashboard_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || 'Không xuất được file Excel');
+    } finally {
+      setExporting(false);
+    }
+  }
+
   function resetFilters() {
     const next: Filters = {
       search: '',
@@ -611,6 +669,32 @@ export default function MembershipAdminDashboardPage() {
     setSearchInput('');
     setFilters(next);
     loadDashboard(next);
+  }
+
+  if (access === 'checking') {
+    return (
+      <PageLayout title="Dashboard Membership" icon={<Crown size={16} className="text-yellow-500" />}>
+        <div className="flex min-h-[50vh] items-center justify-center text-sm font-semibold text-slate-400">
+          Đang kiểm tra quyền truy cập...
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (access === 'denied') {
+    return (
+      <PageLayout title="Dashboard Membership" icon={<Crown size={16} className="text-yellow-500" />}>
+        <div className="mx-auto flex min-h-[55vh] max-w-md flex-col items-center justify-center text-center">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-500">
+            <ShieldCheck size={26} />
+          </div>
+          <h1 className="text-lg font-black text-slate-900">Không có quyền truy cập</h1>
+          <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
+            Dashboard Membership chỉ hiển thị cho tài khoản admin@blackstone.com.vn.
+          </p>
+        </div>
+      </PageLayout>
+    );
   }
 
   return (
@@ -650,6 +734,14 @@ export default function MembershipAdminDashboardPage() {
               >
                 <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
                 Tải lại
+              </button>
+              <button
+                onClick={handleExportExcel}
+                disabled={loading || exporting}
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-white px-4 py-3 text-sm font-bold text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-50 hover:shadow-md disabled:opacity-60"
+              >
+                <Download size={16} className={exporting ? 'animate-bounce' : ''} />
+                {exporting ? 'Đang xuất...' : 'Xuất Excel'}
               </button>
             </div>
           </div>

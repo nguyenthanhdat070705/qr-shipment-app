@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { MEMBERSHIP_APPROVED_STATUS, MEMBERSHIP_CONTRACT_VALUE, dedupeMembershipsByCode } from '@/lib/membership';
 
 // ── Rate Limiting ────────────────────────────────────────────
 const rateLimitStore: Record<string, { count: number; resetAt: number }> = {};
@@ -100,74 +101,110 @@ export async function GET(req: NextRequest) {
     let error = null;
 
     if (isPublicSearch) {
-      // Tìm chính xác theo CCCD hoặc SĐT (Public)
-      let query = supabase
-        .from('members')
-        .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes, contract_value');
-        
+      // ── Nguồn chính: hợp đồng membership hợp lệ trong getfly_contracts ──
+      // Một khách hàng có thể có nhiều hợp đồng (membership, BĐS, KHTT…),
+      // nên chỉ nhận các hợp đồng thoả ĐỦ điều kiện hội viên trăm tuổi:
+      //   mã MBS + trạng thái "Đã duyệt" + giá trị 2.160.000đ.
+      // Trả về TẤT CẢ membership khớp (mỗi người thụ hưởng là 1 hợp đồng).
+      const normalizedPhone = phone ? normalizePhone(phone) : '';
+
+      let contractQuery = supabase
+        .from('getfly_contracts')
+        .select([
+          'getfly_contract_id',
+          'source_contract_code',
+          'contract_name',
+          'contract_code',
+          'customer_name',
+          'customer_phone',
+          'contract_status',
+          'contract_value',
+          'effective_date',
+          'expiry_date',
+          'beneficiary_name_1',
+          'beneficiary_name_2',
+          'beneficiary_vneid_1',
+          'beneficiary_vneid_2',
+          'beneficiary_address_1',
+          'beneficiary_address_2',
+          'person_in_charge',
+          'paid_amount',
+          'synced_at',
+        ].join(','))
+        .eq('contract_status', MEMBERSHIP_APPROVED_STATUS)
+        .eq('contract_value', MEMBERSHIP_CONTRACT_VALUE)
+        .or('source_contract_code.ilike.MBS%,contract_code.ilike.MBS%,contract_name.ilike.MBS%');
+
       if (cccd) {
-        query = query.eq('id_number', cccd);
-      } else if (phone) {
-        const normalizedPhone = normalizePhone(phone);
-        query = normalizedPhone && normalizedPhone !== phone
-          ? query.or(`phone.eq.${phone},phone.eq.${normalizedPhone}`)
-          : query.eq('phone', phone);
+        const cccdDigits = cccd.replace(/\D/g, '');
+        const cccdValues = Array.from(new Set([cccd, cccdDigits].filter(Boolean)));
+        contractQuery = contractQuery.or(
+          cccdValues
+            .flatMap((v) => [`beneficiary_vneid_1.eq.${v}`, `beneficiary_vneid_2.eq.${v}`])
+            .join(','),
+        );
+      } else {
+        const phoneValues = Array.from(
+          new Set([normalizedPhone, phone?.replace(/\D/g, '')].filter((v) => v && /^\d+$/.test(v))),
+        );
+        contractQuery = contractQuery.or(
+          phoneValues
+            .flatMap((v) => [
+              `customer_phone.eq.${v}`,
+              `beneficiary_phone_1.eq.${v}`,
+              `beneficiary_phone_2.eq.${v}`,
+            ])
+            .join(','),
+        );
       }
 
-      ({ data, error } = await query
-        .order('registered_date', { ascending: false })
-        .limit(1));
+      const { data: contracts, error: contractError } = await contractQuery.order('effective_date', {
+        ascending: false,
+      });
 
-      // Fallback cho dữ liệu hợp đồng bán:
-      // nếu SĐT khách hàng chưa có trong bảng members nhưng đã có ở hợp đồng GetFly,
-      // vẫn cho phép tra cứu công khai bằng chính SĐT đó.
-      if (!error && phone && (!data || data.length === 0)) {
-        const normalizedPhone = normalizePhone(phone);
-        const { data: contracts, error: contractError } = await supabase
-          .from('getfly_contracts')
-          .select([
-            'getfly_contract_id',
-            'source_contract_code',
-            'contract_name',
-            'customer_name',
-            'customer_phone',
-            'contract_status',
-            'effective_date',
-            'expiry_date',
-            'beneficiary_name_1',
-            'beneficiary_name_2',
-            'beneficiary_address_1',
-            'beneficiary_address_2',
-            'person_in_charge',
-            'paid_amount',
-          ].join(','))
-          .eq('customer_phone', normalizedPhone || phone)
-          .order('effective_date', { ascending: false })
-          .limit(1);
+      if (contractError) {
+        error = contractError;
+      } else if (contracts && contracts.length > 0) {
+        // Gộp các dòng trùng mã MBS (giữ bản sync mới nhất), rồi sắp xếp mới → cũ.
+        const uniqueContracts = dedupeMembershipsByCode(
+          contracts as Record<string, unknown>[],
+        ).sort((a, b) => String(b.effective_date ?? '').localeCompare(String(a.effective_date ?? '')));
+        data = uniqueContracts.map((contract) => ({
+          id: `contract-${contract.getfly_contract_id}`,
+          member_code: contract.source_contract_code || contract.contract_name,
+          full_name: contract.customer_name,
+          phone: contract.customer_phone,
+          email: null,
+          id_number: null,
+          status: mapContractStatusToMemberStatus(contract.contract_status, contract.expiry_date),
+          registered_date: toIsoDate(contract.effective_date),
+          expiry_date: toIsoDate(contract.expiry_date),
+          branch: null,
+          service_package: null,
+          consultant_name: contract.person_in_charge,
+          address: contract.beneficiary_address_1 || contract.beneficiary_address_2,
+          notes: contract.beneficiary_name_1,
+          beneficiary_name_2: contract.beneficiary_name_2,
+          contract_value: contract.paid_amount,
+          lookup_source: 'getfly_membership',
+        }));
+      } else {
+        // ── Fallback: bảng members (legacy) khớp chính xác CCCD/SĐT ──
+        let query = supabase
+          .from('members')
+          .select('id, member_code, full_name, phone, email, id_number, status, registered_date, expiry_date, branch, service_package, consultant_name, address, notes, contract_value');
 
-        if (contractError) {
-          error = contractError;
-        } else if (contracts && contracts.length > 0) {
-          data = contracts.map((contract) => ({
-            id: `contract-${contract.getfly_contract_id}`,
-            member_code: contract.source_contract_code || contract.contract_name,
-            full_name: contract.customer_name,
-            phone: contract.customer_phone,
-            email: null,
-            id_number: null,
-            status: mapContractStatusToMemberStatus(contract.contract_status, contract.expiry_date),
-            registered_date: toIsoDate(contract.effective_date),
-            expiry_date: toIsoDate(contract.expiry_date),
-            branch: null,
-            service_package: null,
-            consultant_name: contract.person_in_charge,
-            address: contract.beneficiary_address_1 || contract.beneficiary_address_2,
-            notes: contract.beneficiary_name_1,
-            beneficiary_name_2: contract.beneficiary_name_2,
-            contract_value: contract.paid_amount,
-            lookup_source: 'getfly_sale_contract',
-          }));
+        if (cccd) {
+          query = query.eq('id_number', cccd);
+        } else if (phone) {
+          query = normalizedPhone && normalizedPhone !== phone
+            ? query.or(`phone.eq.${phone},phone.eq.${normalizedPhone}`)
+            : query.eq('phone', phone);
         }
+
+        ({ data, error } = await query
+          .order('registered_date', { ascending: false })
+          .limit(1));
       }
     } else {
       // Admin backoffice search
