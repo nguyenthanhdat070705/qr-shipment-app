@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutDashboard, Crown, UserPlus, List, Search, HardDrive, DollarSign, MessageSquare, Clock, Scale } from 'lucide-react';
+import { LayoutDashboard, Crown, UserPlus, List, Search, HardDrive, DollarSign, MessageSquare, Clock, Scale, Infinity as InfinityIcon, FileText } from 'lucide-react';
 import Link from 'next/link';
 import PageLayout from '@/components/PageLayout';
 
@@ -23,6 +23,24 @@ export default function MembershipHubPage() {
       href: '/membership',
       shadow: 'shadow-yellow-500/20',
       gradient: 'from-yellow-400 to-amber-600',
+    },
+    {
+      id: 'tram-tuoi-kh',
+      title: 'Khách Hàng Trăm Tuổi',
+      icon: <InfinityIcon size={28} className="text-white" />,
+      desc: 'Danh sách KH Trăm Tuổi & hợp đồng nền (Chờ duyệt) đồng bộ từ GetFly.',
+      href: '/membership/tram-tuoi?view=khach-hang',
+      shadow: 'shadow-amber-500/20',
+      gradient: 'from-amber-400 to-yellow-600',
+    },
+    {
+      id: 'tram-tuoi-hd',
+      title: 'Quản lý HĐ Trăm Tuổi',
+      icon: <FileText size={28} className="text-white" />,
+      desc: 'Quản lý hợp đồng nền Trăm Tuổi: gói, giá trị, còn lại & đồng bộ dữ liệu.',
+      href: '/membership/tram-tuoi?view=hop-dong',
+      shadow: 'shadow-rose-500/20',
+      gradient: 'from-rose-400 to-pink-600',
     },
     {
       id: 'register',

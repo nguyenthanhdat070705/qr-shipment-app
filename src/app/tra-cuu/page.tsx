@@ -92,8 +92,187 @@ function MembershipCard({ member }: { member: MemberResult }) {
   );
 }
 
+/* ─────────────────── KHTT (Khách Hàng Trăm Tuổi) ─────────────────── */
+interface KhttResult {
+  getfly_order_id: string;
+  order_code: string | null;
+  order_date: string | null;
+  order_status: string | null;
+  customer_code: string | null;
+  customer_name: string | null;
+  customer_phone: string | null;
+  package_name: string | null;
+  total_value: number;
+  paid_amount: number;
+  remaining_amount: number;
+  beneficiary_name: string | null;
+  beneficiary_phone: string | null;
+  expiry_date?: string | null;
+}
+
+function fmtVnd(n: number) {
+  return `${Number(n || 0).toLocaleString('vi-VN')} VNĐ`;
+}
+function fmtKhttDate(s: string | null) {
+  if (!s) return '—';
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? s : d.toLocaleDateString('vi-VN');
+}
+
+function KhttCard({ row }: { row: KhttResult }) {
+  return (
+    <div className="mt-6 sm:mt-8 relative w-full border border-[#e5e7eb] bg-[#fafafa] sm:bg-white p-4 sm:p-10 sm:px-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] max-w-4xl mx-auto rounded-xl">
+      <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#d4af37] via-[#f3e5ab] to-[#d4af37] rounded-t-xl" />
+
+      <div className="absolute top-4 sm:top-8 right-4 sm:right-10 flex items-center gap-1.5 text-amber-600 border-b-2 border-dotted border-current font-bold text-xs sm:text-base px-1 pb-0.5 tracking-wide">
+        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+        {row.order_status || 'Chờ duyệt'}
+      </div>
+
+      <div className="text-center mb-6 sm:mb-10 pt-8 sm:pt-0">
+        <h2 className="text-[#1a2a50] text-base sm:text-2xl font-bold uppercase tracking-wider flex items-center justify-center gap-2 flex-wrap">
+          <ShieldCheck className="text-[#d4af37]" size={22} />
+          <span>Hợp Đồng Khách Hàng Trăm Tuổi</span>
+        </h2>
+        {row.order_code && (
+          <p className="text-gray-400 text-xs sm:text-sm font-mono mt-1">Mã đơn: {row.order_code}</p>
+        )}
+        <div className="w-16 h-0.5 bg-[#d4af37] mx-auto mt-3 opacity-50"></div>
+      </div>
+
+      <div className="flex flex-col space-y-2">
+        <DottedRow label="Mã khách hàng" value={row.customer_code || '—'} />
+        <DottedRow label="Họ tên" value={row.customer_name || '—'} />
+        <DottedRow label="Số điện thoại" value={row.customer_phone || '—'} />
+        <DottedRow label="Gói dịch vụ" value={row.package_name || '—'} />
+        <DottedRow label="Tổng giá trị gói" value={fmtVnd(row.total_value)} />
+        <DottedRow label="Số tiền đặt cọc" value={fmtVnd(row.paid_amount)} />
+        <DottedRow label="Số tiền còn lại" value={fmtVnd(row.remaining_amount)} />
+        <DottedRow label="Ngày đặt hàng" value={fmtKhttDate(row.order_date)} />
+        <DottedRow label="Ngày hết hạn" value={fmtKhttDate(row.expiry_date ?? null)} />
+      </div>
+    </div>
+  );
+}
+
+function KhttLookupSection() {
+  const [phone, setPhone] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState<KhttResult[] | null>(null);
+  const [notFound, setNotFound] = useState(false);
+  const [error, setError] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  async function handleSearch(e?: React.FormEvent) {
+    e?.preventDefault();
+    const val = phone.trim();
+    if (!val) { setError('Vui lòng nhập Số điện thoại'); return; }
+
+    setLoading(true);
+    setError('');
+    setResults(null);
+    setNotFound(false);
+    try {
+      const res = await fetch(`/api/getfly-khtt?phone=${encodeURIComponent(val)}`);
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'Lỗi hệ thống'); return; }
+      if (data.found) setResults(data.results);
+      else setNotFound(true);
+    } catch {
+      setError('Không thể kết nối. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleClear() {
+    setPhone('');
+    setResults(null);
+    setNotFound(false);
+    setError('');
+    inputRef.current?.focus();
+  }
+
+  return (
+    <div>
+      <div className="text-center mb-6 sm:mb-8">
+        <h2 className="text-lg sm:text-2xl font-bold text-[#1a2a50] mb-1 sm:mb-2 tracking-wide">
+          Tra Cứu Khách Hàng Trăm Tuổi
+        </h2>
+        <p className="text-gray-500 text-xs sm:text-base font-medium">
+          (Nhập Số điện thoại để tra cứu hợp đồng nền Trăm Tuổi)
+        </p>
+      </div>
+
+      <div className="max-w-3xl mx-auto">
+        <form onSubmit={handleSearch} className="flex flex-col gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 w-full">
+            <div className="relative w-full shadow-sm">
+              <input
+                ref={inputRef}
+                type="text"
+                inputMode="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Nhập số điện thoại..."
+                className="w-full px-4 sm:px-6 py-3 sm:py-4 border-[2px] border-gray-200 rounded-xl text-base sm:text-lg text-[#1a2a50] font-medium placeholder-gray-400 focus:outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/10 transition-all bg-white"
+                autoComplete="off"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-center mt-2 gap-3 sm:gap-0">
+            <button
+              type="submit"
+              disabled={loading || !phone.trim()}
+              className="w-full sm:w-auto px-8 sm:px-12 py-3 sm:py-4 bg-gradient-to-r from-[#1a2a50] to-[#25396b] hover:from-[#0d162a] hover:to-[#1a2a50] text-[#d4af37] border border-[#1a2a50] rounded-xl text-base sm:text-lg font-bold transition-all shadow-[0_4px_14px_0_rgba(26,42,80,0.39)] disabled:opacity-60 disabled:shadow-none flex items-center justify-center gap-2 uppercase tracking-wide min-h-[48px]"
+            >
+              {loading ? (<><RefreshCw size={20} className="animate-spin" /> Đang tìm...</>) : (<>Tìm kiếm</>)}
+            </button>
+            {phone && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="w-full sm:w-auto sm:ml-4 px-6 py-3 sm:py-4 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-base sm:text-lg font-bold transition-all shadow-sm flex items-center justify-center min-h-[48px]"
+                title="Xoá nội dung"
+              >
+                Làm mới
+              </button>
+            )}
+          </div>
+        </form>
+
+        {error && (
+          <div className="text-red-500 text-center mt-3 font-medium flex justify-center items-center gap-1">
+            <AlertCircle size={16} /> {error}
+          </div>
+        )}
+      </div>
+
+      {!loading && results && results.length > 0 && (
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 ease-out">
+          {results.map((r) => (<KhttCard key={r.getfly_order_id} row={r} />))}
+        </div>
+      )}
+
+      {!loading && notFound && (
+        <div className="mt-8 sm:mt-12 text-center py-8 sm:py-12 px-4 border border-gray-100 bg-white max-w-4xl mx-auto rounded-xl shadow-sm">
+          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertCircle size={32} className="text-gray-400" />
+          </div>
+          <h3 className="text-lg sm:text-xl font-bold text-[#1a2a50] mb-2">Không tìm thấy dữ liệu</h3>
+          <p className="text-gray-500 max-w-md mx-auto text-sm sm:text-base">
+            Không có khách hàng Trăm Tuổi nào khớp Số điện thoại này. Vui lòng kiểm tra lại.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─────────────────── Main Page ─────────────────── */
 export default function PublicLookupPage() {
+  const [searchTab, setSearchTab] = useState<'hoi-vien' | 'khach-hang'>('hoi-vien');
   const [searchBy, setSearchBy] = useState<'cccd' | 'phone'>('cccd');
   const [searchValue, setSearchValue] = useState('');
   const [loading, setLoading] = useState(false);
@@ -165,10 +344,42 @@ export default function PublicLookupPage() {
 
       <div className="max-w-5xl mx-auto px-4 pt-6 sm:pt-20">
         {/* Title Section */}
-        <div className="text-center mb-6 sm:mb-10">
+        <div className="text-center mb-5 sm:mb-7">
           <h1 className="text-xl sm:text-3xl font-bold text-[#1a2a50] mb-2 sm:mb-3 tracking-wide">
-            Tra Cứu Hội Viên Trăm Tuổi – <span className="text-[#d4af37]">Blackstones Lifecare</span>
+            Tra Cứu Trăm Tuổi – <span className="text-[#d4af37]">Blackstones Lifecare</span>
           </h1>
+        </div>
+
+        {/* ── Tab switcher: Hội Viên / Khách Hàng ── */}
+        <div className="flex justify-center mb-6 sm:mb-10">
+          <div className="inline-flex bg-gray-100 rounded-2xl p-1.5 shadow-inner">
+            {([
+              { key: 'hoi-vien', label: 'Hội Viên Trăm Tuổi' },
+              { key: 'khach-hang', label: 'Khách Hàng Trăm Tuổi' },
+            ] as const).map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setSearchTab(t.key)}
+                className={`px-4 sm:px-7 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-bold transition-all ${
+                  searchTab === t.key
+                    ? 'bg-[#1a2a50] text-[#d4af37] shadow'
+                    : 'text-gray-500 hover:text-[#1a2a50]'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ══════ TAB: Hội Viên Trăm Tuổi ══════ */}
+        {searchTab === 'hoi-vien' && (
+        <>
+        <div className="text-center mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-2xl font-bold text-[#1a2a50] mb-1 sm:mb-2 tracking-wide">
+            Tra Cứu Hội Viên Trăm Tuổi
+          </h2>
           <p className="text-gray-500 text-xs sm:text-base font-medium">
             (Vui lòng cung cấp CCCD hoặc Số điện thoại để tra cứu)
           </p>
@@ -294,6 +505,11 @@ export default function PublicLookupPage() {
             </button>
           </div>
         )}
+        </>
+        )}
+
+        {/* ══════ TAB: Khách Hàng Trăm Tuổi ══════ */}
+        {searchTab === 'khach-hang' && <KhttLookupSection />}
 
       </div>
     </div>
