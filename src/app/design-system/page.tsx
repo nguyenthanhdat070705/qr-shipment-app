@@ -15,6 +15,12 @@ import {
  * tông Navy + Gold mới trước khi áp dụng cho toàn hệ thống. Bật/tắt Sáng–Tối
  * ở thanh trên để kiểm tra cả 2 chế độ.
  */
+const PALETTE: Record<string, [number, string][]> = {
+  navy: [[50, '#eef1f7'], [100, '#d5dbe9'], [200, '#a8b4ce'], [300, '#7b8db3'], [400, '#4e6698'], [500, '#2d4a7a'], [600, '#1B2A4A'], [700, '#162240'], [800, '#111a33'], [900, '#0c1226']],
+  brand: [[50, '#faf7f2'], [100, '#f5ede0'], [200, '#e8d9c4'], [300, '#d4c0a0'], [400, '#c5a55a'], [500, '#b8943f'], [600, '#a07d30'], [700, '#86672a'], [800, '#6e5424'], [900, '#5a4520']],
+  teal: [[50, '#eef6f8'], [100, '#d1e8ed'], [200, '#a3d1db'], [300, '#5eaebe'], [400, '#3d8e9e'], [500, '#2D6B7A'], [600, '#245868'], [700, '#1c4552'], [800, '#15353f'], [900, '#0e252c']],
+};
+
 export default function DesignSystemPage() {
   return (
     <PageLayout title="Design System" icon={<Palette size={16} className="text-accent" />}>
@@ -31,12 +37,9 @@ export default function DesignSystemPage() {
           <CardHeader><h2 className="font-bold text-text-strong">Bảng màu thương hiệu</h2></CardHeader>
           <CardBody className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-10 gap-2">
             {(['navy', 'brand', 'teal'] as const).map((fam) =>
-              [50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map((s) => (
+              PALETTE[fam].map(([s, hex]) => (
                 <div key={`${fam}-${s}`} className="text-center">
-                  <div
-                    className="h-12 rounded-lg border border-border-subtle"
-                    style={{ backgroundColor: `var(--color-${fam}-${s})` }}
-                  />
+                  <div className="h-12 rounded-lg border border-border-subtle" style={{ backgroundColor: hex }} />
                   <p className="text-[9px] text-text-muted mt-1">{fam}-{s}</p>
                 </div>
               ))
