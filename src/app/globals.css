@@ -38,6 +38,51 @@
 
   /* Font: ánh xạ tiện ích `font-sans` của Tailwind sang Inter (đã nạp qua next/font) */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* ── Semantic brand aliases (Navy chủ đạo + Gold nhấn) ── */
+  --color-primary: #1B2A4A;        /* Navy 600 */
+  --color-primary-hover: #162240;  /* Navy 700 */
+  --color-primary-fg: #ffffff;     /* chữ trên nền primary */
+  --color-accent: #c5a55a;         /* Gold 400 */
+  --color-accent-hover: #b8943f;   /* Gold 500 */
+  --color-accent-fg: #1a1205;      /* chữ trên nền gold */
+
+  /* ── Shadow mềm dùng cho component layer ── */
+  --shadow-card: 0 1px 3px 0 rgb(16 24 40 / 0.06), 0 1px 2px -1px rgb(16 24 40 / 0.05);
+  --shadow-card-hover: 0 12px 28px -8px rgb(16 24 40 / 0.14), 0 6px 12px -6px rgb(16 24 40 / 0.08);
+  --shadow-pop: 0 16px 40px -12px rgb(16 24 40 / 0.22);
+}
+
+/* ── Semantic surface/text/border tokens — tự đổi theo Sáng/Tối ── */
+:root {
+  --surface: #ffffff;          /* nền thẻ/panel */
+  --surface-muted: #f5f6fa;    /* nền trang */
+  --surface-sunken: #eef1f7;   /* vùng lõm (input, hover) */
+  --text-strong: #0f1629;      /* tiêu đề */
+  --text-default: #1f2a44;     /* body */
+  --text-muted: #64748b;       /* phụ */
+  --border-subtle: #eceff5;
+  --border-default: #dde2ec;
+}
+.dark {
+  --surface: #111a33;          /* navy 800 */
+  --surface-muted: #0c1226;    /* navy 900 */
+  --surface-sunken: #0a1020;
+  --text-strong: #f3f6fb;
+  --text-default: #d5dbe9;
+  --text-muted: #8a97b5;
+  --border-subtle: rgb(255 255 255 / 0.07);
+  --border-default: rgb(255 255 255 / 0.12);
+}
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-text-strong: var(--text-strong);
+  --color-text-default: var(--text-default);
+  --color-text-muted: var(--text-muted);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-default: var(--border-default);
 }
 
 /* ── Base reset / utilities ───────────────────────── */
