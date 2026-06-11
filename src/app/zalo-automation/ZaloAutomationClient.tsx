@@ -140,7 +140,7 @@ export default function ZaloAutomationClient() {
     setCronResult(null);
     try {
       const res = await fetch(
-        `/api/cron/birthday-zns?secret=${process.env.NEXT_PUBLIC_CRON_SECRET || 'blackstone-cron-secret-2026'}`
+        `/api/cron/birthday-zns?secret=${process.env.NEXT_PUBLIC_CRON_SECRET || ''}`
       );
       const data = await res.json();
       setCronResult(data);
@@ -704,7 +704,7 @@ export default function ZaloAutomationClient() {
                   { label: 'Zalo Developer Portal', url: 'https://developers.zalo.me', desc: 'Tạo App, lấy Token' },
                   { label: 'ZNS Template Manager', url: 'https://oa.zalo.me/home', desc: 'Tạo và duyệt ZNS template' },
                   { label: 'Zalo OA Manager', url: 'https://oa.zalo.me', desc: 'Quản lý Official Account' },
-                  { label: 'Birthday Cron (manual)', url: `/api/cron/birthday-zns?secret=blackstone-cron-secret-2026`, desc: 'Chạy thủ công cron' },
+                  { label: 'Birthday Cron (manual)', url: `/api/cron/birthday-zns?secret=${process.env.NEXT_PUBLIC_CRON_SECRET || ''}`, desc: 'Chạy thủ công cron' },
                 ].map(link => (
                   <a
                     key={link.label}

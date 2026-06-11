@@ -35,11 +35,9 @@
   --color-teal-700: #1c4552;
   --color-teal-800: #15353f;
   --color-teal-900: #0e252c;
-}
 
-/* ── Custom CSS Variables ─────────────────────────── */
-:root {
-  --font-inter: 'Inter', sans-serif;
+  /* Font: ánh xạ tiện ích `font-sans` của Tailwind sang Inter (đã nạp qua next/font) */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
 /* ── Base reset / utilities ───────────────────────── */
@@ -48,7 +46,7 @@
 }
 
 body {
-  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent; /* Remove tap flash on mobile */
   max-width: 100%;
   overflow-x: hidden;

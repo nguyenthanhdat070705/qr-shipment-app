@@ -5,7 +5,10 @@
  */
 
 const BASE_URL = 'https://cloud-cloud.1office.vn';
-const ACCESS_TOKEN = process.env.ONEOFFICE_API_KEY || '84869196569c35038d0514699999665';
+const ACCESS_TOKEN = process.env.ONEOFFICE_API_KEY || '';
+if (!ACCESS_TOKEN) {
+  console.warn('[1office] Thiếu biến môi trường ONEOFFICE_API_KEY — đồng bộ 1Office sẽ thất bại. Hãy đặt ONEOFFICE_API_KEY trong .env.local và Vercel.');
+}
 const PAGE_SIZE = 20;
 const DELAY_MS = 800; // Tránh rate limit
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const GETFLY_API_KEY = 'UyNhqLj3Opw0ZSup9dA2uq1A8qFvT1';
+const GETFLY_API_KEY = process.env.GETFLY_API_KEY || '';
 const GETFLY_BASE = 'https://blackstonesdvtl.getflycrm.com/api/v3';
 
 async function getflyFetch(endpoint: string, params: Record<string, string> = {}) {
