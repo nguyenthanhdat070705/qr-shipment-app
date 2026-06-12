@@ -1,0 +1,20 @@
+# Chỉ deploy code app; loại bỏ dev scripts, data dumps, tài liệu (không cần cho build)
+scratch
+outputs
+oneoffice_export
+Membership
+Sample data
+data
+docker
+*.csv
+*.applescript
+*.command
+*.ps1
+*.gs
+*.log
+1office_contracts.json
+1office_receipts.json
+1office_products.json
+output.json
+kho_output.json
+discover_output.txt
