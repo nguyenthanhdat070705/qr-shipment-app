@@ -10,6 +10,8 @@
  *   - Người thụ hưởng ở các custom field cf_*.
  */
 
+import type { SupabaseClient } from '@supabase/supabase-js';
+
 type Json = Record<string, string>;
 
 function num(v: unknown): number {
@@ -89,20 +91,14 @@ export function mapCrmContract(data: Json, syncedAt?: string | null): Normalized
   };
 }
 
-type SupabaseLike = {
-  from: (t: string) => {
-    select: (c: string) => {
-      limit: (n: number) => Promise<{ data: Array<{ id: string; data: Json; synced_at: string }> | null; error: { message: string } | null }>;
-    };
-  };
-};
-
 /** Đọc toàn bộ Hợp Đồng Bán từ Supabase và chuẩn hoá. */
-export async function loadCrmContracts(supabase: SupabaseLike): Promise<NormalizedContract[]> {
+export async function loadCrmContracts(supabase: SupabaseClient): Promise<NormalizedContract[]> {
   const { data, error } = await supabase
     .from('crm_hop_dong_ban')
     .select('id, data, synced_at')
     .limit(20000);
   if (error) throw new Error(error.message);
-  return (data ?? []).map((r) => mapCrmContract((r.data ?? {}) as Json, r.synced_at));
+  return (data ?? []).map((r: { data?: Json; synced_at?: string | null }) =>
+    mapCrmContract((r.data ?? {}) as Json, r.synced_at ?? null),
+  );
 }

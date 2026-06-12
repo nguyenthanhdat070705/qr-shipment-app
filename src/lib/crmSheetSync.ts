@@ -57,8 +57,10 @@ export async function fetchSheetRecords(mod: CrmModule): Promise<SheetRecord[]> 
   const tsIdx = headers.indexOf(AUDIT_COLS[0]);
   const typeIdx = headers.indexOf(AUDIT_COLS[1]);
   const idIdx = headers.indexOf(mod.idField);
-  if (idIdx < 0) {
-    throw new Error(`Sheet "${mod.label}" thiếu cột khoá "${mod.idField}".`);
+  // Validate header: phải có cột khoá VÀ cột audit đầu tiên. Nếu Google trả trang
+  // lỗi/HTML (throttle, mất quyền) → header sai → THROW (không trả rỗng âm thầm).
+  if (idIdx < 0 || tsIdx < 0) {
+    throw new Error(`Sheet "${mod.label}" header không hợp lệ (thiếu "${mod.idField}"/audit) — có thể Google trả lỗi.`);
   }
   const dataCols = headers
     .map((h, i) => ({ h, i }))
@@ -126,11 +128,24 @@ export async function syncModule(supabase: SupabaseClient, mod: CrmModule): Prom
       base.upserted += chunk.length;
     }
 
-    // Xoá bản ghi trong bảng nhưng không còn ở hiện trạng (đã xoá / không xuất hiện).
+    // Xoá bản ghi không còn ở hiện trạng — CÓ HÀNG RÀO AN TOÀN chống xoá nhầm toàn bảng.
     const keep = new Set(rows.map((r) => r.id));
     const { data: existing, error: exErr } = await supabase.from(mod.table).select('id');
     if (exErr) throw new Error(exErr.message);
-    const stale = (existing ?? []).map((e: { id: unknown }) => String(e.id)).filter((id) => !keep.has(id));
+    const existingIds = (existing ?? []).map((e: { id: unknown }) => String(e.id));
+    const stale = existingIds.filter((id) => !keep.has(id));
+
+    // An toàn 1: Sheet trả 0 dòng nhưng bảng đang có data → fetch nhiều khả năng lỗi → KHÔNG xoá.
+    if (current.length === 0 && existingIds.length > 0) {
+      base.error = `Sheet "${mod.label}" trả 0 dòng nhưng bảng có ${existingIds.length} dòng — BỎ QUA để tránh xoá nhầm toàn bộ.`;
+      return base;
+    }
+    // An toàn 2: định xoá > 50% bảng lớn (≥20 dòng) → nghi Sheet trả thiếu → KHÔNG xoá.
+    if (existingIds.length >= 20 && stale.length > existingIds.length * 0.5) {
+      base.error = `Sheet "${mod.label}" định xoá ${stale.length}/${existingIds.length} dòng (>50%) — BỎ QUA xoá để tránh mất data.`;
+      return base;
+    }
+
     for (let i = 0; i < stale.length; i += UPSERT_CHUNK) {
       const chunk = stale.slice(i, i + UPSERT_CHUNK);
       const { error } = await supabase.from(mod.table).delete().in('id', chunk);
