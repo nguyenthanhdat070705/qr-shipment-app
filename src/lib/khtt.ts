@@ -39,6 +39,34 @@ export function phoneKey(phone: unknown): string {
   return d;
 }
 
+/** Khoá so khớp CCCD/VNeID: chỉ giữ chữ số, bỏ MỌI số 0 đầu (KHÔNG động tới 84). */
+export function cccdKey(value: unknown): string {
+  return String(value ?? '').replace(/\D/g, '').replace(/^0+/, '');
+}
+
+/**
+ * Hiển thị SĐT có số 0 đầu (data sync rớt số 0 vì lưu dạng số).
+ * "975882255" → "0975882255"; "84975882255" → "0975882255"; giữ nguyên nếu đã có 0.
+ */
+export function formatPhone(value: unknown): string {
+  let d = String(value ?? '').replace(/\D/g, '');
+  if (!d) return String(value ?? '');
+  if (d.startsWith('84') && d.length >= 11) d = d.slice(2); // bỏ mã quốc gia
+  if (!d.startsWith('0')) d = '0' + d;
+  return d;
+}
+
+/**
+ * Hiển thị CCCD có số 0 đầu. CCCD 12 số luôn bắt đầu bằng 0 (mã tỉnh ≤ 096);
+ * data rớt 0 → còn 11 số → thêm lại 0. Các độ dài khác giữ nguyên.
+ */
+export function formatCccd(value: unknown): string {
+  const d = String(value ?? '').replace(/\D/g, '');
+  if (!d) return String(value ?? '');
+  if (d.length === 11) return '0' + d;
+  return d;
+}
+
 /** Chuyển chuỗi tiền kiểu "110,817,500" hoặc số → number. */
 export function toAmount(value: unknown): number {
   if (value === null || value === undefined || value === '') return 0;

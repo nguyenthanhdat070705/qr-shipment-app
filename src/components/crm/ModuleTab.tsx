@@ -55,8 +55,21 @@ export default function ModuleTab({ module }: { module: CrmModule }) {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    // Cho SĐT/CCCD: so khớp theo chữ số, bỏ số 0 đầu → tìm "0975..." ⇄ "975..." đều ra.
+    const qDigits = q.replace(/\D/g, '').replace(/^0+/, '');
     return rows.filter((r) => {
-      if (q && !module.searchKeys.some((k) => String(r[k] ?? '').toLowerCase().includes(q))) return false;
+      if (q) {
+        const hit = module.searchKeys.some((k) => {
+          const val = String(r[k] ?? '').toLowerCase();
+          if (val.includes(q)) return true;
+          if (qDigits) {
+            const vDigits = val.replace(/\D/g, '').replace(/^0+/, '');
+            if (vDigits && vDigits.includes(qDigits)) return true;
+          }
+          return false;
+        });
+        if (!hit) return false;
+      }
       for (const col of filterCols) {
         if (col.filter === 'select') {
           const fv = filters[col.key];

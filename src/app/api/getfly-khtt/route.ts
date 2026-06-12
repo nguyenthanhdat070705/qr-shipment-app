@@ -14,7 +14,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { phoneKey, toAmount, isKhttOrderCode, KHTT_STATUS_WAITING, KHTT_STATUS_WAITING_LABEL, type KhttRecord } from '@/lib/khtt';
+import { phoneKey, formatPhone, toAmount, isKhttOrderCode, KHTT_STATUS_WAITING, KHTT_STATUS_WAITING_LABEL, type KhttRecord } from '@/lib/khtt';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,7 +47,7 @@ function buildRecord(order: Json, acc: Json | undefined): KhttRecord {
   const paid = toAmount(order.f_amount);
   const accountName = (acc?.account_name || order.contact_name || '').trim() || null;
   const benName = (order.contact_name || acc?.lh_last_name || acc?.account_name || '').trim() || null;
-  const benPhone = (order.contact_phone || acc?.lh_phone_mobile || acc?.lh_phone_home || '').trim() || null;
+  const benPhoneRaw = (order.contact_phone || acc?.lh_phone_mobile || acc?.lh_phone_home || '').trim();
   return {
     getfly_order_id: String(order.id ?? ''),
     order_code: order.order_code || null,
@@ -55,13 +55,13 @@ function buildRecord(order: Json, acc: Json | undefined): KhttRecord {
     order_status: order.status_label || KHTT_STATUS_WAITING_LABEL,
     customer_code: order.account_code || null,
     customer_name: accountName,
-    customer_phone: order.account_phone || null,
+    customer_phone: order.account_phone ? formatPhone(order.account_phone) : null,
     package_name: order.sp_product_name || null,
     total_value: total,
     paid_amount: paid,
     remaining_amount: Math.max(0, total - paid),
     beneficiary_name: benName,
-    beneficiary_phone: benPhone,
+    beneficiary_phone: benPhoneRaw ? formatPhone(benPhoneRaw) : null,
     person_in_charge: order.assigned_user_name || null,
     expiry_date: null, // Sheet Đơn Bán không có ngày hết hạn KHTT
   };

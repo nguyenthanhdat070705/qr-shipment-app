@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 import { isMembershipContract, dedupeMembershipsByCode } from '@/lib/membership';
 import { loadCrmContracts } from '@/lib/crmContracts';
-import { phoneKey } from '@/lib/khtt';
+import { phoneKey, cccdKey } from '@/lib/khtt';
 
 // ── Rate Limiting ────────────────────────────────────────────
 const rateLimitStore: Record<string, { count: number; resetAt: number }> = {};
@@ -119,14 +119,13 @@ export async function GET(req: NextRequest) {
 
       if (!error) {
         if (cccd) {
-          // CCCD: khớp ĐÚNG theo chữ số (KHÔNG bỏ số 0 đầu vì CCCD có thể bắt đầu bằng 0).
+          // CCCD: khớp theo chữ số, BỎ số 0 đầu cả 2 phía (data sync hay rớt số 0).
           // Ưu tiên CCCD của khách hàng (cf_cccd_kh), kèm VNeID người thụ hưởng.
-          const onlyDigits = (v: unknown) => String(v ?? '').replace(/\D/g, '');
-          const target = onlyDigits(cccd);
+          const target = cccdKey(cccd);
           memberships = target
             ? memberships.filter((c) =>
                 [c.customer_id_number, c.beneficiary_vneid_1, c.beneficiary_vneid_2]
-                  .some((v) => v && onlyDigits(v) === target),
+                  .some((v) => v && cccdKey(v) === target),
               )
             : [];
         } else if (phone) {
