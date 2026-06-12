@@ -72,12 +72,13 @@ function TramTuoiContent() {
   const handleSync = useCallback(async () => {
     setSyncing(true);
     try {
-      const res = await fetch('/api/getfly-khtt/sync', { method: 'POST' });
+      // Đồng bộ Google Sheets → Supabase (KHTT lấy từ bảng Đơn Bán đã mirror).
+      const res = await fetch('/api/crm/sync', { method: 'POST' });
       const data = await res.json();
-      if (!res.ok || !data.success) { showToast('err', data.error || data.message || 'Đồng bộ thất bại'); }
-      else { showToast('ok', data.message || 'Đồng bộ thành công'); await load(); }
+      if (!res.ok || !data.success) { showToast('err', data.error || 'Đồng bộ thất bại'); }
+      else { showToast('ok', `Đồng bộ thành công (${data.total_records ?? 0} bản ghi)`); await load(); }
     } catch {
-      showToast('err', 'Không thể kết nối GetFly.');
+      showToast('err', 'Không thể kết nối nguồn dữ liệu.');
     } finally {
       setSyncing(false);
     }

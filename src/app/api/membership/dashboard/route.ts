@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 import { isMembershipContract, dedupeMembershipsByCode } from '@/lib/membership';
+import { mapCrmContract } from '@/lib/crmContracts';
 import * as XLSX from 'xlsx';
 
 type ContractRow = {
@@ -37,6 +38,7 @@ type ContractRow = {
 
 type DriveRow = {
   getfly_contract_id: string;
+  source_contract_code?: string | null;
   vneid_front_file_id: string | null;
   vneid_back_file_id: string | null;
   contract_scan_file_id: string | null;
@@ -217,54 +219,50 @@ function appendSheet(workbook: XLSX.WorkBook, name: string, rows: unknown[][]) {
 }
 
 async function fetchAllContracts(supabase: ReturnType<typeof getSupabaseAdmin>) {
-  const rows: ContractRow[] = [];
-  const batchSize = 1000;
-  let from = 0;
-
-  while (true) {
-    const { data, error } = await supabase
-      .from('getfly_contracts')
-      .select(`
-        id, getfly_contract_id, contract_name, contract_code, source_contract_code,
-        contract_status, contract_type, remaining_days, created_date, effective_date, expiry_date,
-        customer_name, customer_phone, person_in_charge,
-        contract_value, actual_value, executed_amount, paid_amount, debt_amount,
-        beneficiary_name_1, beneficiary_vneid_1, beneficiary_phone_1, beneficiary_address_1,
-        beneficiary_name_2, beneficiary_vneid_2, beneficiary_phone_2, beneficiary_address_2,
-        buyer_email, synced_at
-      `)
-      .order('synced_at', { ascending: false })
-      .range(from, from + batchSize - 1);
-
-    if (error) throw error;
-
-    const batch = (data || []) as ContractRow[];
-    rows.push(...batch);
-    if (batch.length < batchSize) break;
-    from += batchSize;
-  }
-
-  return rows;
+  // Nguồn MỚI: crm_hop_dong_ban (mirror Sheet) → chuẩn hoá về shape getfly_contracts cũ.
+  const { data, error } = await supabase
+    .from('crm_hop_dong_ban')
+    .select('id, data, synced_at')
+    .limit(20000);
+  if (error) throw error;
+  return (data || []).map((r) => {
+    const d = (r.data || {}) as Record<string, string>;
+    return { ...mapCrmContract(d, r.synced_at), id: String(d.id || r.id || '') } as ContractRow;
+  });
 }
 
-async function fetchDriveMap(supabase: ReturnType<typeof getSupabaseAdmin>, contractIds: string[]) {
+// File đính kèm join qua source_contract_code (cầu nối, bền vững) hoặc getfly_contract_id.
+async function fetchDriveMap(supabase: ReturnType<typeof getSupabaseAdmin>, contracts: ContractRow[]) {
   const driveMap = new Map<string, DriveRow>();
-  const batchSize = 500;
+  const codes = Array.from(new Set(contracts.map((c) => str(c.source_contract_code)).filter(Boolean)));
+  const ids = Array.from(new Set(contracts.map((c) => str(c.getfly_contract_id)).filter(Boolean)));
+  const batchSize = 300;
 
-  for (let i = 0; i < contractIds.length; i += batchSize) {
-    const ids = contractIds.slice(i, i + batchSize);
-    const { data: driveRows } = await supabase
-      .from('membership_gdrive_attachments')
-      .select('getfly_contract_id, vneid_front_file_id, vneid_back_file_id, contract_scan_file_id, membership_form_file_id, last_sync_at')
-      .in('getfly_contract_id', ids);
+  const fetchByCol = async (col: string, values: string[]) => {
+    for (let i = 0; i < values.length; i += batchSize) {
+      const slice = values.slice(i, i + batchSize);
+      const { data: driveRows } = await supabase
+        .from('membership_gdrive_attachments')
+        .select('getfly_contract_id, source_contract_code, vneid_front_file_id, vneid_back_file_id, contract_scan_file_id, membership_form_file_id, last_sync_at')
+        .in(col, slice);
+      (driveRows || []).forEach((row) => {
+        const drive = row as DriveRow;
+        if (drive.source_contract_code) driveMap.set('code:' + drive.source_contract_code, drive);
+        if (drive.getfly_contract_id) driveMap.set('id:' + drive.getfly_contract_id, drive);
+      });
+    }
+  };
 
-    (driveRows || []).forEach((row) => {
-      const drive = row as DriveRow;
-      driveMap.set(drive.getfly_contract_id, drive);
-    });
-  }
-
+  if (codes.length) await fetchByCol('source_contract_code', codes);
+  if (ids.length) await fetchByCol('getfly_contract_id', ids);
   return driveMap;
+}
+
+function getDrive(driveMap: Map<string, DriveRow>, c: ContractRow): DriveRow | undefined {
+  return (
+    (c.source_contract_code ? driveMap.get('code:' + c.source_contract_code) : undefined) ||
+    driveMap.get('id:' + c.getfly_contract_id)
+  );
 }
 
 export async function GET(req: NextRequest) {
@@ -298,8 +296,7 @@ export async function GET(req: NextRequest) {
     const contracts = dedupeMembershipsByCode(
       (await fetchAllContracts(supabase)).filter(isMembershipContract),
     );
-    const contractIds = contracts.map((c) => c.getfly_contract_id).filter(Boolean);
-    const driveMap = contractIds.length > 0 ? await fetchDriveMap(supabase, contractIds) : new Map<string, DriveRow>();
+    const driveMap = contracts.length > 0 ? await fetchDriveMap(supabase, contracts) : new Map<string, DriveRow>();
 
     const options = {
       statuses: Array.from(new Set(contracts.map((c) => str(c.contract_status)).filter(Boolean))).sort(),
@@ -397,7 +394,7 @@ export async function GET(req: NextRequest) {
       beneficiaryWithVneid += Number(!!str(c.beneficiary_vneid_1)) + Number(!!str(c.beneficiary_vneid_2));
       beneficiaryWithPhone += Number(!!str(c.beneficiary_phone_1)) + Number(!!str(c.beneficiary_phone_2));
 
-      const drive = driveMap.get(c.getfly_contract_id);
+      const drive = getDrive(driveMap, c);
       const hasContractScan = !!drive?.contract_scan_file_id;
       const hasMembershipForm = !!drive?.membership_form_file_id;
       if (hasContractScan) contractScan += 1;
@@ -414,7 +411,7 @@ export async function GET(req: NextRequest) {
     const summaryMetrics = financialMetrics(paidAmount);
 
     const records = filtered.map((c) => {
-      const drive = driveMap.get(c.getfly_contract_id);
+      const drive = getDrive(driveMap, c);
       return {
         ...c,
         docs: {

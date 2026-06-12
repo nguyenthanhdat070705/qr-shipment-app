@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { MEMBERSHIP_APPROVED_STATUS, MEMBERSHIP_CONTRACT_VALUE, dedupeMembershipsByCode } from '@/lib/membership';
+import { isMembershipContract, dedupeMembershipsByCode } from '@/lib/membership';
+import { loadCrmContracts } from '@/lib/crmContracts';
+import { phoneKey } from '@/lib/khtt';
 
 // ── Rate Limiting ────────────────────────────────────────────
 const rateLimitStore: Record<string, { count: number; resetAt: number }> = {};
@@ -106,69 +108,36 @@ export async function GET(req: NextRequest) {
       // nên chỉ nhận các hợp đồng thoả ĐỦ điều kiện hội viên trăm tuổi:
       //   mã MBS + trạng thái "Đã duyệt" + giá trị 2.160.000đ.
       // Trả về TẤT CẢ membership khớp (mỗi người thụ hưởng là 1 hợp đồng).
-      const normalizedPhone = phone ? normalizePhone(phone) : '';
-
-      let contractQuery = supabase
-        .from('getfly_contracts')
-        .select([
-          'getfly_contract_id',
-          'source_contract_code',
-          'contract_name',
-          'contract_code',
-          'customer_name',
-          'customer_phone',
-          'contract_status',
-          'contract_value',
-          'effective_date',
-          'expiry_date',
-          'beneficiary_name_1',
-          'beneficiary_name_2',
-          'beneficiary_vneid_1',
-          'beneficiary_vneid_2',
-          'beneficiary_address_1',
-          'beneficiary_address_2',
-          'person_in_charge',
-          'paid_amount',
-          'synced_at',
-        ].join(','))
-        .eq('contract_status', MEMBERSHIP_APPROVED_STATUS)
-        .eq('contract_value', MEMBERSHIP_CONTRACT_VALUE)
-        .or('source_contract_code.ilike.MBS%,contract_code.ilike.MBS%,contract_name.ilike.MBS%');
-
-      if (cccd) {
-        const cccdDigits = cccd.replace(/\D/g, '');
-        const cccdValues = Array.from(new Set([cccd, cccdDigits].filter(Boolean)));
-        contractQuery = contractQuery.or(
-          cccdValues
-            .flatMap((v) => [`beneficiary_vneid_1.eq.${v}`, `beneficiary_vneid_2.eq.${v}`])
-            .join(','),
-        );
-      } else {
-        const phoneValues = Array.from(
-          new Set([normalizedPhone, phone?.replace(/\D/g, '')].filter((v) => v && /^\d+$/.test(v))),
-        );
-        contractQuery = contractQuery.or(
-          phoneValues
-            .flatMap((v) => [
-              `customer_phone.eq.${v}`,
-              `beneficiary_phone_1.eq.${v}`,
-              `beneficiary_phone_2.eq.${v}`,
-            ])
-            .join(','),
-        );
+      // Nguồn MỚI: bảng crm_hop_dong_ban (mirror Sheet) → chuẩn hoá → lọc membership.
+      let memberships: Awaited<ReturnType<typeof loadCrmContracts>> = [];
+      try {
+        const all = await loadCrmContracts(supabase);
+        memberships = all.filter(isMembershipContract);
+      } catch (e) {
+        error = { message: e instanceof Error ? e.message : String(e) };
       }
 
-      const { data: contracts, error: contractError } = await contractQuery.order('effective_date', {
-        ascending: false,
-      });
+      if (!error) {
+        if (cccd) {
+          const cset = new Set([phoneKey(cccd), cccd.replace(/\D/g, '')].filter(Boolean));
+          memberships = memberships.filter((c) =>
+            [c.beneficiary_vneid_1, c.beneficiary_vneid_2, c.beneficiary_phone_1, c.beneficiary_phone_2]
+              .some((v) => v && (cset.has(String(v)) || cset.has(phoneKey(v)))),
+          );
+        } else if (phone) {
+          const pk = phoneKey(phone);
+          memberships = memberships.filter((c) =>
+            [c.customer_phone, c.beneficiary_phone_1, c.beneficiary_phone_2]
+              .some((v) => v && phoneKey(v) === pk),
+          );
+        }
+      }
 
-      if (contractError) {
-        error = contractError;
-      } else if (contracts && contracts.length > 0) {
+      if (!error && memberships.length > 0) {
         // Gộp các dòng trùng mã MBS (giữ bản sync mới nhất), rồi sắp xếp mới → cũ.
-        const uniqueContracts = dedupeMembershipsByCode(
-          contracts as Record<string, unknown>[],
-        ).sort((a, b) => String(b.effective_date ?? '').localeCompare(String(a.effective_date ?? '')));
+        const uniqueContracts = dedupeMembershipsByCode(memberships).sort((a, b) =>
+          String(b.effective_date ?? '').localeCompare(String(a.effective_date ?? '')),
+        );
         data = uniqueContracts.map((contract) => ({
           id: `contract-${contract.getfly_contract_id}`,
           member_code: contract.source_contract_code || contract.contract_name,
@@ -197,8 +166,9 @@ export async function GET(req: NextRequest) {
         if (cccd) {
           query = query.eq('id_number', cccd);
         } else if (phone) {
-          query = normalizedPhone && normalizedPhone !== phone
-            ? query.or(`phone.eq.${phone},phone.eq.${normalizedPhone}`)
+          const np = normalizePhone(phone);
+          query = np && np !== phone
+            ? query.or(`phone.eq.${phone},phone.eq.${np}`)
             : query.eq('phone', phone);
         }
 

@@ -1,76 +1,70 @@
+/**
+ * GET /api/getfly-contracts — Hợp đồng bán (Hội viên).
+ * Nguồn MỚI: bảng `crm_hop_dong_ban` (mirror Google Sheet) chuẩn hoá về shape cũ.
+ * File đính kèm (Drive) join qua cầu nối `source_contract_code` (mã MBS) — bền vững
+ * sau khi bỏ getfly_contracts; fallback theo getfly_contract_id (= id HĐ) nếu có.
+ * Giữ NGUYÊN response shape ({ records, total, page, per_page }).
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { loadCrmContracts, type NormalizedContract } from '@/lib/crmContracts';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
     const supabase = getSupabaseAdmin();
     const page = parseInt(req.nextUrl.searchParams.get('page') || '1');
     const perPage = parseInt(req.nextUrl.searchParams.get('per_page') || '20');
-    const search = req.nextUrl.searchParams.get('search') || '';
+    const search = (req.nextUrl.searchParams.get('search') || '').toLowerCase().trim();
     const status = req.nextUrl.searchParams.get('status') || '';
 
-    let query = supabase
-      .from('getfly_contracts')
-      .select('*', { count: 'exact' })
-      .not('raw_data->>contract_id', 'is', null)
-      .order('synced_at', { ascending: false });
+    let contracts = await loadCrmContracts(supabase);
 
-    // Search filter
+    // Lọc theo search
     if (search) {
-      query = query.or(
-        [
-          `contract_name.ilike.%${search}%`,
-          `contract_code.ilike.%${search}%`,
-          `source_contract_code.ilike.%${search}%`,
-          `customer_phone.ilike.%${search}%`,
-        ].join(',')
+      contracts = contracts.filter((c) =>
+        [c.contract_name, c.contract_code, c.source_contract_code, c.customer_phone, c.customer_name]
+          .some((v) => String(v ?? '').toLowerCase().includes(search)),
       );
     }
-
-    // Status filter
+    // Lọc theo trạng thái
     if (status && status !== 'all') {
-      query = query.eq('contract_status', status);
+      contracts = contracts.filter((c) => c.contract_status === status);
     }
 
-    const { data, error } = await query;
+    // Sắp xếp: id HĐ giảm dần (mới nhất trước)
+    contracts.sort((a, b) => Number(b.getfly_contract_id || 0) - Number(a.getfly_contract_id || 0));
 
-    if (error) {
-      console.error('getfly-contracts error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    const sortedData = [...(data || [])].sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
-      const aRaw = (a.raw_data || {}) as Record<string, unknown>;
-      const bRaw = (b.raw_data || {}) as Record<string, unknown>;
-      const aContractId = Number(aRaw.contract_id || 0);
-      const bContractId = Number(bRaw.contract_id || 0);
-      if (aContractId !== bContractId) return bContractId - aContractId;
-      return String(b.synced_at || '').localeCompare(String(a.synced_at || ''));
-    });
-
+    const total = contracts.length;
     const from = (page - 1) * perPage;
-    const pagedData = sortedData.slice(from, from + perPage);
+    const pagedData = contracts.slice(from, from + perPage);
 
-    // Fetch GDrive tracking data for these contracts
-    const contractIds = pagedData.map((c: Record<string, unknown>) => c.getfly_contract_id).filter(Boolean);
-    let driveMap = new Map<string, Record<string, unknown>>();
+    // Join file đính kèm theo source_contract_code (cầu nối) hoặc getfly_contract_id.
+    const codes = pagedData.map((c) => c.source_contract_code).filter(Boolean) as string[];
+    const ids = pagedData.map((c) => c.getfly_contract_id).filter(Boolean) as string[];
+    const driveByCode = new Map<string, Record<string, unknown>>();
+    const driveById = new Map<string, Record<string, unknown>>();
 
-    if (contractIds.length > 0) {
+    if (codes.length || ids.length) {
+      const ors: string[] = [];
+      if (codes.length) ors.push(`source_contract_code.in.(${codes.join(',')})`);
+      if (ids.length) ors.push(`getfly_contract_id.in.(${ids.join(',')})`);
       const { data: driveData } = await supabase
         .from('membership_gdrive_attachments')
         .select('*')
-        .in('getfly_contract_id', contractIds);
-
-      if (driveData) {
-        driveMap = new Map(
-          driveData.map((d: Record<string, unknown>) => [d.getfly_contract_id as string, d])
-        );
+        .or(ors.join(','));
+      for (const d of (driveData ?? []) as Record<string, unknown>[]) {
+        if (d.source_contract_code) driveByCode.set(String(d.source_contract_code), d);
+        if (d.getfly_contract_id) driveById.set(String(d.getfly_contract_id), d);
       }
     }
 
-    // Merge GDrive info into contract records
-    const enrichedRecords = pagedData.map((contract: Record<string, unknown>) => {
-      const driveInfo = driveMap.get(contract.getfly_contract_id as string);
+    const enrichedRecords = pagedData.map((contract: NormalizedContract) => {
+      const driveInfo =
+        (contract.source_contract_code && driveByCode.get(contract.source_contract_code)) ||
+        driveById.get(contract.getfly_contract_id) ||
+        undefined;
       return {
         ...contract,
         gdrive_folder_id: driveInfo?.gdrive_folder_id || null,
@@ -87,7 +81,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       records: enrichedRecords,
-      total: sortedData.length,
+      total,
       page,
       per_page: perPage,
     });

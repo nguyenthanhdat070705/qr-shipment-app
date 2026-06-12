@@ -1,10 +1,24 @@
+/**
+ * GET /api/getfly-khtt — Tra cứu Khách Hàng Trăm Tuổi (KHTT)
+ *
+ * Nguồn dữ liệu MỚI: bảng `crm_don_ban` (mirror Đơn Bán từ Google Sheet), thay cho
+ * bảng cũ `getfly_khtt_orders`. KHTT = đơn bán có mã chứa "KHTT" + đang "Chờ duyệt"
+ * (status = 1). Tên khách + người thụ hưởng lấy từ chính đơn và join `crm_khach_hang`.
+ *
+ *   • ?phone=...  → tra cứu công khai theo SĐT (khách / người thụ hưởng)
+ *   • ?q=...      → tìm nội bộ (tên / mã KH / SĐT / mã đơn)
+ *   • (không tham số) → toàn bộ danh sách KHTT (trang quản lý)
+ *
+ * Giữ NGUYÊN response shape ({ found, total, results: KhttRecord[] }) để các UI công khai
+ * (/embed/khtt, /tra-cuu) không phải sửa.
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { normalizePhone, toAmount, type KhttRecord } from '@/lib/khtt';
+import { phoneKey, toAmount, isKhttOrderCode, KHTT_STATUS_WAITING, KHTT_STATUS_WAITING_LABEL, type KhttRecord } from '@/lib/khtt';
 
 export const dynamic = 'force-dynamic';
 
-// ── Rate limiting (giống /api/membership/lookup) ──
+// ── Rate limiting ──
 const rateLimitStore: Record<string, { count: number; resetAt: number }> = {};
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
@@ -14,11 +28,6 @@ function checkRateLimit(ip: string): boolean {
   }
   return ++rateLimitStore[ip].count <= 60;
 }
-
-const SELECT_COLS =
-  'getfly_order_id, order_code, order_date, order_status, customer_code, customer_name, ' +
-  'customer_phone, package_name, total_value, paid_amount, remaining_amount, ' +
-  'beneficiary_name, beneficiary_phone, person_in_charge, expiry_date';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -30,32 +39,39 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS });
 }
 
-function toRecord(r: Record<string, unknown>): KhttRecord {
+type Json = Record<string, string>;
+
+/** Dựng KhttRecord từ 1 đơn bán + thông tin tài khoản (join). */
+function buildRecord(order: Json, acc: Json | undefined): KhttRecord {
+  const total = toAmount(order.real_amount);
+  const paid = toAmount(order.f_amount);
+  const accountName = (acc?.account_name || order.contact_name || '').trim() || null;
+  const benName = (order.contact_name || acc?.lh_last_name || acc?.account_name || '').trim() || null;
+  const benPhone = (order.contact_phone || acc?.lh_phone_mobile || acc?.lh_phone_home || '').trim() || null;
   return {
-    getfly_order_id: String(r.getfly_order_id),
-    order_code: (r.order_code as string) ?? null,
-    order_date: (r.order_date as string) ?? null,
-    order_status: (r.order_status as string) ?? null,
-    customer_code: (r.customer_code as string) ?? null,
-    customer_name: (r.customer_name as string) ?? null,
-    customer_phone: (r.customer_phone as string) ?? null,
-    package_name: (r.package_name as string) ?? null,
-    total_value: toAmount(r.total_value),
-    paid_amount: toAmount(r.paid_amount),
-    remaining_amount: toAmount(r.remaining_amount),
-    beneficiary_name: (r.beneficiary_name as string) ?? null,
-    beneficiary_phone: (r.beneficiary_phone as string) ?? null,
-    person_in_charge: (r.person_in_charge as string) ?? null,
-    expiry_date: (r.expiry_date as string) ?? null,
+    getfly_order_id: String(order.id ?? ''),
+    order_code: order.order_code || null,
+    order_date: order.order_date || null,
+    order_status: order.status_label || KHTT_STATUS_WAITING_LABEL,
+    customer_code: order.account_code || null,
+    customer_name: accountName,
+    customer_phone: order.account_phone || null,
+    package_name: order.sp_product_name || null,
+    total_value: total,
+    paid_amount: paid,
+    remaining_amount: Math.max(0, total - paid),
+    beneficiary_name: benName,
+    beneficiary_phone: benPhone,
+    person_in_charge: order.assigned_user_name || null,
+    expiry_date: null, // Sheet Đơn Bán không có ngày hết hạn KHTT
   };
 }
 
-// ═══════════════════════════════════════════════════════
-// GET: tra cứu KHTT
-//   • ?phone=...  → tra cứu công khai theo SĐT (khách/CSKH)
-//   • ?q=...      → tìm nội bộ (tên / mã KH / SĐT / mã đơn)
-//   • (không tham số) → toàn bộ danh sách (trang quản lý)
-// ═══════════════════════════════════════════════════════
+function phoneMatches(rec: KhttRecord, keys: Set<string>): boolean {
+  const cands = [rec.customer_phone, rec.beneficiary_phone].filter(Boolean) as string[];
+  return cands.some((p) => keys.has(phoneKey(p)));
+}
+
 export async function GET(req: NextRequest) {
   try {
     const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
@@ -70,47 +86,51 @@ export async function GET(req: NextRequest) {
     const q = req.nextUrl.searchParams.get('q')?.trim();
     const limit = Math.min(parseInt(req.nextUrl.searchParams.get('limit') || '200', 10), 500);
 
+    if (phone !== undefined && !phone) {
+      return NextResponse.json({ error: 'Vui lòng nhập số điện thoại.' }, { status: 400, headers: CORS });
+    }
+
     const supabase = getSupabaseAdmin();
-    let query = supabase.from('getfly_khtt_orders').select(SELECT_COLS);
+
+    // 1) Lấy các đơn KHTT đang hoạt động (mã chứa "KHTT" + Chờ duyệt).
+    const { data: orderRows, error: oErr } = await supabase
+      .from('crm_don_ban')
+      .select('id, data')
+      .ilike('data->>order_code', '%KHTT%')
+      .eq('data->>status', KHTT_STATUS_WAITING)
+      .limit(2000);
+
+    if (oErr) {
+      console.error('[KHTT Lookup] DB error:', oErr.message);
+      return NextResponse.json({ error: 'Lỗi hệ thống. Vui lòng thử lại.' }, { status: 500, headers: CORS });
+    }
+
+    const orders = (orderRows ?? []).map((r) => (r.data ?? {}) as Json).filter((d) => isKhttOrderCode(d.order_code));
+
+    // 2) Join tài khoản (crm_khach_hang.id = đơn.account_id) để lấy tên khách hàng.
+    const accountIds = Array.from(new Set(orders.map((d) => String(d.account_id || '')).filter(Boolean)));
+    const accMap = new Map<string, Json>();
+    if (accountIds.length) {
+      const { data: accRows } = await supabase.from('crm_khach_hang').select('id, data').in('id', accountIds);
+      for (const a of accRows ?? []) accMap.set(String(a.id), (a.data ?? {}) as Json);
+    }
+
+    // 3) Dựng KhttRecord + lọc theo phone/q.
+    let results = orders.map((d) => buildRecord(d, accMap.get(String(d.account_id || ''))));
 
     if (phone !== undefined) {
-      // Tra cứu công khai: bắt buộc nhập SĐT.
-      if (!phone) {
-        return NextResponse.json(
-          { error: 'Vui lòng nhập số điện thoại.' },
-          { status: 400, headers: CORS },
-        );
-      }
-      const norm = normalizePhone(phone);
-      const values = Array.from(new Set([phone, norm].filter(Boolean)));
-      query = query.or(
-        values
-          .flatMap((v) => [`customer_phone.eq.${v}`, `beneficiary_phone.eq.${v}`])
-          .join(','),
-      );
+      const keys = new Set([phoneKey(phone!)].filter(Boolean));
+      results = results.filter((r) => phoneMatches(r, keys));
     } else if (q) {
-      query = query.or(
-        [
-          `customer_name.ilike.%${q}%`,
-          `customer_code.ilike.%${q}%`,
-          `customer_phone.ilike.%${q}%`,
-          `order_code.ilike.%${q}%`,
-          `beneficiary_name.ilike.%${q}%`,
-        ].join(','),
+      const needle = q.toLowerCase();
+      results = results.filter((r) =>
+        [r.customer_name, r.customer_code, r.customer_phone, r.order_code, r.beneficiary_name]
+          .some((v) => String(v ?? '').toLowerCase().includes(needle)),
       );
     }
 
-    const { data, error } = await query.order('order_date', { ascending: false }).limit(limit);
-
-    if (error) {
-      console.error('[KHTT Lookup] DB error:', error.message);
-      return NextResponse.json(
-        { error: 'Lỗi hệ thống. Vui lòng thử lại.' },
-        { status: 500, headers: CORS },
-      );
-    }
-
-    const results = (data || []).map((r) => toRecord(r as Record<string, unknown>));
+    results.sort((a, b) => String(b.order_date ?? '').localeCompare(String(a.order_date ?? '')));
+    results = results.slice(0, limit);
 
     if (phone !== undefined && results.length === 0) {
       return NextResponse.json(

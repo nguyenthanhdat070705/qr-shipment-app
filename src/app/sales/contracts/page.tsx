@@ -103,10 +103,10 @@ export default function ContractsPage() {
 
   const loadSyncInfo = useCallback(async () => {
     try {
-      const res = await fetch('/api/sync-getfly-contracts');
+      const res = await fetch('/api/crm/overview', { cache: 'no-store' });
       const d = await res.json();
       setLastSync(d.last_sync || null);
-      setSyncedCount(d.synced_count || 0);
+      setSyncedCount(d.counts?.['hop-dong-ban'] || 0);
     } catch {}
   }, []);
 
@@ -116,9 +116,15 @@ export default function ContractsPage() {
   async function handleSync() {
     setSyncing(true); setSyncResult(null);
     try {
-      const res = await fetch('/api/sync-getfly-contracts?sync_drive=false', { method: 'POST' });
+      // Đồng bộ Google Sheets → Supabase (hợp đồng bán = bảng crm_hop_dong_ban).
+      const res = await fetch('/api/crm/sync', { method: 'POST' });
       const data = await res.json();
-      setSyncResult(data);
+      const hd = (data.results || []).find((r: { table?: string }) => r.table === 'crm_hop_dong_ban');
+      setSyncResult({
+        success: data.success,
+        synced: hd?.current ?? 0,
+        error: data.success ? undefined : (data.error || 'Đồng bộ thất bại'),
+      });
       if (data.success) { loadContracts(); loadSyncInfo(); }
     } catch (err) { setSyncResult({ error: String(err) }); }
     finally { setSyncing(false); }

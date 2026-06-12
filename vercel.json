@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/sync-1office-crm",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/sync-crm",
+      "schedule": "30 0 * * *"
     }
   ]
 }

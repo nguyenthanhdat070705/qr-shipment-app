@@ -28,6 +28,17 @@ export function normalizePhone(phone: unknown): string {
   return digits.startsWith('84') ? `0${digits.slice(2)}` : digits;
 }
 
+/**
+ * Khoá so khớp SĐT (bền vững): bỏ ký tự lạ, bỏ tiền tố 84 và số 0 đầu.
+ * Dùng để khớp "0937789023" ⇄ "937789023" (GetFly hay lưu thiếu số 0 đầu).
+ */
+export function phoneKey(phone: unknown): string {
+  let d = String(phone ?? '').replace(/\D/g, '');
+  if (d.startsWith('84')) d = d.slice(2);
+  if (d.startsWith('0')) d = d.slice(1);
+  return d;
+}
+
 /** Chuyển chuỗi tiền kiểu "110,817,500" hoặc số → number. */
 export function toAmount(value: unknown): number {
   if (value === null || value === undefined || value === '') return 0;
