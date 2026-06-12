@@ -119,11 +119,16 @@ export async function GET(req: NextRequest) {
 
       if (!error) {
         if (cccd) {
-          const cset = new Set([phoneKey(cccd), cccd.replace(/\D/g, '')].filter(Boolean));
-          memberships = memberships.filter((c) =>
-            [c.beneficiary_vneid_1, c.beneficiary_vneid_2, c.beneficiary_phone_1, c.beneficiary_phone_2]
-              .some((v) => v && (cset.has(String(v)) || cset.has(phoneKey(v)))),
-          );
+          // CCCD: khớp ĐÚNG theo chữ số (KHÔNG bỏ số 0 đầu vì CCCD có thể bắt đầu bằng 0).
+          // Ưu tiên CCCD của khách hàng (cf_cccd_kh), kèm VNeID người thụ hưởng.
+          const onlyDigits = (v: unknown) => String(v ?? '').replace(/\D/g, '');
+          const target = onlyDigits(cccd);
+          memberships = target
+            ? memberships.filter((c) =>
+                [c.customer_id_number, c.beneficiary_vneid_1, c.beneficiary_vneid_2]
+                  .some((v) => v && onlyDigits(v) === target),
+              )
+            : [];
         } else if (phone) {
           const pk = phoneKey(phone);
           memberships = memberships.filter((c) =>
@@ -144,7 +149,7 @@ export async function GET(req: NextRequest) {
           full_name: contract.customer_name,
           phone: contract.customer_phone,
           email: null,
-          id_number: null,
+          id_number: contract.customer_id_number,
           status: mapContractStatusToMemberStatus(contract.contract_status, contract.expiry_date),
           registered_date: toIsoDate(contract.effective_date),
           expiry_date: toIsoDate(contract.expiry_date),

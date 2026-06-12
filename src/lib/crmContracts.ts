@@ -38,6 +38,7 @@ export interface NormalizedContract {
   expiry_date: string | null;
   customer_name: string | null;
   customer_phone: string | null;
+  customer_id_number: string | null;
   person_in_charge: string | null;
   contract_value: number;
   actual_value: number;
@@ -72,6 +73,7 @@ export function mapCrmContract(data: Json, syncedAt?: string | null): Normalized
     expiry_date: str(data.expiration_date),
     customer_name: str(data.vendor_account_name),
     customer_phone: str(data.vendor_account_phone) ?? str(data.contract_name),
+    customer_id_number: str(data.cf_cccd_kh),
     person_in_charge: str(data.create_user_display_name) ?? str(data.approved_by_display_name),
     contract_value: num(data.total_payment),
     actual_value: num(data.total_sale_order_real_amount) || num(data.actual_value),
