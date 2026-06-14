@@ -1,8 +1,9 @@
 /**
  * CRM MODULES — nguồn chân lý chung cho luồng Google Sheets → Supabase → UI.
  *
- * 14 module = 14 file Google Sheets trong folder "BLACKSTONES Data" (do Apps Script
- * `scratch/getfly_drive_sync.gs` sinh ra, poll GetFly v6.1 mỗi 15', append-only).
+ * 15 module = 15 file Google Sheets trong folder "Blackstones Data Sync V1" (do Apps
+ * Script `scratch/blackstones_data_sync_v1.gs` sinh ra, poll GetFly v6.1 mỗi 1h, append-only).
+ * Header sheet là TIẾNG VIỆT → crmSheetSync remap về key ASCII qua src/config/crmHeaderMap.ts.
  *
  * - `sheetId`   : ID Google Sheet (public-readable qua export?format=xlsx).
  * - `table`     : bảng Supabase tương ứng (mirror current-state).
@@ -54,8 +55,8 @@ export const CRM_MODULES: CrmModule[] = [
   // ───────────────────────────── 1. KHÁCH HÀNG ─────────────────────────────
   {
     key: 'khach-hang', table: 'crm_khach_hang',
-    sheetId: '1y-Z-N7xv0rpr82_9k5pKSwNxPvuPvAhhYgw9g3MOQOs',
-    label: 'Khách Hàng', short: 'Khách Hàng', icon: 'Users', idField: 'id',
+    sheetId: '14JwbrZlwjBbfJegWkcGDI5_KPBwFLs130b8gOZUCu68',
+    label: 'Khách Hàng', short: 'Khách Hàng', icon: 'Users', idField: 'ID hệ thống',
     searchKeys: ['account_code', 'account_name', 'phone_office', 'cf_so_cccd', 'cf_ma_hoi_vien', 'email'],
     columns: [
       c('id', 'Mã ID'),
@@ -111,8 +112,8 @@ export const CRM_MODULES: CrmModule[] = [
   // ───────────────────────────── 2. ĐƠN BÁN ─────────────────────────────
   {
     key: 'don-ban', table: 'crm_don_ban',
-    sheetId: '1ee8nhWRj131iVYP_gY8iQc_ZfLb7VNvA_KVWkvKxf-0',
-    label: 'Đơn Bán', short: 'Đơn Bán', icon: 'ShoppingCart', idField: 'id',
+    sheetId: '1U5dFQsLOzA-Nex9NbTUv6m1KPCoXlIDgBNjZw653jbw',
+    label: 'Đơn Bán', short: 'Đơn Bán', icon: 'ShoppingCart', idField: 'ID hệ thống',
     searchKeys: ['order_code', 'account_phone', 'account_code', 'contact_name', 'sp_product_name'],
     columns: [
       c('id', 'Mã ID'),
@@ -165,8 +166,8 @@ export const CRM_MODULES: CrmModule[] = [
   // ───────────────────────────── 3. ĐƠN MUA ─────────────────────────────
   {
     key: 'don-mua', table: 'crm_don_mua',
-    sheetId: '1xQp3J5yqDwignCqSDiTXVTm7DCTFP4Eh4VPcG33dfqc',
-    label: 'Đơn Mua', short: 'Đơn Mua', icon: 'ShoppingBag', idField: 'id',
+    sheetId: '1ON_VwEl5Knc57Ayh5nVNQ2BOUx2ccmBks2Ojl-J1FRw',
+    label: 'Đơn Mua', short: 'Đơn Mua', icon: 'ShoppingBag', idField: 'ID hệ thống',
     searchKeys: ['order_code', 'account_code', 'account_phone', 'sp_product_name'],
     columns: [
       c('id', 'Mã ID'),
@@ -207,8 +208,8 @@ export const CRM_MODULES: CrmModule[] = [
   // ───────────────────────────── 4. HỢP ĐỒNG BÁN ─────────────────────────────
   {
     key: 'hop-dong-ban', table: 'crm_hop_dong_ban',
-    sheetId: '1_tG7luH6__DR7vxxBtwwuQ0vqp8i5LliMoG9hKefWlI',
-    label: 'Hợp Đồng Bán', short: 'HĐ Bán', icon: 'FileText', idField: 'id',
+    sheetId: '1Fu7q5X3hSXCEjob0xj_4WCXtZwpBXS2uq4XAqstcVfw',
+    label: 'Hợp Đồng Bán', short: 'HĐ Bán', icon: 'FileText', idField: 'ID hệ thống',
     searchKeys: ['contract_code', 'contract_name', 'vendor_account_name', 'vendor_account_phone', 'cf_cccd_kh'],
     columns: [
       c('id', 'Mã ID'),
@@ -286,8 +287,8 @@ export const CRM_MODULES: CrmModule[] = [
   // ───────────────────────────── 5. HỢP ĐỒNG MUA ─────────────────────────────
   {
     key: 'hop-dong-mua', table: 'crm_hop_dong_mua',
-    sheetId: '1IzAqccCTr1SepMEJ8TDgL9ZxlCIeAqFY7SSKig2LcOs',
-    label: 'Hợp Đồng Mua', short: 'HĐ Mua', icon: 'FileSignature', idField: 'id',
+    sheetId: '1iYnF7DpkUK745uvyeEltXrFd6WhR_PGPydG2r5lLGnQ',
+    label: 'Hợp Đồng Mua', short: 'HĐ Mua', icon: 'FileSignature', idField: 'ID hệ thống',
     searchKeys: ['contract_code', 'contract_name', 'vendor_account_name', 'vendor_account_phone'],
     columns: [
       c('id', 'Mã ID'),
@@ -363,8 +364,8 @@ export const CRM_MODULES: CrmModule[] = [
   // ───────────────────────────── 6. BÁO GIÁ ─────────────────────────────
   {
     key: 'bao-gia', table: 'crm_bao_gia',
-    sheetId: '1HVVQWQ1Hp2GkZPRUvQ4vb8YvSTlHXkIIu9Ieh77T03I',
-    label: 'Báo Giá', short: 'Báo Giá', icon: 'Receipt', idField: 'id',
+    sheetId: '18XfsreoG-glKAnWevh4Dx-zwR_rq0-efEFbfeQWVvI0',
+    label: 'Báo Giá', short: 'Báo Giá', icon: 'Receipt', idField: 'ID hệ thống',
     searchKeys: ['quote_code', 'account_name', 'account_phone'],
     columns: [
       c('id', 'Mã ID'),
@@ -393,8 +394,8 @@ export const CRM_MODULES: CrmModule[] = [
   // ───────────────────────────── 7. SẢN PHẨM ─────────────────────────────
   {
     key: 'san-pham', table: 'crm_san_pham',
-    sheetId: '12FTiPGWuZPV4DmO8sXe4L71hQtx4j8HOz1ngLnjF4fM',
-    label: 'Sản Phẩm', short: 'Sản Phẩm', icon: 'Package', idField: 'id',
+    sheetId: '1ajHK9tCDFYpPK9HOyVwYU9CBPk1WbefZldsDuOksl7Y',
+    label: 'Sản Phẩm', short: 'Sản Phẩm', icon: 'Package', idField: 'ID hệ thống',
     searchKeys: ['product_code', 'product_name', 'category_name'],
     columns: [
       c('id', 'Mã ID'),
@@ -432,8 +433,8 @@ export const CRM_MODULES: CrmModule[] = [
   // ───────────────────────────── 8. CÔNG VIỆC ─────────────────────────────
   {
     key: 'cong-viec', table: 'crm_cong_viec',
-    sheetId: '183-69TzK9drwlPLQLbYZwV83UiJnAJBRpt1-Q1yTvSY',
-    label: 'Công Việc', short: 'Công Việc', icon: 'ClipboardList', idField: 'id',
+    sheetId: '1Qq-3si3vlIisrepY0o4XrG36ZRlHWW-TDtuiCMdIDgQ',
+    label: 'Công Việc', short: 'Công Việc', icon: 'ClipboardList', idField: 'ID hệ thống',
     searchKeys: ['task_code', 'task_name', 'task_receiver_display_name', 'kh_account_name'],
     columns: [
       c('id', 'Mã ID'),
@@ -464,8 +465,8 @@ export const CRM_MODULES: CrmModule[] = [
   // ───────────────────────────── 9. CƠ HỘI ─────────────────────────────
   {
     key: 'co-hoi', table: 'crm_co_hoi',
-    sheetId: '1m_vLuceYZJKYKeLT7GSRUPBxEeGRGidWRuDpPwIoG74',
-    label: 'Cơ Hội', short: 'Cơ Hội', icon: 'TrendingUp', idField: 'id',
+    sheetId: '1daGiwdVYw3rs495fMlTOX_cdlH3xkQp8zyRdrMqgJEY',
+    label: 'Cơ Hội', short: 'Cơ Hội', icon: 'TrendingUp', idField: 'ID hệ thống',
     searchKeys: ['opportunity_code', 'opportunity_name', 'account_name', 'phone_office'],
     columns: [
       c('id', 'Mã ID'),
@@ -497,8 +498,8 @@ export const CRM_MODULES: CrmModule[] = [
   // ───────────────────────────── 10. CHIẾN DỊCH ─────────────────────────────
   {
     key: 'chien-dich', table: 'crm_chien_dich',
-    sheetId: '1etKlfHVtV5PKyb8rC_NCih058CYMf7VT8GFlecJBZb4',
-    label: 'Chiến Dịch', short: 'Chiến Dịch', icon: 'Megaphone', idField: 'id',
+    sheetId: '18jw4Y14pXrM1hWIzzYa8uoydYPjlFALmPmUyTXt3WHs',
+    label: 'Chiến Dịch', short: 'Chiến Dịch', icon: 'Megaphone', idField: 'ID hệ thống',
     searchKeys: ['campaign_code', 'campaign_name'],
     columns: [
       c('id', 'Mã ID'),
@@ -528,8 +529,8 @@ export const CRM_MODULES: CrmModule[] = [
   // ───────────────────────────── 11. NGƯỜI DÙNG ─────────────────────────────
   {
     key: 'nguoi-dung', table: 'crm_nguoi_dung',
-    sheetId: '1hOnNGEugm6RNrTWO9ob50RUCskkgIYM3AGW0DTTKsMQ',
-    label: 'Người Dùng', short: 'Người Dùng', icon: 'UserCog', idField: 'user_id',
+    sheetId: '1TFSMQloytvpoPcapgqBaSxr29k9Fd_NyIn1NwkgygHM',
+    label: 'Người Dùng', short: 'Người Dùng', icon: 'UserCog', idField: 'ID người dùng',
     searchKeys: ['contact_name', 'user_name', 'email', 'contact_mobile'],
     columns: [
       c('user_id', 'Mã người dùng', { table: true }),
@@ -546,8 +547,8 @@ export const CRM_MODULES: CrmModule[] = [
   // ───────────────────────────── 12. KHO ─────────────────────────────
   {
     key: 'kho', table: 'crm_kho',
-    sheetId: '1mnu1ZM19d0iUd_sN8tG3KjiyRgF6vHUxDl8W4Uq4OPY',
-    label: 'Kho', short: 'Kho', icon: 'Warehouse', idField: 'id',
+    sheetId: '1oEoDG-4iaz52U-SQfMC2lrARmO7hpseQtPRk3_umcbo',
+    label: 'Kho', short: 'Kho', icon: 'Warehouse', idField: 'ID hệ thống',
     searchKeys: ['store_name'],
     columns: [
       c('id', 'Mã ID'),
@@ -559,8 +560,8 @@ export const CRM_MODULES: CrmModule[] = [
   // ───────────────────────────── 13. QUỸ ─────────────────────────────
   {
     key: 'quy', table: 'crm_quy',
-    sheetId: '16DGeXg9eMV0e0Pfl0TEar1PfgYxvm8RL36PjcvYeH_Y',
-    label: 'Quỹ', short: 'Quỹ', icon: 'Wallet', idField: 'id',
+    sheetId: '1WfEZuhCsBMZ27TEMdBSFCx6xAW5-Sa47-kquO8FXyjI',
+    label: 'Quỹ', short: 'Quỹ', icon: 'Wallet', idField: 'ID hệ thống',
     searchKeys: ['fund_code', 'fund_title'],
     columns: [
       c('id', 'Mã ID'),
@@ -581,13 +582,32 @@ export const CRM_MODULES: CrmModule[] = [
   // ───────────────────────────── 14. PT THANH TOÁN ─────────────────────────────
   {
     key: 'pt-thanh-toan', table: 'crm_pt_thanh_toan',
-    sheetId: '1BL6QmxNoKlO8-ai_A1vwCr3ZY7Cd5N78A3n5YmvsGxs',
-    label: 'Phương Thức Thanh Toán', short: 'PT Thanh Toán', icon: 'CreditCard', idField: 'id',
+    sheetId: '1guQYnoNMz50oMHhGU3PtMe7zpZE46z5m6BuGtk-qcn0',
+    label: 'Phương Thức Thanh Toán', short: 'PT Thanh Toán', icon: 'CreditCard', idField: 'ID hệ thống',
     searchKeys: ['method_name'],
     columns: [
       c('id', 'Mã ID'),
       c('method_name', 'Phương thức', { table: true }),
       c('valid', 'Hiệu lực', { type: 'bool', table: true }),
+    ],
+  },
+  // ───────────────────────────── 15. TRAO ĐỔI ─────────────────────────────
+  {
+    key: 'trao-doi', table: 'crm_trao_doi',
+    sheetId: '1dABhzdU1lDS7KpvPETNJXd5kPPAbQ7mELwX8BfRU7gA',
+    label: 'Trao Đổi', short: 'Trao Đổi', icon: 'MessageSquare', idField: 'ID hệ thống',
+    searchKeys: ['account_name', 'comment_title', 'content', 'creator_display_name'],
+    columns: [
+      c('id', 'Mã ID'),
+      c('account_id', 'KH (id)'),
+      c('account_name', 'Khách hàng', { table: true }),
+      c('account_relation_name', 'Mối quan hệ KH'),
+      c('comment_title', 'Tiêu đề', { table: true }),
+      c('content', 'Nội dung trao đổi', { type: 'long', table: true }),
+      c('creator_display_name', 'Người tạo', { table: true, filter: 'select' }),
+      c('created_at', 'Ngày tạo', { type: 'date', table: true }),
+      c('is_feedback', 'Là phản hồi', { type: 'bool' }),
+      c('tagged_users', 'Người được gắn thẻ'),
     ],
   },
 ];

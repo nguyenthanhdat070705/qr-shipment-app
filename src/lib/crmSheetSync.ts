@@ -11,6 +11,18 @@
 import * as xlsx from 'xlsx';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { CRM_MODULES, AUDIT_COLS, type CrmModule } from '@/config/crmModules';
+import { CRM_HEADER_MAP } from '@/config/crmHeaderMap';
+import { formatPhone, formatCccd } from '@/lib/khtt';
+
+// Sửa số 0 đầu SĐT/CCCD (Google Sheet lưu dạng số nên rớt số 0). Chỉ sửa khi TOÀN SỐ.
+const isPhoneKey = (k: string) => /phone|mobile|so_dien_thoai/i.test(k);
+const isCccdKey = (k: string) => /cccd|vneid/i.test(k);
+function fixLeadingZero(key: string, val: string): string {
+  if (!val || !/^\d+$/.test(val)) return val;
+  if (isPhoneKey(key)) return formatPhone(val);
+  if (isCccdKey(key)) return formatCccd(val);
+  return val;
+}
 
 const DELETED_LABEL = 'Đã xóa';
 const UPSERT_CHUNK = 500;
@@ -62,8 +74,11 @@ export async function fetchSheetRecords(mod: CrmModule): Promise<SheetRecord[]> 
   if (idIdx < 0 || tsIdx < 0) {
     throw new Error(`Sheet "${mod.label}" header không hợp lệ (thiếu "${mod.idField}"/audit) — có thể Google trả lỗi.`);
   }
+  // Sheet V1 dùng header TIẾNG VIỆT. Remap header -> KEY ASCII ổn định (account_code,
+  // cf_cccd_kh, status...) để JSONB giữ key mà app + SQL đang phụ thuộc. Header lạ -> giữ nguyên.
+  const hmap = CRM_HEADER_MAP[mod.table] ?? {};
   const dataCols = headers
-    .map((h, i) => ({ h, i }))
+    .map((h, i) => ({ h, key: hmap[h] ?? h, i }))
     .filter((x) => x.h !== '' && !auditSet.has(x.h));
 
   const out: SheetRecord[] = [];
@@ -73,9 +88,9 @@ export async function fetchSheetRecords(mod: CrmModule): Promise<SheetRecord[]> 
     const id = String(row[idIdx] ?? '').trim();
     if (!id) continue;
     const data: Record<string, string> = {};
-    for (const { h, i } of dataCols) {
+    for (const { key, i } of dataCols) {
       const v = row[i];
-      data[h] = v === null || v === undefined ? '' : String(v);
+      data[key] = fixLeadingZero(key, v === null || v === undefined ? '' : String(v));
     }
     out.push({
       id,

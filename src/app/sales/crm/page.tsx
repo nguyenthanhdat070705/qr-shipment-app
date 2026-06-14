@@ -65,7 +65,7 @@ export default function CRMPage() {
           <div>
             <h1 className="text-lg sm:text-xl font-extrabold text-gray-900 dark:text-gray-100">CRM GetFly</h1>
             <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-              14 module đồng bộ từ Google Sheets (BLACKSTONES Data)
+              15 module đồng bộ từ Google Sheets (Blackstones Data Sync V1)
               {overview?.last_sync && (
                 <span className="inline-flex items-center gap-1 ml-2 text-gray-400">
                   <Clock size={12} /> Sync gần nhất: {new Date(overview.last_sync).toLocaleString('vi-VN')}
