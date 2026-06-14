@@ -35,7 +35,7 @@ function fmtDate(s: string | null) {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-end mb-3 sm:mb-5 w-full group gap-0.5 sm:gap-0">
+    <div className="flex flex-col sm:flex-row sm:items-end mb-2 sm:mb-5 w-full group gap-0.5 sm:gap-0">
       <span className="text-[#1a2a50] font-medium text-sm sm:text-base whitespace-nowrap">{label}:</span>
       <div className="sm:ml-2 flex-1 flex flex-wrap items-end relative overflow-hidden">
         <span className="text-[#1a2a50] font-bold text-sm sm:text-base z-10 sm:px-3 bg-white break-words">{value}</span>
@@ -47,13 +47,13 @@ function Row({ label, value }: { label: string; value: string }) {
 
 function ResultCard({ row }: { row: KhttResult }) {
   return (
-    <div className="mt-6 relative w-full border border-[#e5e7eb] bg-white p-4 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-xl">
+    <div className="mt-4 sm:mt-6 relative w-full border border-[#e5e7eb] bg-white p-3.5 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-xl">
       <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#d4af37] via-[#f3e5ab] to-[#d4af37] rounded-t-xl" />
       <div className="absolute top-4 right-4 sm:top-6 sm:right-8 flex items-center gap-1.5 text-amber-600 border-b-2 border-dotted border-current font-bold text-xs sm:text-sm px-1 pb-0.5">
         <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
         {row.order_status || 'Chờ duyệt'}
       </div>
-      <div className="text-center mb-6 pt-8 sm:pt-2">
+      <div className="text-center mb-3 sm:mb-6 pt-7 sm:pt-2">
         <h3 className="text-[#1a2a50] text-base sm:text-xl font-bold uppercase tracking-wider flex items-center justify-center gap-2 flex-wrap">
           <ShieldCheck className="text-[#d4af37]" size={20} />
           <span>Hợp Đồng Khách Hàng Trăm Tuổi</span>
@@ -131,9 +131,9 @@ export default function KhttEmbedPage() {
   }
 
   return (
-    <div className="font-sans p-3 sm:p-5 bg-transparent">
+    <div className="font-sans p-2.5 sm:p-5 bg-transparent">
       <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-4 sm:mb-6">
+        <div className="text-center mb-3 sm:mb-6">
           <h2 className="text-lg sm:text-2xl font-bold text-[#1a2a50] tracking-wide">
             Tra Cứu Khách Hàng Trăm Tuổi
           </h2>
