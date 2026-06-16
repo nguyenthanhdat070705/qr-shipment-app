@@ -38,7 +38,7 @@ function Row({ label, value }: { label: string; value: string }) {
     <div className="flex flex-row items-baseline sm:items-end mb-2 sm:mb-5 w-full group gap-1.5 sm:gap-0">
       <span className="text-[#1a2a50] font-medium text-sm sm:text-base whitespace-nowrap shrink-0">{label}:</span>
       <div className="sm:ml-2 flex-1 flex flex-wrap items-end relative overflow-hidden">
-        <span className="text-[#1a2a50] font-bold text-sm sm:text-base z-10 sm:px-3 bg-white break-words">{value}</span>
+        <span className="text-[#1a2a50] font-bold text-sm sm:text-base z-10 sm:px-3 bg-white break-words [text-wrap:pretty]">{value}</span>
         <div className="hidden sm:block absolute bottom-1.5 left-0 w-full border-b-[2.5px] border-dotted border-gray-300 -z-0"></div>
       </div>
     </div>
