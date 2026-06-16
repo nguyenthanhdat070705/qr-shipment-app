@@ -88,17 +88,27 @@ export default function KhttEmbedPage() {
   useEffect(() => {
     const send = () => {
       try {
-        window.parent?.postMessage(
-          { type: 'khtt-embed-height', height: document.documentElement.scrollHeight },
-          '*',
+        const h = Math.max(
+          document.documentElement.scrollHeight,
+          document.body ? document.body.scrollHeight : 0,
+          document.body ? document.body.offsetHeight : 0,
         );
+        window.parent?.postMessage({ type: 'khtt-embed-height', height: h }, '*');
       } catch { /* ignore */ }
     };
     send();
     const ro = new ResizeObserver(send);
-    ro.observe(document.body);
+    ro.observe(document.documentElement);
+    if (document.body) ro.observe(document.body);
     window.addEventListener('load', send);
-    return () => { ro.disconnect(); window.removeEventListener('load', send); };
+    window.addEventListener('resize', send);
+    const timers = [100, 300, 600, 1200, 2500].map((ms) => window.setTimeout(send, ms));
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('load', send);
+      window.removeEventListener('resize', send);
+      timers.forEach((t) => window.clearTimeout(t));
+    };
   }, [results, notFound, loading, error]);
 
   async function handleSearch(e?: React.FormEvent) {
