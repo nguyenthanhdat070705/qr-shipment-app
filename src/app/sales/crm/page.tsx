@@ -29,6 +29,7 @@ interface SyncResult {
 export default function CRMPage() {
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [syncing, setSyncing] = useState(false);
+  const [syncProgress, setSyncProgress] = useState('');
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   const [overview, setOverview] = useState<Overview | null>(null);
 
@@ -40,17 +41,43 @@ export default function CRMPage() {
   }, []);
   useEffect(() => { loadOverview(); }, [loadOverview]);
 
+  // Đồng bộ TỪNG module (mỗi request riêng) để không chạm timeout 60s của Vercel khi
+  // data lớn (vd Trao Đổi ~30k dòng). Hiển thị tiến độ + gộp kết quả.
   const handleSync = useCallback(async () => {
     setSyncing(true);
     setSyncResult(null);
+    const started = Date.now();
+    const merged: NonNullable<SyncResult['results']> = [];
     try {
-      const res = await fetch('/api/crm/sync', { method: 'POST' });
-      const data: SyncResult = await res.json();
-      setSyncResult(data);
+      for (let i = 0; i < CRM_MODULES.length; i++) {
+        const m = CRM_MODULES[i];
+        setSyncProgress(`Đang đồng bộ ${i + 1}/${CRM_MODULES.length}: ${m.label}...`);
+        try {
+          const res = await fetch(`/api/crm/sync?module=${m.key}`, { method: 'POST' });
+          const data: SyncResult = await res.json();
+          const r = data.results?.[0];
+          merged.push(r ?? { label: m.label, current: 0, error: data.error || `HTTP ${res.status}` });
+        } catch (err) {
+          merged.push({ label: m.label, current: 0, error: String(err) });
+        }
+        // Cập nhật KPI dần để người dùng thấy số nhảy.
+        if (i % 3 === 0) await loadOverview();
+      }
+      const failed = merged.filter((r) => r.error);
+      setSyncResult({
+        success: failed.length === 0,
+        modules: merged.length,
+        succeeded: merged.length - failed.length,
+        failed: failed.length,
+        total_records: merged.reduce((s, r) => s + (r.current || 0), 0),
+        duration_ms: Date.now() - started,
+        results: merged,
+      });
       await loadOverview();
     } catch (err) {
-      setSyncResult({ success: false, error: String(err) });
+      setSyncResult({ success: false, error: String(err), results: merged });
     } finally {
+      setSyncProgress('');
       setSyncing(false);
     }
   }, [loadOverview]);
@@ -80,7 +107,7 @@ export default function CRMPage() {
               className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-semibold hover:bg-violet-700 disabled:opacity-60 transition-all min-h-[42px] shadow-sm"
             >
               <RefreshCw size={15} className={syncing ? 'animate-spin' : ''} />
-              {syncing ? 'Đang sync...' : 'Sync ngay'}
+              {syncing ? (syncProgress || 'Đang sync...') : 'Sync ngay'}
             </button>
             <a
               href="https://blackstonesdvtl.getflycrm.com"

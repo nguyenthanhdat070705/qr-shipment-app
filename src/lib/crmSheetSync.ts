@@ -59,7 +59,7 @@ function fixLeadingZero(key: string, val: string): string {
 }
 
 const DELETED_LABEL = 'Đã xóa';
-const UPSERT_CHUNK = 500;
+const UPSERT_CHUNK = 1000; // chunk lớn hơn → ít round-trip → module nặng kịp trong 60s Vercel
 
 export interface SheetRecord {
   id: string;
@@ -79,25 +79,49 @@ export interface ModuleSyncResult {
   error?: string;
 }
 
-/** Tải 1 Sheet → mảng bản ghi lịch sử (mỗi dòng = 1 record). */
-export async function fetchSheetRecords(mod: CrmModule): Promise<SheetRecord[]> {
+/**
+ * Tải buffer xlsx của 1 Sheet — CÓ RETRY. Sheet lớn (vd Trao Đổi ~30k dòng) hay rớt
+ * kết nối giữa chừng ("fetch failed"/"terminated"); Google đôi khi trả HTML lỗi/redirect
+ * (không phải xlsx). Hàm thử tối đa 3 lần, kiểm tra "PK" (magic của file ZIP/xlsx).
+ */
+async function downloadSheetXlsx(mod: CrmModule): Promise<Buffer> {
   const url = `https://docs.google.com/spreadsheets/d/${mod.sheetId}/export?format=xlsx`;
   const token = await getGoogleAccessTokenOrNull();
-  const res = await fetch(url, {
-    cache: 'no-store',
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-  });
-  if (!res.ok) {
-    // 401/403 = chưa có quyền đọc. Báo rõ cách khắc phục thay vì chỉ "chưa public".
-    if (res.status === 401 || res.status === 403) {
-      const how = token
-        ? `chưa chia sẻ cho service account (${process.env.GOOGLE_CLIENT_EMAIL ?? 'email service account'}) — vào folder "Blackstones Data Sync V1" → Share → thêm email này quyền Viewer.`
-        : 'chưa được chia sẻ công khai — vào folder "Blackstones Data Sync V1" → Share → "Anyone with the link = Viewer" (hoặc cấu hình GOOGLE_CLIENT_EMAIL/GOOGLE_PRIVATE_KEY rồi share folder cho service account để giữ riêng tư).';
-      throw new Error(`Không đọc được Sheet "${mod.label}" (HTTP ${res.status}): ${how}`);
+  const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+  let lastErr: unknown;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const res = await fetch(url, { cache: 'no-store', headers });
+      if (!res.ok) {
+        // 401/403 = thiếu quyền đọc → KHÔNG retry, báo rõ cách khắc phục.
+        if (res.status === 401 || res.status === 403) {
+          const how = token
+            ? `chưa chia sẻ cho service account (${process.env.GOOGLE_CLIENT_EMAIL ?? 'email service account'}) — vào folder "Blackstones Data Sync V1" → Share → thêm email này quyền Viewer.`
+            : 'chưa được chia sẻ công khai — vào folder "Blackstones Data Sync V1" → Share → "Anyone with the link = Viewer" (hoặc cấu hình service account để giữ riêng tư).';
+          throw new Error(`Không đọc được Sheet "${mod.label}" (HTTP ${res.status}): ${how}`);
+        }
+        throw new Error(`HTTP ${res.status}`); // 5xx/429 → để retry
+      }
+      const buffer = Buffer.from(await res.arrayBuffer());
+      // xlsx là ZIP → 2 byte đầu phải là "PK" (0x50 0x4B). Nếu không → Google trả HTML/redirect.
+      if (buffer.length < 4 || buffer[0] !== 0x50 || buffer[1] !== 0x4b) {
+        throw new Error(`không phải file Excel (Google chặn/redirect)`);
+      }
+      return buffer;
+    } catch (e) {
+      lastErr = e;
+      // Lỗi quyền → ném ngay, không thử lại.
+      if (e instanceof Error && /Không đọc được Sheet/.test(e.message)) throw e;
+      if (attempt < 3) await new Promise((r) => setTimeout(r, 1500 * attempt));
     }
-    throw new Error(`Không tải được Sheet "${mod.label}" (HTTP ${res.status}).`);
   }
-  const buffer = Buffer.from(await res.arrayBuffer());
+  const msg = lastErr instanceof Error ? lastErr.message : String(lastErr);
+  throw new Error(`Không tải được Sheet "${mod.label}" sau 3 lần thử (${msg}).`);
+}
+
+/** Tải 1 Sheet → mảng bản ghi lịch sử (mỗi dòng = 1 record). */
+export async function fetchSheetRecords(mod: CrmModule): Promise<SheetRecord[]> {
+  const buffer = await downloadSheetXlsx(mod);
   const workbook = xlsx.read(buffer, { type: 'buffer' });
 
   // Sheet data là sheet đầu tiên không phải "_state" (sheet ẩn so-sánh của Apps Script).
@@ -220,10 +244,27 @@ export async function syncModule(supabase: SupabaseClient, mod: CrmModule): Prom
   }
 }
 
-/** Đồng bộ toàn bộ 14 module (tuần tự — an toàn bộ nhớ serverless). */
-export async function syncAllModules(supabase: SupabaseClient): Promise<ModuleSyncResult[]> {
+/**
+ * Đồng bộ toàn bộ module (tuần tự — an toàn bộ nhớ serverless).
+ * `budgetMs`: nếu đặt, NGỪNG bắt đầu module mới khi đã quá ngân sách thời gian (tránh
+ * timeout cứng của Vercel). Module chưa kịp chạy được đánh dấu "bỏ qua" (sync lần sau).
+ * Dùng cho cron (maxDuration 60s); nút "Sync ngay" trên UI gọi từng module riêng nên KHÔNG cần.
+ */
+export async function syncAllModules(
+  supabase: SupabaseClient,
+  opts: { budgetMs?: number } = {},
+): Promise<ModuleSyncResult[]> {
+  const started = Date.now();
   const results: ModuleSyncResult[] = [];
   for (const mod of CRM_MODULES) {
+    if (opts.budgetMs && Date.now() - started > opts.budgetMs) {
+      results.push({
+        module: mod.key, table: mod.table, label: mod.label,
+        sheetRows: 0, current: 0, upserted: 0, deleted: 0,
+        error: 'Bỏ qua (hết thời gian cho phép trong 1 lần chạy) — sẽ đồng bộ ở lần sau.',
+      });
+      continue;
+    }
     results.push(await syncModule(supabase, mod));
   }
   return results;

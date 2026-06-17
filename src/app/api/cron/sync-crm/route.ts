@@ -23,7 +23,9 @@ export async function GET(request: NextRequest) {
 
   const supabase = getSupabaseAdmin();
   const started = Date.now();
-  const results = await syncAllModules(supabase);
+  // Best-effort trong 50s (maxDuration 60s): module nặng cuối (Trao Đổi) có thể bị bỏ qua,
+  // nhưng các module quan trọng (KH, đơn, hợp đồng) đã ghi xong trước đó.
+  const results = await syncAllModules(supabase, { budgetMs: 50_000 });
   const failed = results.filter((r) => r.error);
 
   return NextResponse.json({
