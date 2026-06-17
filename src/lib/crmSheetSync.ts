@@ -9,10 +9,44 @@
  */
 
 import * as xlsx from 'xlsx';
+import { google } from 'googleapis';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { CRM_MODULES, AUDIT_COLS, type CrmModule } from '@/config/crmModules';
 import { CRM_HEADER_MAP } from '@/config/crmHeaderMap';
 import { formatPhone, formatCccd } from '@/lib/khtt';
+
+/**
+ * Mã access-token của Service Account (nếu có cấu hình GOOGLE_CLIENT_EMAIL /
+ * GOOGLE_PRIVATE_KEY) để đọc cả Sheet KHÔNG public.
+ *
+ * - CÓ creds  → mint token Drive read-only → fetch export URL kèm `Authorization`
+ *   ⇒ đọc được Sheet riêng tư (chỉ cần share folder cho email service account).
+ * - KHÔNG creds (hoặc mint lỗi) → trả null → fetch ẩn danh (Sheet phải public).
+ *
+ * Token cache theo từng lần chạy sync (15 Sheet dùng chung 1 token).
+ */
+let _tokenPromise: Promise<string | null> | null = null;
+async function getGoogleAccessTokenOrNull(): Promise<string | null> {
+  if (_tokenPromise) return _tokenPromise;
+  _tokenPromise = (async () => {
+    const clientEmail = process.env.GOOGLE_CLIENT_EMAIL?.trim();
+    const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    if (!clientEmail || !privateKey) return null;
+    try {
+      const jwt = new google.auth.JWT({
+        email: clientEmail,
+        key: privateKey,
+        scopes: ['https://www.googleapis.com/auth/drive.readonly'],
+      });
+      const { access_token } = await jwt.authorize();
+      return access_token ?? null;
+    } catch (e) {
+      console.warn('[crmSheetSync] Không lấy được token service account, fallback ẩn danh:', e);
+      return null;
+    }
+  })();
+  return _tokenPromise;
+}
 
 // Sửa số 0 đầu SĐT/CCCD (Google Sheet lưu dạng số nên rớt số 0). Chỉ sửa khi TOÀN SỐ.
 const isPhoneKey = (k: string) => /phone|mobile|so_dien_thoai/i.test(k);
@@ -48,9 +82,20 @@ export interface ModuleSyncResult {
 /** Tải 1 Sheet → mảng bản ghi lịch sử (mỗi dòng = 1 record). */
 export async function fetchSheetRecords(mod: CrmModule): Promise<SheetRecord[]> {
   const url = `https://docs.google.com/spreadsheets/d/${mod.sheetId}/export?format=xlsx`;
-  const res = await fetch(url, { cache: 'no-store' });
+  const token = await getGoogleAccessTokenOrNull();
+  const res = await fetch(url, {
+    cache: 'no-store',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
   if (!res.ok) {
-    throw new Error(`Không tải được Sheet "${mod.label}" (HTTP ${res.status}). Sheet có thể chưa public.`);
+    // 401/403 = chưa có quyền đọc. Báo rõ cách khắc phục thay vì chỉ "chưa public".
+    if (res.status === 401 || res.status === 403) {
+      const how = token
+        ? `chưa chia sẻ cho service account (${process.env.GOOGLE_CLIENT_EMAIL ?? 'email service account'}) — vào folder "Blackstones Data Sync V1" → Share → thêm email này quyền Viewer.`
+        : 'chưa được chia sẻ công khai — vào folder "Blackstones Data Sync V1" → Share → "Anyone with the link = Viewer" (hoặc cấu hình GOOGLE_CLIENT_EMAIL/GOOGLE_PRIVATE_KEY rồi share folder cho service account để giữ riêng tư).';
+      throw new Error(`Không đọc được Sheet "${mod.label}" (HTTP ${res.status}): ${how}`);
+    }
+    throw new Error(`Không tải được Sheet "${mod.label}" (HTTP ${res.status}).`);
   }
   const buffer = Buffer.from(await res.arrayBuffer());
   const workbook = xlsx.read(buffer, { type: 'buffer' });
