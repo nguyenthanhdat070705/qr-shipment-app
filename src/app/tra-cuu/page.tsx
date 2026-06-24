@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Search, RefreshCw, AlertCircle, ShieldCheck } from 'lucide-react';
+import { Search, RefreshCw, AlertCircle, ShieldCheck, Lock, ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
 
 /* ─────────────────── Types ─────────────────── */
@@ -9,27 +9,23 @@ interface MemberResult {
   id: string;
   member_code: string;
   full_name: string;
-  phone_masked: string;
-  email_masked: string;
-  id_number_masked: string;
   status: string;
   status_label: string;
   registered_date: string;
   expiry_date: string;
-  branch: string;
-  service_package_label: string;
-  consultant_name: string;
+  consultant_name?: string;
   address?: string;
-  notes?: string;
-  beneficiary_name_2?: string;
+  beneficiary_1?: string;
+  beneficiary_2?: string;
   contract_value?: number;
 }
 
-const STATUS_CONFIG: Record<string, { color: string; label: string; dot: string }> = {
-  active: { color: 'text-red-600', label: 'Đang hoạt động', dot: 'bg-red-500' },
-  pending: { color: 'text-amber-600', label: 'Chờ xác nhận', dot: 'bg-amber-500' },
-  expired: { color: 'text-gray-500', label: 'Hết hạn', dot: 'bg-gray-400' },
-  terminated: { color: 'text-gray-400', label: 'Đã kết thúc', dot: 'bg-gray-300' },
+const STATUS_CONFIG: Record<string, { color: string; dot: string }> = {
+  active: { color: 'text-emerald-600', dot: 'bg-emerald-500' },
+  pending: { color: 'text-amber-600', dot: 'bg-amber-500' },
+  expired: { color: 'text-red-600', dot: 'bg-red-500' },
+  terminated: { color: 'text-gray-500', dot: 'bg-gray-400' },
+  completed: { color: 'text-blue-600', dot: 'bg-blue-500' },
 };
 
 /* ─────────────────── Field Row ─────────────────── */
@@ -66,7 +62,7 @@ function MembershipCard({ member }: { member: MemberResult }) {
       {/* Status Badge (Top Right) */}
       <div className={`absolute top-4 sm:top-8 right-4 sm:right-10 flex items-center gap-1.5 ${config.color} border-b-2 border-dotted border-current font-bold text-xs sm:text-base px-1 pb-0.5 tracking-wide`}>
         <span className={`w-2 h-2 rounded-full ${config.dot} animate-pulse`}></span>
-        {config.label}
+        {member.status_label}
       </div>
 
       <div className="text-center mb-6 sm:mb-10 pt-8 sm:pt-0">
@@ -83,8 +79,8 @@ function MembershipCard({ member }: { member: MemberResult }) {
         <DottedRow label="Ngày ký kết" value={regDate} />
         <DottedRow label="Ngày hết hạn" value={expDate} />
         <DottedRow label="Địa chỉ" value={member.address || '—'} />
-        <DottedRow label="Người thụ hưởng 1" value={member.notes || '—'} />
-        <DottedRow label="Người thụ hưởng 2" value={member.beneficiary_name_2 || '—'} />
+        <DottedRow label="Người thụ hưởng 1" value={member.beneficiary_1 || '—'} />
+        <DottedRow label="Người thụ hưởng 2" value={member.beneficiary_2 || '—'} />
         <DottedRow label="Số tiền đã đóng" value={member.contract_value ? `${Number(member.contract_value).toLocaleString('vi-VN')} VNĐ` : '—'} />
         <DottedRow label="Sale phụ trách" value={member.consultant_name || '—'} />
       </div>
@@ -273,41 +269,38 @@ function KhttLookupSection() {
 /* ─────────────────── Main Page ─────────────────── */
 export default function PublicLookupPage() {
   const [searchTab, setSearchTab] = useState<'hoi-vien' | 'khach-hang'>('hoi-vien');
-  const [searchBy, setSearchBy] = useState<'cccd' | 'phone'>('cccd');
-  const [searchValue, setSearchValue] = useState('');
+  // Tra cứu hội viên 2 bước: nhập SĐT → nhập mật khẩu = CCCD → xem thẻ.
+  const [step, setStep] = useState<'phone' | 'password'>('phone');
+  const [phone, setPhone] = useState('');
+  const [cccd, setCccd] = useState('');
+  const [matchCount, setMatchCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<MemberResult[] | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const cccdRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => { phoneRef.current?.focus(); }, []);
 
-  async function handleSearch(e?: React.FormEvent) {
+  // Bước 1 — tìm theo SĐT (chưa trả thông tin, chỉ kiểm tra tồn tại).
+  async function handlePhone(e?: React.FormEvent) {
     e?.preventDefault();
-    const val = searchValue.trim();
-    
-    if (!val) {
-      setError(searchBy === 'cccd' ? 'Vui lòng nhập mã CCCD' : 'Vui lòng nhập Số điện thoại');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    setResults(null);
-    setNotFound(false);
-
+    const val = phone.trim();
+    if (!val) { setError('Vui lòng nhập Số điện thoại'); return; }
+    setLoading(true); setError(''); setResults(null); setNotFound(false);
     try {
-      const queryParam = searchBy === 'cccd' ? `cccd=${encodeURIComponent(val)}` : `phone=${encodeURIComponent(val)}`;
-      const res = await fetch(`/api/membership/lookup?${queryParam}`);
+      const res = await fetch(`/api/membership/lookup-sheet?phone=${encodeURIComponent(val)}`);
       const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'Lỗi hệ thống');
-        return;
+      if (!res.ok) { setError(data.error || 'Lỗi hệ thống'); return; }
+      if (data.found && data.locked) {
+        setMatchCount(data.count || 0);
+        setCccd('');
+        setStep('password');
+        setTimeout(() => cccdRef.current?.focus(), 50);
+      } else {
+        setNotFound(true);
       }
-      if (data.found) setResults(data.results);
-      else setNotFound(true);
     } catch {
       setError('Không thể kết nối. Vui lòng thử lại.');
     } finally {
@@ -315,12 +308,40 @@ export default function PublicLookupPage() {
     }
   }
 
-  function handleClear() {
-    setSearchValue('');
-    setResults(null);
-    setNotFound(false);
-    setError('');
-    inputRef.current?.focus();
+  // Bước 2 — nhập CCCD (mật khẩu) để mở khoá.
+  async function handleCccd(e?: React.FormEvent) {
+    e?.preventDefault();
+    const val = cccd.trim();
+    if (!val) { setError('Vui lòng nhập CCCD của hội viên'); return; }
+    setLoading(true); setError('');
+    try {
+      const res = await fetch(`/api/membership/lookup-sheet?phone=${encodeURIComponent(phone.trim())}&cccd=${encodeURIComponent(val)}`);
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'Lỗi hệ thống'); return; }
+      if (data.found && !data.locked && data.results) {
+        setResults(data.results);
+      } else if (data.wrongPassword) {
+        setError('CCCD không đúng. Vui lòng nhập đúng CCCD của hội viên.');
+      } else {
+        setNotFound(true);
+        setStep('phone');
+      }
+    } catch {
+      setError('Không thể kết nối. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function resetAll() {
+    setStep('phone'); setPhone(''); setCccd(''); setMatchCount(0);
+    setResults(null); setNotFound(false); setError('');
+    setTimeout(() => phoneRef.current?.focus(), 50);
+  }
+
+  function backToPhone() {
+    setStep('phone'); setCccd(''); setError(''); setResults(null);
+    setTimeout(() => phoneRef.current?.focus(), 50);
   }
 
   return (
@@ -381,78 +402,86 @@ export default function PublicLookupPage() {
             Tra Cứu Hội Viên Trăm Tuổi
           </h2>
           <p className="text-gray-500 text-xs sm:text-base font-medium">
-            (Vui lòng cung cấp CCCD hoặc Số điện thoại để tra cứu)
+            {step === 'phone'
+              ? '(Nhập Số điện thoại của khách hàng để tra cứu)'
+              : '(Nhập CCCD của hội viên để xác thực và xem thông tin)'}
           </p>
         </div>
 
-        {/* Search Box */}
+        {/* Search Box — 2 bước: SĐT → mật khẩu CCCD */}
         <div className="max-w-3xl mx-auto">
-          <form onSubmit={handleSearch} className="flex flex-col gap-4 justify-center">
-            
-            {/* Search Type Selector */}
-            <div className="flex flex-col sm:flex-row justify-center items-start sm:items-center gap-3 sm:gap-6 mb-2">
-              <label className="flex items-center gap-2 cursor-pointer text-[#1a2a50] font-medium transition-colors hover:text-[#d4af37] text-sm sm:text-base">
-                <input
-                  type="radio"
-                  name="searchBy"
-                  checked={searchBy === 'cccd'}
-                  onChange={() => { setSearchBy('cccd'); setSearchValue(''); setError(''); inputRef.current?.focus(); }}
-                  className="w-5 h-5 accent-[#d4af37] focus:ring-[#d4af37]"
-                />
-                Tra cứu bằng CCCD
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer text-[#1a2a50] font-medium transition-colors hover:text-[#d4af37] text-sm sm:text-base">
-                <input
-                  type="radio"
-                  name="searchBy"
-                  checked={searchBy === 'phone'}
-                  onChange={() => { setSearchBy('phone'); setSearchValue(''); setError(''); inputRef.current?.focus(); }}
-                  className="w-5 h-5 accent-[#d4af37] focus:ring-[#d4af37]"
-                />
-                Tra cứu bằng Số điện thoại
-              </label>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 w-full">
+          {step === 'phone' && !results && (
+            <form onSubmit={handlePhone} className="flex flex-col gap-4 justify-center">
               <div className="relative w-full shadow-sm">
+                <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
-                  ref={inputRef}
+                  ref={phoneRef}
                   type="text"
-                  inputMode={searchBy === 'phone' ? 'tel' : 'numeric'}
-                  value={searchValue}
-                  onChange={e => setSearchValue(e.target.value)}
-                  placeholder={searchBy === 'cccd' ? "Nhập mã CCCD..." : "Nhập số điện thoại..."}
-                  className="w-full px-4 sm:px-6 py-3 sm:py-4 border-[2px] border-gray-200 rounded-xl text-base sm:text-lg text-[#1a2a50] font-medium placeholder-gray-400 focus:outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/10 transition-all bg-white"
+                  inputMode="tel"
+                  value={phone}
+                  onChange={(e) => { setPhone(e.target.value); setNotFound(false); setError(''); }}
+                  placeholder="Nhập số điện thoại..."
+                  className="w-full pl-12 pr-4 sm:pr-6 py-3 sm:py-4 border-[2px] border-gray-200 rounded-xl text-base sm:text-lg text-[#1a2a50] font-medium placeholder-gray-400 focus:outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/10 transition-all bg-white"
                   autoComplete="off"
                 />
               </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row justify-center mt-2 gap-3 sm:gap-0">
-              <button
-                type="submit"
-                disabled={loading || !searchValue.trim()}
-                className="w-full sm:w-auto px-8 sm:px-12 py-3 sm:py-4 bg-gradient-to-r from-[#1a2a50] to-[#25396b] hover:from-[#0d162a] hover:to-[#1a2a50] text-[#d4af37] border border-[#1a2a50] rounded-xl text-base sm:text-lg font-bold transition-all shadow-[0_4px_14px_0_rgba(26,42,80,0.39)] disabled:opacity-60 disabled:shadow-none flex items-center justify-center gap-2 uppercase tracking-wide min-h-[48px]"
-              >
-                {loading ? (
-                  <><RefreshCw size={20} className="animate-spin" /> Đang tìm...</>
-                ) : (
-                  <>Tìm kiếm</>
+              <div className="flex flex-col sm:flex-row justify-center mt-2 gap-3 sm:gap-0">
+                <button
+                  type="submit"
+                  disabled={loading || !phone.trim()}
+                  className="w-full sm:w-auto px-8 sm:px-12 py-3 sm:py-4 bg-gradient-to-r from-[#1a2a50] to-[#25396b] hover:from-[#0d162a] hover:to-[#1a2a50] text-[#d4af37] border border-[#1a2a50] rounded-xl text-base sm:text-lg font-bold transition-all shadow-[0_4px_14px_0_rgba(26,42,80,0.39)] disabled:opacity-60 disabled:shadow-none flex items-center justify-center gap-2 uppercase tracking-wide min-h-[48px]"
+                >
+                  {loading ? (<><RefreshCw size={20} className="animate-spin" /> Đang tìm...</>) : (<>Tìm kiếm</>)}
+                </button>
+                {phone && (
+                  <button
+                    type="button"
+                    onClick={resetAll}
+                    className="w-full sm:w-auto sm:ml-4 px-6 py-3 sm:py-4 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-base sm:text-lg font-bold transition-all shadow-sm flex items-center justify-center min-h-[48px]"
+                  >
+                    Làm mới
+                  </button>
                 )}
-              </button>
+              </div>
+            </form>
+          )}
 
-              {searchValue && (
+          {step === 'password' && !results && (
+            <form onSubmit={handleCccd} className="flex flex-col gap-4 justify-center">
+              <div className="text-center text-emerald-600 text-sm sm:text-base font-medium flex items-center justify-center gap-1.5">
+                <ShieldCheck size={18} /> {matchCount > 1 ? `Tìm thấy ${matchCount} hợp đồng` : 'Đã tìm thấy hội viên'}. Nhập CCCD để xác thực.
+              </div>
+              <div className="relative w-full shadow-sm">
+                <Lock size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  ref={cccdRef}
+                  type="text"
+                  inputMode="numeric"
+                  value={cccd}
+                  onChange={(e) => { setCccd(e.target.value); setError(''); }}
+                  placeholder="Nhập CCCD của hội viên..."
+                  className="w-full pl-12 pr-4 sm:pr-6 py-3 sm:py-4 border-[2px] border-gray-200 rounded-xl text-base sm:text-lg text-[#1a2a50] font-medium placeholder-gray-400 focus:outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/10 transition-all bg-white"
+                  autoComplete="off"
+                />
+              </div>
+              <div className="flex flex-col sm:flex-row justify-center mt-2 gap-3 sm:gap-0">
+                <button
+                  type="submit"
+                  disabled={loading || !cccd.trim()}
+                  className="w-full sm:w-auto px-8 sm:px-12 py-3 sm:py-4 bg-gradient-to-r from-[#1a2a50] to-[#25396b] hover:from-[#0d162a] hover:to-[#1a2a50] text-[#d4af37] border border-[#1a2a50] rounded-xl text-base sm:text-lg font-bold transition-all shadow-[0_4px_14px_0_rgba(26,42,80,0.39)] disabled:opacity-60 disabled:shadow-none flex items-center justify-center gap-2 uppercase tracking-wide min-h-[48px]"
+                >
+                  {loading ? (<><RefreshCw size={20} className="animate-spin" /> Đang xác thực...</>) : (<>Xác nhận</>)}
+                </button>
                 <button
                   type="button"
-                  onClick={handleClear}
-                  className="w-full sm:w-auto sm:ml-4 px-6 py-3 sm:py-4 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-base sm:text-lg font-bold transition-all shadow-sm flex items-center justify-center min-h-[48px]"
-                  title="Xoá nội dung"
+                  onClick={backToPhone}
+                  className="w-full sm:w-auto sm:ml-4 px-6 py-3 sm:py-4 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-base sm:text-lg font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 min-h-[48px]"
                 >
-                  Làm mới
+                  <ArrowLeft size={18} /> Đổi số điện thoại
                 </button>
-              )}
-            </div>
-          </form>
+              </div>
+            </form>
+          )}
 
           {/* Validation Error Message */}
           {error && (
@@ -483,6 +512,15 @@ export default function PublicLookupPage() {
              {results.map((m) => (
                 <MembershipCard key={m.id} member={m} />
              ))}
+             <div className="text-center">
+               <button
+                 type="button"
+                 onClick={resetAll}
+                 className="px-8 py-3 border-2 border-[#1a2a50] text-[#1a2a50] font-semibold rounded-lg hover:bg-[#1a2a50] hover:text-[#d4af37] transition-all min-h-[44px] inline-flex items-center justify-center gap-2"
+               >
+                 <RefreshCw size={18} /> Tra cứu hội viên khác
+               </button>
+             </div>
           </div>
         )}
 
@@ -495,10 +533,10 @@ export default function PublicLookupPage() {
             </div>
             <h3 className="text-lg sm:text-xl font-bold text-[#1a2a50] mb-2">Không tìm thấy dữ liệu</h3>
             <p className="text-gray-500 max-w-md mx-auto text-sm sm:text-base">
-              Hệ thống không tìm thấy hội viên nào khớp với thông tin cung cấp.<br /> Vui lòng kiểm tra lại sự chính xác của CCCD và Số điện thoại.
+              Hệ thống không tìm thấy hội viên nào khớp Số điện thoại này.<br /> Vui lòng kiểm tra lại số điện thoại của khách hàng.
             </p>
             <button
-               onClick={handleClear}
+               onClick={resetAll}
                className="mt-6 px-8 py-3 border-2 border-[#1a2a50] text-[#1a2a50] font-semibold rounded-lg hover:bg-[#1a2a50] hover:text-[#d4af37] transition-all min-h-[44px]"
             >
               Thử lại
