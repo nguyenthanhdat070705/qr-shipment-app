@@ -1,13 +1,14 @@
 'use client';
 
 /* ════════════════════════════════════════════════════════════════
-   Widget NHÚNG — Tra Cứu Hội Viên Trăm Tuổi (search theo SĐT hoặc CCCD)
-   Dùng để nhúng <iframe> vào website ngoài. Không có menu/đăng nhập.
-   URL: /embed/hoi-vien   — CHỈ giao diện Hội viên (tách riêng khỏi KHTT).
+   Widget NHÚNG — Tra Cứu Hội Viên Trăm Tuổi
+   Nguồn: đọc TRỰC TIẾP Google Sheet "Hợp Đồng Bán" qua /api/membership/lookup-sheet.
+   Bảo mật 2 bước: nhập SĐT → nhập mật khẩu = CCCD của hội viên → xem thẻ.
+   URL nhúng: /embed/hoi-vien
    ════════════════════════════════════════════════════════════════ */
 
 import { useEffect, useRef, useState } from 'react';
-import { Search, RefreshCw, AlertCircle, ShieldCheck } from 'lucide-react';
+import { Search, RefreshCw, AlertCircle, ShieldCheck, Lock, ArrowLeft } from 'lucide-react';
 
 interface MemberResult {
   id: string;
@@ -18,17 +19,18 @@ interface MemberResult {
   registered_date: string;
   expiry_date: string;
   address?: string;
-  notes?: string; // người thụ hưởng 1
-  beneficiary_name_2?: string;
+  beneficiary_1?: string;
+  beneficiary_2?: string;
   contract_value?: number;
   consultant_name?: string;
 }
 
-const STATUS: Record<string, { label: string; dot: string; text: string }> = {
-  active: { label: 'Đang hoạt động', dot: 'bg-emerald-500', text: 'text-emerald-600' },
-  pending: { label: 'Chờ xác nhận', dot: 'bg-amber-500', text: 'text-amber-600' },
-  expired: { label: 'Hết hạn', dot: 'bg-red-500', text: 'text-red-600' },
-  terminated: { label: 'Đã kết thúc', dot: 'bg-gray-400', text: 'text-gray-500' },
+const STATUS: Record<string, { dot: string; text: string }> = {
+  active: { dot: 'bg-emerald-500', text: 'text-emerald-600' },
+  pending: { dot: 'bg-amber-500', text: 'text-amber-600' },
+  expired: { dot: 'bg-red-500', text: 'text-red-600' },
+  terminated: { dot: 'bg-gray-400', text: 'text-gray-500' },
+  completed: { dot: 'bg-blue-500', text: 'text-blue-600' },
 };
 
 function fmtVnd(n?: number) {
@@ -59,7 +61,7 @@ function MemberCard({ m }: { m: MemberResult }) {
       <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#d4af37] via-[#f3e5ab] to-[#d4af37] rounded-t-xl" />
       <div className={`absolute top-4 right-4 sm:top-6 sm:right-8 flex items-center gap-1.5 ${st.text} border-b-2 border-dotted border-current font-bold text-xs sm:text-sm px-1 pb-0.5`}>
         <span className={`w-2 h-2 rounded-full ${st.dot} animate-pulse`}></span>
-        {m.status_label || st.label}
+        {m.status_label}
       </div>
       <div className="text-center mb-3 sm:mb-6 pt-7 sm:pt-2">
         <h3 className="text-[#1a2a50] text-base sm:text-xl font-bold uppercase tracking-wider flex items-center justify-center gap-2 flex-wrap">
@@ -74,8 +76,8 @@ function MemberCard({ m }: { m: MemberResult }) {
         <Row label="Ngày ký kết" value={fmtDate(m.registered_date)} />
         <Row label="Ngày hết hạn" value={fmtDate(m.expiry_date)} />
         <Row label="Địa chỉ" value={m.address || '—'} />
-        <Row label="Người thụ hưởng 1" value={m.notes || '—'} />
-        <Row label="Người thụ hưởng 2" value={m.beneficiary_name_2 || '—'} />
+        <Row label="Người thụ hưởng 1" value={m.beneficiary_1 || '—'} />
+        <Row label="Người thụ hưởng 2" value={m.beneficiary_2 || '—'} />
         <Row label="Số tiền đã đóng" value={fmtVnd(m.contract_value)} />
         <Row label="Sale phụ trách" value={m.consultant_name || '—'} />
       </div>
@@ -84,15 +86,18 @@ function MemberCard({ m }: { m: MemberResult }) {
 }
 
 export default function HoiVienEmbedPage() {
-  const [searchBy, setSearchBy] = useState<'phone' | 'cccd'>('phone');
-  const [value, setValue] = useState('');
+  const [step, setStep] = useState<'phone' | 'password'>('phone');
+  const [phone, setPhone] = useState('');
+  const [cccd, setCccd] = useState('');
+  const [matchCount, setMatchCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<MemberResult[] | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const cccdRef = useRef<HTMLInputElement>(null);
 
-  // Gửi chiều cao cho trang cha (nếu trang cha có lắng nghe để auto-resize).
+  // Báo chiều cao cho trang cha để tự co giãn iframe.
   useEffect(() => {
     const send = () => {
       try {
@@ -117,23 +122,26 @@ export default function HoiVienEmbedPage() {
       window.removeEventListener('resize', send);
       timers.forEach((t) => window.clearTimeout(t));
     };
-  }, [results, notFound, loading, error]);
+  }, [step, results, notFound, loading, error]);
 
-  async function handleSearch(e?: React.FormEvent) {
+  // Bước 1 — tìm theo SĐT (chưa trả thông tin, chỉ kiểm tra tồn tại).
+  async function handlePhone(e?: React.FormEvent) {
     e?.preventDefault();
-    const val = value.trim();
-    if (!val) { setError(searchBy === 'cccd' ? 'Vui lòng nhập số CCCD' : 'Vui lòng nhập Số điện thoại'); return; }
-    setLoading(true);
-    setError('');
-    setResults(null);
-    setNotFound(false);
+    const val = phone.trim();
+    if (!val) { setError('Vui lòng nhập Số điện thoại'); return; }
+    setLoading(true); setError(''); setResults(null); setNotFound(false);
     try {
-      const param = searchBy === 'cccd' ? `cccd=${encodeURIComponent(val)}` : `phone=${encodeURIComponent(val)}`;
-      const res = await fetch(`/api/membership/lookup?${param}`);
+      const res = await fetch(`/api/membership/lookup-sheet?phone=${encodeURIComponent(val)}`);
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Lỗi hệ thống'); return; }
-      if (data.found) setResults(data.results);
-      else setNotFound(true);
+      if (data.found && data.locked) {
+        setMatchCount(data.count || 0);
+        setCccd('');
+        setStep('password');
+        setTimeout(() => cccdRef.current?.focus(), 50);
+      } else {
+        setNotFound(true);
+      }
     } catch {
       setError('Không thể kết nối. Vui lòng thử lại.');
     } finally {
@@ -141,13 +149,44 @@ export default function HoiVienEmbedPage() {
     }
   }
 
-  function handleClear() {
-    setValue('');
-    setResults(null);
-    setNotFound(false);
-    setError('');
-    inputRef.current?.focus();
+  // Bước 2 — nhập CCCD (mật khẩu) để mở khoá.
+  async function handleCccd(e?: React.FormEvent) {
+    e?.preventDefault();
+    const val = cccd.trim();
+    if (!val) { setError('Vui lòng nhập CCCD của hội viên'); return; }
+    setLoading(true); setError('');
+    try {
+      const res = await fetch(`/api/membership/lookup-sheet?phone=${encodeURIComponent(phone.trim())}&cccd=${encodeURIComponent(val)}`);
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'Lỗi hệ thống'); return; }
+      if (data.found && !data.locked && data.results) {
+        setResults(data.results);
+      } else if (data.wrongPassword) {
+        setError('CCCD không đúng. Vui lòng nhập đúng CCCD của hội viên.');
+      } else {
+        setNotFound(true);
+        setStep('phone');
+      }
+    } catch {
+      setError('Không thể kết nối. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+    }
   }
+
+  function resetAll() {
+    setStep('phone'); setPhone(''); setCccd(''); setMatchCount(0);
+    setResults(null); setNotFound(false); setError('');
+    setTimeout(() => phoneRef.current?.focus(), 50);
+  }
+
+  function backToPhone() {
+    setStep('phone'); setCccd(''); setError(''); setResults(null);
+    setTimeout(() => phoneRef.current?.focus(), 50);
+  }
+
+  const inputCls = 'w-full pl-11 pr-4 py-3 sm:py-3.5 border-[2px] border-gray-200 rounded-xl text-base text-[#1a2a50] font-medium placeholder-gray-400 focus:outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/10 transition-all bg-white';
+  const btnPrimary = 'w-full sm:w-auto px-8 sm:px-12 py-3 bg-gradient-to-r from-[#1a2a50] to-[#25396b] hover:from-[#0d162a] hover:to-[#1a2a50] text-[#d4af37] border border-[#1a2a50] rounded-xl text-base font-bold transition-all shadow-[0_4px_14px_0_rgba(26,42,80,0.39)] disabled:opacity-60 disabled:shadow-none flex items-center justify-center gap-2 uppercase tracking-wide min-h-[48px]';
 
   return (
     <div className="font-sans p-2.5 sm:p-5 bg-transparent">
@@ -157,59 +196,68 @@ export default function HoiVienEmbedPage() {
             Tra Cứu Hội Viên Trăm Tuổi
           </h2>
           <p className="text-gray-500 text-xs sm:text-sm font-medium mt-1">
-            (Nhập Số điện thoại hoặc CCCD của khách hàng để tra cứu)
+            {step === 'phone'
+              ? '(Nhập Số điện thoại của khách hàng để tra cứu)'
+              : '(Nhập CCCD của hội viên để xác thực và xem thông tin)'}
           </p>
         </div>
 
-        {/* Chọn kiểu tra cứu */}
-        <div className="flex justify-center gap-4 mb-3">
-          {(['phone', 'cccd'] as const).map((opt) => (
-            <label key={opt} className="flex items-center gap-1.5 cursor-pointer text-sm font-semibold text-[#1a2a50]">
+        {step === 'phone' && !results && (
+          <form onSubmit={handlePhone} className="flex flex-col gap-3">
+            <div className="relative w-full shadow-sm">
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
-                type="radio"
-                name="searchBy"
-                checked={searchBy === opt}
-                onChange={() => { setSearchBy(opt); setValue(''); setError(''); inputRef.current?.focus(); }}
-                className="accent-[#d4af37] w-4 h-4"
+                ref={phoneRef}
+                type="text"
+                inputMode="tel"
+                value={phone}
+                onChange={(e) => { setPhone(e.target.value); setNotFound(false); setError(''); }}
+                placeholder="Nhập số điện thoại..."
+                className={inputCls}
+                autoComplete="off"
               />
-              {opt === 'phone' ? 'Số điện thoại' : 'CCCD'}
-            </label>
-          ))}
-        </div>
-
-        <form onSubmit={handleSearch} className="flex flex-col gap-3">
-          <div className="relative w-full shadow-sm">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              ref={inputRef}
-              type="text"
-              inputMode={searchBy === 'phone' ? 'tel' : 'numeric'}
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder={searchBy === 'cccd' ? 'Nhập số CCCD...' : 'Nhập số điện thoại...'}
-              className="w-full pl-11 pr-4 py-3 sm:py-3.5 border-[2px] border-gray-200 rounded-xl text-base text-[#1a2a50] font-medium placeholder-gray-400 focus:outline-none focus:border-[#d4af37] focus:ring-4 focus:ring-[#d4af37]/10 transition-all bg-white"
-              autoComplete="off"
-            />
-          </div>
-          <div className="flex flex-col sm:flex-row justify-center gap-3">
-            <button
-              type="submit"
-              disabled={loading || !value.trim()}
-              className="w-full sm:w-auto px-8 sm:px-12 py-3 bg-gradient-to-r from-[#1a2a50] to-[#25396b] hover:from-[#0d162a] hover:to-[#1a2a50] text-[#d4af37] border border-[#1a2a50] rounded-xl text-base font-bold transition-all shadow-[0_4px_14px_0_rgba(26,42,80,0.39)] disabled:opacity-60 disabled:shadow-none flex items-center justify-center gap-2 uppercase tracking-wide min-h-[48px]"
-            >
-              {loading ? (<><RefreshCw size={18} className="animate-spin" /> Đang tìm...</>) : (<>Tìm kiếm</>)}
-            </button>
-            {value && (
-              <button
-                type="button"
-                onClick={handleClear}
-                className="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-base font-bold transition-all shadow-sm flex items-center justify-center min-h-[48px]"
-              >
-                Làm mới
+            </div>
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
+              <button type="submit" disabled={loading || !phone.trim()} className={btnPrimary}>
+                {loading ? (<><RefreshCw size={18} className="animate-spin" /> Đang tìm...</>) : (<>Tìm kiếm</>)}
               </button>
-            )}
-          </div>
-        </form>
+              {phone && (
+                <button type="button" onClick={resetAll} className="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-base font-bold transition-all shadow-sm flex items-center justify-center min-h-[48px]">
+                  Làm mới
+                </button>
+              )}
+            </div>
+          </form>
+        )}
+
+        {step === 'password' && !results && (
+          <form onSubmit={handleCccd} className="flex flex-col gap-3">
+            <div className="text-center text-emerald-600 text-sm font-medium flex items-center justify-center gap-1.5">
+              <ShieldCheck size={16} /> {matchCount > 1 ? `Tìm thấy ${matchCount} hợp đồng` : 'Đã tìm thấy hội viên'}. Nhập CCCD để xác thực.
+            </div>
+            <div className="relative w-full shadow-sm">
+              <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                ref={cccdRef}
+                type="text"
+                inputMode="numeric"
+                value={cccd}
+                onChange={(e) => { setCccd(e.target.value); setError(''); }}
+                placeholder="Nhập CCCD của hội viên..."
+                className={inputCls}
+                autoComplete="off"
+              />
+            </div>
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
+              <button type="submit" disabled={loading || !cccd.trim()} className={btnPrimary}>
+                {loading ? (<><RefreshCw size={18} className="animate-spin" /> Đang xác thực...</>) : (<>Xác nhận</>)}
+              </button>
+              <button type="button" onClick={backToPhone} className="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-base font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 min-h-[48px]">
+                <ArrowLeft size={16} /> Đổi số điện thoại
+              </button>
+            </div>
+          </form>
+        )}
 
         {error && (
           <div className="text-red-500 text-center mt-3 font-medium flex justify-center items-center gap-1 text-sm">
@@ -217,9 +265,16 @@ export default function HoiVienEmbedPage() {
           </div>
         )}
 
-        {!loading && results && results.length > 0 && results.map((m) => (
-          <MemberCard key={m.id} m={m} />
-        ))}
+        {!loading && results && results.length > 0 && (
+          <>
+            {results.map((m) => (<MemberCard key={m.id} m={m} />))}
+            <div className="text-center mt-4">
+              <button type="button" onClick={resetAll} className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-sm font-bold transition-all shadow-sm inline-flex items-center justify-center gap-1.5">
+                <RefreshCw size={15} /> Tra cứu hội viên khác
+              </button>
+            </div>
+          </>
+        )}
 
         {!loading && notFound && (
           <div className="mt-6 text-center py-8 px-4 border border-gray-100 bg-white rounded-xl shadow-sm">
@@ -228,7 +283,7 @@ export default function HoiVienEmbedPage() {
             </div>
             <h3 className="text-base sm:text-lg font-bold text-[#1a2a50] mb-1">Không tìm thấy hội viên</h3>
             <p className="text-gray-500 max-w-md mx-auto text-sm">
-              Không có hội viên Trăm Tuổi nào khớp thông tin này. Vui lòng kiểm tra lại.
+              Không có hội viên Trăm Tuổi nào khớp số điện thoại này. Vui lòng kiểm tra lại.
             </p>
           </div>
         )}
