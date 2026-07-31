@@ -114,6 +114,9 @@ export default function ProductsManagePage() {
 
   // Quantity adjustment state
   const [adjustingQty, setAdjustingQty] = useState<string | null>(null);
+
+  // Toggle active state — ids of rows with a PUT in flight
+  const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
   const [qtyPopup, setQtyPopup] = useState<QtyPopup | null>(null);
   const [warehouses, setWarehouses] = useState<WarehouseItem[]>([]);
 
@@ -356,6 +359,8 @@ export default function ProductsManagePage() {
   };
 
   const toggleActive = async (p: Product) => {
+    if (togglingIds.has(p.id)) return;
+    setTogglingIds(prev => new Set(prev).add(p.id));
     const previous = p.is_active;
     const next = !previous;
     // Optimistic UI update
@@ -374,6 +379,12 @@ export default function ProductsManagePage() {
     } catch {
       setProducts(prev => prev.map(item => item.id === p.id ? { ...item, is_active: previous } : item));
       setMessage({ type: 'error', text: 'Lỗi kết nối khi cập nhật trạng thái bán.' });
+    } finally {
+      setTogglingIds(prev => {
+        const nextSet = new Set(prev);
+        nextSet.delete(p.id);
+        return nextSet;
+      });
     }
   };
 
@@ -1009,7 +1020,7 @@ export default function ProductsManagePage() {
                             type="checkbox"
                             checked={!!p.is_active}
                             onChange={() => { if (canEdit) toggleActive(p); }}
-                            disabled={!canEdit}
+                            disabled={!canEdit || togglingIds.has(p.id)}
                           />
                           <span className="pm-toggle-slider"></span>
                         </label>
