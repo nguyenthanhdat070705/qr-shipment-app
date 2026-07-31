@@ -356,19 +356,24 @@ export default function ProductsManagePage() {
   };
 
   const toggleActive = async (p: Product) => {
+    const previous = p.is_active;
+    const next = !previous;
     // Optimistic UI update
-    setProducts(prev => prev.map(item => item.id === p.id ? { ...item, is_active: !p.is_active } : item));
+    setProducts(prev => prev.map(item => item.id === p.id ? { ...item, is_active: next } : item));
     try {
       const res = await fetch('/api/products', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: p.id, updated_by: userEmail, is_active: !p.is_active }),
+        body: JSON.stringify({ id: p.id, updated_by: userEmail, is_active: next }),
       });
       if (!res.ok) {
-        setProducts(prev => prev.map(item => item.id === p.id ? { ...item, is_active: !p.is_active } : item));
+        const json = await res.json().catch(() => null);
+        setProducts(prev => prev.map(item => item.id === p.id ? { ...item, is_active: previous } : item));
+        setMessage({ type: 'error', text: json?.error || 'Cập nhật trạng thái bán thất bại.' });
       }
     } catch {
-      setProducts(prev => prev.map(item => item.id === p.id ? { ...item, is_active: !p.is_active } : item));
+      setProducts(prev => prev.map(item => item.id === p.id ? { ...item, is_active: previous } : item));
+      setMessage({ type: 'error', text: 'Lỗi kết nối khi cập nhật trạng thái bán.' });
     }
   };
 
@@ -998,12 +1003,12 @@ export default function ProductsManagePage() {
                 <React.Fragment key={p.id}>
                   <tr key={p.id} className={expandedRow === p.id ? 'pm-row-expanded' : ''} style={{ opacity: p.is_active ? 1 : 0.6 }}>
                     <td>
-                      <div className="pm-toggle-wrap" onClick={(e) => { e.stopPropagation(); if (canEdit) toggleActive(p); }}>
+                      <div className="pm-toggle-wrap" onClick={(e) => e.stopPropagation()}>
                         <label className="pm-toggle-switch" title={p.is_active ? 'Đang bán' : 'Ngừng bán'}>
                           <input
                             type="checkbox"
                             checked={!!p.is_active}
-                            readOnly
+                            onChange={() => { if (canEdit) toggleActive(p); }}
                             disabled={!canEdit}
                           />
                           <span className="pm-toggle-slider"></span>
