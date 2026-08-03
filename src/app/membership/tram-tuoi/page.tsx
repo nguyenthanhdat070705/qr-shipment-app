@@ -8,7 +8,8 @@ import {
   Wallet, Coins, AlertCircle, CheckCircle2, X,
 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
-import { formatVnd, type KhttRecord } from '@/lib/khtt';
+import { formatVnd } from '@/lib/normalize';
+import { type KhttRecord } from '@/lib/khtt';
 
 type Tab = 'khach-hang' | 'hop-dong';
 

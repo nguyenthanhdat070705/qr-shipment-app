@@ -13,7 +13,7 @@ import { google } from 'googleapis';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { CRM_MODULES, AUDIT_COLS, type CrmModule } from '@/config/crmModules';
 import { CRM_HEADER_MAP } from '@/config/crmHeaderMap';
-import { formatPhone, formatCccd } from '@/lib/khtt';
+import { formatPhone, formatCccd } from '@/lib/normalize';
 
 /**
  * Mã access-token của Service Account (nếu có cấu hình GOOGLE_CLIENT_EMAIL /

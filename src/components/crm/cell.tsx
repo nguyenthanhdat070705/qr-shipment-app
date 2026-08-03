@@ -1,5 +1,5 @@
 import type { CrmColumn } from '@/config/crmModules';
-import { formatPhone, formatCccd } from '@/lib/khtt';
+import { formatPhone, formatCccd } from '@/lib/normalize';
 
 /** Suy ra "loại" ô: ưu tiên type khai trong config, sau đó tự nhận diện theo tên cột
  *  (cột chứa phone/mobile/so_dien_thoai → SĐT; cccd/vneid → CCCD) để thêm số 0 đầu. */
