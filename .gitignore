@@ -54,3 +54,14 @@ Membership/*.docx
 scripts/cred_minified.txt
 .env*.local
 .claude/
+
+# ===== Working files & dữ liệu nhạy cảm — KHÔNG đẩy lên repo (public) =====
+# scratch/: chứa Google Apps Script hardcode API key GetFly, snapshot hợp đồng
+#           (CCCD/VNeID/SĐT khách hàng), symlink node_modules, và file thử nghiệm.
+/scratch/
+# outputs/: report/export sinh ra (HTML, product master...) — không phải mã nguồn.
+/outputs/
+# *.csv: bảng dữ liệu (danh mục sản phẩm có giá vốn/margin, snapshot hợp đồng có PII).
+*.csv
+# Google Apps Script để tránh lỡ tay commit key (đặt trong scratch/ là chính).
+*.gs

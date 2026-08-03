@@ -14,7 +14,8 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { phoneKey, formatPhone, toAmount, isKhttOrderCode, KHTT_STATUS_WAITING, KHTT_STATUS_WAITING_LABEL, type KhttRecord } from '@/lib/khtt';
+import { phoneKey, formatPhone, toAmount } from '@/lib/normalize';
+import { isKhttOrderCode, KHTT_STATUS_WAITING, KHTT_STATUS_WAITING_LABEL, type KhttRecord } from '@/lib/khtt';
 
 export const dynamic = 'force-dynamic';
 

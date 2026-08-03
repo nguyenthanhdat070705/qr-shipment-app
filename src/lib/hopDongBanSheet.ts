@@ -20,7 +20,7 @@
  */
 
 import { parse } from 'csv-parse/sync';
-import { phoneKey, cccdKey } from '@/lib/khtt';
+import { phoneKey, cccdKey } from '@/lib/normalize';
 import { getGoogleAccessTokenOrNull, SERVICE_ACCOUNT_EMAIL } from '@/lib/googleAuth';
 
 export const HOP_DONG_BAN_SHEET_ID = '1VsrxbldhPl7LcTHZRL6w2VKzS3Ty5ym0EU9NwuI9FQY';
