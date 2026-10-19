@@ -67,11 +67,11 @@ export async function POST(req: NextRequest) {
     let nguoiXuatName = '';
     const { data: account } = await supabase
       .from('dim_account')
-      .select('id, hoten')
+      .select('id, ho_ten')
       .eq('email', email)
       .maybeSingle();
     nguoiXuatId = account?.id || null;
-    nguoiXuatName = account?.hoten || '';
+    nguoiXuatName = account?.ho_ten || '';
 
     // Server-side lock check
     const { getWarehouseFilter } = await import('@/config/roles.config');
