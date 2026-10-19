@@ -12,10 +12,11 @@ export async function GET(req: Request) {
     const [inventoryRes, homRes, khoRes] = await Promise.all([
       supabase.from('fact_inventory').select('*'),
       supabase.from('dim_hom').select('id, ma_hom, ten_hom, gia_ban_1').eq('is_active', true),
-      supabase.from('dim_kho').select('id, ma_kho, ten_kho'),
+      supabase.from('dim_kho').select('id, ma_kho, ten_kho').eq('is_active', true),
     ]);
 
-    const inventory = inventoryRes.data || [];
+    const activeWarehouseIds = new Set((khoRes.data || []).map((k: any) => k.id));
+    const inventory = (inventoryRes.data || []).filter((row: any) => activeWarehouseIds.has(row['Kho']));
     const allProducts = homRes.data || [];
     const homMap = new Map(allProducts.map((h: any) => [h.id, h]));
     const khoMap = new Map((khoRes.data || []).map((k: any) => [k.id, k]));

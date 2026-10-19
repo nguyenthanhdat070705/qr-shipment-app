@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, X, Check, Edit2, Trash2, Warehouse, MapPin, Phone, User, AlertTriangle, Loader2 } from 'lucide-react';
+import { Plus, Search, X, Check, Edit2, Trash2, Warehouse, MapPin, Phone, User, AlertTriangle, Loader2, Eye, EyeOff } from 'lucide-react';
 import './warehouses-manage.css';
 
 interface WarehouseItem {
@@ -35,6 +35,8 @@ export default function WarehousesManageClient() {
   const [userEmail, setUserEmail] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<WarehouseItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
+  const [togglingActiveId, setTogglingActiveId] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -46,7 +48,7 @@ export default function WarehousesManageClient() {
   const fetchWarehouses = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/warehouses');
+      const res = await fetch('/api/warehouses?include_inactive=true');
       const json = await res.json();
       setWarehouses(json.data || []);
     } catch { console.error('Fetch error'); }
@@ -116,11 +118,41 @@ export default function WarehousesManageClient() {
     finally { setDeleting(false); setDeleteTarget(null); }
   };
 
+  const handleToggleActive = async (warehouse: WarehouseItem) => {
+    const nextIsActive = !warehouse.is_active;
+    const action = nextIsActive ? 'khôi phục' : 'ẩn';
+    if (!window.confirm(`${nextIsActive ? 'Khôi phục' : 'Ẩn'} kho "${warehouse.ten_kho}" (${warehouse.ma_kho})? Lịch sử và số tồn hiện có sẽ được giữ nguyên.`)) return;
+
+    setTogglingActiveId(warehouse.id);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/warehouses', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: warehouse.id, is_active: nextIsActive, updated_by: userEmail }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setMessage({ type: 'error', text: json.error || `Không thể ${action} kho.` });
+        return;
+      }
+      setMessage({ type: 'success', text: nextIsActive ? `Đã khôi phục kho "${warehouse.ma_kho}".` : `Đã ẩn kho "${warehouse.ma_kho}" khỏi các danh sách hoạt động.` });
+      await fetchWarehouses();
+    } catch {
+      setMessage({ type: 'error', text: 'Lỗi kết nối khi cập nhật trạng thái kho.' });
+    } finally {
+      setTogglingActiveId(null);
+    }
+  };
+
   const filtered = warehouses.filter(w => {
     const q = search.toLowerCase();
     return w.ma_kho.toLowerCase().includes(q) || w.ten_kho.toLowerCase().includes(q) ||
       (w.dia_chi || '').toLowerCase().includes(q);
   });
+  const activeCount = warehouses.filter(w => w.is_active).length;
+  const inactiveCount = warehouses.length - activeCount;
+  const visibleWarehouses = showInactive ? filtered : filtered.filter(w => w.is_active);
 
   return (
     <div className="wh-container">
@@ -130,7 +162,7 @@ export default function WarehousesManageClient() {
           <Warehouse size={28} />
           <div>
             <h1 className="wh-title">Quản lý kho hàng</h1>
-            <p className="wh-subtitle">Tạo & quản lý danh sách kho ({warehouses.length} kho)</p>
+            <p className="wh-subtitle">Tạo & quản lý danh sách kho ({activeCount} kho đang hoạt động)</p>
           </div>
         </div>
         <button className="wh-btn-create" onClick={() => { setShowForm(true); setEditingId(null); setForm(EMPTY_FORM); }}>
@@ -219,11 +251,23 @@ export default function WarehousesManageClient() {
         {search && <button className="wh-search-clear" onClick={() => setSearch('')}><X size={16} /></button>}
       </div>
 
+      {inactiveCount > 0 && (
+        <button
+          type="button"
+          className="wh-archived-toggle"
+          onClick={() => setShowInactive(value => !value)}
+          aria-expanded={showInactive}
+        >
+          {showInactive ? <EyeOff size={16} /> : <Eye size={16} />}
+          {showInactive ? 'Ẩn kho đã lưu trữ' : `Kho đã lưu trữ (${inactiveCount})`}
+        </button>
+      )}
+
       {/* Table */}
       {loading ? (
         <div className="wh-loading"><div className="wh-spinner" /><p>Đang tải danh sách kho...</p></div>
-      ) : filtered.length === 0 ? (
-        <div className="wh-empty"><Warehouse size={48} /><h3>Chưa có kho nào</h3><p>Nhấn &quot;Thêm kho mới&quot; để bắt đầu.</p></div>
+      ) : visibleWarehouses.length === 0 ? (
+        <div className="wh-empty"><Warehouse size={48} /><h3>{search ? 'Không tìm thấy kho phù hợp' : 'Chưa có kho đang hoạt động'}</h3><p>Nhấn &quot;Thêm kho mới&quot; để bắt đầu.</p></div>
       ) : (
         <div className="wh-table-wrap">
           <table className="wh-table">
@@ -239,11 +283,11 @@ export default function WarehousesManageClient() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((w, i) => (
-                <tr key={w.id}>
+              {visibleWarehouses.map((w, i) => (
+                <tr key={w.id} className={w.is_active ? '' : 'wh-row-inactive'}>
                   <td className="wh-td-center">{i + 1}</td>
                   <td><span className="wh-code">{w.ma_kho}</span></td>
-                  <td className="wh-td-name">{w.ten_kho}</td>
+                  <td className="wh-td-name">{w.ten_kho}{!w.is_active && <span className="wh-inactive-badge">Đã lưu trữ</span>}</td>
                   <td>
                     {w.dia_chi ? (
                       <span className="wh-address"><MapPin size={12} />{w.dia_chi}</span>
@@ -261,6 +305,14 @@ export default function WarehousesManageClient() {
                   </td>
                   <td className="wh-td-actions">
                     <button className="wh-btn-icon" title="Chỉnh sửa" onClick={() => handleEdit(w)}><Edit2 size={15} /></button>
+                    <button
+                      className="wh-btn-icon"
+                      title={w.is_active ? 'Ẩn kho khỏi hệ thống đang hoạt động' : 'Khôi phục kho'}
+                      onClick={() => handleToggleActive(w)}
+                      disabled={togglingActiveId === w.id}
+                    >
+                      {w.is_active ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
                     <button className="wh-btn-icon wh-btn-icon-danger" title="Xóa" onClick={() => setDeleteTarget(w)}><Trash2 size={15} /></button>
                   </td>
                 </tr>

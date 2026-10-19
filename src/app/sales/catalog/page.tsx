@@ -64,9 +64,10 @@ function pickField(row: DimHomRow, ...keys: (keyof DimHomRow)[]): string {
 export default async function CatalogPage() {
   const supabase = getSupabaseAdmin();
 
-  const [homRes, invRes] = await Promise.all([
+  const [homRes, invRes, warehousesRes] = await Promise.all([
     supabase.from('dim_hom').select('*').order('ma_hom', { ascending: true }),
-    supabase.from('fact_inventory').select('"Tên hàng hóa", "Số lượng"'),
+    supabase.from('fact_inventory').select('"Tên hàng hóa", "Số lượng", "Kho"'),
+    supabase.from('dim_kho').select('id').eq('is_active', true),
   ]);
 
   if (homRes.error) {
@@ -80,10 +81,13 @@ export default async function CatalogPage() {
   }
 
   // Aggregate quantities by hom id
+  const activeWarehouseIds = new Set((warehousesRes.data || []).map((warehouse: { id: string }) => warehouse.id));
   const qtyMap = new Map<string, number>();
   for (const row of invRes.data || []) {
-    const homId = (row as Record<string, unknown>)['Tên hàng hóa'] as string;
-    const qty = Number((row as Record<string, unknown>)['Số lượng']) || 0;
+    const inventoryRow = row as Record<string, unknown>;
+    if (!activeWarehouseIds.has(inventoryRow['Kho'] as string)) continue;
+    const homId = inventoryRow['Tên hàng hóa'] as string;
+    const qty = Number(inventoryRow['Số lượng']) || 0;
     qtyMap.set(homId, (qtyMap.get(homId) || 0) + qty);
   }
 

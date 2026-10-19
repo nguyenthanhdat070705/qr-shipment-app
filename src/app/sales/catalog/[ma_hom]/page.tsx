@@ -45,12 +45,15 @@ export default async function CatalogDetailPage({
   // Warehouses
   const { data: khoRows } = await supabase
     .from('dim_kho')
-    .select('id, ma_kho, ten_kho');
+    .select('id, ma_kho, ten_kho')
+    .eq('is_active', true);
 
   const khoMap = new Map<string, string>();
   for (const k of khoRows || []) khoMap.set(k.id, k.ten_kho);
 
+  const activeWarehouseIds = new Set(khoMap.keys());
   const stockByWarehouse = (invRows || [])
+    .filter((r: Record<string, unknown>) => activeWarehouseIds.has(r['Kho'] as string))
     .map((r: Record<string, unknown>) => ({
       khoName: khoMap.get(r['Kho'] as string) || 'Không xác định',
       quantity: Number(r['Số lượng']) || 0,

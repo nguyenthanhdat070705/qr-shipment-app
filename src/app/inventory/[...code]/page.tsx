@@ -134,6 +134,7 @@ export default async function InventoryDetailPage({ params }: PageProps) {
   const { data: khoData } = await supabase
     .from('dim_kho')
     .select('id, ma_kho, ten_kho')
+    .eq('is_active', true)
     .in('id', khoIds.length > 0 ? khoIds : ['__none__']);
   const khoMap = new Map<string, DimKho>();
   for (const k of (khoData || []) as DimKho[]) khoMap.set(k.id, k);
@@ -142,6 +143,7 @@ export default async function InventoryDetailPage({ params }: PageProps) {
   const warehouseGroupMap = new Map<string, { qty: number; avail: number; loaiSet: Set<string> }>();
   for (const row of rawInventory) {
     const wId = row['Kho'] || '__unknown__';
+    if (!khoMap.has(wId)) continue;
     const existing = warehouseGroupMap.get(wId);
     const loai = row['Loại hàng'] || '';
     if (existing) {

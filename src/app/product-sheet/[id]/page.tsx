@@ -90,6 +90,7 @@ export default async function ProductSheetPage({
   const { data: warehouses } = await supabase
     .from('dim_kho')
     .select('id, ma_kho, ten_kho')
+    .eq('is_active', true)
     .order('ten_kho');
 
   // ── Fetch Ngày nhập kho (latest goods receipt date for this product) ──
@@ -146,6 +147,7 @@ export default async function ProductSheetPage({
 
   // ── Fetch active warehouse IDs (where this product currently has inventory) ──
   let activeWarehouseIds: string[] = [];
+  const visibleWarehouseIdSet = new Set((warehouses || []).map((warehouse: { id: string }) => warehouse.id));
   try {
     const { data: invRows } = await supabase
       .from('fact_inventory')
@@ -154,7 +156,7 @@ export default async function ProductSheetPage({
 
     if (invRows) {
       activeWarehouseIds = invRows
-        .filter((r: any) => Number(r['Số lượng'] || 0) > 0)
+        .filter((r: any) => visibleWarehouseIdSet.has(r['Kho']) && Number(r['Số lượng'] || 0) > 0)
         .map((r: any) => r['Kho'])
         .filter(Boolean);
     }

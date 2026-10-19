@@ -106,7 +106,7 @@ export async function GET() {
 
     const supabase = getSupabaseAdmin();
 
-    const [homRes, importRes, exportRes, inventoryRes] = await Promise.all([
+    const [homRes, importRes, exportRes, inventoryRes, warehouseRes] = await Promise.all([
       supabase
         .from('dim_hom')
         .select('*')
@@ -132,8 +132,9 @@ export async function GET() {
         .range(0, 9999),
       supabase
         .from('fact_inventory')
-        .select('"Tên hàng hóa", "Số lượng"')
+        .select('"Tên hàng hóa", "Số lượng", "Kho"')
         .range(0, 9999),
+      supabase.from('dim_kho').select('id').eq('is_active', true),
     ]);
 
     if (homRes.error) {
@@ -146,6 +147,7 @@ export async function GET() {
     const exportQtyByCode = new Map<string, number>();
     const stockQtyByCode = new Map<string, number>();
     const abnormalImports: string[] = [];
+    const activeWarehouseIds = new Set((warehouseRes.data || []).map((warehouse: { id: string }) => textValue(warehouse.id)));
 
     if (!importRes.error) {
       for (const item of importRes.data || []) {
@@ -174,6 +176,7 @@ export async function GET() {
     if (!inventoryRes.error) {
       for (const item of inventoryRes.data || []) {
         const row = item as Record<string, unknown>;
+        if (!activeWarehouseIds.has(textValue(row['Kho']))) continue;
         const hom = productById.get(textValue(row['Tên hàng hóa']));
         if (!hom) continue;
         addToMap(stockQtyByCode, hom.ma_hom, row['Số lượng']);

@@ -73,37 +73,38 @@ export async function POST(req: NextRequest) {
     nguoiXuatId = account?.id || null;
     nguoiXuatName = account?.ho_ten || '';
 
+    const { data: invRow } = await supabase
+      .from('fact_inventory')
+      .select('Kho')
+      .eq('Mã', inventory_id)
+      .maybeSingle();
+    if (!invRow) {
+      return NextResponse.json({ error: 'Không tìm thấy lô tồn kho được chọn.' }, { status: 404 });
+    }
+
+    const { data: khoData } = await supabase
+      .from('dim_kho')
+      .select('ten_kho, is_active')
+      .eq('id', invRow['Kho'])
+      .maybeSingle();
+    if (!khoData?.is_active) {
+      return NextResponse.json({ error: 'Kho của lô hàng đã ngừng hoạt động, không thể xuất hàng mới.' }, { status: 409 });
+    }
+
     // Server-side lock check
     const { getWarehouseFilter } = await import('@/config/roles.config');
     const allowedWarehouse = getWarehouseFilter(email, nguoiXuatName);
     
     if (allowedWarehouse) {
-       // Chúng ta cần lấy tên kho của lô hàng đang muốn xuất
-       const { data: invRow } = await supabase
-        .from('fact_inventory')
-        .select('Kho')
-        .eq('Mã', inventory_id)
-        .single();
+      const khoName = (khoData.ten_kho || '').toLowerCase();
+      const allowedLower = allowedWarehouse.toLowerCase();
 
-       if (invRow) {
-         const { data: khoData } = await supabase
-          .from('dim_kho')
-          .select('ten_kho')
-          .eq('id', invRow['Kho'])
-          .maybeSingle();
-          
-        if (khoData) {
-          const khoName = (khoData.ten_kho || '').toLowerCase();
-          const allowedLower = allowedWarehouse.toLowerCase();
-          
-          if (!khoName.includes(allowedLower) && !allowedLower.includes(khoName)) {
-             return NextResponse.json(
-              { error: `Tài khoản của bạn chỉ được thao tác tại ${allowedWarehouse}. Kho được chọn là ${khoData.ten_kho}.` },
-              { status: 403 }
-            );
-          }
-        }
-       }
+      if (!khoName.includes(allowedLower) && !allowedLower.includes(khoName)) {
+        return NextResponse.json(
+          { error: `Tài khoản của bạn chỉ được thao tác tại ${allowedWarehouse}. Kho được chọn là ${khoData.ten_kho}.` },
+          { status: 403 }
+        );
+      }
     }
 
     // 2. Generate export code

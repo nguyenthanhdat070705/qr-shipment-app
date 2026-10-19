@@ -96,6 +96,18 @@ export async function POST(req: NextRequest) {
     items?: { product_code: string; product_name: string; quantity: number; unit_price: number; note?: string; hang_ky_gui?: boolean }[];
   };
 
+  if (warehouse_id) {
+    const { data: activeWarehouse } = await supabase
+      .from('dim_kho')
+      .select('id')
+      .eq('id', warehouse_id)
+      .eq('is_active', true)
+      .maybeSingle();
+    if (!activeWarehouse) {
+      return NextResponse.json({ error: 'Kho đã ngừng hoạt động và không thể nhận đơn mua mới.' }, { status: 409 });
+    }
+  }
+
   if (!created_by) {
     return NextResponse.json({ error: 'created_by là bắt buộc.' }, { status: 400 });
   }

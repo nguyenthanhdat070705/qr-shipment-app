@@ -102,6 +102,18 @@ export async function PUT(
 
   const { supplier_id, warehouse_id, note, expected_date } = body;
 
+  if (warehouse_id) {
+    const { data: activeWarehouse } = await supabase
+      .from('dim_kho')
+      .select('id')
+      .eq('id', warehouse_id as string)
+      .eq('is_active', true)
+      .maybeSingle();
+    if (!activeWarehouse) {
+      return NextResponse.json({ error: 'Kho đã ngừng hoạt động và không thể gán vào đơn mua.' }, { status: 409 });
+    }
+  }
+
   const { data, error } = await supabase
     .from('fact_don_hang')
     .update({

@@ -427,6 +427,7 @@ async function applyInventoryToWebApp(
   const unresolved: string[] = [];
   const targetNameBySource = new Map<string, string>();
   const warehouseByName = new Map<string, OneOfficeRecord>();
+  const warehouseByCode = new Map<string, OneOfficeRecord>();
 
   const { data: currentWarehouses, error: warehouseReadError } = await supabase
     .from('dim_kho')
@@ -436,6 +437,8 @@ async function applyInventoryToWebApp(
   }
   for (const warehouse of currentWarehouses || []) {
     warehouseByName.set(normalize(warehouse.ten_kho), warehouse as OneOfficeRecord);
+    const code = sourceWarehouseCode(warehouse).toLowerCase();
+    if (code) warehouseByCode.set(code, warehouse as OneOfficeRecord);
   }
 
   const sourceWarehouseByName = new Map<string, OneOfficeRecord>();
@@ -476,7 +479,8 @@ async function applyInventoryToWebApp(
       }
     }
 
-    let target = warehouseByName.get(targetKey);
+    const sourceCodeKey = sourceWarehouseCode(sourceWarehouse).toLowerCase();
+    let target = (sourceCodeKey && warehouseByCode.get(sourceCodeKey)) || warehouseByName.get(targetKey);
     if (!target) {
       const id = sourceWarehouseId(sourceWarehouse);
       const sourceCode = sourceWarehouseCode(sourceWarehouse);
@@ -507,7 +511,13 @@ async function applyInventoryToWebApp(
       }
       target = created as OneOfficeRecord;
       warehouseByName.set(targetKey, target);
+      const createdCode = sourceWarehouseCode(target).toLowerCase();
+      if (createdCode) warehouseByCode.set(createdCode, target);
       createdWarehouses++;
+    }
+    if (target.is_active === false) {
+      unresolved.push(sourceWarehouseName(sourceWarehouse));
+      continue;
     }
     targetNameBySource.set(sourceKey, String(target.id));
   }

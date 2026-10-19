@@ -9,12 +9,15 @@ import { getUserRole } from '@/config/roles.config';
  * DELETE /api/warehouses → Xóa kho
  */
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
+  const includeInactive = new URL(req.url).searchParams.get('include_inactive') === 'true';
+  let query = supabase
     .from('dim_kho')
     .select('*')
     .order('ma_kho', { ascending: true });
+  if (!includeInactive) query = query.eq('is_active', true);
+  const { data, error } = await query;
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ data });

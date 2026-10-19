@@ -89,7 +89,6 @@ async function getProductByCode(productCode: string): Promise<DynamicProductRow 
     .eq('Tên hàng hóa', hom.id);
 
   const inventoryRows = (invData || []) as FactInventoryRow[];
-  const firstInv = inventoryRows[0] || null;
 
   // 3) Get ALL warehouse info for inventory rows
   const warehouseIds = [...new Set(inventoryRows.map(r => r['Kho']).filter(Boolean))];
@@ -98,13 +97,17 @@ async function getProductByCode(productCode: string): Promise<DynamicProductRow 
     const { data: khoData } = await supabase
       .from('dim_kho')
       .select('*')
+      .eq('is_active', true)
       .in('id', warehouseIds);
     allWarehouses = (khoData || []) as DimKho[];
   }
+  const activeWarehouseIds = new Set(allWarehouses.map(k => k.id));
+  const visibleInventoryRows = inventoryRows.filter(row => activeWarehouseIds.has(row['Kho']));
+  const firstInv = visibleInventoryRows[0] || null;
   const warehouse = allWarehouses[0] || null;
 
   // Quantities
-  const totalAvail = inventoryRows.reduce((sum, r) => sum + (r['Ghi chú'] || 0), 0);
+  const totalAvail = visibleInventoryRows.reduce((sum, r) => sum + (r['Ghi chú'] || 0), 0);
 
   // Build a unified DynamicProductRow with all info
   const row: DynamicProductRow = {
@@ -131,7 +134,7 @@ async function getProductByCode(productCode: string): Promise<DynamicProductRow 
     'tình trạng': totalAvail > 0 ? 'in_stock' : 'unavailable',
     is_active: totalAvail > 0 ? 'in_stock' : 'unavailable',
     // Warehouse listing — per-warehouse inventory
-    'danh sách kho': JSON.stringify(inventoryRows.map((r) => {
+    'danh sách kho': JSON.stringify(visibleInventoryRows.map((r) => {
       const kho = allWarehouses.find(w => w.id === r['Kho']);
       return {
         warehouse_name: kho?.ten_kho || '—',

@@ -39,7 +39,7 @@ export default async function ProductListPage() {
   const [inventoryRes, homRes, khoRes] = await Promise.all([
     supabase.from('fact_inventory').select('*'),
     supabase.from('dim_hom').select('id, ma_hom, ten_hom, gia_ban, hinh_anh, ten_hom_the_hien'),
-    supabase.from('dim_kho').select('id, ma_kho, ten_kho'),
+    supabase.from('dim_kho').select('id, ma_kho, ten_kho').eq('is_active', true),
   ]);
 
   if (inventoryRes.error) {
@@ -82,9 +82,10 @@ export default async function ProductListPage() {
   for (const row of inventory) {
     const hom = homMap.get(row['Tên hàng hóa']);
     const kho = khoMap.get(row['Kho']);
+    if (!kho) continue;
 
     const productCode = hom?.ma_hom || row['Mã'] || '—';
-    const warehouse = kho?.ten_kho || '—';
+    const warehouse = kho.ten_kho;
     const quantity = row['Số lượng'] || 0;
     const category = row['Loại hàng'] || '';
 

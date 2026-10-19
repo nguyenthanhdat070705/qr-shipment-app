@@ -64,6 +64,7 @@ export async function PATCH(req: NextRequest) {
     const { data: firstKho } = await supabase
       .from('dim_kho')
       .select('id')
+      .eq('is_active', true)
       .order('ma_kho', { ascending: true })
       .limit(1)
       .single();
@@ -72,6 +73,16 @@ export async function PATCH(req: NextRequest) {
 
   if (!khoId) {
     return NextResponse.json({ error: 'Không tìm thấy kho nào trong hệ thống.' }, { status: 400 });
+  }
+
+  const { data: activeWarehouse } = await supabase
+    .from('dim_kho')
+    .select('id')
+    .eq('id', khoId)
+    .eq('is_active', true)
+    .maybeSingle();
+  if (!activeWarehouse) {
+    return NextResponse.json({ error: 'Kho đã ngừng hoạt động và không thể điều chỉnh tồn kho.' }, { status: 409 });
   }
 
   const loaiHang = (body.loai_hang as string) || 'Đã mua';
