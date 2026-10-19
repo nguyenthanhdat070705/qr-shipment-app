@@ -41,7 +41,7 @@ export default function ImportTab() {
           const auth = localStorage.getItem('auth_user');
           if (auth) {
             const user = JSON.parse(auth);
-            const wFilter = getWarehouseFilter(user.email);
+            const wFilter = getWarehouseFilter(user.email, user.ho_ten || user.name || '');
             if (wFilter) {
               data = data.filter((item: any) => item.warehouse?.name?.includes(wFilter));
             }

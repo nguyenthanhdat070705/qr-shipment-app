@@ -1,6 +1,6 @@
 /**
  * GET /api/cron/sync-1office
- * Được gọi bởi Vercel Cron mỗi 3 tiếng (xem vercel.json)
+ * Được gọi bởi Vercel Cron hằng ngày (xem vercel.json)
  * Bảo vệ bằng CRON_SECRET (Vercel tự inject header Authorization)
  */
 
@@ -8,14 +8,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runFullSync } from '@/lib/1office/sync';
 
 export async function GET(req: NextRequest) {
-  // Xác thực: chấp nhận cả header Authorization HOẶC query param ?secret=
+  // Chỉ nhận Bearer token. Bí mật không được truyền qua URL vì URL có thể bị ghi log.
   const authHeader = req.headers.get('authorization');
-  const querySecret = req.nextUrl.searchParams.get('secret');
   const cronSecret = process.env.CRON_SECRET;
 
-  const isAuthorized = !cronSecret 
-    || authHeader === `Bearer ${cronSecret}` 
-    || querySecret === cronSecret;
+  if (!cronSecret) {
+    console.error('[Cron] CRON_SECRET chưa được cấu hình. Từ chối chạy sync.');
+    return NextResponse.json({ error: 'Cron is not configured' }, { status: 503 });
+  }
+
+  const isAuthorized = authHeader === `Bearer ${cronSecret}`;
 
   if (!isAuthorized) {
     console.warn('[Cron] Unauthorized access attempt');
@@ -37,12 +39,13 @@ export async function GET(req: NextRequest) {
         table: r.table,
         fetched: r.fetched,
         upserted: r.upserted,
-        ok: !r.error_msg,
+        ok: r.errors === 0 && !r.error_msg,
+        ...(r.note ? { note: r.note } : {}),
       })),
     };
 
     console.log('[Cron] ✅ Sync hoàn thành:', JSON.stringify(summary));
-    return NextResponse.json(summary, { status: 200 });
+    return NextResponse.json(summary, { status: result.success ? 200 : 207 });
 
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

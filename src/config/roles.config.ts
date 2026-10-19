@@ -167,6 +167,12 @@ export function getUserRole(email: string): UserRole {
   const lower = email.toLowerCase().trim();
   const username = lower.split('@')[0];
 
+  // Branch accounts follow kho.<branch> (for example kho.hocmon).
+  // Supabase Auth still owns account creation and password/invite lifecycle.
+  if (/^kho(?:[._-][a-z0-9][a-z0-9._-]*|[0-9]+)$/.test(username)) {
+    return 'warehouse';
+  }
+
   for (const mapping of EMAIL_ROLE_MAP) {
     if (mapping.pattern.includes('@')) {
       if (lower === mapping.pattern) {
@@ -216,6 +222,11 @@ export function getWarehouseFilter(email: string, name?: string): string | null 
   if (username === 'kho1' || lowerName === 'kho 1') return 'Kho Hàm Long';
   if (username === 'kho2' || lowerName === 'kho 2') return 'Kho Kha Vạn Cân';
   if (username === 'kho3' || lowerName === 'kho 3') return 'Kho Kinh Dương Vương';
+
+  // New branch accounts use the branch's display name as "Kho <Tên chi nhánh>".
+  if (/^kho\s+.+/i.test(name || '') && !/^kho\s+[1-3]$/i.test(name || '')) {
+    return (name || '').replace(/^Kho\s+/i, '').trim();
+  }
 
   // Nếu thuộc bộ phận kho nhưng chưa được gán mã kho hợp lệ, chặn truy cập kho
   return 'UNASSIGNED_WAREHOUSE';

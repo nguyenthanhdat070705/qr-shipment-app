@@ -13,6 +13,7 @@ import {
   fetchStocktakes,
   fetchSaleOrders,
 } from './client';
+import { runCoffinSync } from './coffin-sync';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder';
@@ -226,6 +227,7 @@ export interface SyncResult {
   errors: number;
   duration_ms: number;
   error_msg?: string;
+  note?: string;
 }
 
 async function syncTable(
@@ -245,7 +247,14 @@ async function syncTable(
     const { upserted, errors } = await upsertBatch(supabaseTable, mapped, conflictKey);
     const duration_ms = Date.now() - start;
     console.log(`[Sync] ✅ ${name}: ${raw.length} fetch, ${upserted} upsert, ${errors} lỗi (${duration_ms}ms)`);
-    return { table: supabaseTable, fetched: raw.length, upserted, errors, duration_ms };
+    return {
+      table: supabaseTable,
+      fetched: raw.length,
+      upserted,
+      errors,
+      duration_ms,
+      ...(errors ? { error_msg: `${errors} bản ghi không đồng bộ được.` } : {}),
+    };
   } catch (err) {
     const duration_ms = Date.now() - start;
     const msg = err instanceof Error ? err.message : String(err);
@@ -268,12 +277,14 @@ export interface FullSyncResult {
 export async function runFullSync(options?: { tables?: string[] }): Promise<FullSyncResult> {
   const startTime = Date.now();
   const started_at = new Date().toISOString();
+  let productSnapshot: Promise<Record<string, unknown>[]> | null = null;
+  const getProductSnapshot = () => productSnapshot ??= fetchProducts();
 
   // Các task sync — table names phải khớp với Supabase schema thực tế
   const allTasks = [
     {
       name: 'products',
-      fetcher: fetchProducts,
+      fetcher: getProductSnapshot,
       mapper: mapProduct,
       conflict: 'oneoffice_id',
       table: 'products',
@@ -333,9 +344,45 @@ export async function runFullSync(options?: { tables?: string[] }): Promise<Full
     results.push(result);
   }
 
+  const requestedTables = options?.tables;
+  const includeCoffinCatalog = !requestedTables
+    || requestedTables.some(table => ['coffin_catalog', 'dim_hom', 'products'].includes(table));
+  const includeCoffinInventory = !requestedTables
+    || requestedTables.some(table => ['coffin_inventory', 'inventory_1office', 'warehouses_1office'].includes(table));
+
+  if (includeCoffinCatalog || includeCoffinInventory) {
+    try {
+      const sourceProducts = await getProductSnapshot();
+      const coffinResults = await runCoffinSync(sourceProducts, {
+        catalog: includeCoffinCatalog,
+        inventory: includeCoffinInventory,
+      });
+      results.push(...coffinResults.map(result => ({
+        table: result.table,
+        fetched: result.fetched,
+        upserted: result.upserted,
+        errors: result.errors,
+        duration_ms: result.duration_ms,
+        ...(result.error_msg ? { error_msg: result.error_msg } : {}),
+        ...(result.note ? { note: result.note } : {}),
+      })));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('[Sync] ❌ 2AQ sync:', msg);
+      results.push({
+        table: '2AQ sync',
+        fetched: 0,
+        upserted: 0,
+        errors: 1,
+        duration_ms: 0,
+        error_msg: msg,
+      });
+    }
+  }
+
   const finished_at = new Date().toISOString();
   const total_duration_ms = Date.now() - startTime;
-  const success = results.every(r => r.error_msg === undefined);
+  const success = results.every(r => r.errors === 0 && r.error_msg === undefined);
 
   console.log(`\n[Sync] 🏁 Hoàn thành: ${total_duration_ms}ms | success=${success}`);
 
