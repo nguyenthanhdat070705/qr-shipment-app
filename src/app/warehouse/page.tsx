@@ -618,6 +618,25 @@ export default function WarehouseDashboard() {
     return searchStr.includes(lowerSearch);
   });
 
+  const warehouseColorThemes = [
+    { icon: 'bg-sky-100 text-sky-600', bar: 'bg-sky-500', quantity: 'text-sky-700' },
+    { icon: 'bg-emerald-100 text-emerald-600', bar: 'bg-emerald-500', quantity: 'text-emerald-700' },
+    { icon: 'bg-violet-100 text-violet-600', bar: 'bg-violet-500', quantity: 'text-violet-700' },
+    { icon: 'bg-amber-100 text-amber-600', bar: 'bg-amber-500', quantity: 'text-amber-700' },
+    { icon: 'bg-pink-100 text-pink-600', bar: 'bg-pink-500', quantity: 'text-pink-700' },
+  ];
+  const visibleWarehouseStats = (globalData?.byWarehouse || []).filter((warehouse: any) => {
+    const normalizedName = String(warehouse.name || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+    return !normalizedName.includes('nguyen van linh (kho 4)');
+  });
+  const visibleWarehouseQuantity = visibleWarehouseStats.reduce(
+    (total: number, warehouse: any) => total + Math.max(0, Number(warehouse.qty) || 0),
+    0,
+  );
+
   if (isMobileLayout) {
     return (
       <PageLayout title={`Kho — ${warehouseLabel}`} icon={<Warehouse size={16} className="text-emerald-500" />}>
@@ -1201,42 +1220,58 @@ export default function WarehouseDashboard() {
 
           {/* Phân bổ tồn kho theo kho */}
           {globalData?.byWarehouse && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <Warehouse size={16} className="text-violet-500" />
-                <h3 className="font-extrabold text-gray-900 text-sm">Tồn kho theo kho</h3>
+            <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-5">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+                  <Warehouse size={17} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-extrabold text-gray-900">Tồn kho theo kho</h3>
+                  <p className="mt-0.5 text-[11px] text-gray-400">
+                    {visibleWarehouseStats.length} kho · {visibleWarehouseQuantity.toLocaleString('vi-VN')} sản phẩm đang hiển thị
+                  </p>
+                </div>
               </div>
-              <div className="flex flex-col gap-3">
-                {globalData.byWarehouse.map((w: any, i: number) => {
-                  const pct = stats.totalQuantity > 0 ? Math.round((w.qty / stats.totalQuantity) * 100) : 0;
-                  const colors = ['bg-sky-500', 'bg-emerald-500', 'bg-violet-500', 'bg-amber-500', 'bg-pink-500'];
-                  const textColors = ['text-sky-600', 'text-emerald-600', 'text-violet-600', 'text-amber-600', 'text-pink-600'];
-                  const bgColors = ['bg-sky-50', 'bg-emerald-50', 'bg-violet-50', 'bg-amber-50', 'bg-pink-50'];
-                  return (
-                    <div key={w.name} className={`p-3.5 rounded-xl ${bgColors[i % colors.length]}`}>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-1.5">
-                          <MapPin size={12} className={textColors[i % textColors.length]} />
-                          <span className="text-xs font-bold text-gray-800 truncate">{w.name}</span>
+
+              {visibleWarehouseStats.length > 0 ? (
+                <div className="space-y-2.5">
+                  {visibleWarehouseStats.map((warehouse: any, index: number) => {
+                    const quantity = Math.max(0, Number(warehouse.qty) || 0);
+                    const share = visibleWarehouseQuantity > 0 ? (quantity / visibleWarehouseQuantity) * 100 : 0;
+                    const percentage = Math.round(share);
+                    const barWidth = Math.min(100, Math.max(0, share));
+                    const theme = warehouseColorThemes[index % warehouseColorThemes.length];
+
+                    return (
+                      <div key={warehouse.name} className="rounded-xl border border-gray-100 bg-gray-50/70 px-3 py-3 transition-colors hover:bg-gray-50 sm:px-3.5">
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${theme.icon}`}>
+                            <MapPin size={14} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-xs font-bold text-gray-800" title={warehouse.name}>{warehouse.name}</p>
+                            <p className="mt-0.5 text-[10px] text-gray-400">{Number(warehouse.total) || 0} SKU</p>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <p className={`text-sm font-extrabold tabular-nums ${theme.quantity}`}>{quantity.toLocaleString('vi-VN')}</p>
+                            <p className="text-[10px] text-gray-400">sản phẩm</p>
+                          </div>
                         </div>
-                        <span className={`text-[12px] font-extrabold ${textColors[i % textColors.length]}`}>{w.qty} Sản phẩm</span>
+                        <div className="mt-2.5 flex items-center gap-2">
+                          <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-gray-200/80">
+                            <div className={`h-full rounded-full transition-all ${theme.bar}`} style={{ width: `${barWidth}%` }} />
+                          </div>
+                          <span className="w-9 shrink-0 text-right text-[10px] font-semibold tabular-nums text-gray-500">{percentage}%</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-[10px] text-gray-500 mb-1.5">
-                        <span className="flex items-center gap-1">
-                          <span className={`w-1.5 h-1.5 rounded-full ${colors[i % colors.length]} inline-block`} />
-                          Đang lưu trữ: <strong className="text-gray-700">{pct}% tổng kho</strong>
-                        </span>
-                        <span className="flex items-center gap-1 ml-3 text-gray-400">
-                          Sở hữu: <strong className="text-gray-500">{w.total} SKU</strong>
-                        </span>
-                      </div>
-                      <div className="w-full bg-white/60 rounded-full h-1">
-                        <div className={`h-1.5 rounded-full ${colors[i % colors.length]} transition-all`} style={{ width: `${pct}%` }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-xl bg-gray-50 px-4 py-6 text-center text-xs text-gray-400">
+                  Chưa có số liệu tồn kho theo kho
+                </div>
+              )}
             </div>
           )}
 
