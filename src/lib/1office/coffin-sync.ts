@@ -4,6 +4,8 @@ const BATCH_SIZE = 50;
 const COFFIN_CODE = /^2AQ/i;
 const DEFAULT_WAREHOUSE_NAME_MAP: Record<string, string> = {
   'to ky': 'Kho Hóc Môn',
+  'ham long': 'Kho Nguyễn Văn Linh (Kho 1)',
+  'nguyen van linh': 'Kho Nguyễn Văn Linh (Kho 4)',
 };
 
 type OneOfficeRecord = Record<string, unknown>;
@@ -448,11 +450,22 @@ async function applyInventoryToWebApp(
   }
 
   let createdWarehouses = 0;
+  const preservedWarehouses = new Set<string>();
+  // The owner confirmed kho1's existing stock on 19/10/2026. This rename
+  // must not replace it with the different 1Office-39 snapshot.
+  const renamedKho1 = (currentWarehouses || []).find(warehouse =>
+    warehouse.ma_kho === 'KHO-01'
+    && normalize(warehouse.ten_kho) === normalize('Kho Nguyễn Văn Linh (Kho 1)')
+  );
   for (const [sourceKey, sourceWarehouse] of sourceWarehouseByName) {
     if (isSubWarehouse(sourceWarehouse)) continue;
     const targetName = nameMap[sourceKey] || DEFAULT_WAREHOUSE_NAME_MAP[sourceKey] || sourceWarehouseName(sourceWarehouse);
     const targetKey = normalize(targetName);
     if (!targetKey) continue;
+    if (renamedKho1 && targetKey === normalize(renamedKho1.ten_kho)) {
+      preservedWarehouses.add(String(renamedKho1.ten_kho));
+      continue;
+    }
 
     if (sourceKey === 'to ky' && !nameMap[sourceKey]) {
       const hocMon = warehouseByName.get(normalize('Kho Hóc Môn'));
@@ -612,6 +625,9 @@ async function applyInventoryToWebApp(
 
   const notes = [
     `${createdWarehouses} kho mới đã được tạo trong dim_kho.`,
+    preservedWarehouses.size
+      ? `Giữ nguyên tồn đã được chủ kho xác nhận ngày 19/10/2026: ${[...preservedWarehouses].join(', ')}; chỉ lưu snapshot 1Office để đối soát.`
+      : '',
     'Tồn được thay bằng snapshot 1Office cho các kho đã ánh xạ; dòng cũ không còn trong snapshot được đặt về 0.',
     'Tài khoản đăng nhập Supabase không được tự tạo cùng bản ghi kho.',
     unresolved.length ? `Cần đối soát thủ công: ${[...new Set(unresolved)].join(', ')}.` : '',

@@ -12,7 +12,7 @@ import { getUserRole, isVIPAdmin } from '@/config/roles.config';
 import { useRouter } from 'next/navigation';
 
 /* ═══════════════════════════════════════════════════════
-   Account definitions — 9 system accounts
+   Account definitions
 ═══════════════════════════════════════════════════════ */
 const SYSTEM_ACCOUNTS = [
   {
@@ -52,11 +52,11 @@ const SYSTEM_ACCOUNTS = [
   {
     id: 'kho1',
     email: 'kho1@blackstone.com.vn',
-    displayName: 'Kho 1',
+    displayName: 'Nguyễn Văn Linh (Kho 1)',
     department: 'Bộ phận Kho vận',
     role: 'warehouse' as const,
     roleLabel: 'Kho vận',
-    description: 'Quản lý nhập/xuất kho tại Kho 1, quét QR sản phẩm',
+    description: 'Kho Hàm Long đổi tên từ 19/10/2026; giữ nguyên tồn và lịch sử',
     icon: Warehouse,
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-50',
@@ -91,6 +91,40 @@ const SYSTEM_ACCOUNTS = [
     role: 'warehouse' as const,
     roleLabel: 'Kho vận',
     description: 'Quản lý nhập/xuất kho tại Kho 3, quét QR sản phẩm',
+    icon: Warehouse,
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-50',
+    borderColor: 'border-emerald-200',
+    badgeBg: 'bg-emerald-100',
+    badgeText: 'text-emerald-700',
+    gradientFrom: 'from-emerald-500',
+    gradientTo: 'to-teal-600',
+  },
+  {
+    id: 'kho4',
+    email: 'kho4@blackstone.com.vn',
+    displayName: 'Nguyễn Văn Linh (Kho 4)',
+    department: 'Bộ phận Kho vận',
+    role: 'warehouse' as const,
+    roleLabel: 'Kho vận',
+    description: 'Kho Nguyễn Văn Linh từ 1Office; quản lý riêng với Kho 1',
+    icon: Warehouse,
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-50',
+    borderColor: 'border-emerald-200',
+    badgeBg: 'bg-emerald-100',
+    badgeText: 'text-emerald-700',
+    gradientFrom: 'from-emerald-500',
+    gradientTo: 'to-teal-600',
+  },
+  {
+    id: 'kho5',
+    email: 'kho5@blackstone.com.vn',
+    displayName: 'Hóc Môn (Tô Ký)',
+    department: 'Bộ phận Kho vận',
+    role: 'warehouse' as const,
+    roleLabel: 'Kho vận',
+    description: 'Quản lý nhập/xuất kho Hóc Môn, quét QR và kiểm kho',
     icon: Warehouse,
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-50',
