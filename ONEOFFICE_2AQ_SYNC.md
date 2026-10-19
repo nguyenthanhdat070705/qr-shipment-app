@@ -16,6 +16,14 @@ Trước khi bật cron với nhánh mới, chạy `sql/migration_1office_coffin
 
 Tạo bản ghi kho không đồng thời tạo tài khoản đăng nhập. Tài khoản kho cần được tạo qua Supabase Auth và có hồ sơ `dim_account` với tên hiển thị `Kho <Tên kho>` (ví dụ `Kho Nguyễn Văn Linh`). Cần xác nhận quyền và kho được hiển thị sau khi đăng nhập trước khi bàn giao tài khoản.
 
+## Điều chỉnh kho ngày 19/10/2026
+
+- `kho1`: `KHO-01` đổi tên Hàm Long thành `Kho Nguyễn Văn Linh (Kho 1)`. Giữ nguyên UUID, toàn bộ dòng tồn và liên kết phiếu cũ; không tạo phiếu điều chuyển.
+- Theo lựa chọn của chủ hệ thống, `kho4` tiếp tục dùng kho riêng `1O-39`, tên `Kho Nguyễn Văn Linh (Kho 4)`. Hai kho không cộng gộp hay sao chép dữ liệu qua lại.
+- `kho5`: tài khoản của `KHO-05`, `Kho Hóc Môn` (Tô Ký). Mật khẩu chỉ được truyền vào công cụ quản trị khi cấp tài khoản, không lưu trong repository.
+- Nguồn `Nguyễn Văn Linh` của 1Office ánh xạ vào Kho 4. Tồn Kho 1 được giữ theo dữ liệu chủ kho đã xác nhận; sync chỉ lưu ảnh chụp đối soát cho nguồn Hàm Long nếu xuất hiện, không ghi đè tồn Kho 1.
+- SQL đổi tên chỉ cập nhật `dim_kho` và tên hồ sơ `dim_account`; có kiểm tra toàn bộ tồn và lịch sử trước/sau trong cùng giao dịch. Công cụ cấp tài khoản không thay mật khẩu các tài khoản đã tồn tại.
+
 ## Cấu hình production
 
 - Nhánh triển khai: `main`; URL production: https://blackstone-order-scm.vercel.app.
