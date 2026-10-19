@@ -1,11 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { fetchInventory, fetchWarehouses } from './client';
-
 const BATCH_SIZE = 50;
 const COFFIN_CODE = /^2AQ/i;
-const PROTECTED_WAREHOUSES = new Set(['ham long', 'kha van can', 'kinh duong vuong']);
-const UNCONFIRMED_WAREHOUSE_ALIASES = new Set(['to ky']);
+const DEFAULT_WAREHOUSE_NAME_MAP: Record<string, string> = {
+  'to ky': 'Kho Hóc Môn',
+};
 
 type OneOfficeRecord = Record<string, unknown>;
 
@@ -62,7 +61,7 @@ function numberValue(value: unknown): number {
 function sourceIsActive(value: unknown): boolean {
   if (value === false || value === 0 || value === '0') return false;
   const status = normalize(value);
-  if (/^(inactive|blocked|disabled|ngung|ngung ban|ngung kinh doanh|tam ngung)$/.test(status)) return false;
+  if (/^(inactive|deactive|blocked|disabled|ngung|ngung ban|ngung kinh doanh|tam ngung)$/.test(status)) return false;
   return true;
 }
 
@@ -71,10 +70,13 @@ function sourceColor(product: OneOfficeRecord): string {
   if (direct) return direct;
 
   const title = stringValue(field(product, 'title', 'name', 'product_name'));
-  const titleColor = title.match(/(?:màu sắc?|colou?r|finish)\s*[:=\-]\s*([^,;|/]+)/i)?.[1]?.trim();
+  const titleColor = title.match(/(?:màu\s*(?:sắc)?|mau\s*sac?|colou?r|finish)\s*(?:[:=]\s*|\-\s*|\s+)([^,;|/\n_\-]+)/i)?.[1]?.trim();
   if (titleColor) return titleColor;
 
-  const properties = field(product, 'properties', 'attributes');
+  let properties = field(product, 'properties', 'attributes');
+  if (typeof properties === 'string' && properties.trim()) {
+    try { properties = JSON.parse(properties); } catch { properties = undefined; }
+  }
   if (!Array.isArray(properties)) return '';
 
   for (const rawProperty of properties) {
@@ -111,7 +113,7 @@ function parseWarehouseNameMap(): Record<string, string> {
 
 function isSubWarehouse(warehouse: OneOfficeRecord): boolean {
   const name = normalize(sourceWarehouseName(warehouse));
-  return /(^| )(ky gui|dat coc|hang hong|bi hong|hu hong|damaged|deposit|consignment|bao hanh)( |$)/.test(name);
+  return /(^| )(ky gui|dat coc|hang loi|hang hong|bi hong|hu hong|damaged|deposit|consignment|bao hanh)( |$)/.test(name);
 }
 
 function sourceProductId(product: OneOfficeRecord): string {
@@ -132,6 +134,81 @@ function sourceWarehouseCode(warehouse: OneOfficeRecord): string {
 
 function sourceWarehouseId(warehouse: OneOfficeRecord): string {
   return stringValue(field(warehouse, 'ID', 'warehouse_id', 'id'));
+}
+
+/**
+ * The tenant's product API includes per-warehouse stock in infoInventory.
+ * Build a complete 2AQ × observed-warehouse snapshot from that single source,
+ * including zeroes so old web-app quantities can be cleared safely.
+ */
+function buildEmbeddedInventorySnapshot(products: OneOfficeRecord[]) {
+  const selected = products.filter(product => COFFIN_CODE.test(sourceProductCode(product)));
+  const warehousesById = new Map<string, OneOfficeRecord>();
+  const stockByKey = new Map<string, OneOfficeRecord>();
+
+  for (const product of selected) {
+    const rawInfo = field(product, 'infoInventory');
+    const info = Array.isArray(rawInfo) ? rawInfo : [];
+    for (const location of info) {
+      if (!location || typeof location !== 'object') continue;
+      const warehouse = location as OneOfficeRecord;
+      const id = sourceWarehouseId(warehouse);
+      const name = sourceWarehouseName(warehouse);
+      if (!id || !name) continue;
+      warehousesById.set(id, { ID: id, title: name });
+
+      let amounts = field(warehouse, 'amounts');
+      if (typeof amounts === 'string') {
+        try { amounts = JSON.parse(amounts); } catch { amounts = {}; }
+      }
+      const amountValues = amounts && typeof amounts === 'object'
+        ? Object.values(amounts as Record<string, unknown>)
+        : [];
+      if (amountValues.length > 1) {
+        throw new Error(`1Office returned multiple units for ${sourceProductCode(product)} @ ${name}; refusing an ambiguous stock sync.`);
+      }
+      const quantity = numberValue(amountValues[0]);
+      if (!Number.isInteger(quantity)) {
+        throw new Error(`1Office returned a non-integer stock quantity for ${sourceProductCode(product)} @ ${name}.`);
+      }
+      const units = field(warehouse, 'units');
+      const unit = units && typeof units === 'object'
+        ? stringValue(Object.values(units as Record<string, unknown>)[0])
+        : '';
+      const code = sourceProductCode(product).toUpperCase();
+      stockByKey.set(`${code}|${id}`, {
+        product_id: sourceProductId(product),
+        product_code: code,
+        product_name: stringValue(field(product, 'title', 'name')) || code,
+        warehouse_id: id,
+        warehouse_name: name,
+        quantity,
+        available_qty: quantity,
+        unit,
+      });
+    }
+  }
+
+  const warehouses = [...warehousesById.values()];
+  const snapshots: OneOfficeRecord[] = [];
+  for (const product of selected) {
+    const code = sourceProductCode(product).toUpperCase();
+    for (const warehouse of warehouses) {
+      const id = sourceWarehouseId(warehouse);
+      const key = `${code}|${id}`;
+      snapshots.push(stockByKey.get(key) || {
+        product_id: sourceProductId(product),
+        product_code: code,
+        product_name: stringValue(field(product, 'title', 'name')) || code,
+        warehouse_id: id,
+        warehouse_name: sourceWarehouseName(warehouse),
+        quantity: 0,
+        available_qty: 0,
+        unit: '',
+      });
+    }
+  }
+  return { warehouses, snapshots };
 }
 
 async function upsertRows(table: string, rows: OneOfficeRecord[], conflict: string) {
@@ -198,23 +275,24 @@ async function syncCoffinCatalog(products: OneOfficeRecord[]): Promise<CoffinSyn
     for (const row of data || []) existingByCode.set(String(row.ma_hom).toUpperCase(), row as OneOfficeRecord);
   }
 
-  const rows = selected.map(([code, product]) => {
-    const current = existingByCode.get(code);
+  const rows = selected.flatMap(([code, product]) => {
+    if (existingByCode.has(code)) return [];
     const title = stringValue(field(product, 'title', 'name', 'product_name')) || code;
-    const color = sourceColor(product) || stringValue(current?.Mau_sac ?? current?.mau_sac);
+    const color = sourceColor(product);
     const activeValue = field(product, 'is_active', 'status');
-    const isActive = current ? current.is_active !== false : sourceIsActive(activeValue);
 
-    return {
+    return [{
       ma_hom: code,
       ten_hom: title,
       ten_hom_the_hien: title,
       ...(color ? { Mau_sac: color } : {}),
-      is_active: isActive,
-    };
+      is_active: sourceIsActive(activeValue),
+    }];
   });
 
-  const { upserted, errors, firstError } = await upsertRows('dim_hom', rows, 'ma_hom');
+  const { upserted, errors, firstError } = rows.length
+    ? await upsertRows('dim_hom', rows, 'ma_hom')
+    : { upserted: 0, errors: 0, firstError: '' };
   return {
     table: 'dim_hom',
     fetched: products.length,
@@ -350,7 +428,7 @@ async function applyInventoryToWebApp(
 
   const { data: currentWarehouses, error: warehouseReadError } = await supabase
     .from('dim_kho')
-    .select('id, ma_kho, ten_kho');
+    .select('id, ma_kho, ten_kho, dia_chi, is_active');
   if (warehouseReadError) {
     return { table: 'fact_inventory', fetched: snapshots.length, upserted: 0, errors: 1, duration_ms: Date.now() - startedAt, error_msg: warehouseReadError.message };
   }
@@ -372,12 +450,17 @@ async function applyInventoryToWebApp(
   let createdWarehouses = 0;
   for (const [sourceKey, sourceWarehouse] of sourceWarehouseByName) {
     if (isSubWarehouse(sourceWarehouse)) continue;
-    const targetName = nameMap[sourceKey] || sourceWarehouseName(sourceWarehouse);
+    const targetName = nameMap[sourceKey] || DEFAULT_WAREHOUSE_NAME_MAP[sourceKey] || sourceWarehouseName(sourceWarehouse);
     const targetKey = normalize(targetName);
-    if (!targetKey || PROTECTED_WAREHOUSES.has(sourceKey) || PROTECTED_WAREHOUSES.has(targetKey)) continue;
-    if (UNCONFIRMED_WAREHOUSE_ALIASES.has(sourceKey) && !nameMap[sourceKey]) {
-      unresolved.push(sourceWarehouseName(sourceWarehouse));
-      continue;
+    if (!targetKey) continue;
+
+    if (sourceKey === 'to ky' && !nameMap[sourceKey]) {
+      const hocMon = warehouseByName.get(normalize('Kho Hóc Môn'));
+      const address = normalize(hocMon?.dia_chi);
+      if (!hocMon || hocMon.is_active === false || !address.includes('to ky') || !address.includes('hoc mon')) {
+        unresolved.push(sourceWarehouseName(sourceWarehouse));
+        continue;
+      }
     }
 
     let target = warehouseByName.get(targetKey);
@@ -398,7 +481,7 @@ async function applyInventoryToWebApp(
       const maKho = codeCollision
         ? `${fallbackCode}-${randomUUID().slice(0, 8)}`
         : proposedCode;
-      const displayName = targetName.replace(/^Kho\s+/i, '').trim();
+      const displayName = targetName.trim();
       const { data: created, error: createError } = await supabase
         .from('dim_kho')
         .insert({ ma_kho: maKho, ten_kho: displayName, is_active: true })
@@ -498,7 +581,7 @@ async function applyInventoryToWebApp(
         const { error } = await supabase.from('fact_inventory').update(inventoryValues).eq('Mã', inventoryId);
         return { error: error?.message || null };
       });
-    } else {
+    } else if (numberValue(snapshot.quantity) > 0 || numberValue(snapshot.available_qty) > 0) {
       operations.push(async () => {
         const { error } = await supabase.from('fact_inventory').insert({
           'Mã': randomUUID(),
@@ -529,7 +612,8 @@ async function applyInventoryToWebApp(
 
   const notes = [
     `${createdWarehouses} kho mới đã được tạo trong dim_kho.`,
-    'Không cập nhật tồn của Hàm Long, Kha Vạn Cân hoặc Kinh Dương Vương.',
+    'Tồn được thay bằng snapshot 1Office cho các kho đã ánh xạ; dòng cũ không còn trong snapshot được đặt về 0.',
+    'Tài khoản đăng nhập Supabase không được tự tạo cùng bản ghi kho.',
     unresolved.length ? `Cần đối soát thủ công: ${[...new Set(unresolved)].join(', ')}.` : '',
   ].filter(Boolean);
   return {
@@ -594,16 +678,14 @@ export async function runCoffinSync(
 
   if (syncCatalog) results.push(await syncCoffinCatalog(products));
   if (syncInventory) {
-    const [warehouses, inventory] = await Promise.all([fetchWarehouses(), fetchInventory()]);
-    const warehouseResult = await syncWarehouseSnapshot(warehouses as OneOfficeRecord[]);
+    const { warehouses, snapshots: rawInventory } = buildEmbeddedInventorySnapshot(products);
+    const warehouseResult = await syncWarehouseSnapshot(warehouses);
     results.push(warehouseResult);
-    const rawWarehouses = warehouses as OneOfficeRecord[];
-    const rawInventory = inventory as OneOfficeRecord[];
-    const snapshots = mapInventoryRows(rawInventory, products, rawWarehouses);
-    const inventoryResult = await syncInventorySnapshot(rawInventory, products, rawWarehouses);
+    const snapshots = mapInventoryRows(rawInventory, products, warehouses);
+    const inventoryResult = await syncInventorySnapshot(rawInventory, products, warehouses);
     results.push(inventoryResult);
     if (!warehouseResult.errors && !inventoryResult.errors) {
-      results.push(await applyInventoryToWebApp(snapshots, rawWarehouses));
+      results.push(await applyInventoryToWebApp(snapshots, warehouses));
     } else {
       results.push({
         table: 'fact_inventory',

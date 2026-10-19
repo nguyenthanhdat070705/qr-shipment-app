@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
   const table = req.nextUrl.searchParams.get('table');
   const tables = table
     ? [table].filter(t => ALLOWED_TABLES.includes(t))
-    : undefined;
+    : ['coffin_catalog', 'coffin_inventory'];
 
   if (table && tables?.length === 0) {
     return NextResponse.json(

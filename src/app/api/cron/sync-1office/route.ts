@@ -27,7 +27,9 @@ export async function GET(req: NextRequest) {
   console.log('[Cron] 🕐 Bắt đầu scheduled sync 1Office → Supabase');
 
   try {
-    const result = await runFullSync();
+    // This cron is dedicated to coffin catalog and stock sync. Other 1Office
+    // datasets are intentionally left to their own pipelines.
+    const result = await runFullSync({ tables: ['coffin_catalog', 'coffin_inventory'] });
 
     const summary = {
       scheduled_at: new Date().toISOString(),

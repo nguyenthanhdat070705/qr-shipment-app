@@ -4,7 +4,7 @@
  * Auth: access_token (query param)
  */
 
-const BASE_URL = 'https://cloud-cloud.1office.vn';
+const BASE_URL = process.env.ONEOFFICE_API_BASE_URL || 'https://blackstones.1office.vn';
 const ACCESS_TOKEN = process.env.ONEOFFICE_API_KEY || '';
 if (!ACCESS_TOKEN) {
   console.warn('[1office] Thiếu biến môi trường ONEOFFICE_API_KEY — đồng bộ 1Office sẽ thất bại. Hãy đặt ONEOFFICE_API_KEY trong .env.local và Vercel.');
