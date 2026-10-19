@@ -96,7 +96,7 @@ export default function ShipmentConfirmationForm({
 
       // Auto-select warehouse based on user email
       if (userEmail && list.length > 0) {
-        const warehouseFilter = getWarehouseFilter(userEmail);
+        const warehouseFilter = getWarehouseFilter(userEmail, userName);
 
         if (warehouseFilter) {
           // Warehouse account (kho1/kho2/kho3) — find and LOCK to their warehouse
@@ -115,7 +115,7 @@ export default function ShipmentConfirmationForm({
         }
       }
     }).catch(() => {});
-  }, [userEmail]);
+  }, [userEmail, userName]);
 
   const isAlreadyExported = currentStatus === 'exported';
 

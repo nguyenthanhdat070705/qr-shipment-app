@@ -27,7 +27,7 @@ export default function ProductListClient({ products }: { products: ProductItem[
       const raw = localStorage.getItem('auth_user');
       if (raw) {
         const u = JSON.parse(raw);
-        const wf = getWarehouseFilter(u.email || '');
+        const wf = getWarehouseFilter(u.email || '', u.ho_ten || u.name || '');
         if (wf) {
           setLockedWarehouse(wf);
           setSelectedWarehouse(wf); // Tự động chọn kho của user

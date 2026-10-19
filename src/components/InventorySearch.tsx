@@ -44,7 +44,7 @@ function getLockedWarehouseFromStorage() {
     const stored = localStorage.getItem('auth_user');
     if (!stored) return null;
     const user = JSON.parse(stored);
-    return user.email ? getWarehouseFilter(user.email) : null;
+    return user.email ? getWarehouseFilter(user.email, user.ho_ten || user.name || '') : null;
   } catch (e) {
     console.error('Error reading auth_user', e);
     return null;
@@ -58,7 +58,7 @@ export default function InventorySearch({ items, showStats = false }: { items: I
   const [filter, setFilter] = useState<FilterType>(initialFilter);
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | 'Đã mua' | 'Ký gửi'>('all');
-  const sort: SortType = 'name';
+  const [sort] = useState<SortType>('name');
   const [warehouseFilter, setWarehouseFilter] = useState<string>('all');
   const lockedWarehouse = useSyncExternalStore(
     () => () => {},

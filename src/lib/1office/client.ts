@@ -9,7 +9,7 @@ const ACCESS_TOKEN = process.env.ONEOFFICE_API_KEY || '';
 if (!ACCESS_TOKEN) {
   console.warn('[1office] Thiếu biến môi trường ONEOFFICE_API_KEY — đồng bộ 1Office sẽ thất bại. Hãy đặt ONEOFFICE_API_KEY trong .env.local và Vercel.');
 }
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 100;
 const DELAY_MS = 800; // Tránh rate limit
 
 function sleep(ms: number) {
@@ -55,6 +55,10 @@ export async function fetchAll<T = Record<string, unknown>>(
         next: { revalidate: 0 },
       });
 
+      if (!res.ok) {
+        throw new Error(`[1Office] ${endpoint} trả HTTP ${res.status}`);
+      }
+
       const text = await res.text();
 
       // Parse JSON (đôi khi có HTML wrapper)
@@ -69,16 +73,18 @@ export async function fetchAll<T = Record<string, unknown>>(
       }
 
       if (!json) {
-        console.warn(`[1Office] [${endpoint}] Trang ${page}: không parse được JSON`);
-        break;
+        throw new Error(`[1Office] ${endpoint} trang ${page}: phản hồi không phải JSON hợp lệ`);
       }
 
       if (json.error === true) {
-        console.warn(`[1Office] [${endpoint}] Lỗi API: ${json.message}`);
-        break;
+        throw new Error(`[1Office] ${endpoint} lỗi API: ${json.message || 'không có thông tin lỗi'}`);
       }
 
-      if (!json.data || !Array.isArray(json.data) || json.data.length === 0) {
+      if (!Array.isArray(json.data)) {
+        throw new Error(`[1Office] ${endpoint} trang ${page}: API không trả danh sách data hợp lệ`);
+      }
+
+      if (json.data.length === 0) {
         console.log(`[1Office] [${endpoint}] Hết dữ liệu tại trang ${page}`);
         break;
       }
@@ -86,14 +92,15 @@ export async function fetchAll<T = Record<string, unknown>>(
       allData.push(...json.data);
       console.log(`[1Office] [${endpoint}] Trang ${page}: +${json.data.length} bản ghi (tổng: ${allData.length})`);
 
-      if (json.data.length < PAGE_SIZE) break;
+      const total = Number(json.total);
+      if (json.data.length < PAGE_SIZE || (Number.isFinite(total) && total > 0 && allData.length >= total)) break;
 
       page++;
       await sleep(DELAY_MS);
 
     } catch (err) {
       console.error(`[1Office] [${endpoint}] Lỗi kết nối trang ${page}:`, err);
-      break;
+      throw err;
     }
   }
 

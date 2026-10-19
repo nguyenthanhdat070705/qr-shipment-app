@@ -88,6 +88,7 @@ CREATE POLICY "Service update goods_receipts_1office" ON goods_receipts_1office 
 CREATE TABLE IF NOT EXISTS inventory_1office (
   id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   oneoffice_id    integer     UNIQUE,
+  source_key      text,
   product_code    text,
   product_name    text,
   warehouse_name  text,
@@ -95,9 +96,15 @@ CREATE TABLE IF NOT EXISTS inventory_1office (
   quantity        numeric(15,3) DEFAULT 0,
   available_qty   numeric(15,3) DEFAULT 0,
   unit            text,
+  last_synced_at  timestamptz,
   created_at      timestamptz NOT NULL DEFAULT now(),
   updated_at      timestamptz NOT NULL DEFAULT now()
 );
+
+-- Upgrade an existing installation without recreating the staging table.
+ALTER TABLE inventory_1office ADD COLUMN IF NOT EXISTS source_key text;
+ALTER TABLE inventory_1office ADD COLUMN IF NOT EXISTS last_synced_at timestamptz;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_inv_1o_source_key ON inventory_1office (source_key);
 
 COMMENT ON TABLE inventory_1office IS 'Tồn kho — sync từ 1Office /api/warehouse/inventory/gets';
 

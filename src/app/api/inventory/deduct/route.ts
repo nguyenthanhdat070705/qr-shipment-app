@@ -48,8 +48,13 @@ export async function POST(req: NextRequest) {
        return NextResponse.json({ success: false, error: 'Lô kho không tồn tại.' }, { status: 404 });
     }
 
+    const { data: account } = await supabase
+      .from('dim_account')
+      .select('*')
+      .eq('email', email)
+      .maybeSingle();
     const { getWarehouseFilter } = await import('@/config/roles.config');
-    const allowedWarehouse = getWarehouseFilter(email, ''); // Name is optional for now
+    const allowedWarehouse = getWarehouseFilter(email, account?.ho_ten || account?.hoten || '');
     if (allowedWarehouse) {
        const { data: khoData } = await supabase
         .from('dim_kho')

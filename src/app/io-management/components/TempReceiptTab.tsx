@@ -67,7 +67,7 @@ export default function TempReceiptTab() {
           if (auth) {
             const user = JSON.parse(auth);
             setUserRole(user.role || '');
-            const wFilter = getWarehouseFilter(user.email);
+            const wFilter = getWarehouseFilter(user.email, user.ho_ten || user.name || '');
             if (wFilter) {
               data = data.filter((item) => item.warehouse?.name?.includes(wFilter));
             }

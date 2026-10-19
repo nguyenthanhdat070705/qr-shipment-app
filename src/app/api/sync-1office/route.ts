@@ -11,6 +11,9 @@ import { runFullSync } from '@/lib/1office/sync';
 
 const ALLOWED_TABLES = [
   'products',
+  'coffin_catalog',
+  'dim_hom',
+  'coffin_inventory',
   'warehouses_1office',
   'inventory_1office',
   'goods_receipts_1office',
