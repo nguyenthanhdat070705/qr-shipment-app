@@ -625,13 +625,9 @@ export default function WarehouseDashboard() {
     { icon: 'bg-amber-100 text-amber-600', bar: 'bg-amber-500', quantity: 'text-amber-700' },
     { icon: 'bg-pink-100 text-pink-600', bar: 'bg-pink-500', quantity: 'text-pink-700' },
   ];
-  const visibleWarehouseStats = (globalData?.byWarehouse || []).filter((warehouse: any) => {
-    const normalizedName = String(warehouse.name || '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase();
-    return !normalizedName.includes('nguyen van linh (kho 4)');
-  });
+  // Warehouse APIs already exclude archived warehouses. Filter by active identity upstream,
+  // because the retained KHO-01 record now uses the former Kho 4 display name.
+  const visibleWarehouseStats = globalData?.byWarehouse || [];
   const visibleWarehouseQuantity = visibleWarehouseStats.reduce(
     (total: number, warehouse: any) => total + Math.max(0, Number(warehouse.qty) || 0),
     0,

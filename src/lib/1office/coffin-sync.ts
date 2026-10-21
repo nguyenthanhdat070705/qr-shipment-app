@@ -2,10 +2,11 @@ import { randomUUID } from 'node:crypto';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 const BATCH_SIZE = 50;
 const COFFIN_CODE = /^2AQ/i;
+const NGUYEN_VAN_LINH_WAREHOUSE = 'Kho Nguyễn Văn Linh (Kho 4)';
 const DEFAULT_WAREHOUSE_NAME_MAP: Record<string, string> = {
   'to ky': 'Kho Hóc Môn',
-  'ham long': 'Kho Nguyễn Văn Linh (Kho 1)',
-  'nguyen van linh': 'Kho Nguyễn Văn Linh (Kho 4)',
+  'ham long': NGUYEN_VAN_LINH_WAREHOUSE,
+  'nguyen van linh': NGUYEN_VAN_LINH_WAREHOUSE,
 };
 
 type OneOfficeRecord = Record<string, unknown>;
@@ -454,19 +455,22 @@ async function applyInventoryToWebApp(
 
   let createdWarehouses = 0;
   const preservedWarehouses = new Set<string>();
-  // The owner confirmed kho1's existing stock on 19/10/2026. This rename
-  // must not replace it with the different 1Office-39 snapshot.
-  const renamedKho1 = (currentWarehouses || []).find(warehouse =>
+  // Keep the original KHO-01 inventory and movement history under the new display name.
+  // It must not be replaced by the archived 1Office-39 snapshot.
+  const retainedKho1 = (currentWarehouses || []).find(warehouse =>
     warehouse.ma_kho === 'KHO-01'
-    && normalize(warehouse.ten_kho) === normalize('Kho Nguyễn Văn Linh (Kho 1)')
+    && normalize(warehouse.ten_kho) === normalize(NGUYEN_VAN_LINH_WAREHOUSE)
   );
   for (const [sourceKey, sourceWarehouse] of sourceWarehouseByName) {
     if (isSubWarehouse(sourceWarehouse)) continue;
-    const targetName = nameMap[sourceKey] || DEFAULT_WAREHOUSE_NAME_MAP[sourceKey] || sourceWarehouseName(sourceWarehouse);
+    const reassignedBranchAlias = sourceKey === 'nguyen van linh' || sourceKey === 'ham long';
+    const targetName = reassignedBranchAlias
+      ? NGUYEN_VAN_LINH_WAREHOUSE
+      : nameMap[sourceKey] || DEFAULT_WAREHOUSE_NAME_MAP[sourceKey] || sourceWarehouseName(sourceWarehouse);
     const targetKey = normalize(targetName);
     if (!targetKey) continue;
-    if (renamedKho1 && targetKey === normalize(renamedKho1.ten_kho)) {
-      preservedWarehouses.add(String(renamedKho1.ten_kho));
+    if (retainedKho1 && targetKey === normalize(retainedKho1.ten_kho)) {
+      preservedWarehouses.add(String(retainedKho1.ten_kho));
       continue;
     }
 
@@ -480,7 +484,9 @@ async function applyInventoryToWebApp(
     }
 
     const sourceCodeKey = sourceWarehouseCode(sourceWarehouse).toLowerCase();
-    let target = (sourceCodeKey && warehouseByCode.get(sourceCodeKey)) || warehouseByName.get(targetKey);
+    let target = reassignedBranchAlias
+      ? warehouseByName.get(targetKey)
+      : (sourceCodeKey && warehouseByCode.get(sourceCodeKey)) || warehouseByName.get(targetKey);
     if (!target) {
       const id = sourceWarehouseId(sourceWarehouse);
       const sourceCode = sourceWarehouseCode(sourceWarehouse);

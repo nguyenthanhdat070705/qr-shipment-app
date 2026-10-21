@@ -48,7 +48,7 @@ export async function POST() {
           const ho_ten_map: Record<string, string> = {
             'quantri@blackstone.com.vn': 'Quản trị viên VIP',
             'admin@blackstone.com.vn': 'Quản trị viên',
-            'kho1@blackstone.com.vn': 'Kho 1',
+            'kho1@blackstone.com.vn': 'Kho Nguyễn Văn Linh (Kho 4)',
             'kho2@blackstone.com.vn': 'Kho 2',
             'kho3@blackstone.com.vn': 'Kho 3',
             'bophanthumua@blackstone.com.vn': 'Bộ phận Thu mua',

@@ -219,9 +219,10 @@ export function getWarehouseFilter(email: string, name?: string): string | null 
   const username = lowerEmail.split('@')[0];
   const lowerName = (name || '').toLowerCase().trim();
 
-  // 19/10/2026: kho1 keeps its stock/history; the branch is now Nguyễn Văn Linh.
-  if (username === 'kho1' || lowerName === 'kho 1') return 'Kho Nguyễn Văn Linh (Kho 1)';
-  if (username === 'kho4') return 'Kho Nguyễn Văn Linh (Kho 4)';
+  // kho1 keeps its original stock/history and now operates as Nguyễn Văn Linh (Kho 4).
+  // The duplicate kho4 account is archived; any existing session is restricted to no warehouse.
+  if (username === 'kho4') return 'UNASSIGNED_WAREHOUSE';
+  if (username === 'kho1' || lowerName === 'kho 1') return 'Kho Nguyễn Văn Linh (Kho 4)';
   if (username === 'kho5') return 'Kho Hóc Môn';
   if (username === 'kho2' || lowerName === 'kho 2') return 'Kho Kha Vạn Cân';
   if (username === 'kho3' || lowerName === 'kho 3') return 'Kho Kinh Dương Vương';

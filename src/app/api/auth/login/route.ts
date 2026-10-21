@@ -5,7 +5,7 @@ import { getUserRole, ROLE_CONFIGS } from '@/config/roles.config';
 const LOCAL_DEFAULT_ACCOUNTS: Record<string, { password: string; name: string; department: string }> = {
   'quantri@blackstone.com.vn': { password: '123456@', name: 'Quản trị viên VIP', department: 'Quản trị' },
   'admin@blackstone.com.vn': { password: 'admin123', name: 'Quản trị viên', department: 'Quản trị' },
-  'kho1@blackstone.com.vn': { password: '123456@', name: 'Kho 1', department: 'Kho' },
+  'kho1@blackstone.com.vn': { password: '123456@', name: 'Kho Nguyễn Văn Linh (Kho 4)', department: 'Kho vận' },
   'kho2@blackstone.com.vn': { password: '123456@', name: 'Kho 2', department: 'Kho' },
   'kho3@blackstone.com.vn': { password: '123456@', name: 'Kho 3', department: 'Kho' },
   'bophanthumua@blackstone.com.vn': { password: '123456@', name: 'Bộ phận Thu mua', department: 'Thu mua' },
@@ -60,6 +60,21 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = getSupabaseAdmin();
+    const normalizedEmail = String(email).toLowerCase().trim();
+
+    const { data: accountInfo, error: accountLookupError } = await supabase
+      .from('dim_account')
+      .select('ho_ten, phong_ban, is_active')
+      .eq('email', normalizedEmail)
+      .maybeSingle();
+
+    if (accountLookupError) {
+      console.error('[auth/login] Account status lookup failed:', accountLookupError.message);
+      return NextResponse.json({ error: 'Không kiểm tra được trạng thái tài khoản.' }, { status: 503 });
+    }
+    if (accountInfo?.is_active === false) {
+      return NextResponse.json({ error: 'Tài khoản đã được lưu trữ.' }, { status: 403 });
+    }
 
     // ── Step 1: Try to auto-confirm email if user exists ──────
     try {
@@ -100,12 +115,6 @@ export async function POST(request: NextRequest) {
     // ── Step 3: Determine user role & fetch account info ─────────────
     const role = getUserRole(data.user.email || email);
     const roleConfig = ROLE_CONFIGS[role];
-
-    const { data: accountInfo } = await supabase
-      .from('dim_account')
-      .select('ho_ten, phong_ban')
-      .eq('email', email)
-      .single();
 
     return NextResponse.json({
       token: data.session.access_token,
