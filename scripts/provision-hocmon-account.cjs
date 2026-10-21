@@ -16,8 +16,7 @@ async function main() {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
     const assignments = [
-      { email: 'kho1@blackstone.com.vn', code: 'KHO-01', name: 'Kho Nguyễn Văn Linh (Kho 1)' },
-      { email: 'kho4@blackstone.com.vn', code: '1O-39', name: 'Kho Nguyễn Văn Linh (Kho 4)' },
+      { email: 'kho1@blackstone.com.vn', code: 'KHO-01', name: 'Kho Nguyễn Văn Linh (Kho 4)' },
       { email: 'kho5@blackstone.com.vn', code: 'KHO-05', name: 'Kho Hóc Môn' },
     ];
     const { data: warehouses, error: warehouseError } = await admin.from('dim_kho')

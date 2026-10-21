@@ -121,6 +121,7 @@ export default async function GRPrintPage({
   const { data: warehouses } = await supabase
     .from('dim_kho')
     .select('id, ten_kho')
+    .eq('is_active', true)
     .order('ten_kho');
 
   /* ── Fetch product info from dim_hom for each item ── */

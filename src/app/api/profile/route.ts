@@ -73,6 +73,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         .from('dim_kho')
         .select('id')
         .ilike('ten_kho', `%${tenKho}%`)
+        .eq('is_active', true)
         .maybeSingle();
 
       if (matchedKho) {

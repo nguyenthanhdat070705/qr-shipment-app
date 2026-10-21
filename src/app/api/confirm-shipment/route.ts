@@ -97,25 +97,27 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // ── Server-side Lock check ──
+  const { data: khoData } = await supabaseAdmin
+    .from('dim_kho')
+    .select('ten_kho')
+    .eq('id', khoId)
+    .eq('is_active', true)
+    .maybeSingle();
+  if (!khoData) {
+    return errorResponse('Kho không tồn tại hoặc đã ngừng hoạt động.', 'VALIDATION_ERROR', 409);
+  }
+
   const { getWarehouseFilter } = await import('@/config/roles.config');
   const allowedWarehouse = getWarehouseFilter(trimmedEmail, trimmedHoTen);
   if (allowedWarehouse) {
-    const { data: khoData } = await supabaseAdmin
-      .from('dim_kho')
-      .select('ten_kho')
-      .eq('id', khoId)
-      .maybeSingle();
-
-    if (khoData) {
-      const khoName = (khoData.ten_kho || '').toLowerCase();
-      const allowedLower = allowedWarehouse.toLowerCase();
-      if (!khoName.includes(allowedLower) && !allowedLower.includes(khoName)) {
-        return errorResponse(
-          `Tài khoản của bạn chỉ được phép chọn ${allowedWarehouse}. Kho được chọn là ${khoData.ten_kho}.`,
-          'VALIDATION_ERROR',
-          403
-        );
-      }
+    const khoName = (khoData.ten_kho || '').toLowerCase();
+    const allowedLower = allowedWarehouse.toLowerCase();
+    if (!khoName.includes(allowedLower) && !allowedLower.includes(khoName)) {
+      return errorResponse(
+        `Tài khoản của bạn chỉ được phép chọn ${allowedWarehouse}. Kho được chọn là ${khoData.ten_kho}.`,
+        'VALIDATION_ERROR',
+        403
+      );
     }
   }
 

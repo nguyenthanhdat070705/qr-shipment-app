@@ -124,15 +124,17 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. Get dim_kho
-    const { data: allKho } = await supabase.from('dim_kho').select('id, ten_kho');
+    const { data: allKho } = await supabase.from('dim_kho').select('id, ten_kho').eq('is_active', true);
     const khoMap = new Map<string, string>();
     for (const k of allKho || []) khoMap.set(k.ten_kho, k.id);
+    const activeWarehouseIds = new Set((allKho || []).map((k: any) => k.id));
 
-    // 4. Delete existing fact_inventory
-    const { data: existingRows } = await supabase.from('fact_inventory').select('Mã');
-    if (existingRows && existingRows.length > 0) {
-      for (let i = 0; i < existingRows.length; i += 50) {
-        const batch = existingRows.slice(i, i + 50).map((r: any) => r['Mã']);
+    // Replace active warehouse inventory while preserving archived warehouse balances.
+    const { data: existingRows } = await supabase.from('fact_inventory').select('Mã, Kho');
+    const activeExistingRows = (existingRows || []).filter((row: any) => activeWarehouseIds.has(row['Kho']));
+    if (activeExistingRows.length > 0) {
+      for (let i = 0; i < activeExistingRows.length; i += 50) {
+        const batch = activeExistingRows.slice(i, i + 50).map((r: any) => r['Mã']);
         await supabase.from('fact_inventory').delete().in('Mã', batch);
       }
     }

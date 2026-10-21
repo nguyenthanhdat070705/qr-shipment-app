@@ -85,7 +85,7 @@ export default function ShipmentConfirmationForm({
 
   // Load warehouses & auto-select based on user role
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/dim_kho?select=id,ma_kho,ten_kho&order=ten_kho.asc`, {
+    fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/dim_kho?select=id,ma_kho,ten_kho&is_active=eq.true&order=ten_kho.asc`, {
       headers: {
         apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
         Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''}`,

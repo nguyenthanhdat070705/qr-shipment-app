@@ -66,6 +66,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'warehouse_id là bắt buộc.' }, { status: 400 });
     }
 
+    const { data: khoData } = await supabase
+      .from('dim_kho')
+      .select('ten_kho')
+      .eq('id', warehouse_id)
+      .eq('is_active', true)
+      .maybeSingle();
+    if (!khoData) {
+      return NextResponse.json({ error: 'Kho đã ngừng hoạt động và không thể bắt đầu kiểm kho mới.' }, { status: 409 });
+    }
+
     // Lookup user
     let nguoiKiemId: string | null = null;
     if (created_by?.includes('@')) {
@@ -83,13 +93,6 @@ export async function POST(req: NextRequest) {
     const timeStr = now.toISOString().slice(11, 19).replace(/:/g, '');
     const randSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
     const ma_phieu_kiem = `KK-${dateStr}-${timeStr.slice(0,4)}-${randSuffix}`;
-
-    // Get warehouse name
-    const { data: khoData } = await supabase
-      .from('dim_kho')
-      .select('ten_kho')
-      .eq('id', warehouse_id)
-      .single();
 
     // Fetch current inventory for this warehouse to pre-populate items
     const { data: inventoryData } = await supabase

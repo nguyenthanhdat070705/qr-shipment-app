@@ -53,7 +53,7 @@ export async function InventoryContent() {
   const [inventoryRes, homRes, khoRes] = await Promise.all([
     supabase.from('fact_inventory').select('*'),
     supabase.from('dim_hom').select('id, ma_hom, ten_hom, ten_hom_the_hien, gia_ban, gia_ban_1, hinh_anh, is_active'),
-    supabase.from('dim_kho').select('id, ma_kho, ten_kho'),
+    supabase.from('dim_kho').select('id, ma_kho, ten_kho').eq('is_active', true),
   ]);
 
   if (inventoryRes.error) {
@@ -77,7 +77,9 @@ export async function InventoryContent() {
     khoMap.set(k.id, k);
   }
 
-  const inventory = (inventoryRes.data || []) as FactInventoryRow[];
+  const activeWarehouseIds = new Set(khoMap.keys());
+  const inventory = ((inventoryRes.data || []) as FactInventoryRow[])
+    .filter(row => activeWarehouseIds.has(row['Kho']));
 
   const productGroupMap = new Map<string, {
     homId: string;

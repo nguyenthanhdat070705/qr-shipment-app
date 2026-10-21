@@ -48,6 +48,16 @@ export async function POST(req: NextRequest) {
        return NextResponse.json({ success: false, error: 'Lô kho không tồn tại.' }, { status: 404 });
     }
 
+    const { data: khoData } = await supabase
+      .from('dim_kho')
+      .select('ten_kho')
+      .eq('id', invRow['Kho'])
+      .eq('is_active', true)
+      .maybeSingle();
+    if (!khoData) {
+      return NextResponse.json({ success: false, error: 'Kho của lô hàng đã ngừng hoạt động, không thể trừ tồn mới.' }, { status: 409 });
+    }
+
     const { data: account } = await supabase
       .from('dim_account')
       .select('*')
@@ -56,21 +66,13 @@ export async function POST(req: NextRequest) {
     const { getWarehouseFilter } = await import('@/config/roles.config');
     const allowedWarehouse = getWarehouseFilter(email, account?.ho_ten || account?.hoten || '');
     if (allowedWarehouse) {
-       const { data: khoData } = await supabase
-        .from('dim_kho')
-        .select('ten_kho')
-        .eq('id', invRow['Kho'])
-        .maybeSingle();
-        
-      if (khoData) {
-        const khoName = (khoData.ten_kho || '').toLowerCase();
-        const allowedLower = allowedWarehouse.toLowerCase();
-        if (!khoName.includes(allowedLower) && !allowedLower.includes(khoName)) {
-           return NextResponse.json(
-            { error: `Tài khoản của bạn chỉ được thao tác tại ${allowedWarehouse}. Kho được chọn là ${khoData.ten_kho}.` },
-            { status: 403 }
-          );
-        }
+      const khoName = (khoData.ten_kho || '').toLowerCase();
+      const allowedLower = allowedWarehouse.toLowerCase();
+      if (!khoName.includes(allowedLower) && !allowedLower.includes(khoName)) {
+        return NextResponse.json(
+          { error: `Tài khoản của bạn chỉ được thao tác tại ${allowedWarehouse}. Kho được chọn là ${khoData.ten_kho}.` },
+          { status: 403 }
+        );
       }
     }
 

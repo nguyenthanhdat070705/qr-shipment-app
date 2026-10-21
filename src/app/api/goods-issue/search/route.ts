@@ -99,12 +99,15 @@ export async function GET(req: NextRequest) {
     }
 
     // 2. Fetch all inventory with correct column names
-    const { data: allInventory, error: invError } = await supabase
-      .from('fact_inventory')
-      .select('*');
+    const [inventoryResult, warehouseResult] = await Promise.all([
+      supabase.from('fact_inventory').select('*'),
+      supabase.from('dim_kho').select('id, ma_kho, ten_kho').eq('is_active', true),
+    ]);
 
-    if (invError) throw invError;
-    const inventory = allInventory || [];
+    if (inventoryResult.error) throw inventoryResult.error;
+    if (warehouseResult.error) throw warehouseResult.error;
+    const activeWarehouseIds = new Set((warehouseResult.data || []).map((warehouse: { id: string }) => warehouse.id));
+    const inventory = (inventoryResult.data || []).filter((row: any) => activeWarehouseIds.has(row['Kho']));
 
     let matchingRows: any[] = [];
     let targetHom: { id: string; ma_hom: string; ten_hom: string } | null = null;
@@ -206,10 +209,7 @@ export async function GET(req: NextRequest) {
 
     // 3. Resolve dim_kho names
     const khoIds = [...new Set(matchingRows.map((r: any) => r['Kho']).filter(Boolean))];
-    const { data: khoData } = await supabase
-      .from('dim_kho')
-      .select('id, ma_kho, ten_kho')
-      .in('id', khoIds.length > 0 ? khoIds : ['__none__']);
+    const khoData = (warehouseResult.data || []).filter((warehouse: { id: string }) => khoIds.includes(warehouse.id));
 
     const khoMap = new Map<string, any>();
     (khoData || []).forEach((k: any) => khoMap.set(k.id, k));

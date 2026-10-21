@@ -14,9 +14,10 @@ export async function GET() {
   const supabase = getSupabaseAdmin();
 
   // Fetch products and inventory in parallel
-  const [productsRes, inventoryRes] = await Promise.all([
+  const [productsRes, inventoryRes, warehousesRes] = await Promise.all([
     supabase.from('dim_hom').select('*').order('ma_hom', { ascending: true }),
-    supabase.from('fact_inventory').select('"Tên hàng hóa", "Số lượng"'),
+    supabase.from('fact_inventory').select('"Tên hàng hóa", "Số lượng", "Kho"'),
+    supabase.from('dim_kho').select('id').eq('is_active', true),
   ]);
 
   if (productsRes.error) {
@@ -24,9 +25,11 @@ export async function GET() {
   }
 
   // Build a map: product_id → total quantity across all warehouses
+  const activeWarehouseIds = new Set((warehousesRes.data || []).map((warehouse: { id: string }) => warehouse.id));
   const qtyMap = new Map<string, number>();
   if (inventoryRes.data) {
     for (const row of inventoryRes.data) {
+      if (!activeWarehouseIds.has((row as Record<string, unknown>)['Kho'] as string)) continue;
       const homId = row['Tên hàng hóa'] as string;
       const qty = Number(row['Số lượng']) || 0;
       qtyMap.set(homId, (qtyMap.get(homId) || 0) + qty);

@@ -146,6 +146,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'warehouse_id và received_by là bắt buộc.' }, { status: 400 });
   }
 
+  const { data: activeWarehouse } = await supabase
+    .from('dim_kho')
+    .select('id')
+    .eq('id', warehouse_id)
+    .eq('is_active', true)
+    .maybeSingle();
+  if (!activeWarehouse) {
+    return NextResponse.json({ error: 'Kho đã ngừng hoạt động và không nhận phiếu nhập mới.' }, { status: 409 });
+  }
+
   // Lookup user UUID
   let nguoiNhanId: string | null = null;
   if (received_by && received_by.includes('@')) {
