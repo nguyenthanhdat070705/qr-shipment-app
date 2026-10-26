@@ -64,11 +64,10 @@ function pickField(row: DimHomRow, ...keys: (keyof DimHomRow)[]): string {
 export default async function CatalogPage() {
   const supabase = getSupabaseAdmin();
 
-  const [homRes, invRes, warehousesRes] = await Promise.all([
-    supabase.from('dim_hom').select('*').order('ma_hom', { ascending: true }),
-    supabase.from('fact_inventory').select('"Tên hàng hóa", "Số lượng", "Kho"'),
-    supabase.from('dim_kho').select('id').eq('is_active', true),
-  ]);
+  const homRes = await supabase
+    .from('dim_hom')
+    .select('*')
+    .order('ma_hom', { ascending: true });
 
   if (homRes.error) {
     return (
@@ -78,17 +77,6 @@ export default async function CatalogPage() {
         </p>
       </div>
     );
-  }
-
-  // Aggregate quantities by hom id
-  const activeWarehouseIds = new Set((warehousesRes.data || []).map((warehouse: { id: string }) => warehouse.id));
-  const qtyMap = new Map<string, number>();
-  for (const row of invRes.data || []) {
-    const inventoryRow = row as Record<string, unknown>;
-    if (!activeWarehouseIds.has(inventoryRow['Kho'] as string)) continue;
-    const homId = inventoryRow['Tên hàng hóa'] as string;
-    const qty = Number(inventoryRow['Số lượng']) || 0;
-    qtyMap.set(homId, (qtyMap.get(homId) || 0) + qty);
   }
 
   const rows = (homRes.data || []) as DimHomRow[];
@@ -120,7 +108,6 @@ export default async function CatalogPage() {
       giaBan1: Number(r.gia_ban_1) || 0,
       giaVon: Number(r.gia_von) || 0,
       hinhAnh: r.hinh_anh || '',
-      tonKho: qtyMap.get(r.id) || 0,
     }));
 
   return <CatalogClient items={items} />;

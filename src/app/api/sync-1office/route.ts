@@ -8,6 +8,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { runFullSync } from '@/lib/1office/sync';
+import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { triggerReorderEvaluation } from '@/lib/reorder/evaluator';
 
 const ALLOWED_TABLES = [
   'products',
@@ -61,6 +63,9 @@ export async function GET(req: NextRequest) {
 
   try {
     const result = await runFullSync({ tables });
+    if (tables.some(t => ['coffin_inventory', 'inventory_1office', 'warehouses_1office'].includes(t))) {
+      triggerReorderEvaluation(getSupabaseAdmin(), '1office-inventory-sync');
+    }
     return NextResponse.json(result, { status: result.success ? 200 : 207 });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

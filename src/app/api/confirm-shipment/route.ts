@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { triggerReorderEvaluation } from '@/lib/reorder/evaluator';
 import { isValidEmail } from '@/lib/utils/email';
 import { PRODUCT_CONFIG } from '@/config/product.config';
 import type {
@@ -415,6 +416,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   } catch (emailError) {
     console.error('[confirm-shipment] Lỗi gọi API gửi email:', emailError);
   }
+
+  triggerReorderEvaluation(supabaseAdmin, 'confirm-shipment');
 
   // ── Bước 7: Phản hồi thành công ─────────────────────────
   const response: ConfirmShipmentResponse = {

@@ -36,32 +36,6 @@ export default async function CatalogDetailPage({
 
   if (error || !hom) notFound();
 
-  // Stock
-  const { data: invRows } = await supabase
-    .from('fact_inventory')
-    .select('"Kho", "Số lượng"')
-    .eq('Tên hàng hóa', hom.id);
-
-  // Warehouses
-  const { data: khoRows } = await supabase
-    .from('dim_kho')
-    .select('id, ma_kho, ten_kho')
-    .eq('is_active', true);
-
-  const khoMap = new Map<string, string>();
-  for (const k of khoRows || []) khoMap.set(k.id, k.ten_kho);
-
-  const activeWarehouseIds = new Set(khoMap.keys());
-  const stockByWarehouse = (invRows || [])
-    .filter((r: Record<string, unknown>) => activeWarehouseIds.has(r['Kho'] as string))
-    .map((r: Record<string, unknown>) => ({
-      khoName: khoMap.get(r['Kho'] as string) || 'Không xác định',
-      quantity: Number(r['Số lượng']) || 0,
-    }))
-    .filter(r => r.quantity > 0);
-
-  const totalStock = stockByWarehouse.reduce((s, r) => s + r.quantity, 0);
-
   // Related products (same loai_go OR same nhom_san_pham)
   const loaiGo = pickField(hom, 'Loai_go', 'loai_go');
   const { data: related } = await supabase
@@ -99,8 +73,6 @@ export default async function CatalogDetailPage({
     giaBan1: Number(hom.gia_ban_1) || 0,
     giaVon: Number(hom.gia_von) || 0,
     hinhAnh: hom.hinh_anh || '',
-    totalStock,
-    stockByWarehouse,
   };
 
   return (

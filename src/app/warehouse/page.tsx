@@ -496,12 +496,16 @@ export default function WarehouseDashboard() {
     setHistoryLoading(true);
     try {
       let filter = '';
+      let email = '';
       try {
         const raw = localStorage.getItem('auth_user');
         if (raw) {
           const u = JSON.parse(raw);
+          email = u.email || '';
           const wf = getWarehouseFilter(u.email || '', u.ho_ten || '');
-          if (wf) filter = `?warehouse=${encodeURIComponent(wf)}`;
+          const params = new URLSearchParams({ email });
+          if (wf) params.set('warehouse', wf);
+          filter = `?${params.toString()}`;
         }
       } catch {}
 
@@ -540,7 +544,9 @@ export default function WarehouseDashboard() {
       if (raw) {
         const u = JSON.parse(raw);
         const wf = getWarehouseFilter(u.email || '', u.ho_ten || '');
-        if (wf) filter = `?warehouse=${encodeURIComponent(wf)}`;
+        const params = new URLSearchParams({ email: u.email || '' });
+        if (wf) params.set('warehouse', wf);
+        filter = `?${params.toString()}`;
       }
       const res = await fetch(`/api/inventory/stats${filter}`);
       if (res.ok) {
@@ -575,7 +581,9 @@ export default function WarehouseDashboard() {
   /* Fetch global stats */
   const fetchGlobalStats = useCallback(async () => {
     try {
-      const res = await fetch('/api/inventory/stats');
+      let email = '';
+      try { email = JSON.parse(localStorage.getItem('auth_user') || '{}').email || ''; } catch { /* ignore */ }
+      const res = await fetch(`/api/inventory/stats?email=${encodeURIComponent(email)}`);
       if (res.ok) {
         setGlobalData(await res.json());
       }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { triggerReorderEvaluation } from '@/lib/reorder/evaluator';
 
 /**
  * GET   /api/operations/[id]  → Detail with items
@@ -105,6 +106,7 @@ export async function PATCH(
         }
       }
     }
+    triggerReorderEvaluation(supabase, 'delivery-order-cancel');
   }
 
   return NextResponse.json({ data });

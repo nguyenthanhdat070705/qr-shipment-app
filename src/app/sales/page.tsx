@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ShoppingBag, Search, Lock, Unlock, Package, BookOpen,
-  Warehouse, BarChart3, ChevronRight, RefreshCw, ArrowRight,
+  ChevronRight, RefreshCw, ArrowRight,
   Clock, ScanLine, LayoutGrid, TrendingUp, Heart,
   Calendar, MapPin, AlertTriangle, CheckCircle, Eye,
   Loader2, X, Star, Sparkles, Receipt, ShoppingCart, Scale
@@ -15,13 +15,6 @@ import { getUserRole } from '@/config/roles.config';
 /* ─────────────────────────────────────
    Types
 ───────────────────────────────────── */
-interface InventoryStat {
-  total: number;
-  available: number;
-  outOfStock: number;
-  totalQuantity: number;
-}
-
 interface HoldInfo {
   product_code: string;
   held_by_email: string;
@@ -198,7 +191,7 @@ function HeldProductsDrawer({
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => router.push(`/product/${encodeURIComponent(hold.product_code)}`)}
+                    onClick={() => router.push(`/sales/catalog/${encodeURIComponent(hold.product_code)}`)}
                     className="p-2 rounded-lg hover:bg-blue-100 text-blue-500 transition-colors"
                     title="Xem chi tiết"
                   >
@@ -220,7 +213,7 @@ function HeldProductsDrawer({
         {/* Footer */}
         <div className="border-t border-gray-100 p-4 bg-gray-50">
           <button
-            onClick={() => { onClose(); router.push('/inventory'); }}
+            onClick={() => { onClose(); router.push('/sales/catalog'); }}
             className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm"
           >
             Tìm sản phẩm để giữ <ArrowRight size={14} />
@@ -243,8 +236,6 @@ export default function SalesDashboard() {
   const [lastRefresh, setLastRefresh] = useState(new Date());
 
   // Data states
-  const [stats, setStats] = useState<InventoryStat>({ total: 0, available: 0, outOfStock: 0, totalQuantity: 0 });
-  const [statsLoading, setStatsLoading] = useState(true);
   const [funerals, setFunerals] = useState<FuneralRow[]>([]);
   const [funeralsLoading, setFuneralsLoading] = useState(true);
   const [myHolds, setMyHolds] = useState<HoldInfo[]>([]);
@@ -275,28 +266,6 @@ export default function SalesDashboard() {
         setUserName(u.ho_ten || u.email?.split('@')[0] || 'Bán hàng');
       }
     } catch { /* ignore */ }
-  }, []);
-
-  /* Fetch inventory stats */
-  const fetchStats = useCallback(async () => {
-    setStatsLoading(true);
-    try {
-      const res = await fetch('/api/inventory/stats');
-      if (res.ok) {
-        const json = await res.json();
-        if (json.stats) {
-          setStats({
-            total: json.stats.totalProducts ?? 0,
-            available: json.stats.totalAvailable ?? 0,
-            outOfStock: json.stats.totalOutOfStock ?? 0,
-            totalQuantity: json.stats.totalQuantity ?? 0,
-          });
-        } else {
-          setStats(json);
-        }
-      }
-    } catch { /* ignore */ }
-    finally { setStatsLoading(false); }
   }, []);
 
   /* Fetch funerals */
@@ -349,19 +318,18 @@ export default function SalesDashboard() {
   useEffect(() => {
     const loadAll = async () => {
       setLoading(true);
-      await Promise.all([fetchStats(), fetchFunerals()]);
+      await fetchFunerals();
       setLastRefresh(new Date());
       setLoading(false);
     };
     loadAll();
-  }, [fetchStats, fetchFunerals]);
+  }, [fetchFunerals]);
 
   useEffect(() => {
     if (userEmail) fetchHolds();
   }, [userEmail, fetchHolds]);
 
   const handleRefresh = () => {
-    fetchStats();
     fetchFunerals();
     if (userEmail) fetchHolds();
   };
@@ -435,10 +403,6 @@ export default function SalesDashboard() {
 
             {/* Quick stats chips */}
             <div className="flex flex-wrap gap-2 mt-4">
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-white text-xs font-semibold">
-                <Package size={12} className="text-blue-300" />
-                {stats.available} sản phẩm sẵn
-              </div>
               {myHolds.length > 0 && (
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-500/20 border border-sky-400/30 text-sky-200 text-xs font-semibold">
                   <Lock size={12} />
@@ -471,15 +435,7 @@ export default function SalesDashboard() {
       </div>
 
       {/* ── KPI Cards ────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
-        <StatCard
-          label="Sản phẩm sẵn"
-          value={statsLoading ? '...' : stats.available}
-          sub="loại hàng còn tồn kho"
-          icon={<Package size={20} />}
-          gradient="bg-gradient-to-br from-blue-500 to-indigo-600"
-          onClick={() => router.push('/inventory?filter=available')}
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
         <StatCard
           label="Đang giữ"
           value={holdsLoading ? '...' : myHolds.length}
@@ -495,14 +451,6 @@ export default function SalesDashboard() {
           icon={<Heart size={20} />}
           gradient="bg-gradient-to-br from-pink-500 to-rose-600"
           onClick={() => router.push('/funerals')}
-        />
-        <StatCard
-          label="Tổng tồn kho"
-          value={statsLoading ? '...' : stats.totalQuantity}
-          sub="sản phẩm toàn hệ thống"
-          icon={<Warehouse size={20} />}
-          gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
-          onClick={() => router.push('/inventory')}
         />
       </div>
 
@@ -646,51 +594,6 @@ export default function SalesDashboard() {
             )}
           </div>
 
-          {/* Inventory summary — compact */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <BarChart3 size={16} className="text-blue-500" />
-              <h3 className="font-extrabold text-gray-900 text-sm">Tình trạng kho hàng</h3>
-            </div>
-            {statsLoading ? (
-              <div className="flex items-center justify-center py-6">
-                <span className="animate-spin h-5 w-5 border-2 border-blue-400 border-t-transparent rounded-full" />
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {[
-                  { label: 'Còn hàng', count: stats.available, total: stats.total, color: 'bg-emerald-500' },
-                  { label: 'Hết hàng', count: stats.outOfStock, total: stats.total, color: 'bg-red-500' },
-                ].map((item) => (
-                  <div key={item.label}>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-xs text-gray-500 font-medium">{item.label}</span>
-                      <span className="text-xs font-bold text-gray-700">{item.count}/{item.total}</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${item.color} transition-all duration-700`}
-                        style={{ width: item.total > 0 ? `${Math.round((item.count / item.total) * 100)}%` : '0%' }}
-                      />
-                    </div>
-                  </div>
-                ))}
-
-                <div className="pt-3 border-t border-gray-50 grid grid-cols-3 gap-2">
-                  {[
-                    { label: 'Tổng loại', value: stats.total, color: 'text-blue-600' },
-                    { label: 'Còn hàng', value: stats.available, color: 'text-emerald-600' },
-                    { label: 'Tổng SL', value: stats.totalQuantity, color: 'text-indigo-600' },
-                  ].map((s) => (
-                    <div key={s.label} className="text-center">
-                      <p className={`text-xl font-extrabold ${s.color}`}>{s.value}</p>
-                      <p className="text-[10px] text-gray-400 font-medium leading-tight">{s.label}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
         </div>
 
         {/* ── Right: Quick Actions + Tips (1/3 width) ── */}
@@ -738,28 +641,12 @@ export default function SalesDashboard() {
                 badge={myHolds.length}
               />
               <QuickAction
-                icon={<Warehouse size={20} />}
-                title="Kho hàng"
-                desc="Xem tồn kho & tình trạng hàng"
-                href="/inventory"
-                color="text-emerald-600"
-                iconBg="bg-emerald-100"
-              />
-              <QuickAction
                 icon={<LayoutGrid size={20} />}
-                title="Toàn bộ sản phẩm"
-                desc="Danh sách sản phẩm & mã QR"
-                href="/product/fullproductlist"
+                title="Catalogue hòm"
+                desc="Xem catalogue và thông tin sản phẩm"
+                href="/sales/catalog"
                 color="text-teal-600"
                 iconBg="bg-teal-100"
-              />
-              <QuickAction
-                icon={<Package size={20} />}
-                title="Danh sách Hòm"
-                desc="Xem thông tin và danh sách hòm"
-                href="/warehouse-settings?tab=boxes"
-                color="text-fuchsia-600"
-                iconBg="bg-fuchsia-100"
               />
               <QuickAction
                 icon={<BookOpen size={20} />}
@@ -791,7 +678,7 @@ export default function SalesDashboard() {
                 { step: '01', title: 'Tra cứu sản phẩm', desc: 'Tìm kiếm sản phẩm bằng mã QR hoặc tên', color: 'text-blue-400', bg: 'bg-blue-500/20' },
                 { step: '02', title: 'Giữ hàng cho khách', desc: 'Nhấn "Giữ hàng" để đặt giữ 24 giờ', color: 'text-sky-400', bg: 'bg-sky-500/20' },
                 { step: '03', title: 'Xem thông tin đám', desc: 'Kiểm tra đám được phân công', color: 'text-pink-400', bg: 'bg-pink-500/20' },
-                { step: '04', title: 'Kiểm tra tồn kho', desc: 'Xem hàng còn sẵn tại các kho', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
+                { step: '04', title: 'Xác nhận khả năng cung ứng', desc: 'Liên hệ Thu mua để xác nhận hàng và thời gian giao', color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
               ].map(w => (
                 <div key={w.step} className="flex items-start gap-3">
                   <div className={`flex items-center justify-center w-7 h-7 rounded-lg ${w.bg} flex-shrink-0`}>

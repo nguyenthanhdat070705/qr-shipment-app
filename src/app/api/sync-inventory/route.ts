@@ -13,6 +13,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
+import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { triggerReorderEvaluation } from '@/lib/reorder/evaluator';
 
 // ── CSV Parser ──────────────────────────────────────────────
 function parseCSVLine(line: string): string[] {
@@ -181,6 +183,8 @@ export async function POST(request: NextRequest) {
     const { count } = await supabase
       .from('fact_inventory')
       .select('*', { count: 'exact', head: true });
+
+    triggerReorderEvaluation(getSupabaseAdmin(), 'inventory-sync');
 
     return NextResponse.json({
       success: true,

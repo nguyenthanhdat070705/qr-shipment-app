@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 import { isVIPAdmin } from '@/config/roles.config';
+import { triggerReorderEvaluation } from '@/lib/reorder/evaluator';
 
 /**
  * PATCH /api/products/quantity
@@ -100,6 +101,8 @@ export async function PATCH(req: NextRequest) {
     console.error('[products/quantity] RPC Error:', rpcErr || rpcResult);
     return NextResponse.json({ error: rpcErr?.message || 'Hết hàng hoặc số lượng trong kho không đủ.' }, { status: 400 });
   }
+
+  triggerReorderEvaluation(supabase, 'product-quantity-adjustment');
 
   return NextResponse.json({
     success: true,

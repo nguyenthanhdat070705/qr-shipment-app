@@ -15,7 +15,6 @@ import PageLayout from '@/components/PageLayout';
 interface Product {
   code: string;
   name: string;
-  ton_kho: number;
   gia_ban?: number;
   nhom_san_pham?: string;
 }
@@ -48,26 +47,33 @@ export default function CreateOrderPage() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const res = await fetch('/api/products?limit=100'); // Lấy tạm 100 sản phẩm hoặc API mặc định
+        const res = await fetch('/api/products?limit=100'); // Chỉ lấy catalogue; không hiển thị số lượng tồn cho Sales.
         const json = await res.json();
+        const apiProducts = Array.isArray(json.data) ? json.data : (Array.isArray(json.products) ? json.products : []);
+        const catalogProducts = apiProducts.map((product: Record<string, unknown>) => ({
+          code: String(product.ma_hom || product.code || ''),
+          name: String(product.ten_hom_the_hien || product.ten_hom || product.name || 'Sản phẩm'),
+          gia_ban: Number(product.gia_ban || product.gia_ban_1 || 0),
+          nhom_san_pham: String(product.nhom_san_pham || product.loai_san_pham || 'Sản phẩm'),
+        })).filter((product: Product) => product.code);
         // Fallback mock nếu API trống
-        if (!json.products || json.products.length === 0) {
+        if (catalogProducts.length === 0) {
           setProducts([
-            { code: 'HOM001', name: 'Hòm gỗ sao cao cấp', ton_kho: 5, gia_ban: 15000000, nhom_san_pham: 'Hòm' },
-            { code: 'HOA002', name: 'Vòng hoa phong lan trắng', ton_kho: 15, gia_ban: 2500000, nhom_san_pham: 'Hoa' },
-            { code: 'DV003', name: 'Quần áo tang lễ (10 bộ)', ton_kho: 50, gia_ban: 800000, nhom_san_pham: 'Vật tư tang lễ' },
-            { code: 'TB004', name: 'Đèn chùm pha lê', ton_kho: 2, gia_ban: 4000000, nhom_san_pham: 'Trang thiết bị' },
-            { code: 'VL005', name: 'Bột ướp xác chuyên dụng', ton_kho: 100, gia_ban: 500000, nhom_san_pham: 'Vật tư y tế' },
+            { code: 'HOM001', name: 'Hòm gỗ sao cao cấp', gia_ban: 15000000, nhom_san_pham: 'Hòm' },
+            { code: 'HOA002', name: 'Vòng hoa phong lan trắng', gia_ban: 2500000, nhom_san_pham: 'Hoa' },
+            { code: 'DV003', name: 'Quần áo tang lễ (10 bộ)', gia_ban: 800000, nhom_san_pham: 'Vật tư tang lễ' },
+            { code: 'TB004', name: 'Đèn chùm pha lê', gia_ban: 4000000, nhom_san_pham: 'Trang thiết bị' },
+            { code: 'VL005', name: 'Bột ướp xác chuyên dụng', gia_ban: 500000, nhom_san_pham: 'Vật tư y tế' },
           ]);
         } else {
-          setProducts(json.products);
+          setProducts(catalogProducts);
         }
       } catch {
         // Mock on error
         setProducts([
-          { code: 'HOM001', name: 'Hòm An Trường (Gỗ tự nhiên)', ton_kho: 12, gia_ban: 18000000, nhom_san_pham: 'Hòm' },
-          { code: 'HOA002', name: 'Lẵng hoa đám tang', ton_kho: 20, gia_ban: 1500000, nhom_san_pham: 'Hoa' },
-          { code: 'ACC001', name: 'Bộ đồ tẩm liệm', ton_kho: 45, gia_ban: 1200000, nhom_san_pham: 'Vật tư tang lễ' },
+          { code: 'HOM001', name: 'Hòm An Trường (Gỗ tự nhiên)', gia_ban: 18000000, nhom_san_pham: 'Hòm' },
+          { code: 'HOA002', name: 'Lẵng hoa đám tang', gia_ban: 1500000, nhom_san_pham: 'Hoa' },
+          { code: 'ACC001', name: 'Bộ đồ tẩm liệm', gia_ban: 1200000, nhom_san_pham: 'Vật tư tang lễ' },
         ]);
       } finally {
         setLoading(false);
@@ -233,7 +239,7 @@ export default function CreateOrderPage() {
                         ) : (
                           <p className="text-xs text-gray-400 italic">Chưa báo giá</p>
                         )}
-                        <p className="text-[10px] text-gray-500 mt-0.5 font-medium">Kho sẵn: {p.ton_kho || 0}</p>
+                        <p className="text-[10px] text-gray-500 mt-0.5 font-medium">Liên hệ Thu mua để xác nhận khả năng cung ứng</p>
                       </div>
                       <button 
                         onClick={() => addToCart(p)}

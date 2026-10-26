@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { triggerReorderEvaluation } from '@/lib/reorder/evaluator';
 import { getUserRole } from '@/config/roles.config';
 
 /**
@@ -198,6 +199,7 @@ export async function PATCH(
       console.error('[goods-receipt PATCH] Notification error:', err);
     }
 
+    triggerReorderEvaluation(supabase, 'goods-receipt-confirm-direct');
     return NextResponse.json({ 
       data: { ...data, status: data.trang_thai, gr_code: data.ma_phieu_nhap },
       message: `Đã liên kết PO ${po.ma_don_hang} thành công.`,
@@ -484,6 +486,7 @@ export async function PATCH(
       console.error('[goods-receipt CONFIRM] Notification error:', err);
     }
 
+    triggerReorderEvaluation(supabase, 'goods-receipt-confirm');
     return NextResponse.json({ 
       data: { ...data, status: data.trang_thai, gr_code: data.ma_phieu_nhap },
       message: 'Xác nhận nhập kho chính thức thành công! Tồn kho đã cập nhật.',
@@ -559,5 +562,6 @@ export async function PATCH(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  triggerReorderEvaluation(supabase, `goods-receipt-${body.status}`);
   return NextResponse.json({ data: { ...data, status: data.trang_thai, gr_code: data.ma_phieu_nhap } });
 }

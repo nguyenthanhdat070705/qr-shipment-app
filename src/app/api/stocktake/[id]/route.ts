@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { triggerReorderEvaluation } from '@/lib/reorder/evaluator';
 
 export const dynamic = 'force-dynamic';
 
@@ -170,6 +171,10 @@ export async function PUT(
       .from('fact_kiem_kho')
       .update(headerUpdate)
       .eq('id', id);
+
+    if (action === 'adjust') {
+      triggerReorderEvaluation(supabase, 'stocktake-adjustment');
+    }
 
     return NextResponse.json({ success: true });
   } catch (err: any) {

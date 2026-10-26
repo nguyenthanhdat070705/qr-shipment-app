@@ -6,7 +6,7 @@ import Image from 'next/image';
 import {
   ArrowLeft, Share2, Printer, ShoppingCart, FileText, Phone,
   Layers, Palette, Heart, Ruler, Compass, Tag, Package, Sparkles,
-  Check, MapPin, Box
+  Check, Box
 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
@@ -39,8 +39,6 @@ interface DetailItem {
   giaBan1: number;
   giaVon: number;
   hinhAnh: string;
-  totalStock: number;
-  stockByWarehouse: { khoName: string; quantity: number }[];
 }
 
 interface RelatedItem {
@@ -181,21 +179,8 @@ export default function CatalogDetailClient({ item, related }: { item: DetailIte
               <p className="text-sm sm:text-base text-stone-500 mb-4 leading-relaxed">{subName}</p>
             )}
 
-            {/* Stock status */}
-            <div className="flex items-center gap-2 mb-5">
-              {item.totalStock > 0 ? (
-                <>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    Còn hàng • {item.totalStock} {item.donVi}
-                  </span>
-                </>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 border border-red-200 text-red-700 text-xs font-bold">
-                  <span className="w-2 h-2 rounded-full bg-red-500" />
-                  Tạm hết
-                </span>
-              )}
+            <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2.5 text-xs font-semibold leading-relaxed text-blue-800">
+              Khả năng cung ứng và phân bổ kho được Thu mua xác nhận theo từng thời điểm.
             </div>
 
             {/* Price box */}
@@ -256,7 +241,7 @@ export default function CatalogDetailClient({ item, related }: { item: DetailIte
         </div>
       </div>
 
-      {/* ── Specs Grid + Inventory + Description ── */}
+      {/* ── Specs Grid + contact ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mt-6">
         {/* Specs */}
         <div className="lg:col-span-2 bg-white border border-stone-200 rounded-2xl p-5 sm:p-6">
@@ -289,39 +274,13 @@ export default function CatalogDetailClient({ item, related }: { item: DetailIte
           )}
         </div>
 
-        {/* Inventory */}
         <div className="bg-white border border-stone-200 rounded-2xl p-5 sm:p-6">
           <h2 className="text-lg sm:text-xl font-extrabold text-stone-900 mb-1 flex items-center gap-2">
             <Package size={18} className="text-emerald-600" />
-            Tồn kho
+            Xác nhận cung ứng
           </h2>
-          <p className="text-xs text-stone-500 mb-4">Phân bố theo kho hàng</p>
+          <p className="text-sm text-stone-500 leading-relaxed mt-3">Sales không xem số lượng hoặc tên kho. Vui lòng liên hệ Thu mua để xác nhận khả năng cung ứng, thời gian giao và kho phù hợp.</p>
 
-          {item.stockByWarehouse.length === 0 ? (
-            <div className="text-center py-8 bg-stone-50 rounded-xl">
-              <Package size={32} className="mx-auto text-stone-300 mb-2" />
-              <p className="text-sm font-semibold text-stone-500">Hiện không có hàng tại kho</p>
-              <p className="text-xs text-stone-400 mt-1">Liên hệ bộ phận thu mua để đặt hàng</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {item.stockByWarehouse.map((w, i) => (
-                <div key={i} className="flex items-center justify-between p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <MapPin size={14} className="text-emerald-600 flex-shrink-0" />
-                    <span className="text-sm font-semibold text-stone-800 truncate">{w.khoName}</span>
-                  </div>
-                  <span className="text-lg font-extrabold text-emerald-700 flex-shrink-0">{w.quantity}</span>
-                </div>
-              ))}
-              <div className="flex items-center justify-between p-3 bg-stone-900 text-white rounded-xl mt-3">
-                <span className="text-xs font-bold uppercase tracking-wider">Tổng cộng</span>
-                <span className="text-xl font-extrabold">{item.totalStock} {item.donVi}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Contact CTA */}
           <div className="mt-5 pt-5 border-t border-stone-100">
             <p className="text-xs font-bold text-stone-700 mb-2">Cần tư vấn thêm?</p>
             <a

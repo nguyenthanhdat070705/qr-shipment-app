@@ -10,14 +10,22 @@ import { getUserRole } from '@/config/roles.config';
 // ── GET: Lấy danh sách sản phẩm ──────────────────────────
 // so_luong is calculated from fact_inventory (source of truth),
 // NOT from dim_hom.so_luong which may be stale.
-export async function GET() {
+export async function GET(req: NextRequest) {
   const supabase = getSupabaseAdmin();
+  const { searchParams } = new URL(req.url);
+  const email = searchParams.get('email') || req.headers.get('x-user-email') || '';
+  const role = email ? getUserRole(email) : 'sales';
+  const canViewInventory = ['admin', 'procurement', 'warehouse', 'operations'].includes(role);
 
   // Fetch products and inventory in parallel
   const [productsRes, inventoryRes, warehousesRes] = await Promise.all([
     supabase.from('dim_hom').select('*').order('ma_hom', { ascending: true }),
-    supabase.from('fact_inventory').select('"Tên hàng hóa", "Số lượng", "Kho"'),
-    supabase.from('dim_kho').select('id').eq('is_active', true),
+    canViewInventory
+      ? supabase.from('fact_inventory').select('"Tên hàng hóa", "Số lượng", "Kho"')
+      : Promise.resolve({ data: [], error: null }),
+    canViewInventory
+      ? supabase.from('dim_kho').select('id').eq('is_active', true)
+      : Promise.resolve({ data: [], error: null }),
   ]);
 
   if (productsRes.error) {
@@ -40,10 +48,9 @@ export async function GET() {
   const data = (productsRes.data || []).map((product: Record<string, unknown>) => {
     const { NCC: _ncc, ...safeProduct } = product;
     void _ncc;
-    return {
-      ...safeProduct,
-      so_luong: qtyMap.get(product.id as string) || 0,
-    };
+    return canViewInventory
+      ? { ...safeProduct, so_luong: qtyMap.get(product.id as string) || 0 }
+      : safeProduct;
   });
 
   return NextResponse.json({ data });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { triggerReorderEvaluation } from '@/lib/reorder/evaluator';
 
 export async function PATCH(
   req: NextRequest,
@@ -85,6 +86,8 @@ export async function PATCH(
       console.warn('[goods-issue] Thiếu inventory_id hoặc so_luong để hoàn kho:', item);
     }
   }
+
+  triggerReorderEvaluation(supabase, 'goods-issue-cancel');
 
   return NextResponse.json({ data });
 }

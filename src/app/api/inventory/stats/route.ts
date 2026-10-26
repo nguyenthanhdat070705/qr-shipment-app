@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { getUserRole } from '@/config/roles.config';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,6 +8,10 @@ export async function GET(req: Request) {
   try {
     const supabase = getSupabaseAdmin();
     const { searchParams } = new URL(req.url);
+    const email = searchParams.get('email') || req.headers.get('x-user-email') || '';
+    if (!email || getUserRole(email) === 'sales') {
+      return NextResponse.json({ error: 'Sales không được tra cứu tồn kho.' }, { status: 403 });
+    }
     const warehouseFilter = searchParams.get('warehouse'); // e.g. "Kho Hàm Long"
 
     const [inventoryRes, homRes, khoRes] = await Promise.all([

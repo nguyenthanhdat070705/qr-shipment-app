@@ -6,6 +6,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { runFullSync } from '@/lib/1office/sync';
+import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { triggerReorderEvaluation } from '@/lib/reorder/evaluator';
 
 export async function GET(req: NextRequest) {
   // Chỉ nhận Bearer token. Bí mật không được truyền qua URL vì URL có thể bị ghi log.
@@ -30,6 +32,7 @@ export async function GET(req: NextRequest) {
     // This cron is dedicated to coffin catalog and stock sync. Other 1Office
     // datasets are intentionally left to their own pipelines.
     const result = await runFullSync({ tables: ['coffin_catalog', 'coffin_inventory'] });
+    triggerReorderEvaluation(getSupabaseAdmin(), '1office-cron-inventory-sync');
 
     const summary = {
       scheduled_at: new Date().toISOString(),

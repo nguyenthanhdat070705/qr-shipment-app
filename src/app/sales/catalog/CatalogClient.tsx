@@ -38,7 +38,6 @@ export interface CatalogItem {
   giaBan1: number;
   giaVon: number;
   hinhAnh: string;
-  tonKho: number;
 }
 
 /* ─────────────────────────────────────
@@ -107,7 +106,6 @@ function CatalogCard({ item, viewMode }: { item: CatalogItem; viewMode: 'grid' |
   const image = getCoffinImage(item.maHom, item.hinhAnh);
   const displayName = item.tenMkt || item.tenTheHien || item.tenHom;
   const subName = item.tenKyThuat || item.tenChuanHoa || '';
-  const isOut = item.tonKho <= 0;
 
   if (viewMode === 'list') {
     return (
@@ -118,9 +116,6 @@ function CatalogCard({ item, viewMode }: { item: CatalogItem; viewMode: 'grid' |
         {/* Image */}
         <div className="relative w-28 h-28 sm:w-36 sm:h-36 flex-shrink-0 bg-gradient-to-br from-stone-100 to-stone-200 rounded-xl overflow-hidden">
           <Image src={image} alt={displayName} fill className="object-contain p-2 group-hover:scale-110 transition-transform duration-500" />
-          {isOut && (
-            <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-500 text-white">HẾT</span>
-          )}
         </div>
 
         {/* Info */}
@@ -170,14 +165,6 @@ function CatalogCard({ item, viewMode }: { item: CatalogItem; viewMode: 'grid' |
         <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-amber-200/20 to-transparent rounded-bl-full pointer-events-none" />
         {/* Badge - tier */}
         <span className={`absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${tier.cls}`}>{tier.label}</span>
-        {/* Badge - stock */}
-        {isOut ? (
-          <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500 text-white border border-red-600">Hết hàng</span>
-        ) : item.tonKho > 0 && (
-          <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-            Còn {item.tonKho}
-          </span>
-        )}
       </div>
 
       {/* Content */}
@@ -228,7 +215,7 @@ export default function CatalogClient({ items }: { items: CatalogItem[] }) {
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState<'code' | 'name' | 'price-asc' | 'price-desc' | 'stock'>('code');
+  const [sortBy, setSortBy] = useState<'code' | 'name' | 'price-asc' | 'price-desc'>('code');
 
   // Filters
   const [fLoaiGo, setFLoaiGo] = useState<string[]>([]);
@@ -236,7 +223,6 @@ export default function CatalogClient({ items }: { items: CatalogItem[] }) {
   const [fTonGiao, setFTonGiao] = useState<string[]>([]);
   const [fGoiDichVu, setFGoiDichVu] = useState<string[]>([]);
   const [fNguonGoc, setFNguonGoc] = useState<string[]>([]);
-  const [fOnlyInStock, setFOnlyInStock] = useState(false);
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
 
@@ -277,7 +263,6 @@ export default function CatalogClient({ items }: { items: CatalogItem[] }) {
       if (fTonGiao.length && !fTonGiao.includes(i.tonGiao)) return false;
       if (fGoiDichVu.length && !fGoiDichVu.includes(i.goiDichVu)) return false;
       if (fNguonGoc.length && !fNguonGoc.includes(i.nguonGoc)) return false;
-      if (fOnlyInStock && i.tonKho <= 0) return false;
       const price = i.giaBan || i.giaBan1;
       if (priceMin && price < Number(priceMin)) return false;
       if (priceMax && price > Number(priceMax)) return false;
@@ -292,22 +277,20 @@ export default function CatalogClient({ items }: { items: CatalogItem[] }) {
           return (a.giaBan || a.giaBan1) - (b.giaBan || b.giaBan1);
         case 'price-desc':
           return (b.giaBan || b.giaBan1) - (a.giaBan || a.giaBan1);
-        case 'stock':
-          return b.tonKho - a.tonKho;
         default:
           return a.maHom.localeCompare(b.maHom);
       }
     });
     return result;
-  }, [items, search, fLoaiGo, fMauSac, fTonGiao, fGoiDichVu, fNguonGoc, fOnlyInStock, priceMin, priceMax, sortBy]);
+  }, [items, search, fLoaiGo, fMauSac, fTonGiao, fGoiDichVu, fNguonGoc, priceMin, priceMax, sortBy]);
 
   const activeFiltersCount =
     fLoaiGo.length + fMauSac.length + fTonGiao.length + fGoiDichVu.length + fNguonGoc.length +
-    (fOnlyInStock ? 1 : 0) + (priceMin ? 1 : 0) + (priceMax ? 1 : 0);
+    (priceMin ? 1 : 0) + (priceMax ? 1 : 0);
 
   const clearAll = () => {
     setFLoaiGo([]); setFMauSac([]); setFTonGiao([]); setFGoiDichVu([]); setFNguonGoc([]);
-    setFOnlyInStock(false); setPriceMin(''); setPriceMax('');
+    setPriceMin(''); setPriceMax('');
   };
 
   return (
@@ -335,10 +318,6 @@ export default function CatalogClient({ items }: { items: CatalogItem[] }) {
             <div className="bg-white/10 backdrop-blur rounded-xl border border-white/15 px-4 py-2">
               <p className="text-[10px] text-amber-200 font-bold uppercase tracking-wider">Tổng SP</p>
               <p className="text-xl sm:text-2xl font-extrabold">{items.length}</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur rounded-xl border border-white/15 px-4 py-2">
-              <p className="text-[10px] text-amber-200 font-bold uppercase tracking-wider">Còn hàng</p>
-              <p className="text-xl sm:text-2xl font-extrabold">{items.filter(i => i.tonKho > 0).length}</p>
             </div>
             <div className="bg-white/10 backdrop-blur rounded-xl border border-white/15 px-4 py-2">
               <p className="text-[10px] text-amber-200 font-bold uppercase tracking-wider">Loại gỗ</p>
@@ -388,7 +367,6 @@ export default function CatalogClient({ items }: { items: CatalogItem[] }) {
                 <option value="name">Tên A→Z</option>
                 <option value="price-asc">Giá thấp → cao</option>
                 <option value="price-desc">Giá cao → thấp</option>
-                <option value="stock">Còn nhiều nhất</option>
               </select>
               <ArrowUpDown size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
               <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
@@ -447,16 +425,6 @@ export default function CatalogClient({ items }: { items: CatalogItem[] }) {
             {/* Quick toggles */}
             <div className="flex flex-wrap gap-2 items-center">
               <span className="text-xs font-bold text-stone-500 uppercase tracking-wider mr-1">Nhanh:</span>
-              <button
-                onClick={() => setFOnlyInStock(v => !v)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                  fOnlyInStock
-                    ? 'bg-emerald-600 text-white border-emerald-600'
-                    : 'bg-white text-stone-700 border-stone-200 hover:border-emerald-400'
-                }`}
-              >
-                {fOnlyInStock && '✓ '}Chỉ còn hàng
-              </button>
               {/* Price range */}
               <div className="inline-flex items-center gap-2 text-xs">
                 <input
@@ -545,7 +513,6 @@ export default function CatalogClient({ items }: { items: CatalogItem[] }) {
           {fTonGiao.map(v => <ActivePill key={`r-${v}`} label={v} icon={<Heart size={11} />} onRemove={() => toggle(setFTonGiao, v)} />)}
           {fGoiDichVu.map(v => <ActivePill key={`t-${v}`} label={v} icon={<Tag size={11} />} onRemove={() => toggle(setFGoiDichVu, v)} />)}
           {fNguonGoc.map(v => <ActivePill key={`o-${v}`} label={v} icon={<Compass size={11} />} onRemove={() => toggle(setFNguonGoc, v)} />)}
-          {fOnlyInStock && <ActivePill label="Còn hàng" icon={<Package size={11} />} onRemove={() => setFOnlyInStock(false)} />}
           {priceMin && <ActivePill label={`≥ ${Number(priceMin).toLocaleString('vi-VN')}đ`} onRemove={() => setPriceMin('')} />}
           {priceMax && <ActivePill label={`≤ ${Number(priceMax).toLocaleString('vi-VN')}đ`} onRemove={() => setPriceMax('')} />}
           <button onClick={clearAll} className="text-xs font-bold text-red-600 hover:text-red-800 underline underline-offset-2 ml-1">Xóa hết</button>

@@ -134,7 +134,7 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
         iconBg: 'bg-pink-500/15',
         section: 'Chuỗi cung ứng',
       } as MenuItem,
-    ] : [{
+    ] : userRole === 'sales' ? [] : [{
       icon: <Warehouse size={18} />,
       label: 'Trung tâm Kho Vận',
       desc: 'Quản lý kho & vận hành',
@@ -143,6 +143,16 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
       iconBg: 'bg-emerald-500/15',
       section: 'Chuỗi cung ứng',
     } as MenuItem]),
+
+    ...(userRole === 'admin' || procurementRole ? [{
+      icon: <Bell size={18} />,
+      label: 'Reorder Point',
+      desc: 'Cảnh báo tồn thấp và file ngưỡng hằng tháng',
+      href: '/procurement/reorder-points',
+      color: 'text-red-400',
+      iconBg: 'bg-red-500/15',
+      section: 'Chuỗi cung ứng',
+    } as MenuItem] : []),
 
     /* ── Zalo Automation (admin) ── */
     ...(userRole === 'admin' ? [{
@@ -627,17 +637,23 @@ function TopBar({
                         }`}
                         onClick={() => {
                           if (n.reference_id) {
-                            router.push(`/goods-receipt/${n.reference_id}`);
+                            if (n.type === 'reorder_alert' || n.type === 'reorder_reminder') {
+                              router.push(`/procurement/reorder-points?alert=${encodeURIComponent(n.reference_id)}`);
+                            } else {
+                              router.push(`/goods-receipt/${n.reference_id}`);
+                            }
                             setNotifOpen(false);
                           }
                         }}
                       >
                         {/* Icon */}
                         <div className={`flex h-9 w-9 items-center justify-center rounded-xl flex-shrink-0 ${
-                          n.type === 'temporary_receipt' ? 'bg-amber-100' : 'bg-blue-100'
+                          n.type === 'temporary_receipt' ? 'bg-amber-100' : n.type === 'reorder_alert' || n.type === 'reorder_reminder' ? 'bg-red-100' : 'bg-blue-100'
                         }`}>
                           {n.type === 'temporary_receipt' 
                             ? <Package size={16} className="text-amber-600" />
+                            : n.type === 'reorder_alert' || n.type === 'reorder_reminder'
+                              ? <Bell size={16} className="text-red-600" />
                             : <PackageCheck size={16} className="text-blue-600" />
                           }
                         </div>

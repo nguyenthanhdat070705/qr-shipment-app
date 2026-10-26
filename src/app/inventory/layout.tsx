@@ -1,7 +1,8 @@
 'use client';
 
 import AuthGuard from '@/components/AuthGuard';
+import RoleGuard from '@/components/RoleGuard';
 
 export default function InventoryLayout({ children }: { children: React.ReactNode }) {
-  return <AuthGuard>{children}</AuthGuard>;
+  return <AuthGuard><RoleGuard allowedRoles={['admin', 'procurement', 'warehouse', 'operations']}>{children}</RoleGuard></AuthGuard>;
 }

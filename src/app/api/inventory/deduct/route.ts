@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { triggerReorderEvaluation } from '@/lib/reorder/evaluator';
 
 /**
  * POST /api/inventory/deduct
@@ -89,6 +90,8 @@ export async function POST(req: NextRequest) {
         error: 'Lỗi cập nhật tồn kho (Database): ' + (rpcErr?.message || 'Lỗi không xác định')
       }, { status: 500 });
     }
+
+    triggerReorderEvaluation(supabase, 'inventory-deduct');
 
     return NextResponse.json({
       success: true,

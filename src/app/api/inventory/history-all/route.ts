@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { getUserRole } from '@/config/roles.config';
 
 export const dynamic = 'force-dynamic'; // Trigger hot reload
 
@@ -7,6 +8,10 @@ export async function GET(request: Request) {
   try {
     const supabase = getSupabaseAdmin();
     const { searchParams } = new URL(request.url);
+    const email = searchParams.get('email') || request.headers.get('x-user-email') || '';
+    if (!email || getUserRole(email) === 'sales') {
+      return NextResponse.json({ error: 'Sales không được tra cứu lịch sử tồn kho.' }, { status: 403 });
+    }
     const warehouseFilter = searchParams.get('warehouse');
     const limit = parseInt(searchParams.get('limit') || '50', 10);
 

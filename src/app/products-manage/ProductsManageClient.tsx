@@ -142,7 +142,9 @@ export default function ProductsManagePage() {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/products');
+      let email = '';
+      try { email = JSON.parse(localStorage.getItem('auth_user') || '{}').email || ''; } catch { /* RoleGuard handles invalid auth state. */ }
+      const res = await fetch(`/api/products?email=${encodeURIComponent(email)}`);
       const json = await res.json();
       setProducts(json.data || []);
     } catch {

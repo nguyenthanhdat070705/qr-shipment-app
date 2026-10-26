@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { triggerReorderEvaluation } from '@/lib/reorder/evaluator';
 
 /**
  * POST /api/goods-issue
@@ -147,6 +148,8 @@ export async function POST(req: NextRequest) {
     } catch (e: any) {
       console.warn('[goods-issue] notification skipped:', e.message);
     }
+
+    triggerReorderEvaluation(supabase, 'goods-issue');
 
     return NextResponse.json(
       {
