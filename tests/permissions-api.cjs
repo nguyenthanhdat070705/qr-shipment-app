@@ -7,6 +7,7 @@ const users = [
   { id: 'a', email: 'admin@blackstone.com.vn', app_metadata: {} },
   { id: 's', email: 'sales@blackstone.com.vn', app_metadata: {} },
   { id: 'x', email: 'admin@example.com', app_metadata: {} },
+  { id: 'o', email: 'bophanvanhanh@blackstone.com.vn', app_metadata: {} },
 ];
 const mock = {
   auth: {
@@ -34,6 +35,7 @@ function load(path) {
     if (name === '@/config/roles.config') return load('src/config/roles.config.ts');
     if (name === '@/lib/serverAuth') return load('src/lib/serverAuth.ts');
     if (name === '@/lib/supplierAuth') return load('src/lib/supplierAuth.ts');
+    if (name === '@/lib/reorder/access') return load('src/lib/reorder/access.ts');
     if (name === '@/lib/supabase/server') return { getSupabaseAdmin: () => mock };
     return require(name);
   };
@@ -83,5 +85,28 @@ function request(token, body) { return { headers: new Headers(token ? { authoriz
   assert.equal((await suppliersImport.POST(request('s', { rows: [] }))).status, 400);
   assert.equal((await proxy.proxy(api('/api/membership/lookup-sheet', null))).status, 200);
   assert.equal((await proxy.proxy(api('/api/operations', 's', 'POST'))).status, 403);
+  // Equal explicit permissions must behave equally across job roles.
+  const shared = { ...users[1].app_metadata.permissions, canViewInventory: true, canMembership: true, canCreatePO: true, canViewSuppliers: true };
+  users[1].app_metadata.permissions = { ...shared };
+  users[3].app_metadata.permissions = { ...shared };
+  for (const path of ['/api/inventory', '/api/membership/list', '/api/reorder-points', '/api/suppliers']) {
+    const salesResult = await proxy.proxy(api(path, 's'));
+    const operationsResult = await proxy.proxy(api(path, 'o'));
+    assert.equal(salesResult.status, 200, `sales denied ${path}`);
+    assert.equal(operationsResult.status, salesResult.status, `unequal access to ${path}`);
+    assert.equal(operationsResult.options.request.headers.get('x-can-view-suppliers'), salesResult.options.request.headers.get('x-can-view-suppliers'));
+  }
+  const { authorizeReorder } = load('src/lib/reorder/access.ts');
+  assert.equal((await authorizeReorder(request('s'))).email, users[1].email);
+  assert.equal((await authorizeReorder(request('o'))).email, users[3].email);
+  users[1].app_metadata.permissions.canCreatePO = false;
+  users[3].app_metadata.permissions.canCreatePO = false;
+  assert.equal((await authorizeReorder(request('s'))).error.status, 403);
+  assert.equal((await authorizeReorder(request('o'))).error.status, 403);
+  assert.equal((await authorizeReorder(request(null, { email: users[0].email }))).error.status, 401);
+  const warehouses = load('src/app/api/warehouses/route.ts');
+  assert.equal((await warehouses.POST(request('s', { created_by: users[0].email }))).status, 403);
+  assert.equal((await warehouses.PUT(request('s', { updated_by: users[0].email }))).status, 403);
+  assert.equal((await warehouses.DELETE(request('s', { email: users[0].email }))).status, 403);
   console.log('Permission API mock checks passed: authentication, admin-only access, validation, save and reload.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

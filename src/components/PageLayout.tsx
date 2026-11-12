@@ -45,7 +45,6 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
   const [userEmail, setUserEmail] = useState('');
   const [userRole,  setUserRole]  = useState<UserRole>('sales');
   const [permissions, setPermissions] = useState<RolePermissions | null>(null);
-  const [permissionsConfigured, setPermissionsConfigured] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -57,7 +56,6 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
           setUserEmail(u.email || '');
           setUserRole(getUserRole(u.email || ''));
           setPermissions(u.permissions || null);
-          setPermissionsConfigured(u.permissionsConfigured === true);
         }
       } catch { setPermissions(null); }
     };
@@ -76,9 +74,6 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
     router.push('/login');
   };
 
-  const procurementRole = userRole === 'procurement';
-  const operationsRole  = userRole === 'operations';
-  const warehouseRole   = userRole === 'warehouse';
   const vipAdmin        = isVIPAdmin(userEmail);
 
   const allMenuItems: MenuItem[] = [
@@ -101,7 +96,7 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
       iconBg: 'bg-[#d4af37]/15',
       section: 'Quản trị',
     } as MenuItem] : []),
-    ...(userRole === 'sales' || userRole === 'admin' ? [{
+    ...(permissions?.canViewProducts || userRole === 'sales' || userRole === 'admin' ? [{
       icon: <ShoppingCart size={18} />,
       label: 'Trung tâm Bán Hàng',
       desc: 'Kho quản lý đơn & gói sản phẩm',
@@ -111,7 +106,7 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
       section: 'Bán Hàng',
     } as MenuItem] : []),
     /* ── Membership & CSKH (chỉ sales + admin) ── */
-    ...(userRole === 'admin' || (permissionsConfigured && permissions?.canMembership) ? [{
+    ...(permissions?.canMembership ? [{
       icon: <Crown size={18} />,
       label: 'Trung tâm CSKH Membership',
       desc: 'Hội viên & Chăm sóc khách hàng',
@@ -123,26 +118,18 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
     } as MenuItem] : []),
 
     /* ── Core SCM Flow ── */
-    ...(warehouseRole ? [
+    ...((permissions?.canManageReceipt || permissions?.canReceiveGoods || permissions?.canExport || permissions?.canViewInventory) ? [
       {
         icon: <PackageCheck size={18} />,
         label: 'Quản lý xuất nhập',
         desc: 'Tổng hợp dữ liệu xuất nhập kho',
-        href: '/inout-management',
+        href: permissions?.canManageReceipt || permissions?.canReceiveGoods ? '/inout-management?tab=import' : permissions?.canExport ? '/inout-management?tab=export' : '/inout-management?tab=inventory',
         color: 'text-blue-400',
         iconBg: 'bg-blue-500/15',
         section: 'Chuỗi cung ứng',
       } as MenuItem,
-      {
-        icon: <ClipboardCheck size={18} />,
-        label: 'Kiểm kho',
-        desc: 'Kiểm kê & đối chiếu tồn kho',
-        href: '/stocktake',
-        color: 'text-pink-400',
-        iconBg: 'bg-pink-500/15',
-        section: 'Chuỗi cung ứng',
-      } as MenuItem,
-    ] : userRole === 'sales' && !(permissions?.canCreatePO || permissions?.canManageReceipt || permissions?.canReceiveGoods || permissions?.canExport || permissions?.canManageDelivery) ? [] : [{
+    ] : []),
+    ...((permissions?.canCreatePO || permissions?.canManageReceipt || permissions?.canReceiveGoods || permissions?.canExport || permissions?.canViewInventory) ? [{
       icon: <Warehouse size={18} />,
       label: 'Trung tâm Kho Vận',
       desc: 'Quản lý kho & vận hành',
@@ -150,15 +137,15 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
       color: 'text-emerald-400',
       iconBg: 'bg-emerald-500/15',
       section: 'Chuỗi cung ứng',
-    } as MenuItem]),
+    } as MenuItem] : []),
 
-    ...(warehouseRole && permissions?.canCreatePO ? [{
-      icon: <Warehouse size={18} />,
-      label: 'Trung tâm Kho Vận',
-      desc: 'Quản lý kho & vận hành',
-      href: '/warehouse-hub',
-      color: 'text-emerald-400',
-      iconBg: 'bg-emerald-500/15',
+    ...(userRole === 'warehouse' ? [{
+      icon: <ClipboardCheck size={18} />,
+      label: 'Kiểm kho',
+      desc: 'Kiểm kê & đối chiếu tồn kho',
+      href: '/stocktake',
+      color: 'text-pink-400',
+      iconBg: 'bg-pink-500/15',
       section: 'Chuỗi cung ứng',
     } as MenuItem] : []),
 
@@ -173,7 +160,7 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
       section: 'Chuỗi cung ứng',
     } as MenuItem] : []),
 
-    ...(userRole === 'admin' || procurementRole ? [{
+    ...(permissions?.canCreatePO ? [{
       icon: <Bell size={18} />,
       label: 'Reorder Point',
       desc: 'Cảnh báo tồn thấp và file ngưỡng hằng tháng',

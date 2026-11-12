@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { canManageReorder, getRequestEmail } from '@/lib/reorder/access';
+import { authorizeReorder } from '@/lib/reorder/access';
 import { evaluateReorderAlerts } from '@/lib/reorder/evaluator';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const email = getRequestEmail(req, req.nextUrl.searchParams.get('email'));
-  if (!canManageReorder(email)) {
-    return NextResponse.json({ error: 'Chỉ Admin và Thu mua được xem quản lý reorder point.' }, { status: 403 });
-  }
+  const auth = await authorizeReorder(req);
+  if (auth.error) return auth.error;
 
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
@@ -24,13 +22,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const email = getRequestEmail(req);
-  if (!canManageReorder(email)) {
-    return NextResponse.json({ error: 'Chỉ Admin và Thu mua được chạy đánh giá reorder point.' }, { status: 403 });
-  }
+  const auth = await authorizeReorder(req);
+  if (auth.error) return auth.error;
 
   try {
-    const summary = await evaluateReorderAlerts({ senderEmail: email || 'system' });
+    const summary = await evaluateReorderAlerts({ senderEmail: auth.email || 'system' });
     return NextResponse.json({ success: true, summary });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

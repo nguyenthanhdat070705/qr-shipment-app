@@ -27,9 +27,9 @@ export default function RoleGuard({
         const user = raw ? JSON.parse(raw) : null;
         const role = getUserRole(user?.email || '');
         const hasRequired = !requiredPermissions || requiredPermissions.every(key => user?.permissions?.[key] === true);
-        // An explicit assignment may grant access beyond the legacy role list.
-        // Existing accounts without an assignment retain their old visibility.
-        setAllowed(Boolean(user && hasRequired && (allowedRoles.includes(role) || (requiredPermissions && user.permissionsConfigured))));
+        // Named permissions have the same effect for every role. Legacy pages
+        // without a corresponding permission retain their role restriction.
+        setAllowed(Boolean(user && hasRequired && (requiredPermissions ? true : allowedRoles.includes(role))));
       } catch {
         router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
       } finally {

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { getEffectivePermissions, getUserRole } from '@/config/roles.config';
+import { getEffectivePermissions } from '@/config/roles.config';
 import { authenticateRequest } from '@/lib/serverAuth';
+import { inventoryWarehouseFilter, warehouseMatches } from '@/lib/inventoryWarehouse';
 
 /**
  * GET  /api/products       → Lấy danh sách sản phẩm (dim_hom)
@@ -16,15 +17,16 @@ export async function GET(req: NextRequest) {
   // Public catalog requests retain their existing access, but only a verified
   // session may receive inventory figures; query parameters are not identity.
   let canViewInventory = false;
+  let warehouseFilter: string | null = null;
   if (req.headers.has('authorization')) {
     const auth = await authenticateRequest(req);
     if (auth.error) return auth.error;
     const user = auth.user!;
-    const role = getUserRole(user.email || '');
-    const configured = !!user.app_metadata.permissions && typeof user.app_metadata.permissions === 'object' && !Array.isArray(user.app_metadata.permissions);
-    canViewInventory = configured
-      ? getEffectivePermissions(user.email || '', user.app_metadata.permissions).canViewInventory
-      : ['admin', 'procurement', 'warehouse', 'operations'].includes(role);
+    canViewInventory = getEffectivePermissions(user.email || '', user.app_metadata.permissions).canViewInventory;
+    if (canViewInventory) {
+      try { warehouseFilter = await inventoryWarehouseFilter(supabase, user.email || ''); }
+      catch { return NextResponse.json({ error: 'Không thể xác định kho của tài khoản.' }, { status: 503 }); }
+    }
   }
 
   // Fetch products and inventory in parallel
@@ -34,16 +36,19 @@ export async function GET(req: NextRequest) {
       ? supabase.from('fact_inventory').select('"Tên hàng hóa", "Số lượng", "Kho"')
       : Promise.resolve({ data: [], error: null }),
     canViewInventory
-      ? supabase.from('dim_kho').select('id').eq('is_active', true)
+      ? supabase.from('dim_kho').select('id, ten_kho').eq('is_active', true)
       : Promise.resolve({ data: [], error: null }),
   ]);
 
   if (productsRes.error) {
     return NextResponse.json({ error: productsRes.error.message }, { status: 500 });
   }
+  if (inventoryRes.error || warehousesRes.error) return NextResponse.json({ error: 'Không tải được tồn kho.' }, { status: 500 });
 
   // Build a map: product_id → total quantity across all warehouses
-  const activeWarehouseIds = new Set((warehousesRes.data || []).map((warehouse: { id: string }) => warehouse.id));
+  const activeWarehouseIds = new Set((warehousesRes.data || [])
+    .filter((warehouse: { id: string; ten_kho: string }) => warehouseMatches(warehouse.ten_kho || '', warehouseFilter))
+    .map((warehouse: { id: string }) => warehouse.id));
   const qtyMap = new Map<string, number>();
   if (inventoryRes.data) {
     for (const row of inventoryRes.data) {

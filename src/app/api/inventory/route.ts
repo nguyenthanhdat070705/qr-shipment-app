@@ -1,5 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/serverAuth';
+import { getEffectivePermissions } from '@/config/roles.config';
+import { inventoryWarehouseFilter, warehouseMatches } from '@/lib/inventoryWarehouse';
 
 function getCoffinImage(productCode: string): string {
   if (productCode === '2AQ0106' || productCode === '2AQ0129') return '/coffin-3.png';
@@ -37,8 +40,17 @@ interface DimKho {
   ten_kho: string;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const supabase = getSupabaseAdmin();
+  const auth = await authenticateRequest(req);
+  if (auth.error) return auth.error;
+  const user = auth.user!;
+  if (!getEffectivePermissions(user.email || '', user.app_metadata.permissions).canViewInventory) {
+    return NextResponse.json({ error: 'Bạn không có quyền xem tồn kho.' }, { status: 403 });
+  }
+  let warehouseFilter: string | null;
+  try { warehouseFilter = await inventoryWarehouseFilter(supabase, user.email || ''); }
+  catch { return NextResponse.json({ error: 'Không thể xác định kho của tài khoản.' }, { status: 503 }); }
 
   // Fetch stock, product, and warehouse data. Supplier data is intentionally excluded from this API.
   const [inventoryRes, homRes, khoRes] = await Promise.all([
@@ -50,6 +62,9 @@ export async function GET() {
   if (inventoryRes.error) {
     return NextResponse.json({ error: inventoryRes.error.message }, { status: 500 });
   }
+  if (homRes.error || khoRes.error) {
+    return NextResponse.json({ error: 'Không tải được danh sách sản phẩm hoặc kho.' }, { status: 500 });
+  }
 
   // Build lookup maps
   const homMap = new Map<string, DimHom>();
@@ -59,7 +74,7 @@ export async function GET() {
 
   const khoMap = new Map<string, DimKho>();
   for (const k of (khoRes.data || []) as DimKho[]) {
-    khoMap.set(k.id, k);
+    if (warehouseMatches(k.ten_kho || '', warehouseFilter)) khoMap.set(k.id, k);
   }
 
   const activeWarehouseIds = new Set(khoMap.keys());

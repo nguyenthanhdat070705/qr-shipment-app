@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:permissions": "node tests/permissions-api.cjs && node tests/client-session.cjs"
+    "test:permissions": "node tests/permissions-api.cjs && node tests/client-session.cjs && node tests/catalog-inventory.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.99.2",

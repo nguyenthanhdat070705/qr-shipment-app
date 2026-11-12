@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { getUserRole } from '@/config/roles.config';
+import { authenticateRequest } from '@/lib/serverAuth';
 
 /**
  * GET    /api/warehouses → Lấy danh sách kho
@@ -24,14 +24,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await authenticateRequest(req, true);
+  if (auth.error) return auth.error;
   const supabase = getSupabaseAdmin();
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
-
-  const role = getUserRole((body.created_by as string) || '');
-  if (role !== 'admin') {
-    return NextResponse.json({ error: 'Chỉ Admin mới có quyền tạo kho.' }, { status: 403 });
-  }
 
   const { ma_kho, ten_kho } = body;
   if (!ma_kho || !ten_kho) {
@@ -59,14 +56,11 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  const auth = await authenticateRequest(req, true);
+  if (auth.error) return auth.error;
   const supabase = getSupabaseAdmin();
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
-
-  const role = getUserRole((body.updated_by as string) || '');
-  if (role !== 'admin') {
-    return NextResponse.json({ error: 'Chỉ Admin mới có quyền chỉnh sửa kho.' }, { status: 403 });
-  }
 
   const { id, ...updateFields } = body;
   if (!id) return NextResponse.json({ error: 'ID kho là bắt buộc.' }, { status: 400 });
@@ -82,14 +76,11 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const auth = await authenticateRequest(req, true);
+  if (auth.error) return auth.error;
   const supabase = getSupabaseAdmin();
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
-
-  const role = getUserRole((body.email as string) || '');
-  if (role !== 'admin') {
-    return NextResponse.json({ error: 'Chỉ Admin mới có quyền xóa kho.' }, { status: 403 });
-  }
 
   const id = body.id as string;
   if (!id) return NextResponse.json({ error: 'ID kho là bắt buộc.' }, { status: 400 });

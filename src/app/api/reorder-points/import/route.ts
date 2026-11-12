@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { canManageReorder, getRequestEmail } from '@/lib/reorder/access';
+import { authorizeReorder } from '@/lib/reorder/access';
 import { evaluateReorderAlerts } from '@/lib/reorder/evaluator';
 import { hashRows, normalizeEffectiveMonth, validateReorderRows } from '@/lib/reorder/validation';
 import type { ReorderImportRow } from '@/lib/reorder/types';
@@ -17,6 +17,8 @@ interface ImportBody {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await authorizeReorder(req);
+  if (auth.error) return auth.error;
   let body: ImportBody;
   try {
     body = await req.json();
@@ -24,10 +26,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 });
   }
 
-  const email = getRequestEmail(req, body.email);
-  if (!canManageReorder(email)) {
-    return NextResponse.json({ error: 'Chỉ Admin và Thu mua được import reorder point.' }, { status: 403 });
-  }
+  const email = auth.email;
 
   if (!Array.isArray(body.rows) || body.rows.length === 0) {
     return NextResponse.json({ error: 'File không có dòng dữ liệu reorder point.' }, { status: 400 });

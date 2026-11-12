@@ -6,23 +6,27 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import PageLayout from "@/components/PageLayout";
-import { getUserRole, UserRole } from "@/config/roles.config";
+import { getUserRole, type UserRole, type RolePermissions } from "@/config/roles.config";
 
 export default function SalesHubPage() {
   const [userRole, setUserRole] = useState<UserRole>("sales");
+  const [permissions, setPermissions] = useState<RolePermissions | null>(null);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("auth_user");
-      if (raw) {
-        const u = JSON.parse(raw);
+    const readUser = () => {
+      try {
+        const u = JSON.parse(localStorage.getItem("auth_user") || "{}");
         setUserRole(getUserRole(u.email || ""));
-      }
-    } catch { /* ignore */ }
+        setPermissions(u.permissions || null);
+      } catch { setPermissions(null); }
+    };
+    readUser();
+    window.addEventListener('auth-user-updated', readUser);
+    return () => window.removeEventListener('auth-user-updated', readUser);
   }, []);
 
   const cards = [
-    ...(userRole === "sales" || userRole === "admin" ? [{
+    ...(permissions?.canViewProducts ? [{
       id: "catalog",
       title: "Catalog Hòm Sản phẩm",
       icon: <BookOpen size={32} className="text-white" />,

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
+import { useCatalogInventory } from '@/lib/useCatalogInventory';
 
 interface DetailItem {
   id: string;
@@ -84,6 +85,8 @@ function SpecRow({ icon, label, value }: { icon: React.ReactNode; label: string;
 
 export default function CatalogDetailClient({ item, related }: { item: DetailItem; related: RelatedItem[] }) {
   const [copied, setCopied] = useState(false);
+  const { inventory, status: inventoryStatus } = useCatalogInventory();
+  const stock = inventory[item.maHom];
   const image = getCoffinImage(item.maHom, item.hinhAnh);
   const displayName = item.tenMkt || item.tenTheHien || item.tenHom;
   const subName = item.tenKyThuat || item.tenChuanHoa || '';
@@ -279,7 +282,14 @@ export default function CatalogDetailClient({ item, related }: { item: DetailIte
             <Package size={18} className="text-emerald-600" />
             Xác nhận cung ứng
           </h2>
-          <p className="text-sm text-stone-500 leading-relaxed mt-3">Sales không xem số lượng hoặc tên kho. Vui lòng liên hệ Thu mua để xác nhận khả năng cung ứng, thời gian giao và kho phù hợp.</p>
+          {inventoryStatus === 'loading' && <p className="text-sm text-stone-500 mt-3">Đang tải tồn kho...</p>}
+          {inventoryStatus === 'error' && <p className="text-sm text-red-700 mt-3" role="alert">Không tải được tồn kho. Vui lòng thử tải lại trang.</p>}
+          {inventoryStatus === 'ready' && stock && <div className="mt-3 space-y-2 text-sm text-stone-700">
+            <p className="font-bold">Tổng tồn: {stock.tonKho} · Khả dụng: {stock.khaDung}</p>
+            {stock.warehouseBreakdown.map((warehouse, index) => <p key={`${warehouse.name}-${index}`}>{warehouse.name}: tồn {warehouse.qty}, khả dụng {warehouse.avail}</p>)}
+          </div>}
+          {inventoryStatus === 'ready' && !stock && <p className="text-sm text-stone-500 mt-3">Chưa có dữ liệu tồn kho cho sản phẩm này.</p>}
+          {inventoryStatus === 'hidden' && <p className="text-sm text-stone-500 mt-3">Liên hệ quản trị viên nếu bạn cần quyền xem tồn kho.</p>}
 
           <div className="mt-5 pt-5 border-t border-stone-100">
             <p className="text-xs font-bold text-stone-700 mb-2">Cần tư vấn thêm?</p>

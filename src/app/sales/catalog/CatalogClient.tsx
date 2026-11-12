@@ -9,6 +9,7 @@ import {
   Compass, Heart, Ruler, Eye, ChevronDown, Printer
 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
+import { useCatalogInventory, type CatalogInventory } from '@/lib/useCatalogInventory';
 
 /* ─────────────────────────────────────
    Types
@@ -101,7 +102,7 @@ function FilterChip({
 /* ─────────────────────────────────────
    Catalog Card
 ───────────────────────────────────── */
-function CatalogCard({ item, viewMode }: { item: CatalogItem; viewMode: 'grid' | 'list' }) {
+function CatalogCard({ item, viewMode, stock }: { item: CatalogItem; viewMode: 'grid' | 'list'; stock?: CatalogInventory }) {
   const tier = tierLabel(item.goiDichVu);
   const image = getCoffinImage(item.maHom, item.hinhAnh);
   const displayName = item.tenMkt || item.tenTheHien || item.tenHom;
@@ -135,6 +136,7 @@ function CatalogCard({ item, viewMode }: { item: CatalogItem; viewMode: 'grid' |
             {item.mauSac && <span className="inline-flex items-center gap-1"><Palette size={11} /> {item.mauSac}</span>}
             {item.tonGiao && <span className="inline-flex items-center gap-1"><Heart size={11} /> {item.tonGiao}</span>}
             {item.kichThuoc && <span className="inline-flex items-center gap-1"><Ruler size={11} /> {item.kichThuoc}</span>}
+            {stock && <span className="font-bold text-emerald-700">Khả dụng: {stock.khaDung}</span>}
           </div>
 
           {/* Footer */}
@@ -174,6 +176,7 @@ function CatalogCard({ item, viewMode }: { item: CatalogItem; viewMode: 'grid' |
           {displayName}
         </h3>
         {subName && <p className="text-[11px] text-stone-500 line-clamp-1 mb-2">{subName}</p>}
+        {stock && <p className="text-xs font-bold text-emerald-700 mb-2">Khả dụng: {stock.khaDung}</p>}
 
         {/* Specs grid */}
         <div className="grid grid-cols-2 gap-x-2 gap-y-1 mt-1 text-[11px] text-stone-600 mb-3">
@@ -212,6 +215,7 @@ function CatalogCard({ item, viewMode }: { item: CatalogItem; viewMode: 'grid' |
    Main Client
 ───────────────────────────────────── */
 export default function CatalogClient({ items }: { items: CatalogItem[] }) {
+  const { inventory, status: inventoryStatus } = useCatalogInventory();
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
@@ -525,6 +529,7 @@ export default function CatalogClient({ items }: { items: CatalogItem[] }) {
           Hiển thị <span className="font-bold text-stone-900">{filtered.length}</span> / {items.length} sản phẩm
         </p>
       </div>
+      {inventoryStatus === 'error' && <p className="mb-4 text-sm text-red-700" role="alert">Không tải được số lượng tồn kho. Vui lòng thử tải lại trang.</p>}
 
       {/* ── Grid / List ── */}
       {filtered.length === 0 ? (
@@ -540,11 +545,11 @@ export default function CatalogClient({ items }: { items: CatalogItem[] }) {
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-5 pb-8">
-          {filtered.map(item => <CatalogCard key={item.id} item={item} viewMode="grid" />)}
+          {filtered.map(item => <CatalogCard key={item.id} item={item} viewMode="grid" stock={inventory[item.maHom]} />)}
         </div>
       ) : (
         <div className="flex flex-col gap-3 pb-8">
-          {filtered.map(item => <CatalogCard key={item.id} item={item} viewMode="list" />)}
+          {filtered.map(item => <CatalogCard key={item.id} item={item} viewMode="list" stock={inventory[item.maHom]} />)}
         </div>
       )}
     </PageLayout>

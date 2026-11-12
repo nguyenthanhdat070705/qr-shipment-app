@@ -150,7 +150,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       canExport: false,
       canManageDelivery: false,
       canHold: true,
-      canViewInventory: false,
+      canViewInventory: true,
       canViewProducts: true,
       canMembership: true,
       canViewSuppliers: false,

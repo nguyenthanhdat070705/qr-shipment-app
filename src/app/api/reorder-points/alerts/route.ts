@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { canManageReorder, getRequestEmail } from '@/lib/reorder/access';
+import { authorizeReorder } from '@/lib/reorder/access';
 import { evaluateReorderAlerts } from '@/lib/reorder/evaluator';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const email = getRequestEmail(req, req.nextUrl.searchParams.get('email'));
-  if (!canManageReorder(email)) {
-    return NextResponse.json({ error: 'Chỉ Admin và Thu mua được xem cảnh báo reorder point.' }, { status: 403 });
-  }
+  const auth = await authorizeReorder(req);
+  if (auth.error) return auth.error;
 
   const supabase = getSupabaseAdmin();
   try {
-    const evaluation = await evaluateReorderAlerts({ supabase, senderEmail: email });
+    const evaluation = await evaluateReorderAlerts({ supabase, senderEmail: auth.email });
     const { data: sets, error: setError } = await supabase
       .from('reorder_point_sets')
       .select('id, effective_month, source_file_name, uploaded_by, status, row_count, created_at, activated_at')
