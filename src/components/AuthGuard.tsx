@@ -28,17 +28,29 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        let response = await fetch('/api/auth/me', {
-          headers: { Authorization: `Bearer ${token}` },
-          cache: 'no-store',
+        let checkedToken = token;
+        const checkToken = (accessToken: string) => fetch('/api/auth/me', {
+          headers: { Authorization: `Bearer ${accessToken}` }, cache: 'no-store',
         });
-        if (response.status === 401) {
-          const renewedToken = await refreshSession();
-          if (renewedToken) response = await fetch('/api/auth/me', {
-            headers: { Authorization: `Bearer ${renewedToken}` }, cache: 'no-store',
-          });
+        let response = await checkToken(checkedToken);
+        // Another tab may have refreshed or replaced the session while this request ran.
+        const latestToken = localStorage.getItem('auth_token');
+        if (response.status === 401 && latestToken && latestToken !== checkedToken) {
+          checkedToken = latestToken;
+          response = await checkToken(checkedToken);
         }
         if (response.status === 401) {
+          const renewedToken = await refreshSession();
+          if (renewedToken) {
+            checkedToken = renewedToken;
+            response = await checkToken(checkedToken);
+          }
+        }
+        if (response.status === 401) {
+          if (localStorage.getItem('auth_token') !== checkedToken) {
+            if (!cancelled) void refreshUser();
+            return;
+          }
           localStorage.removeItem('auth_token');
           localStorage.removeItem('auth_refresh_token');
           localStorage.removeItem('auth_user');
@@ -50,6 +62,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         const data = await response.json();
         if (!data.user || !data.user.permissions) throw new Error('Không thể kiểm tra quyền tài khoản.');
         if (cancelled) return;
+        if (localStorage.getItem('auth_token') !== checkedToken) {
+          void refreshUser();
+          return;
+        }
         let previous = {};
         try { previous = JSON.parse(localStorage.getItem('auth_user') || '{}'); } catch { /* ignore invalid cache */ }
         localStorage.setItem('auth_user', JSON.stringify({ ...previous, ...data.user }));

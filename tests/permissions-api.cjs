@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require('fs');
 const vm = require('vm');
 const ts = require('typescript');
@@ -15,7 +16,9 @@ const mock = {
       updateUserById: async (id, update) => { Object.assign(users.find(u => u.id === id).app_metadata, update.app_metadata); return { error: null }; },
     },
   },
-  from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { is_active: true }, error: null }) }) }) }),
+  from: table => table === 'dim_ncc'
+    ? { select: () => ({ order: async () => ({ data: [{ id: 'supplier' }], error: null }) }) }
+    : { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { is_active: true }, error: null }) }) }) },
 };
 const next = { NextResponse: {
   json: (data, opts = {}) => ({ status: opts.status || 200, data }),
@@ -30,6 +33,7 @@ function load(path) {
     if (name === 'next/server') return next;
     if (name === '@/config/roles.config') return load('src/config/roles.config.ts');
     if (name === '@/lib/serverAuth') return load('src/lib/serverAuth.ts');
+    if (name === '@/lib/supplierAuth') return load('src/lib/supplierAuth.ts');
     if (name === '@/lib/supabase/server') return { getSupabaseAdmin: () => mock };
     return require(name);
   };
@@ -65,6 +69,18 @@ function request(token, body) { return { headers: new Headers(token ? { authoriz
   assert.equal(allowed.status, 200);
   assert.equal(allowed.options.request.headers.get('x-authenticated-email'), users[1].email);
   assert.equal((await proxy.proxy(api('/api/suppliers', 's', 'POST'))).status, 403);
+  const suppliers = load('src/app/api/suppliers/route.ts');
+  const suppliersImport = load('src/app/api/suppliers/import/route.ts');
+  assert.equal((await suppliers.GET(request())).status, 401);
+  assert.equal((await suppliers.GET(request('s'))).status, 403);
+  users[1].app_metadata.permissions.canViewSuppliers = true;
+  users[1].app_metadata.permissions.canCreatePO = false;
+  assert.equal((await suppliers.GET(request('s'))).status, 200);
+  assert.equal((await suppliers.POST(request('s', { created_by: users[0].email }))).status, 403);
+  assert.equal((await suppliersImport.POST(request('s', { email: users[0].email, rows: [] }))).status, 403);
+  users[1].app_metadata.permissions.canCreatePO = true;
+  assert.equal((await suppliers.POST(request('s', {}))).status, 400);
+  assert.equal((await suppliersImport.POST(request('s', { rows: [] }))).status, 400);
   assert.equal((await proxy.proxy(api('/api/membership/lookup-sheet', null))).status, 200);
   assert.equal((await proxy.proxy(api('/api/operations', 's', 'POST'))).status, 403);
   console.log('Permission API mock checks passed: authentication, admin-only access, validation, save and reload.');

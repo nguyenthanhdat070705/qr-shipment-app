@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { getUserRole } from '@/config/roles.config';
+import { authorizeSupplierRequest } from '@/lib/supplierAuth';
 
 /**
  * GET  /api/suppliers       → Lấy danh sách NCC
@@ -11,14 +11,8 @@ import { getUserRole } from '@/config/roles.config';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const email = req.nextUrl.searchParams.get('email') || '';
-  const role = getUserRole(email);
-  if (role !== 'admin' && role !== 'procurement') {
-    return NextResponse.json(
-      { error: 'Bạn không có quyền xem danh sách NCC.' },
-      { status: 403 }
-    );
-  }
+  const denied = await authorizeSupplierRequest(req);
+  if (denied) return denied;
 
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
@@ -33,6 +27,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const denied = await authorizeSupplierRequest(req, true);
+  if (denied) return denied;
   const supabase = getSupabaseAdmin();
 
   let body: Record<string, unknown>;
@@ -40,15 +36,6 @@ export async function POST(req: NextRequest) {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const email = (body.created_by as string) || '';
-  const role = getUserRole(email);
-  if (role !== 'admin' && role !== 'procurement') {
-    return NextResponse.json(
-      { error: 'Bạn không có quyền tạo NCC. Chỉ Admin và Thu mua mới được phép.' },
-      { status: 403 }
-    );
   }
 
   const { ma_ncc, ten_ncc } = body;
@@ -102,6 +89,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  const denied = await authorizeSupplierRequest(req, true);
+  if (denied) return denied;
   const supabase = getSupabaseAdmin();
 
   let body: Record<string, unknown>;
@@ -109,15 +98,6 @@ export async function PUT(req: NextRequest) {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const email = (body.updated_by as string) || '';
-  const role = getUserRole(email);
-  if (role !== 'admin' && role !== 'procurement') {
-    return NextResponse.json(
-      { error: 'Bạn không có quyền chỉnh sửa NCC.' },
-      { status: 403 }
-    );
   }
 
   const { id, ...updateFields } = body;
@@ -143,6 +123,8 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const denied = await authorizeSupplierRequest(req, true);
+  if (denied) return denied;
   const supabase = getSupabaseAdmin();
 
   let body: Record<string, unknown>;
@@ -150,15 +132,6 @@ export async function DELETE(req: NextRequest) {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const email = (body.email as string) || '';
-  const role = getUserRole(email);
-  if (role !== 'admin' && role !== 'procurement') {
-    return NextResponse.json(
-      { error: 'Bạn không có quyền xóa NCC.' },
-      { status: 403 }
-    );
   }
 
   const id = body.id as string;

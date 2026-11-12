@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { getUserRole } from '@/config/roles.config';
+import { authorizeSupplierRequest } from '@/lib/supplierAuth';
 
 /**
  * POST /api/suppliers/import — Bulk import NCC from Excel
  */
 export async function POST(req: NextRequest) {
+  const denied = await authorizeSupplierRequest(req, true);
+  if (denied) return denied;
   const supabase = getSupabaseAdmin();
 
   let body: { rows: Record<string, unknown>[]; email: string };
@@ -13,11 +15,6 @@ export async function POST(req: NextRequest) {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const role = getUserRole(body.email || '');
-  if (role !== 'admin' && role !== 'procurement') {
-    return NextResponse.json({ error: 'Không có quyền.' }, { status: 403 });
   }
 
   const { rows } = body;
