@@ -13,7 +13,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
-import { getUserRole, ROLE_CONFIGS, ROLE_COLORS, isVIPAdmin, type UserRole } from '@/config/roles.config';
+import { getUserRole, ROLE_CONFIGS, ROLE_COLORS, isVIPAdmin, type UserRole, type RolePermissions } from '@/config/roles.config';
 import AuthGuard from '@/components/AuthGuard';
 
 /* ═══════════════════════════════════════════════════
@@ -44,19 +44,26 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
   const pathname = usePathname();
   const [userEmail, setUserEmail] = useState('');
   const [userRole,  setUserRole]  = useState<UserRole>('sales');
+  const [permissions, setPermissions] = useState<RolePermissions | null>(null);
+  const [permissionsConfigured, setPermissionsConfigured] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('auth_user');
-      if (raw) {
-        const u = JSON.parse(raw);
-        setUserEmail(u.email || '');
-        // Luôn gán lại role từ email thay vì dùng cache u.role, 
-        // để khi config thay đổi, Admin sẽ thấy quyền mới ngay.
-        setUserRole(getUserRole(u.email || ''));
-      }
-    } catch { /* ignore */ }
+    const readUser = () => {
+      try {
+        const raw = localStorage.getItem('auth_user');
+        if (raw) {
+          const u = JSON.parse(raw);
+          setUserEmail(u.email || '');
+          setUserRole(getUserRole(u.email || ''));
+          setPermissions(u.permissions || null);
+          setPermissionsConfigured(u.permissionsConfigured === true);
+        }
+      } catch { setPermissions(null); }
+    };
+    readUser();
+    window.addEventListener('auth-user-updated', readUser);
+    return () => window.removeEventListener('auth-user-updated', readUser);
   }, []);
 
   const roleConfig = ROLE_CONFIGS[userRole];
@@ -64,6 +71,7 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
 
   const handleLogout = () => {
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_refresh_token');
     localStorage.removeItem('auth_user');
     router.push('/login');
   };
@@ -103,7 +111,7 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
       section: 'Bán Hàng',
     } as MenuItem] : []),
     /* ── Membership & CSKH (chỉ sales + admin) ── */
-    ...(userRole === 'admin' ? [{
+    ...(userRole === 'admin' || (permissionsConfigured && permissions?.canMembership) ? [{
       icon: <Crown size={18} />,
       label: 'Trung tâm CSKH Membership',
       desc: 'Hội viên & Chăm sóc khách hàng',
@@ -134,7 +142,7 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
         iconBg: 'bg-pink-500/15',
         section: 'Chuỗi cung ứng',
       } as MenuItem,
-    ] : userRole === 'sales' ? [] : [{
+    ] : userRole === 'sales' && !(permissions?.canCreatePO || permissions?.canManageReceipt || permissions?.canReceiveGoods || permissions?.canExport || permissions?.canManageDelivery) ? [] : [{
       icon: <Warehouse size={18} />,
       label: 'Trung tâm Kho Vận',
       desc: 'Quản lý kho & vận hành',
@@ -143,6 +151,27 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
       iconBg: 'bg-emerald-500/15',
       section: 'Chuỗi cung ứng',
     } as MenuItem]),
+
+    ...(warehouseRole && permissions?.canCreatePO ? [{
+      icon: <Warehouse size={18} />,
+      label: 'Trung tâm Kho Vận',
+      desc: 'Quản lý kho & vận hành',
+      href: '/warehouse-hub',
+      color: 'text-emerald-400',
+      iconBg: 'bg-emerald-500/15',
+      section: 'Chuỗi cung ứng',
+    } as MenuItem] : []),
+
+    ...(permissions?.canViewSuppliers ? [{
+      icon: <Building2 size={18} />,
+      label: 'Nhà cung cấp',
+      desc: 'Tra cứu nhà cung cấp',
+      href: '/suppliers-manage',
+      color: 'text-teal-400',
+      iconBg: 'bg-teal-500/15',
+      requiresPermission: 'canViewSuppliers',
+      section: 'Chuỗi cung ứng',
+    } as MenuItem] : []),
 
     ...(userRole === 'admin' || procurementRole ? [{
       icon: <Bell size={18} />,
@@ -242,7 +271,7 @@ function Sidebar({ isOpen, onClose, isMobileView }: { isOpen: boolean; onClose: 
   // Filter by permissions
   const menuItems = allMenuItems.filter((item) => {
     if (!item.requiresPermission) return true;
-    return roleConfig.permissions[item.requiresPermission];
+    return permissions?.[item.requiresPermission] === true;
   });
 
   // Group by section

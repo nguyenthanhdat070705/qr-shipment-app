@@ -55,7 +55,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return errorResponse('Dữ liệu gửi lên không hợp lệ (JSON lỗi).', 'VALIDATION_ERROR', 400);
   }
 
-  const { qrCode, hoTen, email, note, chucVu, maSanPhamXacNhan, maDonHang, khoId } = body as any;
+  const { qrCode, hoTen, note, chucVu, maSanPhamXacNhan, maDonHang, khoId } = body as any;
+  const email = req.headers.get('x-authenticated-email') || '';
   const soLuong = Math.max(1, Number(body.soLuong) || 1);
 
   if (!khoId) {
@@ -109,7 +110,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const { getWarehouseFilter } = await import('@/config/roles.config');
-  const allowedWarehouse = getWarehouseFilter(trimmedEmail, trimmedHoTen);
+  const { data: account } = await supabaseAdmin.from('dim_account').select('ho_ten').eq('email', trimmedEmail).maybeSingle();
+  const allowedWarehouse = getWarehouseFilter(trimmedEmail, account?.ho_ten || '');
   if (allowedWarehouse) {
     const khoName = (khoData.ten_kho || '').toLowerCase();
     const allowedLower = allowedWarehouse.toLowerCase();

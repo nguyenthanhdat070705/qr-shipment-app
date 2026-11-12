@@ -39,8 +39,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Thiếu dữ liệu: Lô hàng tồn kho.' }, { status: 400 });
   }
 
-  // App hiện tại đang lưu session tự chế trên localStorage nên không có token Supabase Auth thật
-  let email = body.created_by;
+  // Identity is inserted by the authorization proxy after validating the token.
+  const email = req.headers.get('x-authenticated-email') || '';
   
   if (!email || email === 'unknown') {
      return NextResponse.json({ error: 'Yêu cầu đăng nhập hoặc không xác định người dùng.' }, { status: 401 });

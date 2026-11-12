@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 import { randomUUID } from 'crypto';
-import { getUserRole } from '@/config/roles.config';
 
 /**
  * GET  /api/goods-receipt     → List all GRPOs from fact_nhap_hang
@@ -10,9 +9,7 @@ import { getUserRole } from '@/config/roles.config';
 
 export async function GET(req: NextRequest) {
   const supabase = getSupabaseAdmin();
-  const email = req.nextUrl.searchParams.get('email') || '';
-  const role = getUserRole(email);
-  const canViewSupplier = email && ['admin', 'procurement', 'warehouse'].includes(role);
+  const canViewSupplier = req.headers.get('x-can-view-suppliers') === 'true';
 
   try {
     const { data, error } = await supabase
@@ -133,7 +130,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { po_id, warehouse_id, note, received_by, items, is_temporary } = body as {
+  const { po_id, warehouse_id, note, items, is_temporary } = body as {
     po_id?: string;
     warehouse_id: string;
     note?: string;
@@ -141,6 +138,8 @@ export async function POST(req: NextRequest) {
     items?: { product_code: string; product_name: string; expected_qty: number; received_qty: number; note?: string }[];
     is_temporary?: boolean;
   };
+
+  const received_by = req.headers.get('x-authenticated-email') || '';
 
   if (!warehouse_id || !received_by) {
     return NextResponse.json({ error: 'warehouse_id và received_by là bắt buộc.' }, { status: 400 });

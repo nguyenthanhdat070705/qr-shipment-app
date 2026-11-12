@@ -37,8 +37,8 @@ export interface RoleConfig {
 /** map email patterns to roles */
 const EMAIL_ROLE_MAP: { pattern: string; role: UserRole }[] = [
   // Admin
-  { pattern: 'admin', role: 'admin' },
-  { pattern: 'quantri', role: 'admin' },
+  { pattern: 'admin@blackstone.com.vn', role: 'admin' },
+  { pattern: 'quantri@blackstone.com.vn', role: 'admin' },
   // Procurement (Thu mua)
   { pattern: 'bophanthumua', role: 'procurement' },
   { pattern: 'thuamua', role: 'procurement' },
@@ -157,6 +157,27 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
     },
   },
 };
+
+/** Only these established accounts may administer permissions. */
+export function isSystemAdminEmail(email: string): boolean {
+  return ['admin@blackstone.com.vn', 'quantri@blackstone.com.vn']
+    .includes((email || '').trim().toLowerCase());
+}
+
+/** Resolve individually assigned permissions, falling back to the role defaults. */
+export function getEffectivePermissions(email: string, stored: unknown): RolePermissions {
+  const defaults = ROLE_CONFIGS[getUserRole(email)].permissions;
+  if (isSystemAdminEmail(email)) return { ...ROLE_CONFIGS.admin.permissions };
+
+  const result = { ...defaults, canAdmin: false };
+  if (stored && typeof stored === 'object' && !Array.isArray(stored)) {
+    const values = stored as Record<string, unknown>;
+    for (const key of Object.keys(result) as (keyof RolePermissions)[]) {
+      if (key !== 'canAdmin' && typeof values[key] === 'boolean') result[key] = values[key] as boolean;
+    }
+  }
+  return result;
+}
 
 /**
  * Determine user role from email address.

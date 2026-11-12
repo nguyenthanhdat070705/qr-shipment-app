@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/serverAuth';
 
 /**
  * POST /api/accounts/reset-defaults
@@ -18,8 +19,10 @@ const DEFAULT_PASSWORDS: { email: string; password: string }[] = [
   { email: 'bophanpttt@blackstone.com.vn',   password: '123456@' },
 ];
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    const auth = await authenticateRequest(request, true);
+    if (auth.error) return auth.error;
     const supabase = getSupabaseAdmin();
 
     // Fetch all users once

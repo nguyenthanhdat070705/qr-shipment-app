@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { getUserRole, ROLE_CONFIGS } from '@/config/roles.config';
+import { getEffectivePermissions, getUserRole, ROLE_CONFIGS } from '@/config/roles.config';
 
 const LOCAL_DEFAULT_ACCOUNTS: Record<string, { password: string; name: string; department: string }> = {
   'quantri@blackstone.com.vn': { password: '123456@', name: 'Quản trị viên VIP', department: 'Quản trị' },
@@ -94,7 +95,13 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Step 2: Sign in with email + password ─────────────────
-    const { data, error } = await supabase.auth.signInWithPassword({
+    // Do not sign in on the shared service-role client: that would mutate its session.
+    const authClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!.trim(),
+      (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)!.trim(),
+      { auth: { persistSession: false, autoRefreshToken: false } },
+    );
+    const { data, error } = await authClient.auth.signInWithPassword({
       email,
       password,
     });
@@ -118,12 +125,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       token: data.session.access_token,
+      refreshToken: data.session.refresh_token,
       user: {
         id: data.user.id,
         email: data.user.email,
         role: role,
         roleLabel: roleConfig.label,
-        permissions: roleConfig.permissions,
+        permissionsConfigured: !!data.user.app_metadata.permissions && typeof data.user.app_metadata.permissions === 'object',
+        permissions: getEffectivePermissions(data.user.email || email, data.user.app_metadata.permissions),
         ho_ten: accountInfo?.ho_ten || '',
         phong_ban: accountInfo?.phong_ban || '',
       },

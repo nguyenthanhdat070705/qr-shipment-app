@@ -6,7 +6,7 @@ import RoleGuard from '@/components/RoleGuard';
 export default function SuppliersManageLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard>
-      <RoleGuard allowedRoles={['admin', 'procurement']}>{children}</RoleGuard>
+      <RoleGuard allowedRoles={['admin', 'procurement']} requiredPermissions={['canViewSuppliers']}>{children}</RoleGuard>
     </AuthGuard>
   );
 }

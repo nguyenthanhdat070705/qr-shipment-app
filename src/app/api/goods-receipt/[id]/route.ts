@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 import { triggerReorderEvaluation } from '@/lib/reorder/evaluator';
-import { getUserRole } from '@/config/roles.config';
 
 /**
  * GET   /api/goods-receipt/[id]  → Detail with items
@@ -14,9 +13,7 @@ export async function GET(
 ) {
   const { id } = await params;
   const supabase = getSupabaseAdmin();
-  const email = req.nextUrl.searchParams.get('email') || '';
-  const role = getUserRole(email);
-  const canViewSupplier = email && ['admin', 'procurement', 'warehouse'].includes(role);
+  const canViewSupplier = req.headers.get('x-can-view-suppliers') === 'true';
 
   // Fetch GR from fact_nhap_hang
   const { data: gr, error } = await supabase

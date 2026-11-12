@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { getUserRole } from '@/config/roles.config';
 
 function getCoffinImage(productCode: string): string {
   if (productCode === '2AQ0106' || productCode === '2AQ0129') return '/coffin-3.png';
@@ -38,11 +37,7 @@ interface DimKho {
   ten_kho: string;
 }
 
-export async function GET(req: NextRequest) {
-  const email = req.nextUrl.searchParams.get('email') || req.headers.get('x-user-email') || '';
-  if (!email || getUserRole(email) === 'sales') {
-    return NextResponse.json({ error: 'Sales không được tra cứu tồn kho.' }, { status: 403 });
-  }
+export async function GET() {
   const supabase = getSupabaseAdmin();
 
   // Fetch stock, product, and warehouse data. Supplier data is intentionally excluded from this API.

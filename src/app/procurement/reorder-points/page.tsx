@@ -7,7 +7,7 @@ import ReorderPointsClient from './ReorderPointsClient';
 export default function ReorderPointsPage() {
   return (
     <AuthGuard>
-      <RoleGuard allowedRoles={['admin', 'procurement']}>
+      <RoleGuard allowedRoles={['admin', 'procurement']} requiredPermissions={['canCreatePO']}>
         <ReorderPointsClient />
       </RoleGuard>
     </AuthGuard>

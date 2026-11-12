@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Lock, Unlock, Loader2, Clock, AlertCircle, CheckCircle } from 'lucide-react';
-import { getUserRole } from '@/config/roles.config';
 
 interface HoldProductButtonProps {
   productCode: string;
@@ -11,7 +10,7 @@ interface HoldProductButtonProps {
 
 export default function HoldProductButton({ productCode, productName }: HoldProductButtonProps) {
   const [userEmail, setUserEmail] = useState('');
-  const [userRole, setUserRole] = useState('');
+  const [canHold, setCanHold] = useState(false);
   const [holdStatus, setHoldStatus] = useState<{
     isHeld: boolean;
     heldByEmail?: string;
@@ -22,14 +21,17 @@ export default function HoldProductButton({ productCode, productName }: HoldProd
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('auth_user');
-      if (raw) {
-        const u = JSON.parse(raw);
-        setUserEmail(u.email || '');
-        setUserRole(getUserRole(u.email || ''));
-      }
-    } catch { /* ignore */ }
+    const readUser = () => {
+      try {
+        const raw = localStorage.getItem('auth_user');
+        const user = raw ? JSON.parse(raw) : null;
+        setUserEmail(user?.email || '');
+        setCanHold(user?.permissions?.canHold === true);
+      } catch { setCanHold(false); }
+    };
+    readUser();
+    window.addEventListener('auth-user-updated', readUser);
+    return () => window.removeEventListener('auth-user-updated', readUser);
   }, []);
 
   // Check hold status
@@ -56,9 +58,7 @@ export default function HoldProductButton({ productCode, productName }: HoldProd
     if (productCode) checkHold();
   }, [productCode]);
 
-  // Only show for sales role
-  const isSales = userRole === 'sales';
-  if (!isSales) return null;
+  if (!canHold) return null;
 
   async function handleHold() {
     setHolding(true);

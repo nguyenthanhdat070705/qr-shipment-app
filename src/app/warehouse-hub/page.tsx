@@ -6,46 +6,44 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import PageLayout from "@/components/PageLayout";
-import { getUserRole, UserRole } from "@/config/roles.config";
-import { useRouter } from "next/navigation";
+import { getUserRole, type UserRole, type RolePermissions } from "@/config/roles.config";
 
 export default function WarehouseHubPage() {
   const [userRole, setUserRole] = useState<UserRole>("sales");
   const [roleReady, setRoleReady] = useState(false);
-  const router = useRouter();
+  const [permissions, setPermissions] = useState<RolePermissions | null>(null);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("auth_user");
-      if (raw) {
-        const u = JSON.parse(raw);
-        setUserRole(getUserRole(u.email || ""));
-      }
-    } catch { /* ignore */ }
-    setRoleReady(true);
+    const readUser = () => {
+      try {
+        const raw = localStorage.getItem("auth_user");
+        if (raw) {
+          const u = JSON.parse(raw);
+          setUserRole(getUserRole(u.email || ""));
+          setPermissions(u.permissions || null);
+        }
+      } catch { setPermissions(null); }
+      setRoleReady(true);
+    };
+    readUser();
+    window.addEventListener('auth-user-updated', readUser);
+    return () => window.removeEventListener('auth-user-updated', readUser);
   }, []);
 
-  useEffect(() => {
-    if (roleReady && userRole === "warehouse") {
-      router.replace("/warehouse");
-    }
-    if (roleReady && userRole === "sales") {
-      router.replace("/sales-hub");
-    }
-  }, [roleReady, router, userRole]);
-
   const cards = [
-    ...(userRole === "admin" || userRole === "warehouse" || userRole === "procurement" ? [{
+    ...(permissions?.canManageReceipt || permissions?.canReceiveGoods || permissions?.canExport ? [{
       id: "inout-management",
       title: "Quản lý xuất nhập",
       icon: <PackageCheck size={32} className="text-white" />,
       desc: "Tổng hợp và quản lý dữ liệu xuất nhập kho",
-      href: "/inout-management",
+      href: permissions?.canManageReceipt || permissions?.canReceiveGoods
+        ? "/inout-management?tab=import"
+        : "/inout-management?tab=export",
       color: "bg-blue-500",
       shadow: "shadow-blue-500/20",
       gradient: "from-blue-400 to-indigo-600",
     }] : []),
-    ...(userRole === "admin" || userRole === "warehouse" ? [{
+    ...((userRole === "admin" || userRole === "warehouse") && permissions?.canViewInventory ? [{
       id: "stocktake",
       title: "Kiểm kho",
       icon: <ClipboardCheck size={32} className="text-white" />,
@@ -55,7 +53,7 @@ export default function WarehouseHubPage() {
       shadow: "shadow-pink-500/20",
       gradient: "from-pink-400 to-rose-600",
     }] : []),
-    ...(userRole === "admin" || userRole === "procurement" ? [{
+    ...(permissions?.canCreatePO ? [{
       id: "purchase-orders",
       title: "Đặt hàng",
       icon: <ShoppingCart size={32} className="text-white" />,
@@ -64,6 +62,16 @@ export default function WarehouseHubPage() {
       color: "bg-violet-500",
       shadow: "shadow-violet-500/20",
       gradient: "from-violet-400 to-fuchsia-600",
+    }] : []),
+    ...(permissions?.canViewInventory ? [{
+      id: "inventory",
+      title: "Quản lý tồn kho",
+      icon: <Warehouse size={32} className="text-white" />,
+      desc: "Xem số lượng và tình trạng hàng tồn kho",
+      href: "/inout-management?tab=inventory",
+      color: "bg-emerald-500",
+      shadow: "shadow-emerald-500/20",
+      gradient: "from-emerald-400 to-teal-600",
     }] : []),
     ...(userRole === "admin" || userRole === "procurement" ? [{
       id: "warehouse-settings",
@@ -77,7 +85,7 @@ export default function WarehouseHubPage() {
     }] : [])
   ];
 
-  if (!roleReady || userRole === "warehouse" || userRole === "sales") {
+  if (!roleReady) {
     return null;
   }
 

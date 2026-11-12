@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import ApiAuthProvider from '@/components/ApiAuthProvider';
 
 /* Inter — tải thật qua next/font (self-host, không layout-shift), kèm subset tiếng Việt */
 const inter = Inter({
@@ -31,7 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="vi" className={inter.variable}>
       <body className="antialiased bg-gray-50 text-gray-900 font-sans">
-        {children}
+        <ApiAuthProvider>{children}</ApiAuthProvider>
       </body>
     </html>
   );

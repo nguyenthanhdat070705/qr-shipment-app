@@ -11,7 +11,7 @@ import RoleGuard from '@/components/RoleGuard';
 export default function ProductLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard>
-      <RoleGuard allowedRoles={['admin', 'procurement', 'warehouse', 'operations']}>{children}</RoleGuard>
+      <RoleGuard allowedRoles={['admin', 'procurement', 'warehouse', 'operations']} requiredPermissions={['canViewProducts', 'canViewInventory']}>{children}</RoleGuard>
     </AuthGuard>
   );
 }

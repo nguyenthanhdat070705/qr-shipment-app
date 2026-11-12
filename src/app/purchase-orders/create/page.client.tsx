@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShoppingCart, ArrowLeft, Plus, Trash2, Search, X } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
-import { getUserRole, type UserRole } from '@/config/roles.config';
 
 interface DimNcc {
   id: string;
@@ -55,7 +54,7 @@ export default function CreatePurchaseOrderPage() {
   ]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [userRole, setUserRole] = useState<UserRole>('sales');
+  const [canCreatePO, setCanCreatePO] = useState(false);
   const [authReady, setAuthReady] = useState(false);
   
   // Custom dropdown cho Nhà cung cấp
@@ -71,16 +70,20 @@ export default function CreatePurchaseOrderPage() {
   const filteredProducts = homList;
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('auth_user');
-      const email = raw ? JSON.parse(raw).email || '' : '';
-      setUserRole(getUserRole(email));
-    } catch { /* ignore */ }
-    setAuthReady(true);
+    const readUser = () => {
+      try {
+        const raw = localStorage.getItem('auth_user');
+        setCanCreatePO(Boolean(raw && JSON.parse(raw).permissions?.canCreatePO === true));
+      } catch { setCanCreatePO(false); }
+      setAuthReady(true);
+    };
+    readUser();
+    window.addEventListener('auth-user-updated', readUser);
+    return () => window.removeEventListener('auth-user-updated', readUser);
   }, []);
 
   useEffect(() => {
-    if (!authReady || (userRole !== 'admin' && userRole !== 'procurement')) return;
+    if (!authReady || !canCreatePO) return;
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -97,7 +100,7 @@ export default function CreatePurchaseOrderPage() {
       setKhoList(Array.isArray(kho) ? kho : []);
       setHomList(Array.isArray(hom) ? hom : []);
     }).catch(console.error);
-  }, [authReady, userRole]);
+  }, [authReady, canCreatePO]);
 
   const addItem = () => {
     setItems([...items, { product_code: '', product_name: '', quantity: 1, unit_price: 0, hang_ky_gui: false, note: '' }]);
@@ -278,7 +281,7 @@ export default function CreatePurchaseOrderPage() {
   const selectedNcc = nccList.find(n => n.id === supplierId);
   const selectedKho = khoList.find(k => k.id === warehouseId);
 
-  if (authReady && userRole !== 'admin' && userRole !== 'procurement') {
+  if (authReady && !canCreatePO) {
     return (
       <PageLayout title="Tạo đơn mua hàng" icon={<ShoppingCart size={16} className="text-purple-500" />}>
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm font-semibold text-amber-800">

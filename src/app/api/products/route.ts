@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { getUserRole } from '@/config/roles.config';
+import { getEffectivePermissions, getUserRole } from '@/config/roles.config';
+import { authenticateRequest } from '@/lib/serverAuth';
 
 /**
  * GET  /api/products       → Lấy danh sách sản phẩm (dim_hom)
@@ -12,10 +13,19 @@ import { getUserRole } from '@/config/roles.config';
 // NOT from dim_hom.so_luong which may be stale.
 export async function GET(req: NextRequest) {
   const supabase = getSupabaseAdmin();
-  const { searchParams } = new URL(req.url);
-  const email = searchParams.get('email') || req.headers.get('x-user-email') || '';
-  const role = email ? getUserRole(email) : 'sales';
-  const canViewInventory = ['admin', 'procurement', 'warehouse', 'operations'].includes(role);
+  // Public catalog requests retain their existing access, but only a verified
+  // session may receive inventory figures; query parameters are not identity.
+  let canViewInventory = false;
+  if (req.headers.has('authorization')) {
+    const auth = await authenticateRequest(req);
+    if (auth.error) return auth.error;
+    const user = auth.user!;
+    const role = getUserRole(user.email || '');
+    const configured = !!user.app_metadata.permissions && typeof user.app_metadata.permissions === 'object' && !Array.isArray(user.app_metadata.permissions);
+    canViewInventory = configured
+      ? getEffectivePermissions(user.email || '', user.app_metadata.permissions).canViewInventory
+      : ['admin', 'procurement', 'warehouse', 'operations'].includes(role);
+  }
 
   // Fetch products and inventory in parallel
   const [productsRes, inventoryRes, warehousesRes] = await Promise.all([
@@ -46,8 +56,9 @@ export async function GET(req: NextRequest) {
 
   // Merge: override so_luong with the real aggregated quantity
   const data = (productsRes.data || []).map((product: Record<string, unknown>) => {
-    const { NCC: _ncc, ...safeProduct } = product;
+    const { NCC: _ncc, so_luong: _cachedQuantity, ...safeProduct } = product;
     void _ncc;
+    void _cachedQuantity;
     return canViewInventory
       ? { ...safeProduct, so_luong: qtyMap.get(product.id as string) || 0 }
       : safeProduct;
@@ -67,15 +78,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  // Check permission
-  const email = (body.created_by as string) || '';
-  const role = getUserRole(email);
-  if (role !== 'admin' && role !== 'procurement') {
-    return NextResponse.json(
-      { error: 'Bạn không có quyền tạo sản phẩm. Chỉ Admin và Thu mua mới được phép.' },
-      { status: 403 }
-    );
-  }
 
   const {
     ma_hom,
@@ -180,14 +182,6 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const email = (body.updated_by as string) || '';
-  const role = getUserRole(email);
-  if (role !== 'admin' && role !== 'procurement') {
-    return NextResponse.json(
-      { error: 'Bạn không có quyền chỉnh sửa sản phẩm.' },
-      { status: 403 }
-    );
-  }
 
   const { id, ...updateFields } = body;
   if (!id) {
@@ -221,11 +215,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const email = (body.email as string) || '';
-  const role = getUserRole(email);
-  if (role !== 'admin' && role !== 'procurement') {
-    return NextResponse.json({ error: 'Bạn không có quyền xóa sản phẩm.' }, { status: 403 });
-  }
 
   const id = body.id as string;
   if (!id) return NextResponse.json({ error: 'ID sản phẩm là bắt buộc.' }, { status: 400 });

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { getUserRole, HOLD_DURATION_MS } from '@/config/roles.config';
+import { HOLD_DURATION_MS } from '@/config/roles.config';
 
 /**
  * POST /api/hold-product
@@ -16,16 +16,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { productCode, email } = body;
+  const { productCode } = body;
+  const email = req.headers.get('x-authenticated-email') || '';
 
   if (!productCode || !email || typeof productCode !== 'string' || typeof email !== 'string') {
     return NextResponse.json({ error: 'productCode và email là bắt buộc.' }, { status: 400 });
-  }
-
-  // Check role
-  const role = getUserRole(email);
-  if (role !== 'sales') {
-    return NextResponse.json({ error: 'Chỉ tài khoản Sales mới được giữ hàng.' }, { status: 403 });
   }
 
   // Ensure hold table exists
@@ -93,10 +88,11 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'productCode là bắt buộc.' }, { status: 400 });
   }
 
-  const { error } = await supabase
-    .from('product_holds')
-    .delete()
-    .eq('product_code', productCode);
+  const email = req.headers.get('x-authenticated-email') || '';
+  if (!email) return NextResponse.json({ error: 'Vui lòng đăng nhập.' }, { status: 401 });
+  let query = supabase.from('product_holds').delete().eq('product_code', productCode);
+  if (req.headers.get('x-authenticated-admin') !== 'true') query = query.eq('held_by_email', email);
+  const { error } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

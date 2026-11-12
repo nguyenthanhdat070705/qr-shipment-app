@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { authenticateRequest } from '@/lib/serverAuth';
 
 /**
  * POST /api/accounts/change-password
@@ -7,6 +8,8 @@ import { getSupabaseAdmin } from '@/lib/supabase/server';
  */
 export async function POST(request: NextRequest) {
   try {
+    const auth = await authenticateRequest(request, true);
+    if (auth.error) return auth.error;
     const { email, newPassword } = await request.json();
 
     if (!email || !newPassword) {

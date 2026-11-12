@@ -54,6 +54,8 @@ function LoginForm() {
 
       // Store token in localStorage
       localStorage.setItem('auth_token', data.token);
+      if (data.refreshToken) localStorage.setItem('auth_refresh_token', data.refreshToken);
+      else localStorage.removeItem('auth_refresh_token');
       localStorage.setItem('auth_user', JSON.stringify(data.user));
 
       // Redirect to the original page (or home if none)

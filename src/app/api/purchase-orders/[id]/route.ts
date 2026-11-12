@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { getUserRole } from '@/config/roles.config';
 
 /**
  * GET    /api/purchase-orders/[id]   → Detail with items
@@ -14,9 +13,7 @@ export async function GET(
 ) {
   const { id } = await params;
   const supabase = getSupabaseAdmin();
-  const email = req.nextUrl.searchParams.get('email') || '';
-  const role = getUserRole(email);
-  const canViewSupplier = email && ['admin', 'procurement', 'warehouse'].includes(role);
+  const canViewSupplier = req.headers.get('x-can-view-suppliers') === 'true';
 
   // Fetch PO from fact_don_hang
   const { data: po, error } = await supabase

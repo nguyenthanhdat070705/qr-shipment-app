@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Search, X, Check, Edit2, ChevronDown, ChevronUp, Truck, Phone, FileText, MapPin, Trash2, Upload, FileSpreadsheet, ArrowRight, RefreshCw, AlertCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { getUserRole, type UserRole } from '@/config/roles.config';
 import './suppliers-manage.css';
 
 interface Supplier {
@@ -90,7 +89,8 @@ export default function SuppliersManageClient() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [userEmail, setUserEmail] = useState('');
-  const [userRole, setUserRole] = useState<UserRole>('sales');
+  const [canViewSuppliers, setCanViewSuppliers] = useState(false);
+  const [canEditSuppliers, setCanEditSuppliers] = useState(false);
   const [authReady, setAuthReady] = useState(false);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
@@ -111,18 +111,20 @@ export default function SuppliersManageClient() {
   const excelFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('auth_user');
-      if (raw) {
-        const email = JSON.parse(raw).email || '';
-        setUserEmail(email);
-        setUserRole(getUserRole(email));
-      }
-    } catch { /* ignore */ }
-    setAuthReady(true);
+    const readUser = () => {
+      try {
+        const raw = localStorage.getItem('auth_user');
+        const user = raw ? JSON.parse(raw) : null;
+        setUserEmail(user?.email || '');
+        setCanViewSuppliers(user?.permissions?.canViewSuppliers === true);
+        setCanEditSuppliers(user?.permissions?.canViewSuppliers === true && user?.permissions?.canCreatePO === true);
+      } catch { setCanViewSuppliers(false); setCanEditSuppliers(false); }
+      setAuthReady(true);
+    };
+    readUser();
+    window.addEventListener('auth-user-updated', readUser);
+    return () => window.removeEventListener('auth-user-updated', readUser);
   }, []);
-
-  const canViewSuppliers = userRole === 'admin' || userRole === 'procurement';
 
   const fetchSuppliers = useCallback(async () => {
     if (!canViewSuppliers || !userEmail) {
@@ -295,7 +297,7 @@ export default function SuppliersManageClient() {
         <div className="ncc-empty">
           <AlertTriangle size={48} />
           <h3>Không có quyền xem nhà cung cấp</h3>
-          <p>Thông tin NCC chỉ hiển thị cho tài khoản Quản trị hoặc Thu mua.</p>
+          <p>Vui lòng liên hệ quản trị viên để được cấp quyền xem nhà cung cấp.</p>
         </div>
       </div>
     );
@@ -312,7 +314,7 @@ export default function SuppliersManageClient() {
             <p className="ncc-subtitle">Tạo mã & quản lý danh sách NCC ({suppliers.length} NCC)</p>
           </div>
         </div>
-        <div className="ncc-header-actions">
+        {canEditSuppliers && <div className="ncc-header-actions">
           <button className="ncc-btn-upload" onClick={() => setShowExcel(true)}>
             <Upload size={18} />
             Import Excel
@@ -321,7 +323,7 @@ export default function SuppliersManageClient() {
             <Plus size={18} />
             Thêm NCC mới
           </button>
-        </div>
+        </div>}
       </div>
 
       {/* Message */}
@@ -621,8 +623,8 @@ export default function SuppliersManageClient() {
                     <td>{s.sdt ? <span className="ncc-phone"><Phone size={12} />{s.sdt}</span> : '—'}</td>
                     <td className="ncc-td-content">{s.noi_dung || '—'}</td>
                     <td className="ncc-td-actions">
-                      <button className="ncc-btn-icon" title="Chỉnh sửa" onClick={() => handleEdit(s)}><Edit2 size={15} /></button>
-                      <button className="ncc-btn-icon ncc-btn-icon-danger" title="Xóa" onClick={() => setDeleteTarget(s)}><Trash2 size={15} /></button>
+                      {canEditSuppliers && <button className="ncc-btn-icon" title="Chỉnh sửa" onClick={() => handleEdit(s)}><Edit2 size={15} /></button>}
+                      {canEditSuppliers && <button className="ncc-btn-icon ncc-btn-icon-danger" title="Xóa" onClick={() => setDeleteTarget(s)}><Trash2 size={15} /></button>}
                       <button className="ncc-btn-icon" title="Chi tiết" onClick={() => setExpandedRow(expandedRow === s.id ? null : s.id)}>
                         {expandedRow === s.id ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
                       </button>

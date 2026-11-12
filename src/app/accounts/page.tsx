@@ -8,7 +8,7 @@ import {
   Crown, Warehouse, ShoppingBag, Wrench, Tag
 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
-import { getUserRole, isVIPAdmin } from '@/config/roles.config';
+import { getUserRole, isVIPAdmin, isSystemAdminEmail, ROLE_CONFIGS, type RolePermissions } from '@/config/roles.config';
 import { useRouter } from 'next/navigation';
 
 /* ═══════════════════════════════════════════════════════
@@ -200,15 +200,9 @@ const PERMISSIONS_META = [
   { key: 'canHold',           label: 'Giữ hàng' },
   { key: 'canViewInventory',  label: 'Xem tồn kho' },
   { key: 'canViewProducts',   label: 'Xem sản phẩm' },
-];
-
-const ROLE_PERMISSIONS: Record<string, Record<string, boolean>> = {
-  admin:       { canAdmin: true,  canCreatePO: true,  canManageReceipt: true,  canReceiveGoods: true,  canExport: true,  canManageDelivery: true,  canHold: true,  canViewInventory: true,  canViewProducts: true },
-  procurement: { canAdmin: false, canCreatePO: true,  canManageReceipt: true,  canReceiveGoods: false, canExport: false, canManageDelivery: false, canHold: false, canViewInventory: true,  canViewProducts: true },
-  warehouse:   { canAdmin: false, canCreatePO: false, canManageReceipt: false, canReceiveGoods: true,  canExport: true,  canManageDelivery: false, canHold: false, canViewInventory: true,  canViewProducts: true },
-  operations:  { canAdmin: false, canCreatePO: false, canManageReceipt: false, canReceiveGoods: false, canExport: true,  canManageDelivery: true,  canHold: false, canViewInventory: true,  canViewProducts: true },
-  sales:       { canAdmin: false, canCreatePO: false, canManageReceipt: false, canReceiveGoods: false, canExport: false, canManageDelivery: false, canHold: true,  canViewInventory: true,  canViewProducts: true },
-};
+  { key: 'canMembership',     label: 'Quản lý hội viên' },
+  { key: 'canViewSuppliers',  label: 'Xem nhà cung cấp' },
+] satisfies { key: keyof RolePermissions; label: string }[];
 
 /* ═══════════════════════════════════════════════════════
    Change Password Modal
@@ -244,7 +238,7 @@ function ChangePasswordModal({
     try {
       const res = await fetch('/api/accounts/change-password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}` },
         body: JSON.stringify({ email: account.email, newPassword }),
       });
       const data = await res.json();
@@ -379,17 +373,21 @@ function ChangePasswordModal({
 function AccountCard({
   account,
   onChangePassword,
+  onEditPermissions,
+  permissions,
+  permissionsReady,
   isOnline,
 }: {
   account: typeof SYSTEM_ACCOUNTS[0];
   onChangePassword: () => void;
+  onEditPermissions: () => void;
+  permissions: RolePermissions;
+  permissionsReady: boolean;
   isOnline: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const permissions = ROLE_PERMISSIONS[account.role] || {};
   const IconComp = account.icon;
   const enabledPerms = PERMISSIONS_META.filter((p) => permissions[p.key]);
-  const disabledPerms = PERMISSIONS_META.filter((p) => !permissions[p.key]);
 
   return (
     <div className={`rounded-2xl border ${account.borderColor} bg-white shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden`}>
@@ -433,13 +431,14 @@ function AccountCard({
 
         {/* Active permissions summary */}
         <div className="flex flex-wrap gap-1.5 mb-4">
-          {enabledPerms.slice(0, 3).map((p) => (
+          {!permissionsReady && <span className="text-xs text-gray-500">Chưa tải được quyền</span>}
+          {permissionsReady && enabledPerms.slice(0, 3).map((p) => (
             <span key={p.key} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold ${account.bgColor} ${account.color}`}>
               <CheckCircle size={9} />
               {p.label}
             </span>
           ))}
-          {enabledPerms.length > 3 && (
+          {permissionsReady && enabledPerms.length > 3 && (
             <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-gray-100 text-gray-500 text-[10px] font-semibold">
               +{enabledPerms.length - 3} quyền khác
             </span>
@@ -447,7 +446,7 @@ function AccountCard({
         </div>
 
         {/* Expanded permissions */}
-        {expanded && (
+        {expanded && permissionsReady && (
           <div className={`rounded-xl p-4 mb-4 ${account.bgColor} border ${account.borderColor}`}>
             <p className="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wide">Chi tiết phân quyền</p>
             <div className="grid grid-cols-1 gap-1.5">
@@ -474,6 +473,7 @@ function AccountCard({
         <div className="flex gap-2">
           <button
             onClick={() => setExpanded(!expanded)}
+            disabled={!permissionsReady}
             className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
           >
             {expanded ? <X size={13} /> : <UserCheck size={13} />}
@@ -487,6 +487,75 @@ function AccountCard({
             Đổi mật khẩu
           </button>
         </div>
+        {!isSystemAdminEmail(account.email) && (
+          <button
+            onClick={onEditPermissions}
+            disabled={!permissionsReady}
+            className="mt-2 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-blue-200 text-xs font-bold text-blue-700 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Edit3 size={13} /> Chỉnh sửa quyền
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PermissionsModal({ account, permissions, onClose, onSaved }: {
+  account: typeof SYSTEM_ACCOUNTS[0];
+  permissions: RolePermissions;
+  onClose: () => void;
+  onSaved: (permissions: RolePermissions) => void;
+}) {
+  const [draft, setDraft] = useState(permissions);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError('');
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      const res = await fetch('/api/accounts/permissions', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ email: account.email, permissions: draft }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.permissions) throw new Error(data.error || 'Không thể lưu quyền.');
+      onSaved(data.permissions);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Lỗi kết nối mạng.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div role="dialog" aria-modal="true" aria-labelledby="permissions-title" className="w-full max-w-md bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="p-5 border-b border-gray-100 flex justify-between items-start">
+          <div><h2 id="permissions-title" className="font-bold text-gray-900">Chỉnh sửa quyền</h2><p className="text-xs text-gray-500 mt-1">{account.displayName} · {account.email}</p></div>
+          <button type="button" onClick={onClose} disabled={saving} aria-label="Đóng" className="text-gray-500"><X size={18} /></button>
+        </div>
+        <form onSubmit={save} className="p-5 space-y-4">
+          <p className="text-xs text-gray-500">Chọn các chức năng cho tài khoản này. Cài đặt chỉ áp dụng ở những phần đã kết nối với phân quyền; một số màn hình và API cũ vẫn kiểm tra theo vai trò.</p>
+          {error && <div role="alert" className="rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-700">{error}</div>}
+          <div className="space-y-2">
+            {PERMISSIONS_META.filter(p => p.key !== 'canAdmin').map(perm => (
+              <label key={perm.key} className="flex items-center gap-3 rounded-xl border border-gray-100 p-3 text-sm text-gray-700">
+                <input type="checkbox" checked={draft[perm.key]} disabled={saving} onChange={e => setDraft(previous => ({ ...previous, [perm.key]: e.target.checked }))} className="h-4 w-4 accent-blue-700" />
+                {perm.label}
+              </label>
+            ))}
+          </div>
+          <div className="flex gap-3">
+            <button type="button" onClick={onClose} disabled={saving} className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600">Hủy</button>
+            <button type="submit" disabled={saving} className="flex-1 rounded-xl bg-[#1B2A4A] py-2.5 text-sm font-bold text-white disabled:opacity-60">{saving ? 'Đang lưu...' : 'Lưu quyền'}</button>
+          </div>
+        </form>
       </div>
     </div>
   );
@@ -498,6 +567,10 @@ function AccountCard({
 export default function AccountsPage() {
   const router = useRouter();
   const [selectedAccount, setSelectedAccount] = useState<typeof SYSTEM_ACCOUNTS[0] | null>(null);
+  const [editingAccount, setEditingAccount] = useState<typeof SYSTEM_ACCOUNTS[0] | null>(null);
+  const [permissionsByEmail, setPermissionsByEmail] = useState<Record<string, RolePermissions>>({});
+  const [permissionsReady, setPermissionsReady] = useState(false);
+  const [permissionsError, setPermissionsError] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [isVIP, setIsVIP] = useState(false);
   const [checking, setChecking] = useState(true);
@@ -529,11 +602,30 @@ export default function AccountsPage() {
     }
   }, [router]);
 
+  useEffect(() => {
+    if (!isAdmin) return;
+    let active = true;
+    async function loadPermissions() {
+      try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        const res = await fetch('/api/accounts/permissions', { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        if (!res.ok || !data.permissionsByEmail) throw new Error(data.error || 'Không thể tải quyền tài khoản.');
+        if (active) { setPermissionsByEmail(data.permissionsByEmail); setPermissionsReady(true); }
+      } catch (err) {
+        if (active) setPermissionsError(err instanceof Error ? err.message : 'Lỗi kết nối mạng.');
+      }
+    }
+    loadPermissions();
+    return () => { active = false; };
+  }, [isAdmin]);
+
   async function handleResetAllPasswords() {
     if (!confirm('Bạn có chắc muốn reset tất cả mật khẩu về mặc định không?')) return;
     setResetMsg('Đang xử lý...');
     try {
-      const res = await fetch('/api/accounts/reset-defaults', { method: 'POST' });
+      const res = await fetch('/api/accounts/reset-defaults', { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}` } });
       const data = await res.json();
       if (data.success) {
         setResetMsg(`✅ ${data.message}`);
@@ -557,9 +649,24 @@ export default function AccountsPage() {
   if (!isAdmin) return null;
 
   // VIP account is completely hidden from non-VIP admins
-  const visibleAccounts = isVIP
-    ? SYSTEM_ACCOUNTS
-    : SYSTEM_ACCOUNTS.filter(a => a.id !== 'vip-admin');
+  const knownEmails = new Set(SYSTEM_ACCOUNTS.map(account => account.email.toLowerCase()));
+  const extraAccounts: typeof SYSTEM_ACCOUNTS = Object.keys(permissionsByEmail)
+    .filter(email => !knownEmails.has(email.toLowerCase()) && email.toLowerCase() !== 'kho4@blackstone.com.vn')
+    .map(email => {
+      const role = getUserRole(email);
+      return {
+        ...SYSTEM_ACCOUNTS[SYSTEM_ACCOUNTS.length - 1],
+        id: email,
+        email,
+        displayName: email.split('@')[0],
+        department: 'Tài khoản hệ thống',
+        role,
+        roleLabel: ROLE_CONFIGS[role].label,
+        description: ROLE_CONFIGS[role].description,
+      };
+    });
+  const visibleAccounts = [...SYSTEM_ACCOUNTS, ...extraAccounts]
+    .filter(account => (isVIP || !isVIPAdmin(account.email)) && (!permissionsReady || Object.prototype.hasOwnProperty.call(permissionsByEmail, account.email.toLowerCase())));
 
   const stats = [
     { label: 'Tổng tài khoản', value: visibleAccounts.length, color: 'text-[#1B2A4A]', bg: 'bg-blue-50' },
@@ -577,7 +684,7 @@ export default function AccountsPage() {
           <div>
             <h1 className="text-lg sm:text-xl font-extrabold text-gray-900">Quản lý tài khoản hệ thống</h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
-              Xem thông tin và quản lý mật khẩu của {visibleAccounts.length} tài khoản trong hệ thống
+              Xem thông tin, quản lý quyền và mật khẩu của {visibleAccounts.length} tài khoản trong hệ thống
             </p>
           </div>
           <button
@@ -681,6 +788,12 @@ export default function AccountsPage() {
           </div>
         </div>
 
+        {!permissionsReady && (
+          <div role="status" className={`rounded-xl border px-4 py-3 text-sm ${permissionsError ? 'border-red-200 bg-red-50 text-red-700' : 'border-blue-200 bg-blue-50 text-blue-700'}`}>
+            {permissionsError ? `Không thể tải quyền: ${permissionsError}` : 'Đang tải quyền tài khoản...'}
+          </div>
+        )}
+
         {/* ── Account grid ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-5">
           {visibleAccounts.map((account) => (
@@ -688,6 +801,9 @@ export default function AccountsPage() {
               key={account.id}
               account={account}
               onChangePassword={() => setSelectedAccount(account)}
+              onEditPermissions={() => setEditingAccount(account)}
+              permissions={{ ...ROLE_CONFIGS[account.role].permissions, ...permissionsByEmail[account.email] }}
+              permissionsReady={permissionsReady}
               isOnline={onlineEmails.includes(account.email)}
             />
           ))}
@@ -695,9 +811,21 @@ export default function AccountsPage() {
 
         {/* Footer note */}
         <p className="text-xs text-center text-gray-400 pb-4">
-          Hệ thống có {visibleAccounts.length} tài khoản được cấu hình sẵn. Liên hệ quản trị viên để thêm tài khoản mới.
+          Hệ thống có {visibleAccounts.length} tài khoản. Liên hệ quản trị viên để thêm tài khoản mới.
         </p>
       </div>
+
+      {editingAccount && (
+        <PermissionsModal
+          account={editingAccount}
+          permissions={{ ...ROLE_CONFIGS[editingAccount.role].permissions, ...permissionsByEmail[editingAccount.email] }}
+          onClose={() => setEditingAccount(null)}
+          onSaved={(permissions) => {
+            setPermissionsByEmail(previous => ({ ...previous, [editingAccount.email]: permissions }));
+            setEditingAccount(null);
+          }}
+        />
+      )}
 
       {/* Change Password Modal */}
       {selectedAccount && (

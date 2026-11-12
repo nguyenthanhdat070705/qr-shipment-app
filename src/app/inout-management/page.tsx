@@ -15,9 +15,7 @@ export default async function InOutManagementPage(props: { searchParams: Promise
   return (
     <PageLayout title="Quản lý Xuất Nhập" icon={<Truck size={15} className="text-blue-500" />}>
       <div className="w-full">
-        <InOutManagementTabs currentTab={currentTab} />
-        
-        <div className="mt-2">
+        <InOutManagementTabs currentTab={currentTab}>
           {currentTab === "import" && <GoodsReceiptContent />}
           {currentTab === "receipt-management" && <ReceiptManagementContent />}
           {currentTab === "export" && <GoodsIssueContent />}
@@ -29,7 +27,7 @@ export default async function InOutManagementPage(props: { searchParams: Promise
           )}
           {currentTab === "voided-receipts" && <VoidedReceiptsContent />}
           {currentTab === "inventory" && <InventoryContent />}
-        </div>
+        </InOutManagementTabs>
       </div>
     </PageLayout>
   );

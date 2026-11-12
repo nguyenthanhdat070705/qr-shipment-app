@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { getUserRole } from '@/config/roles.config';
 
 /**
  * GET  /api/purchase-orders   → List all POs from fact_don_hang
@@ -9,9 +8,7 @@ import { getUserRole } from '@/config/roles.config';
 
 export async function GET(req: NextRequest) {
   const supabase = getSupabaseAdmin();
-  const email = req.nextUrl.searchParams.get('email') || '';
-  const role = getUserRole(email);
-  const canViewSupplier = email && ['admin', 'procurement', 'warehouse'].includes(role);
+  const canViewSupplier = req.headers.get('x-can-view-suppliers') === 'true';
   const selectQuery = canViewSupplier
     ? '*, ncc:dim_ncc!ncc_id(id, ma_ncc, ten_ncc, nguoi_lien_he, sdt), kho:dim_kho!kho_id(id, ma_kho, ten_kho)'
     : '*, kho:dim_kho!kho_id(id, ma_kho, ten_kho)';
@@ -87,7 +84,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { supplier_id, warehouse_id, note, created_by, expected_date, items } = body as {
+  const { supplier_id, warehouse_id, note, expected_date, items } = body as {
     supplier_id?: string;
     warehouse_id?: string;
     note?: string;
@@ -95,6 +92,8 @@ export async function POST(req: NextRequest) {
     expected_date?: string;
     items?: { product_code: string; product_name: string; quantity: number; unit_price: number; note?: string; hang_ky_gui?: boolean }[];
   };
+
+  const created_by = req.headers.get('x-authenticated-email') || '';
 
   if (warehouse_id) {
     const { data: activeWarehouse } = await supabase

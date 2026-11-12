@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
-import { getUserRole } from '@/config/roles.config';
 
 /**
  * POST /api/products/import
@@ -18,16 +17,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { rows, email } = body;
-
-  // Check permission
-  const role = getUserRole(email || '');
-  if (role !== 'admin' && role !== 'procurement') {
-    return NextResponse.json(
-      { error: 'Bạn không có quyền import sản phẩm. Chỉ Admin và Thu mua mới được phép.' },
-      { status: 403 }
-    );
-  }
+  const { rows } = body;
 
   if (!Array.isArray(rows) || rows.length === 0) {
     return NextResponse.json({ error: 'Không có dữ liệu để import.' }, { status: 400 });
